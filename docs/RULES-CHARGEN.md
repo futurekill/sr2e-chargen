@@ -1,7 +1,7 @@
 # Character creation rules (M0 source capture)
 
 _Read from renders of the corrected 11th printing (FASA 7901), book pages cited (PDF = book + 1 in this chapter).
-Never from pdftotext. M0 status: **core book, Shadowrun Companion, Cyberpirates and Fields of Fire captured**; the image-only books still to check (end)._
+Never from pdftotext. M0 status: **core book, Shadowrun Companion, Cyberpirates, Fields of Fire and Rigger 2 captured**; the image-only books still to check (end)._
 
 ## Chapter map (core)
 
@@ -293,8 +293,16 @@ _Renders of PDF 15–19, 61–64, 72–73, 85–86, 91, 113–124 (book = PDF �
   Skill Points per point of rating (raised later as a General Skill, core p.190); off-hand penalty = the weapon skill
   minus Ambidexterity (no effect above it); still the Second Firearm modifier. The mercenary **dealer** contact (a
   fixer for arms, −1 acquisition TN, +25 % time) only for characters with a legitimate mercenary background.
+- **Rigger 2** (FASA 7906, renders of PDF 13–16, book = PDF − 1), "The Rigger: Character Creation" p.12–15:
+  priority (core p.47) or point-based (Companion p.20); no racial restrictions on riggers. Creation-relevant
+  Edge/Flaw rules: a character with a vehicle control rig can't take **Bio-Rejection**; **Blind** and **Deaf** are worth
+  −2 and −1 when (GM's call) they don't affect rigging, their full values when they do; Night Vision / Night Blindness
+  don't apply while rigging. New Edges/Flaws (Computer Illiterate −3, Sensitive Neural Structure −2/−4, Simsense
+  Vertigo −2, Spike Resistance 2/4, Gremlins −1 to −4, and the rest) are content (`sr2e-rigger-2` `r2-qualities`).
+  Skills notes (VCR half-modifier defaulting, Non-Matrix Programming, Vehicle Stealth, Vehicle Tactics) are play rules
+  the Foundry system already implements (Part 2b).
 - **Image-only books still to check for creation rules** (no text layer, so only a page-by-page look finds them):
-  Rigger 2, Virtual Realities 2.0, Cybertechnology, Street Samurai Catalog, Neo-Anarchist's Guide to Real Life
+  Virtual Realities 2.0, Cybertechnology, Street Samurai Catalog, Neo-Anarchist's Guide to Real Life
   (lifestyles), Corporate Security Handbook. The text-layer books (Grimoire, Shadowtech, Running Gear) have no creation
   rules beyond the core's (searched).
 
