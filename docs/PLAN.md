@@ -1,5 +1,5 @@
 # Plan: SR2E Character Generator & Manager (standalone)
-_Draft 6, 2026-11-13, by Claude, after Codex plan rounds 1–5 (38 findings, all taken; see docs/PLAN-REVIEW-LOG.md). Supersedes the 2026-07-17 design doc
+_Draft 7, 2026-11-13, by Claude, after Codex plan rounds 1–6 (39 findings, all taken; see docs/PLAN-REVIEW-LOG.md). Supersedes the 2026-07-17 design doc
 (`sr2e-foundryvtt/docs/PLAN-character-creator.md`), whose schema ideas it keeps._
 
 ## Goal
@@ -79,7 +79,9 @@ Foundry's DataModel (fragile, and the licence problem).
 release: the existing 1,615 unit tests + Quench batches must stay green, plus a new **parity test** per extracted
 piece (Foundry path vs pure path on every pregen in `packs-src/runners` and the module archetypes). Only what the
 creator needs is extracted, in this order: attributes (racial, ware, limbs) → Essence/Magic/Body Index → initiative
-& Reaction → dice pools → armor → condition monitors → chargen budget. Matrix/vehicle-in-play/combat derivations
+& Reaction → **character-side deck, persona and Hacking Pool** (`_snapshotActiveDeck`, `_derivePersona`,
+`_calculateHackingPool`; round 6: buying, replacing or unloading a deck or program changes the sheet) → dice pools →
+armor → condition monitors → chargen budget. Live-play Matrix/vehicle/combat operations
 stay in the system.
 
 **D3: Active Effects.** The creator cannot run Foundry AEs. Rule: every effect that changes a *character's* numbers
@@ -401,7 +403,8 @@ dependency and image scan results are release gates.
   data, shared references).
 - **M1b Citations** (system + content repos): the D8 `citation` field, the book table, the backfill scripts and the
   `validate` rule.
-- **M2 Derive extraction** (system repo, several small releases per D2): **item preparation first** (item-data's
+- **M2 Derive extraction** (system repo, several small releases per D2; parity fixtures include deck/program
+  replacement and removal): **item preparation first** (item-data's
   ratings, costs, derived fields), then the actor derivations, all behind D9's `DeriveContext`; **module
   registration as pure adapters** (each content module exports a `register(registries)` usable outside Foundry,
   versioned with the module); the AE audit (D3); Node AND browser import tests. **Gate:** parity fixtures beyond the

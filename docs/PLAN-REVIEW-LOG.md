@@ -70,3 +70,10 @@ All taken: affected actors fenced across clients (gameplay writers/reconcilers d
 outside changes); write-intent + reserved ids journalled BEFORE each mutation, recovery reconciles idempotently against
 the world; typed timestamp adapters export remaining durations and re-anchor on import; image work in the same
 bounded, killable subprocess queue as PDF rendering.
+
+## Round 6 — Codex (draft 6, fresh session): REVISE, 1 finding
+1. D2 excluded the Matrix derivations a decker's sheet needs (active deck snapshot, persona, Hacking Pool).
+
+### Claude's response (draft 7)
+Taken: the character-side deck/persona/Hacking Pool derivations join D2's order before dice pools; M2's parity fixtures
+include deck and program replacement/removal; only live-play Matrix operations stay in the system.
