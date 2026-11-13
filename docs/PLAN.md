@@ -38,6 +38,7 @@ loss in either direction**.
   buttons included, as long as the meaning stays clear.
 - U15. Ships as a Docker image. SQLite on a mounted volume to start; a supported path to Postgres (preferred) or
   MySQL/MariaDB later.
+- U16. Multiple character sheet styles; the user likes the Pink Fohawk / Mel sheet in particular.
 - Also accepted: always-on rules panel with page references, in-app dice with a log, history/undo, portrait upload
   exported as a Foundry token, GM NPC builder, phone-friendly viewing.
 
@@ -150,8 +151,16 @@ character's `ruleset`.
 ## Exports
 
 - Foundry JSON (character, vehicle) — the canonical format.
-- PDF: a recreated multi-page sheet, drawn by a dedicated renderer from the derived character (pdf-lib, server-side),
-  not printed from the page. Overflow pages for long lists.
+- PDF, in **several sheet styles** (U16), all drawn by a dedicated renderer from the derived character (server-side),
+  never printed from the page; overflow pages for long lists. One sheet model (sections + values from the derive
+  layer), one template per style:
+  - **Classic**: a functional recreation of the official SR2 sheet (no FASA art or logos).
+  - **Fohawk**: the 2026 Pink Fohawk sheet (`sr2e-pink-fohawk/tools/gen-sheet.mjs`, Mel Offaleater): black angled
+    section bars, magenta accents, portrait header with handle / a.k.a. / priorities, big attribute row, condition
+    monitor boxes, attacks with computed damage codes, Essence/Body Index. Its SVG → PDF approach (librsvg) is the
+    starting point. Note: that script re-implements the attribute maths by hand ("mirrors
+    CharacterData#_calculateAttributeMods") — exactly the drift D1 removes; its port reads the derive layer.
+  - Later: sheets matching the app themes (terminal, cybernoir…), all from the same sheet model.
 - Markdown / plain-text stat block; one-page table card (PDF).
 
 ## Architecture
