@@ -85,13 +85,63 @@ Never from pdftotext. M0 status: **core book captured**; alternate methods from 
 10. **Fleshing out** (p.47–48): Twenty Questions (sex, size, colouring, …) — flavour for the builder's notes step;
     no mechanics.
 
+## After creation: Karma and advancement (p.190–191; renders of PDF 199–200, offset +9 here)
+
+- **Awards** (p.190): the GM awards Karma at the end of an adventure (staying alive, success, danger; individual
+  awards for roleplaying etc.). 90% becomes **Good Karma** (long-term improvement), 10% goes to the **Karma Pool**.
+  - Book conflict, already ruled in the system (`karmaPoolCapacity`, sr2e-rules.mjs): p.190 says "round off in favor
+    of Good Karma", p.191 says the Pool gets one-tenth "(round up)". The pool's own section (p.191) wins; the
+    creator uses the same function.
+- **Attributes** (p.190): +1 costs Good Karma = the NEW rating (Strength 5 → 6 costs 6). Above the racial maximum
+  only with GM approval, at DOUBLE cost (human Strength 6 → 7 costs 14); the GM should discourage going past
+  1.5 × the racial maximum. Reduced attributes may be raised back. Reaction, Essence and Magic can NEVER be raised
+  with Karma (Reaction follows Quickness/Intelligence).
+- **Skills** (p.190–191), Good Karma Cost for Skills table: general skill 2 × new rating; Concentration
+  1.5 × new rating; Specialization 1 × new rating; Language 1 × new rating. After creation, general skills,
+  Concentrations and Specializations improve separately (raising the general skill doesn't move the Concentration).
+  Example (Iris): Firearms 1 → 2 costs 4; Pistols 3 → 4 costs 6; Beretta 101T 5 → 6 costs 6.
+  - A new Concentration starts from the general skill (Firearms 4 → Pistols 5 costs 5 × 1.5 = 8 — rounding up is
+    the book's own example); a new Specialization from the Concentration, else the general skill
+    (Roomsweeper 5 × 1 = 5). A brand-new skill costs 1 Good Karma for rating 1.
+  - A hermetic needs a sorcery library rated at least the Sorcery rating being bought.
+- **Karma Pool** (p.191): refreshes each encounter; re-roll failures (1, then +1 per further re-roll on the same
+  test), avoid an Oops (1), buy extra dice (1 each, at most the dice in use excluding pools), buy successes
+  (1 each, needs a natural success; spent permanently). Team Karma (p.191): each member contributes at least 1;
+  leaving halves it; multiple teams cost extra per point. (Play-time rules; the manager tracks the pools.)
+- **Buying a lifestyle permanently** (p.190): 100 months' upkeep; Middle or better can be sold back for 2D6 × 10% of
+  the price (1D6 without a SIN or in a hurry).
+
+## Alternate methods: Shadowrun Companion (FASA 7905), "Character Creation Options" p.19–20
+
+_Renders of PDF 20–21 (book = PDF − 1 here). All optional, GM's choice; the Companion recommends the whole group use
+the same method (p.19)._
+
+- **Altering priorities** (p.19): GM tables, not fixed rules: Race (e.g. ordinary metahumans at B, Priority A for
+  exotic races such as variants or shapeshifters, pp.36–44; per-race priorities; or no Race category); Magic (e.g.
+  shamans at B in a tribal game); Attributes/Skills (raise or lower the starting points, or give initial Karma);
+  Resources (change the amounts, a flat amount for everyone, approved-equipment lists, an Availability limit — 6 is
+  suggested). **Builder support:** a GM "house table" editor that overrides the Master Character Creation Table per
+  campaign, plus an equipment allow-list/Availability cap.
+- **Altering rating limits** (p.20): the starting cap of 6 on Attributes and Skills may be lowered (4: generalists)
+  or raised (8: specialists). **Builder:** a campaign setting, default 6.
+- **Sum-to-10** (p.20): priorities become numbers A=4, B=3, C=2, D=1, E=0; any combination totalling ≤ 10 (e.g.
+  4,3,2,1,0; 4,4,1,1,0; 3,3,3,1,0) — each category then gets the Master Table row of its letter.
+- **Point-Based Design** (p.20–21): the GM sets a Building Points allotment (100 recommended). Building Points
+  Table (p.20): Race — metahuman 10, human 0; Magic — magician 20 (30 Force Points), adept 15 (30 Force Points),
+  physical adept 15 (Force Points = Magic Rating); Attributes — 1 Attribute Point per 2 Building Points (GM sets
+  rating limits); Skills — 1 Skill Point per 1 Building Point; Resources — additional Force Points 2 per 1 Building
+  Point; nuyen: 0¥ −5, 500¥ 0, 5,000¥ 5, 90,000¥ 10, 200,000¥ 15, 400,000¥ 20, 650,000¥ 25, 1,000,000¥ 30.
+  Magically active characters automatically get 30 Force Points (not the Resources priority). Edges and Flaws costs:
+  p.21. **To capture next:** the rest of p.21 (the method's Magic/Attributes/Skills/Resources notes) and Edges and
+  Flaws p.21–35.
+
 ## Already in the Foundry system (to reuse, D1)
 `priorityTableFor`, `chargenBudgetOf` (module/sheets/actor-sheet.mjs) implement the priority budget; pricing,
 grades and Essence are in `module/rules/`. M2 extracts what the creator needs; this file is the reference the
 extracted code and the creator's rule tests cite.
 
 ## Still to capture in M0
-- Karma and advancement costs (p.190–191) and lifestyles in detail (p.189).
-- Alternate creation methods in the enabled books (Shadowrun Companion's alternate system; any others) — each with
-  its own section here, from renders.
+- Lifestyles in detail (p.189) beyond the costs already captured (p.46, p.190).
+- Companion p.21 onward (point-based details, Edges and Flaws pp.21–35, shapeshifters pp.36–44); other books'
+  creation options (check each enabled book's contents).
 - Book metatypes and Edges & Flaws (Companion) as creation-time options.

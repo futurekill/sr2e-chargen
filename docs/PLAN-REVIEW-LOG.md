@@ -59,3 +59,14 @@ extracting the Workshop's vehicle preparation.
 All taken: `LONGTEXT` on MySQL/MariaDB with a maximum document size tested across dialects; a recoverable import
 (preflight, reserved identities, a journal of originals and writes, rollback/resume, failure-injection tests); banter
 data, starter set, toggle and an export-exclusion test in M4.
+
+## Round 5 — Codex (draft 5, fresh session): REVISE, 4 findings
+1. Import isolation: write options can't stop queued reconcilers or other clients mid-import. 2. A crash window
+between a write and its journal entry. 3. World-time instants (healing dueAt, move-by-wire since) break across worlds.
+4. Image decoding lacked the renderer's resource isolation.
+
+### Claude's response (draft 6)
+All taken: affected actors fenced across clients (gameplay writers/reconcilers drain and skip; rollback refuses on
+outside changes); write-intent + reserved ids journalled BEFORE each mutation, recovery reconciles idempotently against
+the world; typed timestamp adapters export remaining durations and re-anchor on import; image work in the same
+bounded, killable subprocess queue as PDF rendering.

@@ -1,5 +1,5 @@
 # Plan: SR2E Character Generator & Manager (standalone)
-_Draft 5, 2026-11-13, by Claude, after Codex plan rounds 1–4 (34 findings, all taken; see docs/PLAN-REVIEW-LOG.md). Supersedes the 2026-07-17 design doc
+_Draft 6, 2026-11-13, by Claude, after Codex plan rounds 1–5 (38 findings, all taken; see docs/PLAN-REVIEW-LOG.md). Supersedes the 2026-07-17 design doc
 (`sr2e-foundryvtt/docs/PLAN-character-creator.md`), whose schema ideas it keeps._
 
 ## Goal
@@ -361,8 +361,9 @@ High/Critical**; SBOM attached; image signed (cosign, keyless via GitHub OIDC); 
 - authorization on every document read/write (owner check in one place, tested), never by guessable id alone;
 - every API input validated by schema (Fastify JSON Schema); **JSON import** is untrusted: size cap, full schema
   validation, prototype-pollution-safe parsing, unowned source fields carried unchanged and never executed;
-- portrait upload: size/type caps AND a decoded pixel limit (`limitInputPixels`), re-encoded server-side (sharp) to
-  WebP with metadata stripped; user SVG never accepted; served only to the owner;
+- portrait upload: size/type caps AND a decoded pixel limit (`limitInputPixels`), re-encoded (sharp) to WebP with
+  metadata stripped, in the SAME bounded, killable subprocess queue as PDF rendering (memory/time limits, per-user
+  admission limits; round 5 #4), archive images included; user SVG never accepted; served only to the owner;
 - denial of service (round 1 #13, round 2 #7): PDF rendering runs in a separate **killable child process** (native
   SVG/image code isn't bounded by worker-thread limits) with OS-enforced memory and CPU-time limits (`ulimit`-style
   via the container, plus a wall-clock kill), bounded input and output sizes, through a bounded
@@ -385,8 +386,16 @@ dependency and image scan results are release gates.
 - **M1 Schema + Foundry export/import** (system repo; useful on its own as character backup). Import is
   **recoverable** (round 4 #2): a preflight validates the whole bundle (schema, versions, references, assets, ruleset
   acceptance) before any write; identities are reserved; the original source of every document it will overwrite is
-  journalled (`flags.sr2e.importJournal` on a world document) with each completed write; a failure rolls back from the
-  journal, and a retry resumes; failure-injection tests stop it after each write. the bundle format with
+  journalled (`flags.sr2e.importJournal` on a world document); before EACH mutation the journal records the write's
+  INTENT and its reserved ids, and recovery reconciles against the actual world state with idempotent operations (a
+  create with a reserved id is detected, not repeated), so the gap between a write and its journal entry is safe
+  (round 5 #2). The affected actors are **fenced** for the whole import and recovery (round 5 #1): a fence flag the
+  system's gameplay writers and reconcilers (move-by-wire `reconcile`, healing clock, permanent damage, astral
+  forms, …) check and skip, on every client, after draining their pending work; rollback refuses if a fenced actor
+  changed outside the import. Failure-injection tests stop it before and after each journal acknowledgement.
+  **Clocks** (round 5 #3): timed state stored as world-time instants (healing `dueAt`, move-by-wire `since`, …) has a
+  typed timestamp adapter (D11's registry) that exports REMAINING durations and re-anchors them to the destination
+  world's clock on import; fixtures import into a world whose time differs. the bundle format with
   references, assets zip, field ownership, `portableId`, D10 migrations + historical fixtures, ruleset acceptance on
   import, round-trip Quench + unit tests over all pregens AND edited round trips (edits, deletions, unknown module
   data, shared references).
