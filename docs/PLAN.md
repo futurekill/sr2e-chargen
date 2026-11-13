@@ -1,5 +1,5 @@
 # Plan: SR2E Character Generator & Manager (standalone)
-_Draft 8, 2026-11-13, by Claude, after Codex plan rounds 1–7 (41 findings, all taken; see docs/PLAN-REVIEW-LOG.md). Supersedes the 2026-07-17 design doc
+_Draft 9, 2026-11-13, by Claude, after Codex plan rounds 1–8 (43 findings, all taken; see docs/PLAN-REVIEW-LOG.md). Supersedes the 2026-07-17 design doc
 (`sr2e-foundryvtt/docs/PLAN-character-creator.md`), whose schema ideas it keeps._
 
 ## Goal
@@ -101,7 +101,10 @@ by a Foundry adapter in the system and by the creator's own adapter. Each derive
 reads; a parity test fails if a function reads a key it didn't declare. Effects: the context carries the
 character's Active Effects as data, and the pure layer applies only the **supported semantics** (the system's own
 AE keys listed in its CLAUDE.md: `system.<attr>.mod`, `reaction.mod`, `initiative.mod`, `armor.ballistic/impact`, with
-ADD/OVERRIDE modes). Any other effect is **unsupported**: the creator shows the affected values as "as last computed
+ADD/OVERRIDE modes). The effect collection is the **effective** one, matching Foundry's own eligibility and
+order: the actor's effects PLUS effects transferred from its owned items (the system uses modern transfer,
+`legacyTransferral = false`, so these never appear in `actor.effects`; round 8 #1), each disabled/suppressed check
+included; M2 tests supported and unsupported effects on both. Any other effect is **unsupported**: the creator shows the affected values as "as last computed
 in Foundry" (from the export) with a warning, and never edits them.
 
 ## Portable character JSON (the interchange)
@@ -169,7 +172,10 @@ Additions:
   them for the new ids. A flag with no adapter is carried **opaquely** and never blocks an export (round 3 #1); only
   an import that changes identities (a new world, new ids) refuses when it would carry an unadaptable reference,
   naming it; same-id re-imports (backup/restore) pass.
-  Embedded effects get a `portableId` like items. M1's fixtures re-import every complex character under NEW ids and
+  Embedded effects get a `portableId` like items. **Deterministic ids** (round 8 #2): claim/event markers
+  (`claims.mjs`: `_id = claimId(key)`) are re-derived from their REMAPPED key during identity reservation — never
+  copied or freshly allocated — and every reference to them is remapped too, so `once()`/`recordEvent` still find an
+  already-recorded event after import; a test retries every imported claim/event and asserts no new consequence. M1's fixtures re-import every complex character under NEW ids and
   compare the derived result.
 - **D12 Prepared snapshot** (round 2 #2): the export also carries each document's **prepared** values (what Foundry
   derived) and the D9 context it was derived under, read-only. If a document holds an unsupported effect, the whole

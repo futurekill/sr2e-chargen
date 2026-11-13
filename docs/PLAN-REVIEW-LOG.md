@@ -87,3 +87,13 @@ Both taken: M2 starts with versioned pure source constructors/normalisers + vali
 definitions, parity-tested from a minimal new actor and raw packs-src items; the asset manifest covers every image
 in the graph (portraits, tokens, item images, effect icons, rich-text `<img>`), system/module paths travel as
 references, unreachable ones are listed and warned; a cross-world fixture.
+
+## Round 8 — Codex (draft 8, fresh session): REVISE, 2 findings
+1. The effect contract missed effects transferred from owned items (modern transfer: not in `actor.effects`).
+2. Claim/event markers have deterministic ids from their keys; remapping keys without re-deriving ids would let an
+event fire again.
+
+### Claude's response (draft 9)
+Both taken: D9 uses the effective effect collection (actor + transferred item effects, Foundry's eligibility and order),
+tested in M2; D11 re-derives claim ids from remapped keys during reservation, remaps references, and tests that
+retrying imported claims/events produces no new consequence.
