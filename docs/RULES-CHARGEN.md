@@ -1,7 +1,7 @@
 # Character creation rules (M0 source capture)
 
 _Read from renders of the corrected 11th printing (FASA 7901), book pages cited (PDF = book + 1 in this chapter).
-Never from pdftotext. M0 status: **core book captured**; alternate methods from other books still to capture (end)._
+Never from pdftotext. M0 status: **core book and Shadowrun Companion captured**; other books' options still to capture (end)._
 
 ## Chapter map (core)
 
@@ -131,9 +131,94 @@ the same method (p.19)._
   physical adept 15 (Force Points = Magic Rating); Attributes — 1 Attribute Point per 2 Building Points (GM sets
   rating limits); Skills — 1 Skill Point per 1 Building Point; Resources — additional Force Points 2 per 1 Building
   Point; nuyen: 0¥ −5, 500¥ 0, 5,000¥ 5, 90,000¥ 10, 200,000¥ 15, 400,000¥ 20, 650,000¥ 25, 1,000,000¥ 30.
-  Magically active characters automatically get 30 Force Points (not the Resources priority). Edges and Flaws costs:
-  p.21. **To capture next:** the rest of p.21 (the method's Magic/Attributes/Skills/Resources notes) and Edges and
-  Flaws p.21–35.
+  Magically active characters automatically get 30 Force Points (not the Resources priority).
+- **Point-based details** (p.21; render PDF 22):
+  - Magic: magicians and non-physical adepts get 30 Force Points free; they may BUY more at 1 Building Point per 2
+    Force Points, or SELL them at 2 Force Points per 1 Building Point. Physical adepts get no 30 Force Points (nothing
+    to sell) and buy powers with Magic-Rating points as usual (core p.125). The GM may lower/raise the magic costs.
+  - Skills: 1 Building Point per level up to the GM's cap; Concentrations and Specializations chosen after purchase
+    cost nothing extra (Virgil: "Demolitions (Plastic Explosives) 3/5" costs 4 = the purchased rating).
+  - Attributes: 2 Building Points per point (Virgil: Body 3 = 6, Intelligence 5 = 10).
+  - Spells (GM option): Force Points may replace Karma to start as an initiate, or to summon/maintain an ally spirit.
+  - Worked example (p.21, **test fixture**): Virgil the SEAL decker = 102 BP — Race human 0, Magic none 0, Attributes
+    Body 3/6, Quickness 4/8, Strength 3/6, Charisma 1/2, Intelligence 5/10, Willpower 4/8; Skills Computer 6, Computer
+    (B/R) 6, Electronics 5, Computer Theory 3, Stealth 4, Demolitions (Plastic Explosives) 3/5 = 4, Unarmed Combat
+    (Cyber-implanted Weaponry) 3/5 = 4, Athletics 4, Firearms 4, Japanese 2; Resources 400,000¥ = 20. The GM may
+    require a 2-point Flaw to get back to 100, or allow a small range of overage.
+
+## Edges and Flaws (Companion p.21–35)
+
+_Renders of PDF 22–36 (book = PDF − 1). The catalogue itself is content: the `sr2e-shadowrun-companion` module's
+`sc-qualities` pack (86 items, `system.pointValue`, `kind` edge/flaw, `category`, `notes`). M0 checked every item's
+point value against the Edges and Flaws Table (p.35, re-read at 300 dpi): all match except Mysterious
+Cyberware/Bioware, which the module had at −5 and the book prints −3 (p.34 and p.35); fixed in module 0.4.1._
+
+- **Optional and per-character** (p.21): usable with the priority system, Sum-to-10 or point-based; the GM may forbid
+  any or all. GM option: allow adding them in play (the Companion recommends roleplaying them in instead).
+- **Priority / Sum-to-10 games** (p.21–22): any combination whose point values total **exactly zero** (Ambidexterity 2
+  + Color Blind −1 + Combat Monster −1).
+- **Point-based games** (p.22): Edges cost Building Points equal to their value; Flaws ADD Building Points equal to
+  their value (Blind −6 → +6 BP). The GM may also allow the zero-sum rule there.
+- **Limitations** (p.22): an Edge never raises an Attribute, skill or Spell Force above the standard limits and
+  racial maximums for new characters (GM approval excepted); a TN is never reduced below 2 by Edges/Flaws; Edges and
+  Flaws can't be combined unless an entry says so (no Pacifist + Total Pacifist); the education Edges/Flaws (Illiterate,
+  Uneducated, High School, Technical School, College) may be banned as a group by the GM.
+- **Eliminating Flaws** (p.22, play-time, for the manager): GM-approved, through roleplaying, costs Good Karma = 10 ×
+  the Flaw's point value (BTL addiction, −3: 30 Karma) plus any nuyen the GM sets for medical procedures.
+- **Custom Edges/Flaws** (p.22): ±6 points at most, GM-approved (Stacy's "Good Looking and Knows It" 2 → 1). **Builder:**
+  a GM custom-quality editor with that cap.
+- **Ranged and conditional values** (p.35; the module stores the LOWEST value, the player sets the chosen one — the
+  builder must offer the range and validate it):
+
+| Entry | Points |
+|---|---|
+| High Pain Tolerance | Variable (Edge) |
+| Lightning Reflexes | 2 to 6 |
+| Will to Live | 1 to 3 |
+| Day Job | 1 to 3 |
+| Good Reputation | 1 or 2 |
+| Bonus Force Point | 1 to 3 |
+| Magic Resistance | 1 to 4 |
+| Magical Talent: Summoning Talent | 3/5 |
+| State-of-the-Art Model | 2, 4 or 6 |
+| Allergy | −1 to −4 |
+| Infirm | −1 to −5 |
+| Amnesia | −2 to −5 |
+| Phobia | −1 to −4 |
+| Bad Reputation | −1 to −4 |
+| Compulsive, Dependent | Variable |
+| Hunted | −2, −4 or −6 |
+| Addiction | −1 Strongly Addictive / −1 Debilitating / −2 Incapacitating (the table's sub-rows) |
+| Bio-Rejection | −5 (−2 for magically active characters) |
+| Blind | −6 (−2 for magically active characters) |
+| Sensitive System | −3 (−2 for magically active characters) |
+
+  **M1/M7 consequence:** the Companion items need a range/conditional field (or the creator a lookup keyed by the
+  item's source UUID) before the builder can validate them; decide in M7's plan. Per-entry creation effects (Bonus
+  Attribute/Skill/Force Point, Exceptional Attribute, Extra Contact, education, State-of-the-Art availability caps
+  Availability 10 / 20 / delta-grade any, Registered Equipment needs a valid SIN) are read from each entry (p.23–34)
+  when M7 builds them; the Foundry system already implements `attributeBonus`/`maximumBonus` (Quench `sr2e.qualities`).
+
+## New character types (Companion p.36–44)
+
+_Renders of PDF 37–45._
+
+- **Shapeshifters** (p.36–38; already in the Foundry system, sr2e 0.125.0 + module 0.4.0): Race MUST be Priority A;
+  the Shapeshifter Character Creation Table replaces the Master Table's other columns — B: Magician, 24 Attribute
+  Points, 30 Skill Points, 400,000¥/35 Force Points; C: Adept, 20, 24, 90,000¥/25; D: —, 17, 20, 5,000¥/15; E: —, 15,
+  17, 500¥/5. Base Attributes bought per standard rules, **max 6**; then the species' Human Form modifiers (final
+  human-form ratings) and Animal Form modifiers (Shapeshifter Attribute Modifiers Table) — final ratings are NOT
+  subject to racial maximums. **No free starting contacts**: contacts are bought from Resources. **No cyberware**
+  (rejected on shifting). The Foundry system's `shapeshift-rules.mjs` holds the table; the creator reuses it (D1).
+- **Metahuman variants** (p.38–44; content in the module's `sc-metatypes`, each = the base race's modifiers with the
+  listed exceptions): no creation-priority change, EXCEPT **Oni** (p.42): at the GM's discretion a MAGICAL oni may take
+  Resources A, Race B, Magic C (non-magical oni use the regular metahuman priorities). Every variant gets a **Hostile**
+  reaction (core Social Skill Table p.182) in all initial social contacts with other metahumans (p.38). **Dryads**
+  (p.44): a limited Animal Empathy Edge (birds and small tree-living animals) that need not be balanced by a Flaw.
+- **Metahuman albinism** (p.38): any race; no priority change; the character MUST take at least one of Bio-Rejection,
+  Color Blind, Low Pain Tolerance, Night Blindness or Sensitive System WITHOUT gaining its value (no Building Points,
+  no balancing Edge); each further Flaw from that list gives its points normally; +1 Willpower on top of any other
+  creation increase. **Builder:** an "Albino" toggle enforcing that.
 
 ## Already in the Foundry system (to reuse, D1)
 `priorityTableFor`, `chargenBudgetOf` (module/sheets/actor-sheet.mjs) implement the priority budget; pricing,
@@ -142,6 +227,5 @@ extracted code and the creator's rule tests cite.
 
 ## Still to capture in M0
 - Lifestyles in detail (p.189) beyond the costs already captured (p.46, p.190).
-- Companion p.21 onward (point-based details, Edges and Flaws pp.21–35, shapeshifters pp.36–44); other books'
-  creation options (check each enabled book's contents).
-- Book metatypes and Edges & Flaws (Companion) as creation-time options.
+- Other books' creation options (check each enabled book's contents).
+- Per-entry Edge/Flaw creation effects (Companion p.23–34) when M7 builds them (above).
