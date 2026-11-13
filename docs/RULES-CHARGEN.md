@@ -333,8 +333,9 @@ _Renders of PDF 15–19, 61–64, 72–73, 85–86, 91, 113–124 (book = PDF �
   get alpha and beta at shadow clinics; delta is "far more difficult" (a corp must want you there), so at creation the
   builder offers delta only with the Companion's 6-point State-of-the-Art Model Edge (p.34); Cybertechnology p.44 also
   prints the Essence reduction (alpha ×.8, beta ×.6, delta ×.5, round up, never below .05), the cost multipliers (×3 /
-  ×7 / ×10) and surgery fees (alpha/beta 50 ×, delta 200 × core p.145) — **M2 check:** compare these with what the
-  system implements (its grades follow SSC p.98 per the cybertechnology plan) and record which book the system uses.
+  ×7 / ×10) and surgery fees (alpha/beta 50 ×, delta 200 × core p.145); the system's `CYBERWARE_GRADES`
+  (module/rules/sr2e-rules.mjs) holds exactly these multipliers and damage resistances. Shadowtech p.40: none of
+  Shadowtech's cyberware comes in alpha or beta.
 - **Image-only books still to check for creation rules** (no text layer, so only a page-by-page look finds them):
   Street Samurai Catalog, Neo-Anarchist's Guide to Real Life
   (lifestyles), Corporate Security Handbook. The text-layer books (Grimoire, Shadowtech, Running Gear) have no creation
