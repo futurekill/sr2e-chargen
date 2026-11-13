@@ -1,5 +1,5 @@
 # Plan: SR2E Character Generator & Manager (standalone)
-_Draft 2, 2026-11-13, by Claude, after Codex plan round 1 (16 findings, all taken; see docs/PLAN-REVIEW-LOG.md). Supersedes the 2026-07-17 design doc
+_Draft 3, 2026-11-13, by Claude, after Codex plan rounds 1–2 (26 findings, all taken; see docs/PLAN-REVIEW-LOG.md). Supersedes the 2026-07-17 design doc
 (`sr2e-foundryvtt/docs/PLAN-character-creator.md`), whose schema ideas it keeps._
 
 ## Goal
@@ -68,7 +68,10 @@ computes. Today:
 **Decision D1: the system repo is the shared package.** No third repo. Derived-state logic moves out of the data
 models into pure functions (`module/derive/*.mjs`) that take plain `{system, items}` objects; the data models
 become thin callers. The creator imports the system's `module/rules`, `module/derive` and the static tables
-directly, pinned to a system version (git dependency on a release tag). Rejected: copying the math (drifts — this
+directly, pinned to a system version. They come as a **code-only package** built by the system's release
+workflow from the same tag (`sr2e-core-<version>.tgz`, an allow-list of `module/rules`, `module/derive`,
+`module/portable`, `schema` and the static tables; never `packs-src` or assets), attached to the GitHub release;
+the creator's CI inspects the final image layers and fails on any excluded path (round 2 #8). Rejected: copying the math (drifts — this
 estate has been bitten before); a separate `sr2e-core` package (a second release train for no gain); shimming
 Foundry's DataModel (fragile, and the licence problem).
 
@@ -118,7 +121,10 @@ Keeps the 2026-07-17 envelope (`schema`, `schemaVersion`, `systemVersion`, `modu
   provenance link (`_stats.compendiumSource`); its data is never replaced by the installed compendium's. Bringing a
   character's items up to a newer compendium is a separate, explicit "update content" action, item by item, later.
 - **Assets** (round 1 #6). Portrait and token images travel in the export as files: the export is a zip
-  (`<handle>.sr2e.zip`: `character.json` + `assets/`); JSON-only export stays available without images. Foundry
+  (`<handle>.sr2e.zip`: `character.json` + `assets/`); JSON-only export stays available without images. Archive
+  import (round 2 #6) is streaming and bounded in BOTH apps: at most 64 entries, 20 MB expanded in total, 5 MB per
+  entry, compression-ratio check; entry names must be plain relative paths (no `..`, absolute paths, links or
+  duplicates); every image goes through the same decode/pixel/re-encode checks as an upload. Foundry
   import (GM) uploads the images to `worlds/<world>/sr2e-imports/<portableId>/` and rewrites the paths; a missing
   image becomes a warning and the default icon. The creator stores uploaded images per user (served only to their
   owner, see Security).
@@ -129,17 +135,37 @@ Additions:
   settings, so an import into a world whose settings differ lists the differences and **requires explicit
   acceptance** ("this character will be recomputed under this world's rules") before anything is written
   (round 1 #8). The creator likewise recomputes a Foundry export under the character's recorded ruleset only.
-- **D10 Migrations** (round 1 #7): pure, ordered document migrations in the system (`module/portable/migrations/`),
-  keyed by `schemaVersion` and by each module's version, applied on read by both apps (never in place on the
+- **D10 Migrations** (round 1 #7, round 2 #5): pure, ordered document migrations in the system
+  (`module/portable/migrations/`), dispatched on FOUR versions recorded in every bundle: the envelope `schemaVersion`,
+  the system version (the system's existing world migrations are reused through an adapter that feeds them document
+  source, as `module/migrations.mjs` does), the Foundry core version (document format) and each content module's
+  version. Compatibility: any version NEWER than the reader knows, or a module the reader doesn't have, makes the
+  document view-only (never dropped); applied on read by both apps (never in place on the
   original: the pre-migration file is kept). The creator migrates stored documents in a DB transaction per document,
   keeping the previous revision. Historical fixtures (one per `schemaVersion`) are in the test suite before M1
   ships. A document from a NEWER system than the creator's is view-only (risk 3).
-- **D5** Play state (current damage, ammo loaded, sustained spells, drug states, bound spirits' services) round-trips
-  through `_foundry` when the creator doesn't model it, and through `character.play` for what it does model (v1:
-  Physical/Stun damage, Karma pool, nuyen, ammo counts).
-- **D6** Vehicles are a sibling document (`schema: "shadowrun2e-vehicle"`) using the same envelope; a character
-  embeds owned vehicles by value with their own `portableId`, matching how the system stores rigger-owned vehicles
-  (to verify in M1).
+- **D5 One authority** (round 2 #4): each document's `source` is the ONLY authority for its data: play state
+  (damage, ammo, Karma, nuyen) is read from and written to `source` at the owned paths. There is no separate
+  `character.play` and no opaque `_foundry`; "unknown fields" are simply the source paths the creator doesn't own,
+  carried unchanged. Anything the creator SHOWS beyond source (derived values) is a read-only **projection**.
+- **D6** Vehicles, drones and bound spirits are their own documents in the graph (the bundle), referenced by the
+  character, never embedded copies. A vehicle exported alone is a one-document bundle.
+- **D11 Identity inside data** (round 2 #1): some Foundry state embeds actor identities in keys and values:
+  `permKey(uuid)` / `shiftKey(uuid)` / `stateKey(uuid)` hashed flag keys, `recordEvent` keys like `permdmg:<uuid>:…`,
+  effect `origin` uuids, item ids inside flags. The system's `module/portable` has a **typed reference adapter** per
+  such kind (listed in one registry, each with a test): export rewrites them to portable identities, import rebuilds
+  them for the new ids. A flag kind with no adapter blocks the export with a named error (never a silent copy).
+  Embedded effects get a `portableId` like items. M1's fixtures re-import every complex character under NEW ids and
+  compare the derived result.
+- **D12 Prepared snapshot** (round 2 #2): the export also carries each document's **prepared** values (what Foundry
+  derived) and the D9 context it was derived under, read-only. If a document holds an unsupported effect, the whole
+  document is view-only in the creator (shown from that snapshot), never partially edited.
+- **D13 Mutations** (round 2 #3): Foundry's update hooks keep state in step (shapeshifter damage buckets, healing
+  revisions, permanent-damage episodes, ware lifecycle records). The manager may apply a mutation only through a
+  **shared transition function** extracted to the system (`module/derive/transitions/*.mjs`, the hooks become thin
+  callers, parity-tested like D2). A mutation without one is blocked on the characters it would affect (e.g. no
+  damage entry on a shapeshifter until its transition exists). v1 ships transitions for damage, Karma, nuyen,
+  purchases and ammo.
 - **D7** The schema lives in the **system** repo (`schema/*.json` + `module/portable/*.mjs` export/import + migrations),
   because Foundry must read and write it too. Round-trip tests run in the system's CI and the creator's CI against
   the same fixtures.
@@ -218,7 +244,8 @@ a later purchase relied on), never a rewrite of history. In-app dice and their l
 
 The system's `module/rules/vehicle-design.mjs`, `vehicle-custom.mjs` and the R2 module's design tables, under the
 same D1 rule (import pure code; extract anything still tied to the data model). Vehicles are their own documents in
-the library; "attach to character" copies them into the character (D6). Core vs Rigger 2 design follows the
+the library; "attach to character" adds a reference from the character to the vehicle document (D6), the same way
+Foundry links a vehicle actor. Core vs Rigger 2 design follows the
 character's `ruleset`.
 
 ## Exports
@@ -242,7 +269,7 @@ character's `ruleset`.
   - **Pages (U20):** multi-page is fine. Page 1 holds what's needed at the table mid-fight (attributes, pools,
     initiative, condition monitors, armor, attacks, active skills); later pages hold ware, gear, magic, contacts,
     vehicles, notes. A short character fits on one page; the layout never squeezes past the size floor to get there.
-    The separate one-page table card (export) stays the "everything on one sheet" option.
+    The separate one-page table card (export) is the "one sheet at the table" option, with its own content budget.
   - **Print (U21):** players print these. Every style is designed for paper first:
     US Letter and A4 (chosen per user; layout reflows, never scaled to fit), safe margins ≥ 0.5 in / 12.7 mm for
     home printers, vector text and lines (raster only for the portrait), black-and-white legible (nothing conveyed by
@@ -261,8 +288,10 @@ character's `ruleset`.
     from the embedded font (then a fallback font is embedded, never a tofu box), (c) a box leaves its area or a run
     is under the size floor. A single row too long for any page area is split across a continuation page. A visual
     snapshot per style/fixture is kept for review.
-- Markdown / plain-text stat block; one-page **table card** (PDF): the at-the-table subset named in GRAPHICS.md
-  (attributes, pools, initiative, monitors, armour, attacks, active skills, key ware/spells), not everything.
+- Markdown / plain-text stat block; one-page **table card** (PDF, round 2 #10): the at-the-table subset named in
+  GRAPHICS.md (attributes, pools, initiative, monitors, armour, attacks, active skills, key ware/spells), with an
+  explicit **content budget**: the user ticks which attacks/skills/ware/spells go on it, a live fit preview shows the
+  page, and an overfull selection can't be exported (untick something). Everything stays on the multipage sheet.
 
 ## Architecture
 
@@ -278,7 +307,8 @@ character's `ruleset`.
     compares a canonical checksum per table (rows serialised in id order); the source DB is never modified, so
     rollback is "point `DATABASE_URL` back". Switching is then just changing `DATABASE_URL`;
   - CI runs the server test suite against SQLite, Postgres **and** MySQL (service containers) from day one;
-  - **Backups:** nightly consistent snapshots (`VACUUM INTO` for SQLite, `pg_dump`/`mysqldump` otherwise) written to a
+  - **Backups** (round 2 #9: the database AND the uploaded assets, as one set with a manifest of asset checksums):
+    nightly consistent snapshots (`VACUUM INTO` for SQLite, `pg_dump`/`mysqldump` otherwise) plus the asset files, written to a
     `BACKUP_DIR` that the docs require to be a DIFFERENT volume or host path; a restore test runs in CI, and the admin
     CLI has `backup verify` (restores into a scratch DB and compares checksums).
 - **Client:** Vite + Svelte (small, fast; wizard + themes are mostly CSS). Shared code is plain ESM, imported by both.
@@ -319,10 +349,12 @@ High/Critical**; SBOM attached; image signed (cosign, keyless via GitHub OIDC); 
   Secure, SameSite=Lax cookies, rotated on login; CSRF protection on every state-changing request;
 - authorization on every document read/write (owner check in one place, tested), never by guessable id alone;
 - every API input validated by schema (Fastify JSON Schema); **JSON import** is untrusted: size cap, full schema
-  validation, prototype-pollution-safe parsing, unknown fields kept only inside `_foundry`, never executed;
+  validation, prototype-pollution-safe parsing, unowned source fields carried unchanged and never executed;
 - portrait upload: size/type caps AND a decoded pixel limit (`limitInputPixels`), re-encoded server-side (sharp) to
   WebP with metadata stripped; user SVG never accepted; served only to the owner;
-- denial of service (round 1 #13): PDF rendering runs in a worker thread with memory/time limits through a bounded
+- denial of service (round 1 #13, round 2 #7): PDF rendering runs in a separate **killable child process** (native
+  SVG/image code isn't bounded by worker-thread limits) with OS-enforced memory and CPU-time limits (`ulimit`-style
+  via the container, plus a wall-clock kill), bounded input and output sizes, through a bounded
   queue (one or two at a time, per-user rate limit), with a page cap; a render that hits a limit FAILS with a clear
   message, never returns a truncated sheet;
 - PDF/SVG sheets: all user text escaped for XML; the SVG renderer runs with external resources disabled (no
@@ -354,7 +386,7 @@ dependency and image scan results are release gates.
 - **M3 Creator skeleton**: repo, Docker, auth lifecycle + admin CLI, library with revisions, catalog build from the
   content mount (with U12 source tagging), backups, one theme.
 - **M4 Core build flow** (Priority system, all steps, rules panel), archetypes, JSON/zip export/import.
-- **M5 PDF + text exports** (renderer worker, fit test, table card).
+- **M5 PDF + text exports** (renderer subprocess, fit test, table card with content budget).
 - **M6 Manager** (Karma, nuyen ledger, purchases, damage, history/undo as compensating changes, in-app dice + log).
 - **M7 Sourcebooks**: book toggles across the catalog, alternate methods, book metatypes/qualities.
 - **M8 Vehicle Workshop.**
@@ -366,7 +398,7 @@ Each milestone: plan section → Codex review → build → Codex code review �
 ## Testing
 
 - Parity tests (D2) in the system: Foundry derived state == pure derive output for every fixture.
-- Round-trip tests in both repos on shared fixtures: Foundry → JSON → Foundry is identical (`_source` + `_foundry`);
+- Round-trip tests in both repos on shared fixtures: Foundry → JSON → Foundry is identical (every document's source, under new ids too);
   creator → JSON → creator identical; creator → Foundry → creator identical.
 - A "complex characters" fixture set: magician with foci and bound spirits, rigger with drones and a custom vehicle,
   cyber-heavy samurai with second-hand/grade ware and limbs, decker with a custom deck, shapeshifter.

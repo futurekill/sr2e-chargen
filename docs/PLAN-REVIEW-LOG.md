@@ -22,3 +22,19 @@ checksums, all three dialects in CI, off-volume backups with restore verificatio
 ownership never restored, sanitised display; worker/queue/pixel limits, fail-not-truncate; fit test checks complete
 consumption and glyph coverage, table card = named subset; image ships no content (content mount), U12 tagging in
 M3; M1b citations, dice log in M6.
+
+## Round 2 — Codex (draft 2, fresh session): REVISE, 10 findings
+1. Identities inside data (hashed flag keys, event keys, effect origins) weren't remapped. 2. The unsupported-effect
+fallback had no prepared snapshot. 3. Shared derivation doesn't share Foundry's mutation hooks. 4. Conflicting
+authorities (`source` vs `character.play` vs `_foundry`; embedded vehicles in D6/Workshop). 5. Migration dispatch
+ignored system/Foundry/module versions. 6. ZIP imports lacked archive defences. 7. Worker threads don't bound native
+memory. 8. A git dependency on the system would pull book content into the image. 9. Backups omitted assets.
+10. The table card had unbounded content.
+
+### Claude's response (draft 3)
+All taken. D11 typed reference adapters (unknown kinds block export); D12 prepared snapshot + whole-document view-only;
+D13 shared transition functions (v1: damage, Karma, nuyen, purchases, ammo; others blocked where they apply); D5 one
+authority (`source`), no `character.play`/`_foundry`; D6 graph references (Workshop too); D10 dispatch on envelope,
+system (existing migrations via adapter), Foundry and module versions; bounded streaming archive import; renderer in a
+killable child process; a code-only `sr2e-core` package from the system release + image-layer inspection; backups
+include assets with checksums; table card content budget with fit preview.
