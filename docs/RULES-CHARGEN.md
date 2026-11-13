@@ -1,7 +1,7 @@
 # Character creation rules (M0 source capture)
 
 _Read from renders of the corrected 11th printing (FASA 7901), book pages cited (PDF = book + 1 in this chapter).
-Never from pdftotext. M0 status: **core book and Shadowrun Companion captured**; other books' options still to capture (end)._
+Never from pdftotext. M0 status: **core book, Shadowrun Companion, Cyberpirates and Fields of Fire captured**; the image-only books still to check (end)._
 
 ## Chapter map (core)
 
@@ -220,6 +220,84 @@ _Renders of PDF 37–45._
   no balancing Edge); each further Flaw from that list gives its points normally; +1 Willpower on top of any other
   creation increase. **Builder:** an "Albino" toggle enforcing that.
 
+## More Shadowrun Companion creation options (p.14–18, 60–75, 84–90, 110–123)
+
+_Renders of PDF 15–19, 61–64, 72–73, 85–86, 91, 113–124 (book = PDF − 1)._
+
+- **Priority example** (p.15, **test fixture**): Tara's SEAL decker Virgil = Skills A (40), Resources B (400,000¥),
+  Attributes C (20), Race D (human), Magic E; the same mix as the core Former Company Man (core p.55). p.21 prices the
+  same character at 102 Building Points (above). The Companion reprints the Master Table on p.14 (identical to core
+  p.47).
+- **Contact levels** (p.62–63, optional): Level 1 = the core contact, upkeep 500¥/year; Level 2 = a buddy at
+  creation, +1 Etiquette die, upkeep 3,000¥; Level 3 = a lifelong friend, +2 Etiquette dice, upkeep 7,000¥. **At
+  creation:** the 2 free contacts are Level 1, as are all contacts bought at creation (core p.46); buddies bought at
+  creation are Level 2; followers (tribe, gang members) are not contacts. Players pay "the appropriate upkeep costs for
+  all contacts gained during character creation from their starting nuyen"; raising a free Level 1 contact to Level 3
+  costs 3,000 + 7,000 = 10,000¥. **Open (M7 plan):** whether that sentence also charges each contact's own first-year
+  upkeep (500¥ for a Level 1) on top of the core purchase price — the example only covers the upgrade. In play
+  (manager): improving one level costs the current level's upkeep + the new level's (Level 2 → 3: 10,000¥), or by Karma
+  (GM option) = 2 × the new level, one level at a time; failing upkeep drops a level; losing all contacts gives Hung Out
+  to Dry and Bad Reputation and raises every Enemy by 1.
+- **Friends of a friend** (p.63): each starting contact knows one Level 1, one Level 2 and one Level 3 FOF (fixers and
+  Mr. Johnsons: 2 at each level); GM-adjustable. Flavour plus a record on the contact (builder: optional fields).
+- **Enemies** (p.71–72, optional, GM-run at creation): the Enemy Rating comes from Resources — priority E 0, D 1, C 2,
+  B 3, A 4; point-based starting resources 0¥ 0, 500¥ 1, 5,000¥ 2, 90,000¥ 3, 400,000¥ 4, 1,000,000¥ 5; Rating 6
+  has no Resources row. Characteristic Points by rating: 0 0, 1 4, 2 6, 3 8, 4 11, 5 14, 6 17, split by the GM over
+  Power, Motivation and Knowledge (0–6 each). The rating may be split over several Enemies (Rating 4 = two at 2, or
+  four at 1, or 3 + 1). Flaws (Hunted, etc.) add Enemies or raise ratings. **Builder:** a GM-side Enemy panel; never
+  shown to the player unless the GM shares it.
+- **Prime runners** (p.84–85, NPC builder, M9): Inferior = Skills/Attributes 1–2 below the player-character average,
+  Threat 1–2 (3 once); Equal = about average, Threat 3–5 (6 once); Superior = 1–2 above, Threat = the average of the
+  team's relevant pool (e.g. Combat Pool); Superhuman = 3+ above, pools/Threat 1–3 above the team's average, Threat
+  added to every test; Ultimate = no statistics. Each also gets a Professional Rating (core p.187).
+- **State of the Art** (p.85): alpha-grade cyberware's Street Index and Availability equal standard grade, so players
+  may choose alpha at creation (Essence and price per SSC/Cybertechnology). Other SOTA rules are play-time (manager).
+- **Availability limit** (p.90, optional): no starting gear with Availability above 6 (in addition to the core rating
+  cap of 6); mandatory if the State-of-the-Art Model Edge is in use (it raises the cap: 10 / 20 / delta).
+- **Campaign concepts** (p.110–123), as campaign presets for the builder:
+  - DocWagon HTR (p.112): the GM may forbid Resources A or B (DocWagon supplies non-implanted gear); every character
+    Biotech ≥ 3.
+  - Media teams (p.114): standard rules or any Companion option; guidance only.
+  - Special forces (p.115–116): standard rules, NO optional Enemies; may ignore the Availability option; the 2 free
+    contacts are automatically their commanding officer and quartermaster; others bought; annual wage 75,000¥.
+  - Cops / corporate security (p.117): metahumans rare (≤ 1 per group); Skills priority C or better; ≥ 2 Knowledge
+    skills; point-based: 24 points to Skills; one of Technical School / High School / College Education at its
+    normal cost; a salary that maintains Medium lifestyle; ≥ 2 Enemies at creation (one Rank 1, one Rank 2); the 2
+    free contacts are from their own corporation/precinct, bought ones any.
+  - Magical campaigns (p.120): guidance only (most characters magically active).
+  - **Gangs** (p.121–123): starting nuyen ≤ 90,000¥ (priority system: Resources not A or B); Enemies — rival gangs
+    as Rank 2 Enemies, one per 2 gang-member player characters (round up), and each PC one personal Rank 1 Enemy; a
+    player spending 50 % of starting nuyen on "Gang Background" is the leader (several: the highest percentage wins)
+    and gets a second Rank 1 Enemy; the gang as a whole gets one Level 1 Fixer contact (not counted per character);
+    no starting Knowledge, Technical or Magical skill above 3 (including Sorcery, Conjuring, Magical Theory,
+    Demolitions and Computer); High School, College and Technical School Education Edges cost double; no starting
+    gear above Availability 5; the GM rolls 2D6 gang members (core p.44 Gangs/Tribesmen) — NPCs owned by the group;
+    normal contacts/buddies (Street only, as a rule). Variants: elf gangs up to 400,000¥ (Resources B), twice the
+    Enemies, Medium lifestyle minimum; tribesmen — the leader is a shaman, Rural/Tribal contacts except the leader's;
+    decker gangs — the leader starts with 1,000,000¥ (Resources A), the 50 % fee buys jackpoints and hidden shops, no
+    cash or education limits for decker gangers, only the leader has Street contacts.
+
+## Other books
+
+- **Cyberpirates** (FASA 7124, image-only scan; renders of PDF 151–154, book = PDF − 9), "Creating Pirate
+  Characters" p.142–145: priority or point-based as usual. Pirate bands use the Companion's Gang Creation rules (p.122,
+  above) with changes: additional contacts at a reduced 1,000¥ each; the gang's turf is its home port (where the bonus
+  fixer is); the GM may grant home-port bonuses; the Enemy gang is a pirate gang. **Independents** (no gang): reduced-
+  cost contacts and informants but no followers; no starting contact above Level 1; Buddies at full cost; Enemies
+  assigned at one level of Resources higher than the character has. After creation an independent group may buy a
+  home port for 50,000¥ (dock passes and IDs for 30 days). **Availability by home port** (p.142): Africa ≤ 9,
+  Philippines ≤ 4, Caribbean ≤ 6. New Edges/Flaws (p.142–144) are content (`sr2e-cyberpirates` `cp-qualities`), plus new
+  skills and concentrations (p.144–145, `cp-skills`). "The Cost of Living on the Sea" (p.136–138) is a regional price
+  list (Seattle = base), a GM pricing option, not creation.
+- **Fields of Fire** (FASA 7114, p.81; PDF = book): **Ambidexterity** is a Special Skill bought ONLY at creation, 3
+  Skill Points per point of rating (raised later as a General Skill, core p.190); off-hand penalty = the weapon skill
+  minus Ambidexterity (no effect above it); still the Second Firearm modifier. The mercenary **dealer** contact (a
+  fixer for arms, −1 acquisition TN, +25 % time) only for characters with a legitimate mercenary background.
+- **Image-only books still to check for creation rules** (no text layer, so only a page-by-page look finds them):
+  Rigger 2, Virtual Realities 2.0, Cybertechnology, Street Samurai Catalog, Neo-Anarchist's Guide to Real Life
+  (lifestyles), Corporate Security Handbook. The text-layer books (Grimoire, Shadowtech, Running Gear) have no creation
+  rules beyond the core's (searched).
+
 ## Already in the Foundry system (to reuse, D1)
 `priorityTableFor`, `chargenBudgetOf` (module/sheets/actor-sheet.mjs) implement the priority budget; pricing,
 grades and Essence are in `module/rules/`. M2 extracts what the creator needs; this file is the reference the
@@ -227,5 +305,5 @@ extracted code and the creator's rule tests cite.
 
 ## Still to capture in M0
 - Lifestyles in detail (p.189) beyond the costs already captured (p.46, p.190).
-- Other books' creation options (check each enabled book's contents).
+- The image-only books listed under "Other books".
 - Per-entry Edge/Flaw creation effects (Companion p.23–34) when M7 builds them (above).
