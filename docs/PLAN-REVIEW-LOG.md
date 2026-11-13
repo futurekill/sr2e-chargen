@@ -50,3 +50,12 @@ All taken: unknown flags travel opaquely, only identity-changing imports refuse 
 DeriveContext + parity tests for removed mechanisms / double preparation; a pure runner extracted from migrations.mjs
 keeping its semantics; an `sr2eImport` write mode the gameplay hooks skip, with edited round-trip tests; M8 starts by
 extracting the Workshop's vehicle preparation.
+
+## Round 4 — Codex (draft 4, fresh session): REVISE, 3 findings
+1. MySQL `TEXT` (64 KB) can't hold the documents. 2. M1 Foundry import had no recovery from a half-done write.
+3. The Shadowland banter (U11) had no milestone or acceptance gate.
+
+### Claude's response (draft 5)
+All taken: `LONGTEXT` on MySQL/MariaDB with a maximum document size tested across dialects; a recoverable import
+(preflight, reserved identities, a journal of originals and writes, rollback/resume, failure-injection tests); banter
+data, starter set, toggle and an export-exclusion test in M4.

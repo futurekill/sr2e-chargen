@@ -1,5 +1,5 @@
 # Plan: SR2E Character Generator & Manager (standalone)
-_Draft 4, 2026-11-13, by Claude, after Codex plan rounds 1–3 (31 findings, all taken; see docs/PLAN-REVIEW-LOG.md). Supersedes the 2026-07-17 design doc
+_Draft 5, 2026-11-13, by Claude, after Codex plan rounds 1–4 (34 findings, all taken; see docs/PLAN-REVIEW-LOG.md). Supersedes the 2026-07-17 design doc
 (`sr2e-foundryvtt/docs/PLAN-character-creator.md`), whose schema ideas it keeps._
 
 ## Goal
@@ -311,7 +311,8 @@ character's `ruleset`.
 - **Datastore (U15):** SQLite to start, the file on a mounted volume (`/data`).
   Must be movable to **Postgres** (the user's preference) or MySQL/MariaDB later:
   - one query layer for all three (Kysely), dialect-neutral migrations, no SQLite-only SQL; JSON documents in a
-    column that is `TEXT` on SQLite/MySQL and `jsonb` on Postgres, read and written only through the query layer;
+    column that is `TEXT` on SQLite, `LONGTEXT` on MySQL/MariaDB (MySQL `TEXT` stops at 64 KB; round 4 #1) and `jsonb` on
+    Postgres, with an application maximum document size that every dialect's CI copy test exercises, read and written only through the query layer;
   - ids are UUIDs generated in the app, not autoincrement, so rows copy across unchanged;
   - `chargen db copy` (round 1 #10) puts the app in **maintenance mode** (read-only) first, copies every table, and
     compares a canonical checksum per table (rows serialised in id order); the source DB is never modified, so
@@ -381,7 +382,11 @@ dependency and image scan results are release gates.
 
 - **M0 Source capture** — render the core chargen chapter, Karma/advancement, lifestyle/starting nuyen, and every
   enabled book's alternate creation rules; write the step list and page refs into `docs/RULES-CHARGEN.md`.
-- **M1 Schema + Foundry export/import** (system repo; useful on its own as character backup): the bundle format with
+- **M1 Schema + Foundry export/import** (system repo; useful on its own as character backup). Import is
+  **recoverable** (round 4 #2): a preflight validates the whole bundle (schema, versions, references, assets, ruleset
+  acceptance) before any write; identities are reserved; the original source of every document it will overwrite is
+  journalled (`flags.sr2e.importJournal` on a world document) with each completed write; a failure rolls back from the
+  journal, and a retry resumes; failure-injection tests stop it after each write. the bundle format with
   references, assets zip, field ownership, `portableId`, D10 migrations + historical fixtures, ruleset acceptance on
   import, round-trip Quench + unit tests over all pregens AND edited round trips (edits, deletions, unknown module
   data, shared references).
@@ -395,7 +400,9 @@ dependency and image scan results are release gates.
   module-enabled characters — must pass before M3 starts.
 - **M3 Creator skeleton**: repo, Docker, auth lifecycle + admin CLI, library with revisions, catalog build from the
   content mount (with U12 source tagging), backups, one theme.
-- **M4 Core build flow** (Priority system, all steps, rules panel), archetypes, JSON/zip export/import.
+- **M4 Core build flow** (Priority system, all steps, rules panel), archetypes, JSON/zip export/import, and the
+  **Shadowland banter** (U11, round 4 #3): `banter/*.json` data keyed to steps/items/metatypes/choices, an original
+  starter set in our own handles, the on/off toggle, and a test that no banter text appears in any export or sheet.
 - **M5 PDF + text exports** (renderer subprocess, fit test, table card with content budget).
 - **M6 Manager** (Karma, nuyen ledger, purchases, damage, history/undo as compensating changes, in-app dice + log).
 - **M7 Sourcebooks**: book toggles across the catalog, alternate methods, book metatypes/qualities.
