@@ -1,7 +1,7 @@
 # Character creation rules (M0 source capture)
 
 _Read from renders of the corrected 11th printing (FASA 7901), book pages cited (PDF = book + 1 in this chapter).
-Never from pdftotext. M0 status: **core book, Shadowrun Companion, Cyberpirates, Fields of Fire, Rigger 2, VR2.0 (otaku) and Cybertechnology captured**; the image-only books still to check (end)._
+Never from pdftotext. M0 status: **complete** — the core book and every sourcebook on hand checked; per-entry Edge/Flaw effects deferred to M7 (end)._
 
 ## Chapter map (core)
 
@@ -220,6 +220,16 @@ _Renders of PDF 37–45._
   no balancing Edge); each further Flaw from that list gives its points normally; +1 Willpower on top of any other
   creation increase. **Builder:** an "Albino" toggle enforcing that.
 
+## Lifestyles (core p.189; render PDF 198)
+
+Luxury 100,000¥/month and up; High 10,000¥; Middle 5,000¥; Low 1,000¥; Squatter 100¥; Streets free; Hospitalized
+500¥/day basic, 1,000¥/day intensive — only while sick or injured, never owned (the builder never offers it). A
+lifestyle covers shelter, food, entertainment and clothing, not equipment or hirelings. Middle or better can support
+guests at +10 % of the host's own cost per guest; a host can keep a guest at a lower lifestyle by paying 10 % of that
+lower lifestyle's cost. Missed payments (manager, play-time): each missed month roll 1D6; greater than the number of
+consecutive missed months, absorbed; less or equal, the lifestyle drops one level and the character owes one month of
+the former lifestyle. Lifestyle affects healing (core p.113, already in the system).
+
 ## More Shadowrun Companion creation options (p.14–18, 60–75, 84–90, 110–123)
 
 _Renders of PDF 15–19, 61–64, 72–73, 85–86, 91, 113–124 (book = PDF − 1)._
@@ -336,17 +346,16 @@ _Renders of PDF 15–19, 61–64, 72–73, 85–86, 91, 113–124 (book = PDF �
   ×7 / ×10) and surgery fees (alpha/beta 50 ×, delta 200 × core p.145); the system's `CYBERWARE_GRADES`
   (module/rules/sr2e-rules.mjs) holds exactly these multipliers and damage resistances. Shadowtech p.40: none of
   Shadowtech's cyberware comes in alpha or beta.
-- **Image-only books still to check for creation rules** (no text layer, so only a page-by-page look finds them):
-  Street Samurai Catalog, Neo-Anarchist's Guide to Real Life
-  (lifestyles), Corporate Security Handbook. The text-layer books (Grimoire, Shadowtech, Running Gear) have no creation
-  rules beyond the core's (searched).
+- **Checked, no creation rules:** Street Samurai Catalog (a gear catalogue; its grades and second-hand rules, p.98–100,
+  are already in the system), Neo-Anarchist's Guide to Real Life (setting and gear: credsticks and ID levels, DocWagon
+  contracts, coffin hotels — priced items for the gear step), Corporate Security Handbook (a GM book: security
+  systems, a catalogue, archetypes p.121), Grimoire, Shadowtech and Running Gear (searched: nothing beyond the
+  core's).
 
 ## Already in the Foundry system (to reuse, D1)
 `priorityTableFor`, `chargenBudgetOf` (module/sheets/actor-sheet.mjs) implement the priority budget; pricing,
 grades and Essence are in `module/rules/`. M2 extracts what the creator needs; this file is the reference the
 extracted code and the creator's rule tests cite.
 
-## Still to capture in M0
-- Lifestyles in detail (p.189) beyond the costs already captured (p.46, p.190).
-- The image-only books listed under "Other books".
+## Deferred from M0
 - Per-entry Edge/Flaw creation effects (Companion p.23–34) when M7 builds them (above).

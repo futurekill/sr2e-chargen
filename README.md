@@ -7,8 +7,8 @@ nothing lost in either direction.
 
 Built for a small private group: invite-only accounts, one Docker container on your own server.
 
-> **Status: planning.** Nothing runs yet. The plan is approved (Codex review, 12 rounds) and work has started on
-> milestone M0, capturing the creation rules from the books. See [Roadmap](#roadmap).
+> **Status: planning.** Nothing runs yet. The plan is approved (Codex review, 12 rounds) and
+> milestone M0 (the creation rules from the books) is done; M1 is next. See [Roadmap](#roadmap).
 
 ## What it will do
 
@@ -44,7 +44,7 @@ Docker image: the app reads the content modules from a folder you mount.
 
 | Milestone | What | Status |
 |---|---|---|
-| M0 | Capture the creation rules from the books | in progress |
+| M0 | Capture the creation rules from the books | done |
 | M1 | Character export/import in the Foundry system (lossless, recoverable) | next |
 | M1b | Structured book/page citations on every item | |
 | M2 | Share the rules code between Foundry and this app | |
