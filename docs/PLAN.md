@@ -1,5 +1,5 @@
 # Plan: SR2E Character Generator & Manager (standalone)
-_Draft 1, 2026-11-12, by Claude. Not yet Codex-reviewed. Supersedes the 2026-07-17 design doc
+_Draft 2, 2026-11-13, by Claude, after Codex plan round 1 (16 findings, all taken; see docs/PLAN-REVIEW-LOG.md). Supersedes the 2026-07-17 design doc
 (`sr2e-foundryvtt/docs/PLAN-character-creator.md`), whose schema ideas it keeps._
 
 ## Goal
@@ -85,17 +85,55 @@ must be expressible as data the pure derive layer reads (item fields — already
 from item data (fine), (b) transient play state (wound/drug/spell-sustain — carried through JSON opaquely, see D5),
 or (c) needs converting. Category (c) is a blocker list for v1, fixed in the system first.
 
+**D9: the derivation context is explicit** (round 1 #1). The data models read more than `{system, items}`: flags
+(event records, shapeshifter/healing/permanent-damage state), effect-backed records (`recordEvent` markers), the
+actor's uuid, world time, world settings, and tables that content modules register at `init`. The pure layer takes
+ONE argument, `DeriveContext = { system, items (prepared), effects, flags, uuid, now, settings, registries }`, built
+by a Foundry adapter in the system and by the creator's own adapter. Each derive function declares which keys it
+reads; a parity test fails if a function reads a key it didn't declare. Effects: the context carries the
+character's Active Effects as data, and the pure layer applies only the **supported semantics** (the system's own
+AE keys listed in its CLAUDE.md: `system.<attr>.mod`, `reaction.mod`, `initiative.mod`, `armor.ballistic/impact`, with
+ADD/OVERRIDE modes). Any other effect is **unsupported**: the creator shows the affected values as "as last computed
+in Foundry" (from the export) with a warning, and never edits them.
+
 ## Portable character JSON (the interchange)
 
-Keeps the 2026-07-17 design: `schema: "shadowrun2e-character"`, `schemaVersion`, `systemVersion`, `exportedBy`,
-`character` (authored values only, never derived), `items[]` (each with stable `portableId`, `type`, `name`,
-authored `system`, `source` compendium UUID), `metadata` (created/modified, portrait, warnings), and `_foundry`
-(opaque side channel: actor/item ids, flags, AEs, token, ownership — the creator never edits it, always returns it).
+Keeps the 2026-07-17 envelope (`schema`, `schemaVersion`, `systemVersion`, `modules: {id: version}`, `exportedBy`,
+`metadata`) but changes what it holds (round 1 #3, #4):
+
+- **A bundle, not one document.** `linkedVehicles`, `controlledVehicles` and `boundSpirits` are references to OTHER
+  actors, so an export is a **document graph**: the character plus every actor it references (vehicles, drones,
+  bound spirits), each a `document` with a stable `portableId`. References inside documents are rewritten to
+  `portable:<portableId>` on export and remapped to new or existing ids on import; a document referenced twice is
+  stored once; a reference to something not exported is listed in `unresolved[]` and shown on import.
+- **Lossless by construction.** Each document carries its **complete source** (`source`: Foundry `toObject()` of the
+  actor and every embedded item and effect, flags included), plus a `portableId` per embedded item. The creator
+  never drops anything it doesn't understand.
+- **Field ownership.** A schema file lists the paths the creator OWNS (attributes, skills, item quantities, nuyen…);
+  the creator edits only those, in the source itself. Edits are recorded as a patch (`edits[]`: path, before, after)
+  so an import can show them. Deleting an item is an explicit `deleted[]` entry (portableId), confirmed on import.
+  Identity: an import over an existing actor matches items by `portableId` (stored as `flags.sr2e.portableId` in
+  Foundry): matched → updated in place (keeps the Foundry id), unmatched → created, `deleted[]` → removed.
+- **Embedded items are authoritative** (round 1 #5). On import, an item's `source` compendium UUID only restores its
+  provenance link (`_stats.compendiumSource`); its data is never replaced by the installed compendium's. Bringing a
+  character's items up to a newer compendium is a separate, explicit "update content" action, item by item, later.
+- **Assets** (round 1 #6). Portrait and token images travel in the export as files: the export is a zip
+  (`<handle>.sr2e.zip`: `character.json` + `assets/`); JSON-only export stays available without images. Foundry
+  import (GM) uploads the images to `worlds/<world>/sr2e-imports/<portableId>/` and rewrites the paths; a missing
+  image becomes a warning and the default icon. The creator stores uploaded images per user (served only to their
+  owner, see Security).
 
 Additions:
 - **D4** `ruleset`: the optional-rule settings the character was built under (`vehicleRuleset`, `matrixRuleset`,
-  cyber/bioware damage toggles, …) and `books`: the enabled sourcebook ids. Import into a world with different
-  settings shows a warning listing the differences; it never silently recomputes.
+  cyber/bioware damage toggles, …) and `books`: the enabled sourcebook ids. Foundry always derives under the WORLD's
+  settings, so an import into a world whose settings differ lists the differences and **requires explicit
+  acceptance** ("this character will be recomputed under this world's rules") before anything is written
+  (round 1 #8). The creator likewise recomputes a Foundry export under the character's recorded ruleset only.
+- **D10 Migrations** (round 1 #7): pure, ordered document migrations in the system (`module/portable/migrations/`),
+  keyed by `schemaVersion` and by each module's version, applied on read by both apps (never in place on the
+  original: the pre-migration file is kept). The creator migrates stored documents in a DB transaction per document,
+  keeping the previous revision. Historical fixtures (one per `schemaVersion`) are in the test suite before M1
+  ships. A document from a NEWER system than the creator's is view-only (risk 3).
 - **D5** Play state (current damage, ammo loaded, sustained spells, drug states, bound spirits' services) round-trips
   through `_foundry` when the creator doesn't model it, and through `character.play` for what it does model (v1:
   Physical/Stun damage, Karma pool, nuyen, ammo counts).
@@ -105,15 +143,21 @@ Additions:
 - **D7** The schema lives in the **system** repo (`schema/*.json` + `module/portable/*.mjs` export/import + migrations),
   because Foundry must read and write it too. Round-trip tests run in the system's CI and the creator's CI against
   the same fixtures.
-- Compendium content: on import into Foundry, items relink to the live compendium entry by `source` when installed
-  (as in the original plan); otherwise the embedded `system` is kept and a warning added.
+- **Permissions and rich text** (round 1 #12): Foundry import never restores the exported `ownership` map; the
+  importing user owns the actor (GM default otherwise). Biography/notes HTML is kept raw in `source` and only ever
+  displayed in the creator after sanitising (an allow-list sanitiser, server-side); exports carry the raw value.
 
 ## Content catalog
 
 The creator reads the same `packs-src` JSON as the system and the content modules (system + 13 sourcebook modules;
-adventure modules excluded). A build step (`npm run catalog`) pins each repo at a release tag and produces one
-indexed catalog per book: items with their compendium UUID (so `source` links back), plus the module's metatypes,
-qualities, traditions, archetypes (`runners`, `csh-archetypes`). Book ids = module ids; the core book = the system.
+adventure modules excluded) and builds one indexed catalog per book: items with their compendium UUID (so `source`
+links back), plus the module's metatypes, qualities, traditions, archetypes. Book ids = module ids; the core book =
+the system.
+
+**Distribution** (round 1 #15): the Docker image ships **no book content**. The catalog is built at start-up from a
+read-only content mount (`/content`, the owner's own checkouts of the repos at pinned tags), so the published image
+carries only code. Catalog routes are authenticated like everything else. The U12 hook is implemented in the catalog
+build (M3): every text field is tagged with its book, so a reduced-content mode is a filter, not a rewrite.
 
 Book text (U9): the catalog includes only what the compendia hold. Descriptions longer than a summary are not
 added; page references are shown everywhere.
@@ -164,7 +208,11 @@ flagged, not blocked).
 
 v1: Karma (earn, spend on attributes/skills/initiation with the book's costs — verify pages), nuyen ledger, buy/sell
 gear (reuses the system's purchase rules: street index, grades, second-hand), damage tracking, ammo, notes,
-history. Every change is a ledger entry → history/undo and snapshots for free.
+history. Every change is a ledger entry, committed in ONE transaction with the new document revision (round 1 #9):
+documents carry a revision number and every write is conditional on it (optimistic concurrency: a stale tab gets
+"someone changed this, reload"); every mutation carries an idempotency key, so a retried purchase never charges
+twice. Undo is a **compensating change** (the inverse entry, re-validated by the rules: you can't un-spend Karma that
+a later purchase relied on), never a rewrite of history. In-app dice and their log (accepted list) are part of M6.
 
 ## Vehicle Workshop
 
@@ -206,27 +254,39 @@ character's `ruleset`.
     bundled), with slightly wider letter/line spacing. Research on which helps is mixed, so it's the user's choice,
     not one forced font. These fonts run wider, so the fit rules and the fit test apply per font: every style ×
     paper size × font must pass.
-  - **Fit test:** CI renders every sheet style for every fixture plus a stress set (longest real item names in the
-    catalog, 40-char handles, maximum skills/ware/contacts, long notes) and fails if any text run's measured box
-    leaves its area or falls below the size floor. A visual snapshot per style/fixture is kept for review.
-- Markdown / plain-text stat block; one-page table card (PDF).
+  - **Fit test** (round 1 #14): the renderer reports every text run it placed, with its box measured by the SAME font
+    files and engine that draw it. CI renders every style × paper size × font for every fixture plus a stress set
+    (longest real item names in the catalog, 40-char handles, maximum skills/ware/contacts, long notes) and fails if
+    (a) the set of placed strings differs from the sheet model's strings (nothing omitted), (b) any glyph is missing
+    from the embedded font (then a fallback font is embedded, never a tofu box), (c) a box leaves its area or a run
+    is under the size floor. A single row too long for any page area is split across a continuation page. A visual
+    snapshot per style/fixture is kept for review.
+- Markdown / plain-text stat block; one-page **table card** (PDF): the at-the-table subset named in GRAPHICS.md
+  (attributes, pools, initiative, monitors, armour, attacks, active skills, key ware/spells), not everything.
 
 ## Architecture
 
 - **Server:** Node (the Active LTS line at build time, checked in M3, not assumed), Fastify. Documents stored as the portable JSON + a ledger table.
 - **Delivery (U15):** one Docker image (published to GHCR by CI on release) + a `docker compose` example. Config by
   environment variables only (`DATABASE_URL`, secrets, base URL).
-- **Datastore (U15):** SQLite to start, the file on a mounted volume (`/data`), nightly backup to the same volume.
+- **Datastore (U15):** SQLite to start, the file on a mounted volume (`/data`).
   Must be movable to **Postgres** (the user's preference) or MySQL/MariaDB later:
   - one query layer for all three (Kysely), dialect-neutral migrations, no SQLite-only SQL; JSON documents in a
     column that is `TEXT` on SQLite/MySQL and `jsonb` on Postgres, read and written only through the query layer;
   - ids are UUIDs generated in the app, not autoincrement, so rows copy across unchanged;
-  - `chargen db copy --from sqlite:///data/chargen.db --to postgres://…` copies every table in a transaction and
-    checks row counts and a checksum per table; switching is then just changing `DATABASE_URL`;
-  - CI runs the server test suite against SQLite and Postgres (service container) from day one, so the second
-    dialect never rots.
+  - `chargen db copy` (round 1 #10) puts the app in **maintenance mode** (read-only) first, copies every table, and
+    compares a canonical checksum per table (rows serialised in id order); the source DB is never modified, so
+    rollback is "point `DATABASE_URL` back". Switching is then just changing `DATABASE_URL`;
+  - CI runs the server test suite against SQLite, Postgres **and** MySQL (service containers) from day one;
+  - **Backups:** nightly consistent snapshots (`VACUUM INTO` for SQLite, `pg_dump`/`mysqldump` otherwise) written to a
+    `BACKUP_DIR` that the docs require to be a DIFFERENT volume or host path; a restore test runs in CI, and the admin
+    CLI has `backup verify` (restores into a scratch DB and compares checksums).
 - **Client:** Vite + Svelte (small, fast; wizard + themes are mostly CSS). Shared code is plain ESM, imported by both.
-- **Auth v1 (U13):** invite-only local accounts (username + password, argon2), each user sees only their own library.
+- **Auth v1 (U13):** invite-only local accounts (username + password, argon2id), each user sees only their own
+  library. Lifecycle (round 1 #11): an admin CLI in the image (`chargen admin`) bootstraps the first admin (prints a
+  one-time setup link), creates/lists/revokes invites, disables accounts and issues single-use password-reset links
+  (no email in v1). Invite redemption is atomic (one transaction, unique token). Sessions are server-side rows:
+  idle expiry 7 days, absolute 30 days, all of a user's sessions revoked on password change or account disable.
   Social login (OIDC) in a later iteration replaces/joins it.
 - **Themes:** CSS custom-property token sets; one layout. The readable-font setting (U22) overrides every theme's
   fonts, including the terminal and GeoCities ones. Every theme meets WCAG AA contrast and honours
@@ -260,8 +320,11 @@ High/Critical**; SBOM attached; image signed (cosign, keyless via GitHub OIDC); 
 - authorization on every document read/write (owner check in one place, tested), never by guessable id alone;
 - every API input validated by schema (Fastify JSON Schema); **JSON import** is untrusted: size cap, full schema
   validation, prototype-pollution-safe parsing, unknown fields kept only inside `_foundry`, never executed;
-- portrait upload: size/type caps, re-encoded server-side (sharp) to WebP with metadata stripped; user SVG never
-  accepted;
+- portrait upload: size/type caps AND a decoded pixel limit (`limitInputPixels`), re-encoded server-side (sharp) to
+  WebP with metadata stripped; user SVG never accepted; served only to the owner;
+- denial of service (round 1 #13): PDF rendering runs in a worker thread with memory/time limits through a bounded
+  queue (one or two at a time, per-user rate limit), with a page cap; a render that hits a limit FAILS with a clear
+  message, never returns a truncated sheet;
 - PDF/SVG sheets: all user text escaped for XML; the SVG renderer runs with external resources disabled (no
   user-controlled hrefs);
 - strict Content-Security-Policy (no inline script, no `eval`), plus HSTS, frame-ancestors none, nosniff, Referrer-
@@ -276,13 +339,23 @@ dependency and image scan results are release gates.
 
 - **M0 Source capture** — render the core chargen chapter, Karma/advancement, lifestyle/starting nuyen, and every
   enabled book's alternate creation rules; write the step list and page refs into `docs/RULES-CHARGEN.md`.
-- **M1 Schema + Foundry export/import** (system repo; useful on its own as character backup): portable schema,
-  `exportCharacter`/`importCharacter`, migrations, round-trip Quench + unit tests over all pregens.
-- **M2 Derive extraction** (system repo, several small releases per D2) + AE audit (D3).
-- **M3 Creator skeleton**: repo, Docker, auth, library, catalog build, one theme.
-- **M4 Core build flow** (Priority system, all steps, rules panel), archetypes, JSON export/import.
-- **M5 PDF + text exports.**
-- **M6 Manager** (Karma, nuyen ledger, purchases, damage, history/undo).
+- **M1 Schema + Foundry export/import** (system repo; useful on its own as character backup): the bundle format with
+  references, assets zip, field ownership, `portableId`, D10 migrations + historical fixtures, ruleset acceptance on
+  import, round-trip Quench + unit tests over all pregens AND edited round trips (edits, deletions, unknown module
+  data, shared references).
+- **M1b Citations** (system + content repos): the D8 `citation` field, the book table, the backfill scripts and the
+  `validate` rule.
+- **M2 Derive extraction** (system repo, several small releases per D2): **item preparation first** (item-data's
+  ratings, costs, derived fields), then the actor derivations, all behind D9's `DeriveContext`; **module
+  registration as pure adapters** (each content module exports a `register(registries)` usable outside Foundry,
+  versioned with the module); the AE audit (D3); Node AND browser import tests. **Gate:** parity fixtures beyond the
+  pregens — edits, item removals, repeated preparation (the derived-state-clearing trap), effects on/off, and
+  module-enabled characters — must pass before M3 starts.
+- **M3 Creator skeleton**: repo, Docker, auth lifecycle + admin CLI, library with revisions, catalog build from the
+  content mount (with U12 source tagging), backups, one theme.
+- **M4 Core build flow** (Priority system, all steps, rules panel), archetypes, JSON/zip export/import.
+- **M5 PDF + text exports** (renderer worker, fit test, table card).
+- **M6 Manager** (Karma, nuyen ledger, purchases, damage, history/undo as compensating changes, in-app dice + log).
 - **M7 Sourcebooks**: book toggles across the catalog, alternate methods, book metatypes/qualities.
 - **M8 Vehicle Workshop.**
 - **M9 Remaining themes, portrait/token export, NPC builder.**
@@ -308,7 +381,8 @@ Each milestone: plan section → Codex review → build → Codex code review �
 3. **Version skew**: a character exported from a newer system than the creator's pinned version. Rule: refuse to
    *edit* (view only) and warn when `systemVersion` is newer than the creator's; Foundry likewise for the reverse.
 4. Alternate creation methods: which books define them, and how much is rules vs. GM option — M0 decides.
-5. GitHub repo creation (private) when 1Password is unlocked.
+5. Book-content redistribution: the image carries none (content mount); whether a friend's server may hold the
+   content is the owner's call, outside this plan.
 
 ## Out of scope (v1)
 
