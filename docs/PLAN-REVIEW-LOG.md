@@ -121,3 +121,7 @@ its snapshot; tested with a missing sustaining elemental.
 ### Claude's response (draft 12)
 Taken: recursive source reconciliation of the actor, items and effects (unmatched deleted after confirmation; removed
 keys deleted with `-=`), under `sr2eImport`; tests for removed effects and flags staying removed.
+
+## Round 12 — Codex (draft 12, fresh session): APPROVED
+"No new material problems found. Draft 12 incorporates the settled fixes and provides concrete gates for derivation
+parity, lossless reconciliation, migrations, security, and PDF fit. The milestone order supports those dependencies."

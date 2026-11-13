@@ -1,5 +1,5 @@
 # Plan: SR2E Character Generator & Manager (standalone)
-_Draft 12, 2026-11-13, by Claude, after Codex plan rounds 1–11 (48 findings, all taken; see docs/PLAN-REVIEW-LOG.md). Supersedes the 2026-07-17 design doc
+_Draft 12, 2026-11-13, by Claude — **APPROVED at Codex plan round 12** (48 findings over rounds 1–11, all taken; see docs/PLAN-REVIEW-LOG.md). Supersedes the 2026-07-17 design doc
 (`sr2e-foundryvtt/docs/PLAN-character-creator.md`), whose schema ideas it keeps._
 
 ## Goal
