@@ -40,6 +40,7 @@ loss in either direction**.
   MySQL/MariaDB later.
 - U16. Multiple character sheet styles; the user likes the Pink Fohawk / Mel sheet in particular.
 - U17. Up-to-date packages and current methods throughout; security is a must (recent wave of vulnerabilities).
+- U18. Everything on a sheet must be easily readable and fit its area: no words cut off for lack of space.
 - Also accepted: always-on rules panel with page references, in-app dice with a log, history/undo, portrait upload
   exported as a Foundry token, GM NPC builder, phone-friendly viewing.
 
@@ -162,6 +163,13 @@ character's `ruleset`.
     starting point. Note: that script re-implements the attribute maths by hand ("mirrors
     CharacterData#_calculateAttributeMods") — exactly the drift D1 removes; its port reads the derive layer.
   - Later: sheets matching the app themes (terminal, cybernoir…), all from the same sheet model.
+  - **Fit rule (U18), every style:** nothing is ever cut off, clipped or ellipsised. Text is measured with the
+    embedded font's real metrics (fontkit/opentype) before layout. Order of fixes when it doesn't fit: wrap onto
+    more lines in its box → reduce size down to a readable floor (body 8 pt, labels 6.5 pt; never below) → the
+    section continues on an overflow page with a "continued" marker. Fonts are embedded, never system fallbacks.
+  - **Fit test:** CI renders every sheet style for every fixture plus a stress set (longest real item names in the
+    catalog, 40-char handles, maximum skills/ware/contacts, long notes) and fails if any text run's measured box
+    leaves its area or falls below the size floor. A visual snapshot per style/fixture is kept for review.
 - Markdown / plain-text stat block; one-page table card (PDF).
 
 ## Architecture
