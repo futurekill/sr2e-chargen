@@ -36,6 +36,8 @@ loss in either direction**.
 - U14. **Voice: ham it up.** The site greets visitors with "Hoi chummer!" (the user may use it as the domain or
   subdomain). Copy across the app is in-world street slang, matching the banter (U11); errors, empty states and
   buttons included, as long as the meaning stays clear.
+- U15. Ships as a Docker image. SQLite on a mounted volume to start; a supported path to Postgres (preferred) or
+  MySQL/MariaDB later.
 - Also accepted: always-on rules panel with page references, in-app dice with a log, history/undo, portrait upload
   exported as a Foundry token, GM NPC builder, phone-friendly viewing.
 
@@ -154,8 +156,18 @@ character's `ruleset`.
 
 ## Architecture
 
-- **Server:** Node 22, Fastify, SQLite (one file on a Docker volume). Documents stored as the portable JSON + a
-  ledger table. One container; `docker compose` file with the volume; nightly SQLite backup to the volume.
+- **Server:** Node 22, Fastify. Documents stored as the portable JSON + a ledger table.
+- **Delivery (U15):** one Docker image (published to GHCR by CI on release) + a `docker compose` example. Config by
+  environment variables only (`DATABASE_URL`, secrets, base URL).
+- **Datastore (U15):** SQLite to start, the file on a mounted volume (`/data`), nightly backup to the same volume.
+  Must be movable to **Postgres** (the user's preference) or MySQL/MariaDB later:
+  - one query layer for all three (Kysely), dialect-neutral migrations, no SQLite-only SQL; JSON documents in a
+    column that is `TEXT` on SQLite/MySQL and `jsonb` on Postgres, read and written only through the query layer;
+  - ids are UUIDs generated in the app, not autoincrement, so rows copy across unchanged;
+  - `chargen db copy --from sqlite:///data/chargen.db --to postgres://…` copies every table in a transaction and
+    checks row counts and a checksum per table; switching is then just changing `DATABASE_URL`;
+  - CI runs the server test suite against SQLite and Postgres (service container) from day one, so the second
+    dialect never rots.
 - **Client:** Vite + Svelte (small, fast; wizard + themes are mostly CSS). Shared code is plain ESM, imported by both.
 - **Auth v1 (U13):** invite-only local accounts (username + password, argon2), each user sees only their own library.
   Social login (OIDC) in a later iteration replaces/joins it.
