@@ -1,7 +1,7 @@
 # Character creation rules (M0 source capture)
 
 _Read from renders of the corrected 11th printing (FASA 7901), book pages cited (PDF = book + 1 in this chapter).
-Never from pdftotext. M0 status: **core book, Shadowrun Companion, Cyberpirates, Fields of Fire, Rigger 2 and VR2.0 (otaku) captured**; the image-only books still to check (end)._
+Never from pdftotext. M0 status: **core book, Shadowrun Companion, Cyberpirates, Fields of Fire, Rigger 2, VR2.0 (otaku) and Cybertechnology captured**; the image-only books still to check (end)._
 
 ## Chapter map (core)
 
@@ -327,8 +327,16 @@ _Renders of PDF 15–19, 61–64, 72–73, 85–86, 91, 113–124 (book = PDF �
   - Also in VR2.0 for creation: the Decker chapter (Attributes, Skills, the persona, task bonuses p.77), cyberdeck
     construction and "Decks à la Carte" package prices (p.81–91), buying programs (p.107) — purchases the builder's
     gear step prices from the VR2.0 module's items; read in M7 with the gear step.
+- **Cybertechnology** (FASA 7119, renders of PDF 44–45, book = PDF − 1), "Cyberware Quality" p.42–44: no
+  creation-specific rule; grades are priced and Essence-reduced by the Foundry system's existing grade code (the
+  cybertechnology plan, `itemBaseCost` + `wareCtx`), which the creator reuses (D1). For the builder: player characters
+  get alpha and beta at shadow clinics; delta is "far more difficult" (a corp must want you there), so at creation the
+  builder offers delta only with the Companion's 6-point State-of-the-Art Model Edge (p.34); Cybertechnology p.44 also
+  prints the Essence reduction (alpha ×.8, beta ×.6, delta ×.5, round up, never below .05), the cost multipliers (×3 /
+  ×7 / ×10) and surgery fees (alpha/beta 50 ×, delta 200 × core p.145) — **M2 check:** compare these with what the
+  system implements (its grades follow SSC p.98 per the cybertechnology plan) and record which book the system uses.
 - **Image-only books still to check for creation rules** (no text layer, so only a page-by-page look finds them):
-  Cybertechnology, Street Samurai Catalog, Neo-Anarchist's Guide to Real Life
+  Street Samurai Catalog, Neo-Anarchist's Guide to Real Life
   (lifestyles), Corporate Security Handbook. The text-layer books (Grimoire, Shadowtech, Running Gear) have no creation
   rules beyond the core's (searched).
 
