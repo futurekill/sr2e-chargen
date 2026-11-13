@@ -46,6 +46,7 @@ loss in either direction**.
 - U21. Players will print the PDFs: sheets designed for paper (Letter/A4, margins, B&W legible, ink-saver).
 - U22. Toggle for dyslexia-friendly fonts on sheets and the site. More accommodations (site and sheets) to look
   at later.
+- Graphics: see `docs/GRAPHICS.md` (Codex consult + what we adopt).
 - Also accepted: always-on rules panel with page references, in-app dice with a log, history/undo, portrait upload
   exported as a Foundry token, GM NPC builder, phone-friendly viewing.
 
@@ -187,7 +188,8 @@ character's `ruleset`.
   - Later: sheets matching the app themes (terminal, cybernoir…), all from the same sheet model.
   - **Fit rule (U18), every style:** nothing is ever cut off, clipped or ellipsised. Text is measured with the
     embedded font's real metrics (fontkit/opentype) before layout. Order of fixes when it doesn't fit: wrap onto
-    more lines in its box → reduce size down to a readable floor (body 8 pt, labels 6.5 pt; never below) → the
+    more lines in its box → reduce size toward a readable floor (design target 9–10 pt body; 8 pt body / 6.5 pt labels are
+    emergency floors, never below) → the
     section continues on an overflow page with a "continued" marker. Fonts are embedded, never system fallbacks.
   - **Pages (U20):** multi-page is fine. Page 1 holds what's needed at the table mid-fight (attributes, pools,
     initiative, condition monitors, armor, attacks, active skills); later pages hold ware, gear, magic, contacts,
