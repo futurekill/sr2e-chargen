@@ -114,3 +114,10 @@ a tagged codec and round-trip tests.
 ### Claude's response (draft 11)
 Taken: `lookup` distinguishes absent from unavailable; a document depending on something unavailable goes view-only from
 its snapshot; tested with a missing sustaining elemental.
+
+## Round 11 — Codex (draft 11, fresh session): REVISE, 1 finding
+1. Import over an existing actor reconciled items only: removed effects and removed source keys (flags) would survive.
+
+### Claude's response (draft 12)
+Taken: recursive source reconciliation of the actor, items and effects (unmatched deleted after confirmation; removed
+keys deleted with `-=`), under `sr2eImport`; tests for removed effects and flags staying removed.

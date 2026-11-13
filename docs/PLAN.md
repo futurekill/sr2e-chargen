@@ -1,5 +1,5 @@
 # Plan: SR2E Character Generator & Manager (standalone)
-_Draft 11, 2026-11-13, by Claude, after Codex plan rounds 1–10 (47 findings, all taken; see docs/PLAN-REVIEW-LOG.md). Supersedes the 2026-07-17 design doc
+_Draft 12, 2026-11-13, by Claude, after Codex plan rounds 1–11 (48 findings, all taken; see docs/PLAN-REVIEW-LOG.md). Supersedes the 2026-07-17 design doc
 (`sr2e-foundryvtt/docs/PLAN-character-creator.md`), whose schema ideas it keeps._
 
 ## Goal
@@ -136,6 +136,13 @@ Keeps the 2026-07-17 envelope (`schema`, `schemaVersion`, `systemVersion`, `modu
   so an import can show them. Deleting an item is an explicit `deleted[]` entry (portableId), confirmed on import.
   Identity: an import over an existing actor matches items by `portableId` (stored as `flags.sr2e.portableId` in
   Foundry): matched → updated in place (keeps the Foundry id), unmatched → created, `deleted[]` → removed.
+  Import over an existing actor is a **recursive source reconciliation** (round 11): the actor, every embedded item
+  AND every embedded effect (actor and item effects) end up exactly as the bundle's source says — matched by
+  `portableId`, unmatched ones created, and ones present in the destination but not in the bundle deleted (listed
+  and confirmed on import); within a document, keys removed in the bundle's source (a flag, a field) are removed with
+  Foundry's `-=` deletion keys, not left behind by a merge. All of it under the `sr2eImport` mode (no gameplay hooks
+  replayed). Tests: existing-actor round trips where a sustained-spell effect, an item effect and a flag were removed
+  stay removed.
 - **Embedded items are authoritative** (round 1 #5). On import, an item's `source` compendium UUID only restores its
   provenance link (`_stats.compendiumSource`); its data is never replaced by the installed compendium's. Bringing a
   character's items up to a newer compendium is a separate, explicit "update content" action, item by item, later.
