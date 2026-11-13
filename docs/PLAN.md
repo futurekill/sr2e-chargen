@@ -32,6 +32,10 @@ loss in either direction**.
 - U12. **Copyright-friendly mode** (later, to think through): a run mode with reduced content exposure. Design
   hook now: every piece of book-derived text (descriptions, book banter) is tagged with its source so a mode can
   filter it; stats and page references stay.
+- U13. Auth v1 = invite-only local accounts (accepted 2026-11-12). Repo name `sr2e-chargen` (accepted).
+- U14. **Voice: ham it up.** The site greets visitors with "Hoi chummer!" (the user may use it as the domain or
+  subdomain). Copy across the app is in-world street slang, matching the banter (U11); errors, empty states and
+  buttons included, as long as the meaning stays clear.
 - Also accepted: always-on rules panel with page references, in-app dice with a log, history/undo, portrait upload
   exported as a Foundry token, GM NPC builder, phone-friendly viewing.
 
@@ -153,8 +157,7 @@ character's `ruleset`.
 - **Server:** Node 22, Fastify, SQLite (one file on a Docker volume). Documents stored as the portable JSON + a
   ledger table. One container; `docker compose` file with the volume; nightly SQLite backup to the volume.
 - **Client:** Vite + Svelte (small, fast; wizard + themes are mostly CSS). Shared code is plain ESM, imported by both.
-- **Auth v1 (⚑ open):** the app is reachable from the internet on the user's server, so v1 needs *something*:
-  proposal = invite-only local accounts (username + password, argon2), each user sees only their own library.
+- **Auth v1 (U13):** invite-only local accounts (username + password, argon2), each user sees only their own library.
   Social login (OIDC) in a later iteration replaces/joins it.
 - **Themes:** CSS custom-property token sets; one layout. Every theme meets WCAG AA contrast and honours
   `prefers-reduced-motion`; checked by an automated contrast test.
@@ -196,8 +199,7 @@ Each milestone: plan section → Codex review → build → Codex code review �
 3. **Version skew**: a character exported from a newer system than the creator's pinned version. Rule: refuse to
    *edit* (view only) and warn when `systemVersion` is newer than the creator's; Foundry likewise for the reverse.
 4. Alternate creation methods: which books define them, and how much is rules vs. GM option — M0 decides.
-5. ⚑ Auth for v1 (proposal above).
-6. ⚑ Repo name (`sr2e-chargen` placeholder) and GitHub repo creation (private).
+5. GitHub repo creation (private) when 1Password is unlocked.
 
 ## Out of scope (v1)
 
