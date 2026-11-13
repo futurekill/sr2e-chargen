@@ -107,3 +107,10 @@ retrying imported claims/events produces no new consequence.
 All taken: `lookup(ref)` in DeriveContext with an elemental-sustaining parity fixture; `events` read from complete
 sources, separate from the effective `effects` used only for AE changes; the snapshot is a versioned projection with
 a tagged codec and round-trip tests.
+
+## Round 10 — Codex (draft 10, fresh session): REVISE, 1 finding
+1. An unresolved dependency (a sustaining elemental not in the bundle) would be treated as absent and recomputed wrong.
+
+### Claude's response (draft 11)
+Taken: `lookup` distinguishes absent from unavailable; a document depending on something unavailable goes view-only from
+its snapshot; tested with a missing sustaining elemental.

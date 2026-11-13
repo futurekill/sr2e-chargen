@@ -1,5 +1,5 @@
 # Plan: SR2E Character Generator & Manager (standalone)
-_Draft 10, 2026-11-13, by Claude, after Codex plan rounds 1–9 (46 findings, all taken; see docs/PLAN-REVIEW-LOG.md). Supersedes the 2026-07-17 design doc
+_Draft 11, 2026-11-13, by Claude, after Codex plan rounds 1–10 (47 findings, all taken; see docs/PLAN-REVIEW-LOG.md). Supersedes the 2026-07-17 design doc
 (`sr2e-foundryvtt/docs/PLAN-character-creator.md`), whose schema ideas it keeps._
 
 ## Goal
@@ -111,7 +111,11 @@ move-by-wire, cybermancy…); `events` is read from the complete actor/item sour
 and `effects` is used only to apply AE changes; tested together. **Other documents** (round 9 #1): `lookup(ref)`
 resolves another document of the bundle (or the creator's library) by portable or Foundry reference, so
 cross-document reads work (e.g. `sustainPenalty` → `elementalHolderOf` → a bound elemental's service, Force and
-spell); M2 has a parity fixture of an elemental sustaining its magician's spell. Any other effect is **unsupported**: the creator shows the affected values as "as last computed
+spell); M2 has a parity fixture of an elemental sustaining its magician's spell. `lookup` answers one of THREE ways
+(round 10): the document, **absent** (the reference is genuinely empty or the target was deleted), or **unavailable**
+(referenced but not in the bundle or library — e.g. an unresolved reference). Derive code treats `unavailable` as
+"can't reproduce": the document that depended on it falls back to D12 (view-only from its snapshot), never to
+"absent". Tested with a missing sustaining elemental. Any other effect is **unsupported**: the creator shows the affected values as "as last computed
 in Foundry" (from the export) with a warning, and never edits them.
 
 ## Portable character JSON (the interchange)
