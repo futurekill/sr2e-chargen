@@ -39,6 +39,7 @@ loss in either direction**.
 - U15. Ships as a Docker image. SQLite on a mounted volume to start; a supported path to Postgres (preferred) or
   MySQL/MariaDB later.
 - U16. Multiple character sheet styles; the user likes the Pink Fohawk / Mel sheet in particular.
+- U17. Up-to-date packages and current methods throughout; security is a must (recent wave of vulnerabilities).
 - Also accepted: always-on rules panel with page references, in-app dice with a log, history/undo, portrait upload
   exported as a Foundry token, GM NPC builder, phone-friendly viewing.
 
@@ -165,7 +166,7 @@ character's `ruleset`.
 
 ## Architecture
 
-- **Server:** Node 22, Fastify. Documents stored as the portable JSON + a ledger table.
+- **Server:** Node (the Active LTS line at build time, checked in M3, not assumed), Fastify. Documents stored as the portable JSON + a ledger table.
 - **Delivery (U15):** one Docker image (published to GHCR by CI on release) + a `docker compose` example. Config by
   environment variables only (`DATABASE_URL`, secrets, base URL).
 - **Datastore (U15):** SQLite to start, the file on a mounted volume (`/data`), nightly backup to the same volume.
@@ -183,6 +184,45 @@ character's `ruleset`.
 - **Themes:** CSS custom-property token sets; one layout. Every theme meets WCAG AA contrast and honours
   `prefers-reduced-motion`; checked by an automated contrast test.
 - **Phone:** responsive viewing and play tracking; the full wizard is desktop-first but usable on a tablet.
+
+## Security & currency (U17)
+
+Built current and kept current; security is a requirement, not a pass at the end.
+
+**Versions.** Every runtime, framework and library at its latest stable release when M3 starts, each confirmed
+against the project's own release page at that moment (not from memory). Prefer the platform over packages
+(`node:crypto`, `fetch`, `node:test` where it fits); every dependency must earn its place (logged in
+`docs/DEPENDENCIES.md` with why).
+
+**Supply chain** (the recent npm worm/compromised-maintainer attacks are the threat model):
+- exact versions + committed lockfile; `npm ci` only; install scripts off (`ignore-scripts=true`, allow-list the few
+  that need them);
+- Renovate/Dependabot with a **minimum release age** (e.g. 7 days) so a freshly hijacked release never lands
+  automatically; security fixes fast-tracked by hand after review;
+- CI: `npm audit` + OSV-Scanner, CodeQL, secret scanning + push protection, Dependabot alerts on;
+- GitHub Actions pinned to commit SHAs, `permissions:` least-privilege per job, no `pull_request_target`.
+
+**Container:** small base (distroless or Alpine/Chainguard Node) pinned by digest; non-root user; read-only root
+filesystem with only `/data` writable; no shell tools beyond need; image scanned (Trivy) in CI and **fails on
+High/Critical**; SBOM attached; image signed (cosign, keyless via GitHub OIDC); weekly rebuild for base-image patches.
+
+**Application** (OWASP ASVS Level 2 as the checklist; `docs/THREAT-MODEL.md` written in M3):
+- auth: argon2id; invite tokens single-use and expiring; login rate limiting + lockout; sessions in HttpOnly,
+  Secure, SameSite=Lax cookies, rotated on login; CSRF protection on every state-changing request;
+- authorization on every document read/write (owner check in one place, tested), never by guessable id alone;
+- every API input validated by schema (Fastify JSON Schema); **JSON import** is untrusted: size cap, full schema
+  validation, prototype-pollution-safe parsing, unknown fields kept only inside `_foundry`, never executed;
+- portrait upload: size/type caps, re-encoded server-side (sharp) to WebP with metadata stripped; user SVG never
+  accepted;
+- PDF/SVG sheets: all user text escaped for XML; the SVG renderer runs with external resources disabled (no
+  user-controlled hrefs);
+- strict Content-Security-Policy (no inline script, no `eval`), plus HSTS, frame-ancestors none, nosniff, Referrer-
+  Policy; themes are CSS only;
+- no secrets in the image or repo (env/Docker secrets); logs never contain passwords, tokens or session ids;
+- TLS terminates at the user's reverse proxy; the app trusts proxy headers only from it.
+
+**Process:** each milestone's Codex code review includes a security pass; `/security-review` before every release;
+dependency and image scan results are release gates.
 
 ## Milestones
 
