@@ -1,7 +1,7 @@
 # Character creation rules (M0 source capture)
 
 _Read from renders of the corrected 11th printing (FASA 7901), book pages cited (PDF = book + 1 in this chapter).
-Never from pdftotext. M0 status: **core book, Shadowrun Companion, Cyberpirates, Fields of Fire and Rigger 2 captured**; the image-only books still to check (end)._
+Never from pdftotext. M0 status: **core book, Shadowrun Companion, Cyberpirates, Fields of Fire, Rigger 2 and VR2.0 (otaku) captured**; the image-only books still to check (end)._
 
 ## Chapter map (core)
 
@@ -301,8 +301,34 @@ _Renders of PDF 15–19, 61–64, 72–73, 85–86, 91, 113–124 (book = PDF �
   Vertigo −2, Spike Resistance 2/4, Gremlins −1 to −4, and the rest) are content (`sr2e-rigger-2` `r2-qualities`).
   Skills notes (VCR half-modifier defaulting, Non-Matrix Programming, Vehicle Stealth, Vehicle Tactics) are play rules
   the Foundry system already implements (Part 2b).
+- **Virtual Realities 2.0** (FASA 7904, renders of PDF 152–155, book = PDF − 8), "Building an Otaku" p.144–147.
+  GM option (otaku may be NPC-only). **Not in the Foundry system yet** (no otaku anywhere in sr2e): an otaku can't be
+  exported until the system supports living personas, channels and complex forms — a dependency to plan before M7
+  offers it.
+  - Any race. Priorities: Magic E. Human: Resources A, Race D, Attributes and Skills on B and C. Metahuman: Resources
+    B (or A with the core "More Metahumans" option, p.46), Attributes and Skills on C and D. The Resources priority
+    gives NO nuyen benefit: 5,000¥ only, as if Priority D (p.145).
+  - Racial maximums: Mental +1, Physical −1. Option: every Physical Attribute at 1 and their maximums halved (round
+    up) → +2 Attribute Points for Mental Attributes and Mental maximums +2 in total instead of +1.
+  - Skills: Computer 6–8 at start (Software concentration or Decking specialization allowed). Channels (Access,
+    Control, Index, Files, Slave — five special skills): one may start at 6, one at 5, one at 4, the rest ≤ 3; free
+    channel points = ⌈(Intelligence + Willpower + Charisma) ÷ 3⌉, plus regular Skill Points if wanted; concentrations
+    and single-operation specializations allowed. Etiquette: only Matrix and Street at start. All of these limits
+    apply at creation only.
+  - Programming days at start = Computer × 3, plus the otaku task bonus ⌈(Intelligence + Charisma) ÷ 4⌉, spent on
+    complex forms (Karma = rating each; rating ≤ Computer or its concentration/specialization; size =
+    rating² × utility multiplier + option rating² × option multiplier; base time = size × 2 days); unfinished forms
+    finish in play.
+  - Living persona (derived): MPCP ⌈(Int + Wil + Cha) ÷ 3⌉; Bod Wil; Evasion Int; Masking ⌈(Wil + Cha) ÷ 2⌉; Sensor
+    Int; Response ⌈(Int + Wil) ÷ 2⌉ + 3D6 Initiative; Armor Wil; Hardening ⌈Wil ÷ 2⌉; I/O Int × 100 Mp. Cyberware
+    raising Mental Attributes raises these; cosmetic/social Charisma boosts (tailored pheromones) and magic don't.
+  - Cyberadept (+1 effective complex-form rating) or technoshaman (−1 TN with channels): a GM option, chosen at
+    creation.
+  - Also in VR2.0 for creation: the Decker chapter (Attributes, Skills, the persona, task bonuses p.77), cyberdeck
+    construction and "Decks à la Carte" package prices (p.81–91), buying programs (p.107) — purchases the builder's
+    gear step prices from the VR2.0 module's items; read in M7 with the gear step.
 - **Image-only books still to check for creation rules** (no text layer, so only a page-by-page look finds them):
-  Virtual Realities 2.0, Cybertechnology, Street Samurai Catalog, Neo-Anarchist's Guide to Real Life
+  Cybertechnology, Street Samurai Catalog, Neo-Anarchist's Guide to Real Life
   (lifestyles), Corporate Security Handbook. The text-layer books (Grimoire, Shadowtech, Running Gear) have no creation
   rules beyond the core's (searched).
 
