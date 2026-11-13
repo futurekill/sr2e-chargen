@@ -41,6 +41,7 @@ loss in either direction**.
 - U16. Multiple character sheet styles; the user likes the Pink Fohawk / Mel sheet in particular.
 - U17. Up-to-date packages and current methods throughout; security is a must (recent wave of vulnerabilities).
 - U18. Everything on a sheet must be easily readable and fit its area: no words cut off for lack of space.
+- U19. Cite book and page for items (and rules) during creation, as Foundry does today.
 - Also accepted: always-on rules panel with page references, in-app dice with a log, history/undo, portrait upload
   exported as a Foundry token, GM NPC builder, phone-friendly viewing.
 
@@ -112,7 +113,24 @@ qualities, traditions, archetypes (`runners`, `csh-archetypes`). Book ids = modu
 Book text (U9): the catalog includes only what the compendia hold. Descriptions longer than a summary are not
 added; page references are shown everywhere.
 
-## The build flow (creator)
+### Citations (U19)
+
+Every catalog entry, chargen step, rule message and alternate method shows **where it comes from**: a short badge
+(`SSC p.59`, `R2 p.14–16`) with the full book title on hover. Citations survive copyright-friendly mode (U12).
+
+Today Foundry cites pages as free text inside `notes` (e.g. "…(SSC p.59)."): 501/651 system items, 285/317 R2,
+all of Shadowtech and Grimoire; only qualities have a structured `source` field. That's readable but not
+dependable data. So:
+- **D8** a structured `citation: { book, page }` (book = module/book id, page = string to allow ranges) on every item
+  type in the **system's** item schema (blank allowed), carried in the portable JSON, shown as a badge on Foundry
+  item sheets too;
+- a one-off backfill script per content repo parses the existing notes, writes `citation`, and reports items with
+  no page or more than one candidate; the reported gaps are filled from page renders (never pdftotext), then each
+  repo's `validate` fails on a catalog item without a citation;
+- one book table (id, abbreviation, full title, PDF page offset) in the system, used by both apps.
+- Later, optional: "open my PDF at this page" for users who own the book (per-user PDF path + the offset table).
+
+
 
 Step list follows the core book's chargen chapter (exact order and page refs captured from renders in M0, never
 from memory or pdftotext):
