@@ -42,6 +42,7 @@ loss in either direction**.
 - U17. Up-to-date packages and current methods throughout; security is a must (recent wave of vulnerabilities).
 - U18. Everything on a sheet must be easily readable and fit its area: no words cut off for lack of space.
 - U19. Cite book and page for items (and rules) during creation, as Foundry does today.
+- U20. Multi-page sheets are acceptable (one page would be nice, but not at the cost of fit/readability).
 - Also accepted: always-on rules panel with page references, in-app dice with a log, history/undo, portrait upload
   exported as a Foundry token, GM NPC builder, phone-friendly viewing.
 
@@ -185,6 +186,10 @@ character's `ruleset`.
     embedded font's real metrics (fontkit/opentype) before layout. Order of fixes when it doesn't fit: wrap onto
     more lines in its box → reduce size down to a readable floor (body 8 pt, labels 6.5 pt; never below) → the
     section continues on an overflow page with a "continued" marker. Fonts are embedded, never system fallbacks.
+  - **Pages (U20):** multi-page is fine. Page 1 holds what's needed at the table mid-fight (attributes, pools,
+    initiative, condition monitors, armor, attacks, active skills); later pages hold ware, gear, magic, contacts,
+    vehicles, notes. A short character fits on one page; the layout never squeezes past the size floor to get there.
+    The separate one-page table card (export) stays the "everything on one sheet" option.
   - **Fit test:** CI renders every sheet style for every fixture plus a stress set (longest real item names in the
     catalog, 40-char handles, maximum skills/ware/contacts, long notes) and fails if any text run's measured box
     leaves its area or falls below the size floor. A visual snapshot per style/fixture is kept for review.
