@@ -44,6 +44,8 @@ loss in either direction**.
 - U19. Cite book and page for items (and rules) during creation, as Foundry does today.
 - U20. Multi-page sheets are acceptable (one page would be nice, but not at the cost of fit/readability).
 - U21. Players will print the PDFs: sheets designed for paper (Letter/A4, margins, B&W legible, ink-saver).
+- U22. Toggle for dyslexia-friendly fonts on sheets and the site. More accommodations (site and sheets) to look
+  at later.
 - Also accepted: always-on rules panel with page references, in-app dice with a log, history/undo, portrait upload
   exported as a Foundry token, GM NPC builder, phone-friendly viewing.
 
@@ -197,6 +199,11 @@ character's `ruleset`.
     colour alone; accents also differ by weight/shape), condition-monitor boxes and tick areas large enough to mark
     in pencil, white or near-white page backgrounds. Heavy-ink styles (Fohawk's black bars) get an **ink-saver**
     variant: outlined bars, same layout. Fit test (below) runs on both paper sizes.
+  - **Readable fonts (U22):** a per-user setting (also offered on each PDF export) to use a dyslexia-friendly font
+    on sheets **and** the site: OpenDyslexic, Atkinson Hyperlegible or Lexend (all SIL OFL; licences re-checked when
+    bundled), with slightly wider letter/line spacing. Research on which helps is mixed, so it's the user's choice,
+    not one forced font. These fonts run wider, so the fit rules and the fit test apply per font: every style ×
+    paper size × font must pass.
   - **Fit test:** CI renders every sheet style for every fixture plus a stress set (longest real item names in the
     catalog, 40-char handles, maximum skills/ware/contacts, long notes) and fails if any text run's measured box
     leaves its area or falls below the size floor. A visual snapshot per style/fixture is kept for review.
@@ -219,7 +226,8 @@ character's `ruleset`.
 - **Client:** Vite + Svelte (small, fast; wizard + themes are mostly CSS). Shared code is plain ESM, imported by both.
 - **Auth v1 (U13):** invite-only local accounts (username + password, argon2), each user sees only their own library.
   Social login (OIDC) in a later iteration replaces/joins it.
-- **Themes:** CSS custom-property token sets; one layout. Every theme meets WCAG AA contrast and honours
+- **Themes:** CSS custom-property token sets; one layout. The readable-font setting (U22) overrides every theme's
+  fonts, including the terminal and GeoCities ones. Every theme meets WCAG AA contrast and honours
   `prefers-reduced-motion`; checked by an automated contrast test.
 - **Phone:** responsive viewing and play tracking; the full wizard is desktop-first but usable on a tablet.
 
