@@ -1,5 +1,5 @@
 # Plan: SR2E Character Generator & Manager (standalone)
-_Draft 9, 2026-11-13, by Claude, after Codex plan rounds 1–8 (43 findings, all taken; see docs/PLAN-REVIEW-LOG.md). Supersedes the 2026-07-17 design doc
+_Draft 10, 2026-11-13, by Claude, after Codex plan rounds 1–9 (46 findings, all taken; see docs/PLAN-REVIEW-LOG.md). Supersedes the 2026-07-17 design doc
 (`sr2e-foundryvtt/docs/PLAN-character-creator.md`), whose schema ideas it keeps._
 
 ## Goal
@@ -93,7 +93,8 @@ or (c) needs converting. Category (c) is a blocker list for v1, fixed in the sys
 **D9: the derivation context is explicit** (round 1 #1). The data models read more than `{system, items}`: flags
 (event records, shapeshifter/healing/permanent-damage state), effect-backed records (`recordEvent` markers), the
 actor's uuid, world time, world settings, and tables that content modules register at `init`. The pure layer takes
-ONE argument, `DeriveContext = { source, system, items (prepared), effects, flags, uuid, now, settings, registries }`
+ONE argument, `DeriveContext = { source, system, items (prepared), effects, events, flags, uuid, now, settings,
+registries, lookup }`
 (round 3 #2: `source` is the immutable actor and embedded-document source, separate from the prepared working data,
 because derivations read `_source` and restore from it between preparations; parity tests include removing a
 derivation mechanism and preparing twice), built
@@ -104,7 +105,13 @@ AE keys listed in its CLAUDE.md: `system.<attr>.mod`, `reaction.mod`, `initiativ
 ADD/OVERRIDE modes). The effect collection is the **effective** one, matching Foundry's own eligibility and
 order: the actor's effects PLUS effects transferred from its owned items (the system uses modern transfer,
 `legacyTransferral = false`, so these never appear in `actor.effects`; round 8 #1), each disabled/suppressed check
-included; M2 tests supported and unsupported effects on both. Any other effect is **unsupported**: the creator shows the affected values as "as last computed
+included; M2 tests supported and unsupported effects on both. **Event records are separate** (round 9 #2): the
+system stores durable events as DISABLED effects (`claims.mjs`), which derivation reads (permanent damage,
+move-by-wire, cybermancy…); `events` is read from the complete actor/item sources, never filtered by eligibility,
+and `effects` is used only to apply AE changes; tested together. **Other documents** (round 9 #1): `lookup(ref)`
+resolves another document of the bundle (or the creator's library) by portable or Foundry reference, so
+cross-document reads work (e.g. `sustainPenalty` → `elementalHolderOf` → a bound elemental's service, Force and
+spell); M2 has a parity fixture of an elemental sustaining its magician's spell. Any other effect is **unsupported**: the creator shows the affected values as "as last computed
 in Foundry" (from the export) with a warning, and never edits them.
 
 ## Portable character JSON (the interchange)
@@ -178,7 +185,10 @@ Additions:
   already-recorded event after import; a test retries every imported claim/event and asserts no new consequence. M1's fixtures re-import every complex character under NEW ids and
   compare the derived result.
 - **D12 Prepared snapshot** (round 2 #2): the export also carries each document's **prepared** values (what Foundry
-  derived) and the D9 context it was derived under, read-only. If a document holds an unsupported effect, the whole
+  derived) and the D9 context it was derived under, read-only. It is an explicit, versioned **projection** with a
+  tagged codec (round 9 #3): prepared state holds non-JSON values (`system.vr2Deck.corrupted` is a Set; Maps;
+  computed getters), so the projection lists what it carries and encodes Sets/Maps/getter values explicitly;
+  round-trip tests cover each. If a document holds an unsupported effect, the whole
   document is view-only in the creator (shown from that snapshot), never partially edited.
 - **D13 Mutations** (round 2 #3): Foundry's update hooks keep state in step (shapeshifter damage buckets, healing
   revisions, permanent-damage episodes, ware lifecycle records). The manager may apply a mutation only through a

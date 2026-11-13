@@ -97,3 +97,13 @@ event fire again.
 Both taken: D9 uses the effective effect collection (actor + transferred item effects, Foundry's eligibility and order),
 tested in M2; D11 re-derives claim ids from remapped keys during reservation, remaps references, and tests that
 retrying imported claims/events produces no new consequence.
+
+## Round 9 — Codex (draft 9, fresh session): REVISE, 3 findings
+1. DeriveContext lacked cross-document reads (a bound elemental sustaining a spell changes the sustain penalty).
+2. Event records are DISABLED effects that derivation reads; filtering effects by eligibility would drop them.
+3. The prepared snapshot holds non-JSON values (Sets, Maps, getters).
+
+### Claude's response (draft 10)
+All taken: `lookup(ref)` in DeriveContext with an elemental-sustaining parity fixture; `events` read from complete
+sources, separate from the effective `effects` used only for AE changes; the snapshot is a versioned projection with
+a tagged codec and round-trip tests.
