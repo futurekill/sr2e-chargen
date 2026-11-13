@@ -1,5 +1,5 @@
 # Plan: SR2E Character Generator & Manager (standalone)
-_Draft 3, 2026-11-13, by Claude, after Codex plan rounds 1–2 (26 findings, all taken; see docs/PLAN-REVIEW-LOG.md). Supersedes the 2026-07-17 design doc
+_Draft 4, 2026-11-13, by Claude, after Codex plan rounds 1–3 (31 findings, all taken; see docs/PLAN-REVIEW-LOG.md). Supersedes the 2026-07-17 design doc
 (`sr2e-foundryvtt/docs/PLAN-character-creator.md`), whose schema ideas it keeps._
 
 ## Goal
@@ -91,7 +91,10 @@ or (c) needs converting. Category (c) is a blocker list for v1, fixed in the sys
 **D9: the derivation context is explicit** (round 1 #1). The data models read more than `{system, items}`: flags
 (event records, shapeshifter/healing/permanent-damage state), effect-backed records (`recordEvent` markers), the
 actor's uuid, world time, world settings, and tables that content modules register at `init`. The pure layer takes
-ONE argument, `DeriveContext = { system, items (prepared), effects, flags, uuid, now, settings, registries }`, built
+ONE argument, `DeriveContext = { source, system, items (prepared), effects, flags, uuid, now, settings, registries }`
+(round 3 #2: `source` is the immutable actor and embedded-document source, separate from the prepared working data,
+because derivations read `_source` and restore from it between preparations; parity tests include removing a
+derivation mechanism and preparing twice), built
 by a Foundry adapter in the system and by the creator's own adapter. Each derive function declares which keys it
 reads; a parity test fails if a function reads a key it didn't declare. Effects: the context carries the
 character's Active Effects as data, and the pure layer applies only the **supported semantics** (the system's own
@@ -137,8 +140,10 @@ Additions:
   (round 1 #8). The creator likewise recomputes a Foundry export under the character's recorded ruleset only.
 - **D10 Migrations** (round 1 #7, round 2 #5): pure, ordered document migrations in the system
   (`module/portable/migrations/`), dispatched on FOUR versions recorded in every bundle: the envelope `schemaVersion`,
-  the system version (the system's existing world migrations are reused through an adapter that feeds them document
-  source, as `module/migrations.mjs` does), the Foundry core version (document format) and each content module's
+  the system version (the system's existing migrations are reused through a **pure runner extracted from
+  `module/migrations.mjs`** that keeps its semantics: every pending entry reads the SAME source, item migrations
+  receive the owning actor's source, `addItems` creations, explicit settings/context instead of world reads; tested
+  with several pending versions and embedded-item additions — round 3 #3), the Foundry core version (document format) and each content module's
   version. Compatibility: any version NEWER than the reader knows, or a module the reader doesn't have, makes the
   document view-only (never dropped); applied on read by both apps (never in place on the
   original: the pre-migration file is kept). The creator migrates stored documents in a DB transaction per document,
@@ -154,7 +159,9 @@ Additions:
   `permKey(uuid)` / `shiftKey(uuid)` / `stateKey(uuid)` hashed flag keys, `recordEvent` keys like `permdmg:<uuid>:…`,
   effect `origin` uuids, item ids inside flags. The system's `module/portable` has a **typed reference adapter** per
   such kind (listed in one registry, each with a test): export rewrites them to portable identities, import rebuilds
-  them for the new ids. A flag kind with no adapter blocks the export with a named error (never a silent copy).
+  them for the new ids. A flag with no adapter is carried **opaquely** and never blocks an export (round 3 #1); only
+  an import that changes identities (a new world, new ids) refuses when it would carry an unadaptable reference,
+  naming it; same-id re-imports (backup/restore) pass.
   Embedded effects get a `portableId` like items. M1's fixtures re-import every complex character under NEW ids and
   compare the derived result.
 - **D12 Prepared snapshot** (round 2 #2): the export also carries each document's **prepared** values (what Foundry
@@ -165,7 +172,10 @@ Additions:
   **shared transition function** extracted to the system (`module/derive/transitions/*.mjs`, the hooks become thin
   callers, parity-tested like D2). A mutation without one is blocked on the characters it would affect (e.g. no
   damage entry on a shapeshifter until its transition exists). v1 ships transitions for damage, Karma, nuyen,
-  purchases and ammo.
+  purchases and ammo. **Importing never replays transitions** (round 3 #4): Foundry import writes the bundle's final
+  source in a validated import mode (`{ sr2eImport: true }` on the writes), which the system's gameplay hooks skip
+  (they already skip their own clock/receipt writes the same way), so no consequence is generated twice. Edited
+  round-trip tests cover damage, ware changes and purchases.
 - **D7** The schema lives in the **system** repo (`schema/*.json` + `module/portable/*.mjs` export/import + migrations),
   because Foundry must read and write it too. Round-trip tests run in the system's CI and the creator's CI against
   the same fixtures.
@@ -389,7 +399,9 @@ dependency and image scan results are release gates.
 - **M5 PDF + text exports** (renderer subprocess, fit test, table card with content budget).
 - **M6 Manager** (Karma, nuyen ledger, purchases, damage, history/undo as compensating changes, in-app dice + log).
 - **M7 Sourcebooks**: book toggles across the catalog, alternate methods, book metatypes/qualities.
-- **M8 Vehicle Workshop.**
+- **M8 Vehicle Workshop** (round 3 #5): first extract the vehicle preparation the Workshop needs (design stats,
+  `applyModEffects`/`effective*`, capacity, validation) behind the same DeriveContext and parity tests; live-play
+  vehicle calculations (chase, damage) stay in the system.
 - **M9 Remaining themes, portrait/token export, NPC builder.**
 - Later: social login, public copies, campaigns.
 

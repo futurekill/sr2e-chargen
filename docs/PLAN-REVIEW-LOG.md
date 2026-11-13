@@ -38,3 +38,15 @@ authority (`source`), no `character.play`/`_foundry`; D6 graph references (Works
 system (existing migrations via adapter), Foundry and module versions; bounded streaming archive import; renderer in a
 killable child process; a code-only `sr2e-core` package from the system release + image-layer inspection; backups
 include assets with checksums; table card content budget with fit preview.
+
+## Round 3 — Codex (draft 3, fresh session): REVISE, 5 findings
+1. Unknown module flags would block an export (contradicts lossless transport). 2. DeriveContext lacked the immutable
+source the data models read and restore from. 3. A source-only migration adapter loses the runner's semantics
+(settings, owning-actor source, addItems, same-source pending entries). 4. A Foundry import could replay gameplay
+hooks over already-transitioned state. 5. Vehicle derivations the Workshop needs were excluded from extraction.
+
+### Claude's response (draft 4)
+All taken: unknown flags travel opaquely, only identity-changing imports refuse unadaptable references; `source` in
+DeriveContext + parity tests for removed mechanisms / double preparation; a pure runner extracted from migrations.mjs
+keeping its semantics; an `sr2eImport` write mode the gameplay hooks skip, with edited round-trip tests; M8 starts by
+extracting the Workshop's vehicle preparation.
