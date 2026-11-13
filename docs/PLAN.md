@@ -1,5 +1,5 @@
 # Plan: SR2E Character Generator & Manager (standalone)
-_Draft 7, 2026-11-13, by Claude, after Codex plan rounds 1–6 (39 findings, all taken; see docs/PLAN-REVIEW-LOG.md). Supersedes the 2026-07-17 design doc
+_Draft 8, 2026-11-13, by Claude, after Codex plan rounds 1–7 (41 findings, all taken; see docs/PLAN-REVIEW-LOG.md). Supersedes the 2026-07-17 design doc
 (`sr2e-foundryvtt/docs/PLAN-character-creator.md`), whose schema ideas it keeps._
 
 ## Goal
@@ -131,7 +131,12 @@ Keeps the 2026-07-17 envelope (`schema`, `schemaVersion`, `systemVersion`, `modu
   entry, compression-ratio check; entry names must be plain relative paths (no `..`, absolute paths, links or
   duplicates); every image goes through the same decode/pixel/re-encode checks as an upload. Foundry
   import (GM) uploads the images to `worlds/<world>/sr2e-imports/<portableId>/` and rewrites the paths; a missing
-  image becomes a warning and the default icon. The creator stores uploaded images per user (served only to their
+  image becomes a warning and the default icon. The asset manifest covers EVERY image the graph references
+  (round 7 #2): actor portrait and token, embedded item images, effect icons, and `<img>` sources inside rich text
+  (biography, notes); each is copied into the zip and its path rewritten on import. System and module paths
+  (`systems/sr2e/…`, `modules/…`) travel as references, not files; anything else unreachable (an external URL, a
+  missing file) is listed as unsupported and left pointing where it did, with a warning. A cross-world fixture
+  checks every image survives. The creator stores uploaded images per user (served only to their
   owner, see Security).
 
 Additions:
@@ -404,7 +409,11 @@ dependency and image scan results are release gates.
 - **M1b Citations** (system + content repos): the D8 `citation` field, the book table, the backfill scripts and the
   `validate` rule.
 - **M2 Derive extraction** (system repo, several small releases per D2; parity fixtures include deck/program
-  replacement and removal): **item preparation first** (item-data's
+  replacement and removal): **source normalisation first** (round 7 #1: Foundry's TypeDataModel construction fills
+  defaults and nested structures and enforces constraints that a new character or a raw catalog entry needs; the
+  system exports versioned, pure source constructors/normalisers + validation built from the same schema
+  definitions, and parity tests start from a minimal new actor and from raw `packs-src` items, not only from
+  instantiated exports), then **item preparation** (item-data's
   ratings, costs, derived fields), then the actor derivations, all behind D9's `DeriveContext`; **module
   registration as pure adapters** (each content module exports a `register(registries)` usable outside Foundry,
   versioned with the module); the AE audit (D3); Node AND browser import tests. **Gate:** parity fixtures beyond the

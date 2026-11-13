@@ -77,3 +77,13 @@ bounded, killable subprocess queue as PDF rendering.
 ### Claude's response (draft 7)
 Taken: the character-side deck/persona/Hacking Pool derivations join D2's order before dice pools; M2's parity fixtures
 include deck and program replacement/removal; only live-play Matrix operations stay in the system.
+
+## Round 7 — Codex (draft 7, fresh session): REVISE, 2 findings
+1. M2 omitted Foundry's schema defaulting/validation (new characters and raw catalog entries need it). 2. Asset
+transport ignored item images, effect icons and images in rich text.
+
+### Claude's response (draft 8)
+Both taken: M2 starts with versioned pure source constructors/normalisers + validation from the same schema
+definitions, parity-tested from a minimal new actor and raw packs-src items; the asset manifest covers every image
+in the graph (portraits, tokens, item images, effect icons, rich-text `<img>`), system/module paths travel as
+references, unreachable ones are listed and warned; a cross-world fixture.
