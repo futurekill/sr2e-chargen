@@ -25,6 +25,13 @@ loss in either direction**.
 - U9. Content: the same data the Foundry compendia already carry (stats, names, page references); no book prose
   copied in beyond what the compendia hold.
 - U10. Later, not v1: social login (Google etc.), personal library with public copies, campaigns/GM layer.
+- U11. **Shadowland banter** in the builder (2026-11-12, a must): in-character BBS-style commentary on choices
+  (`>>>>>[ … ]<<<<< —Handle`), shown in the builder only, never printed on sheets or exports. Banter is data
+  (`banter/*.json`, keyed to steps, items, metatypes, choices), so it can be toggled and swapped. Default set is
+  ORIGINAL writing in the style with our own handles; quotes from the books only in the full-content mode (U12).
+- U12. **Copyright-friendly mode** (later, to think through): a run mode with reduced content exposure. Design
+  hook now: every piece of book-derived text (descriptions, book banter) is tagged with its source so a mode can
+  filter it; stats and page references stay.
 - Also accepted: always-on rules panel with page references, in-app dice with a log, history/undo, portrait upload
   exported as a Foundry token, GM NPC builder, phone-friendly viewing.
 
