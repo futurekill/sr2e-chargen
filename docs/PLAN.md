@@ -43,6 +43,7 @@ loss in either direction**.
 - U18. Everything on a sheet must be easily readable and fit its area: no words cut off for lack of space.
 - U19. Cite book and page for items (and rules) during creation, as Foundry does today.
 - U20. Multi-page sheets are acceptable (one page would be nice, but not at the cost of fit/readability).
+- U21. Players will print the PDFs: sheets designed for paper (Letter/A4, margins, B&W legible, ink-saver).
 - Also accepted: always-on rules panel with page references, in-app dice with a log, history/undo, portrait upload
   exported as a Foundry token, GM NPC builder, phone-friendly viewing.
 
@@ -190,6 +191,12 @@ character's `ruleset`.
     initiative, condition monitors, armor, attacks, active skills); later pages hold ware, gear, magic, contacts,
     vehicles, notes. A short character fits on one page; the layout never squeezes past the size floor to get there.
     The separate one-page table card (export) stays the "everything on one sheet" option.
+  - **Print (U21):** players print these. Every style is designed for paper first:
+    US Letter and A4 (chosen per user; layout reflows, never scaled to fit), safe margins ≥ 0.5 in / 12.7 mm for
+    home printers, vector text and lines (raster only for the portrait), black-and-white legible (nothing conveyed by
+    colour alone; accents also differ by weight/shape), condition-monitor boxes and tick areas large enough to mark
+    in pencil, white or near-white page backgrounds. Heavy-ink styles (Fohawk's black bars) get an **ink-saver**
+    variant: outlined bars, same layout. Fit test (below) runs on both paper sizes.
   - **Fit test:** CI renders every sheet style for every fixture plus a stress set (longest real item names in the
     catalog, 40-char handles, maximum skills/ware/contacts, long notes) and fails if any text run's measured box
     leaves its area or falls below the size floor. A visual snapshot per style/fixture is kept for review.
