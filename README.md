@@ -45,7 +45,7 @@ Docker image: the app reads the content modules from a folder you mount.
 | Milestone | What | Status |
 |---|---|---|
 | M0 | Capture the creation rules from the books | done |
-| M1 | Character export/import in the Foundry system (lossless, recoverable) | next |
+| M1 | Character export/import in the Foundry system (lossless, recoverable) | planning (sr2e-foundryvtt docs/PLAN-portable.md) |
 | M1b | Structured book/page citations on every item | |
 | M2 | Share the rules code between Foundry and this app | |
 | M3 | App skeleton: Docker, accounts, library, content catalog, one theme | |
