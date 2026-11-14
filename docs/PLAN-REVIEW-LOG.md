@@ -125,3 +125,7 @@ keys deleted with `-=`), under `sr2eImport`; tests for removed effects and flags
 ## Round 12 — Codex (draft 12, fresh session): APPROVED
 "No new material problems found. Draft 12 incorporates the settled fixes and provides concrete gates for derivation
 parity, lossless reconciliation, migrations, security, and PDF fit. The milestone order supports those dependencies."
+
+## Amendment 2026-11-14 — user ruling (no review round)
+The user prefers to ship the image fully formed: the content mount (round 1 #15) is replaced by baking the catalog in
+at image build time from pinned tags (`content-pins.json`); default to a private/local tag, never a public push.

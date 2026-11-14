@@ -1,5 +1,5 @@
 # Plan: SR2E Character Generator & Manager (standalone)
-_Draft 12, 2026-11-13, by Claude — **APPROVED at Codex plan round 12** (48 findings over rounds 1–11, all taken; see docs/PLAN-REVIEW-LOG.md). Supersedes the 2026-07-17 design doc
+_Draft 12, 2026-11-13, by Claude — **APPROVED at Codex plan round 12**; amended 2026-11-14 by user ruling (content baked into the image) (48 findings over rounds 1–11, all taken; see docs/PLAN-REVIEW-LOG.md). Supersedes the 2026-07-17 design doc
 (`sr2e-foundryvtt/docs/PLAN-character-creator.md`), whose schema ideas it keeps._
 
 ## Goal
@@ -224,10 +224,15 @@ adventure modules excluded) and builds one indexed catalog per book: items with 
 links back), plus the module's metatypes, qualities, traditions, archetypes. Book ids = module ids; the core book =
 the system.
 
-**Distribution** (round 1 #15): the Docker image ships **no book content**. The catalog is built at start-up from a
-read-only content mount (`/content`, the owner's own checkouts of the repos at pinned tags), so the published image
-carries only code. Catalog routes are authenticated like everything else. The U12 hook is implemented in the catalog
-build (M3): every text field is tagged with its book, so a reduced-content mode is a filter, not a rewrite.
+**Distribution** (user ruling 2026-11-14, replacing round 1 #15's content mount): the Docker image is **fully
+formed** — it ships with the content. A multi-stage build checks out the system and the content modules at the pinned
+tags, builds the catalog at IMAGE BUILD time and copies only the built catalog (no repos, no build tools) into the
+final image; nothing to mount but `/data`. The pinned tags are one file in the repo (`content-pins.json`), bumped by a
+commit, and the catalog records them so a character's `books`/versions can be checked against what the image holds.
+Because the image now holds book-derived text, where it is published (a private registry vs a public one) is the
+owner's call — the build defaults to a local/private tag, never a public push. Catalog routes are authenticated like
+everything else. The U12 hook is implemented in the catalog build (M3): every text field is tagged with its book, so a
+reduced-content mode is a filter, not a rewrite.
 
 Book text (U9): the catalog includes only what the compendia hold. Descriptions longer than a summary are not
 added; page references are shown everywhere.
@@ -447,7 +452,7 @@ dependency and image scan results are release gates.
   pregens — edits, item removals, repeated preparation (the derived-state-clearing trap), effects on/off, and
   module-enabled characters — must pass before M3 starts.
 - **M3 Creator skeleton**: repo, Docker, auth lifecycle + admin CLI, library with revisions, catalog build from the
-  content mount (with U12 source tagging), backups, one theme.
+  pinned content baked in at image build (with U12 source tagging), backups, one theme.
 - **M4 Core build flow** (Priority system, all steps, rules panel), archetypes, JSON/zip export/import, and the
   **Shadowland banter** (U11, round 4 #3): `banter/*.json` data keyed to steps/items/metatypes/choices, an original
   starter set in our own handles, the on/off toggle, and a test that no banter text appears in any export or sheet.
@@ -480,8 +485,8 @@ Each milestone: plan section → Codex review → build → Codex code review �
 3. **Version skew**: a character exported from a newer system than the creator's pinned version. Rule: refuse to
    *edit* (view only) and warn when `systemVersion` is newer than the creator's; Foundry likewise for the reverse.
 4. Alternate creation methods: which books define them, and how much is rules vs. GM option — M0 decides.
-5. Book-content redistribution: the image carries none (content mount); whether a friend's server may hold the
-   content is the owner's call, outside this plan.
+5. Book-content redistribution: the image carries the built catalog (user ruling 2026-11-14); publish it only to a
+   private registry unless the owner decides otherwise.
 
 ## Out of scope (v1)
 
