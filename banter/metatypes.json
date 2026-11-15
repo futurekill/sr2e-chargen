@@ -1,0 +1,43 @@
+{
+ "schema": "sr2e-banter",
+ "version": 1,
+ "set": "original",
+ "source": "original",
+ "entries": {
+  "metatype:human": [
+   {
+    "handle": "Tick-Tock",
+    "text": "Human. Nothing special — which is exactly why nobody remembers your face. Use that.",
+    "stamp": "14:20:31/03-12-57"
+   }
+  ],
+  "metatype:elf": [
+   {
+    "handle": "Lady Ghoul",
+    "text": "Pointy ears open doors uptown and close them in the Barrens. Know which street you're on.",
+    "stamp": "14:22:09/03-12-57"
+   }
+  ],
+  "metatype:dwarf": [
+   {
+    "handle": "Two-Ton Mule",
+    "text": "Dwarves see in the dark and shrug off what kills the rest of us. Short jokes are fatal. Mostly for the joker.",
+    "stamp": "14:25:44/03-12-57"
+   }
+  ],
+  "metatype:ork": [
+   {
+    "handle": "Saltlick",
+    "text": "Tusks and a short fuse are what they expect. Give 'em a long memory instead.",
+    "stamp": "14:29:02/03-12-57"
+   }
+  ],
+  "metatype:troll": [
+   {
+    "handle": "Two-Ton Mule",
+    "text": "Doorframes are your natural enemy. Everything else is just scared of you.",
+    "stamp": "14:31:57/03-12-57"
+   }
+  ]
+ }
+}

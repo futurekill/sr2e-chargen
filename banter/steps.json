@@ -1,0 +1,115 @@
+{
+ "schema": "sr2e-banter",
+ "version": 1,
+ "set": "original",
+ "source": "original",
+ "entries": {
+  "step:start": [
+   {
+    "handle": "GridMother",
+    "text": "New face on the board. Pick a handle you can live with, chummer. Your government name? Keep it in a lead box.",
+    "stamp": "02:14:07/03-11-57"
+   },
+   {
+    "handle": "Whisperjack",
+    "text": "Second the lead box. I've seen SINs sold for less than a soykaf.",
+    "stamp": "02:16:51/03-11-57"
+   }
+  ],
+  "step:priorities": [
+   {
+    "handle": "Rustbucket",
+    "text": "Five letters, A through E, and every one of 'em costs you something. Welcome to the shadows.",
+    "stamp": "23:40:12/03-09-57"
+   },
+   {
+    "handle": "Velvet Nine",
+    "text": "Put Resources on E and you'll be eating Nutrisoy out of a dumpster behind the Stuffer Shack. Ask me how I know.",
+    "stamp": "23:44:30/03-09-57"
+   },
+   {
+    "handle": "Tick-Tock",
+    "text": "Put Magic on A and the street will smell it on you before you open your mouth. Worth it.",
+    "stamp": "23:47:02/03-09-57"
+   }
+  ],
+  "step:metatype": [
+   {
+    "handle": "Two-Ton Mule",
+    "text": "Pick your meat. You'll be stuck in it a while.",
+    "stamp": "04:02:45/03-12-57"
+   }
+  ],
+  "step:magic": [
+   {
+    "handle": "Spoonbender",
+    "text": "Awakened? Then hear this: the drain doesn't care how pretty your spell looks.",
+    "stamp": "19:21:09/03-10-57"
+   },
+   {
+    "handle": "Lady Ghoul",
+    "text": "Totem or tradition, choose like your life depends on it. It will.",
+    "stamp": "19:25:33/03-10-57"
+   }
+  ],
+  "step:attributes": [
+   {
+    "handle": "Rustbucket",
+    "text": "Body keeps you breathing. Quickness keeps you out of the way. Nobody ever died of too much Willpower.",
+    "stamp": "01:08:19/03-13-57"
+   }
+  ],
+  "step:skills": [
+   {
+    "handle": "GridMother",
+    "text": "Can't shoot, can't talk, can't drive? Then you'd better be able to run. Fast.",
+    "stamp": "03:33:41/03-13-57"
+   },
+   {
+    "handle": "Kipper",
+    "text": "Etiquette is the cheapest armor in the Sprawl. Nobody buys it.",
+    "stamp": "03:35:20/03-13-57"
+   }
+  ],
+  "step:edges": [
+   {
+    "handle": "Whisperjack",
+    "text": "Everybody's got a flaw. The smart ones know which one will get 'em killed.",
+    "stamp": "22:12:58/03-14-57"
+   }
+  ],
+  "step:resources": [
+   {
+    "handle": "Velvet Nine",
+    "text": "Nuyen in your pocket at the start is the most nuyen you'll ever have. Spend it like it's your last.",
+    "stamp": "00:51:07/03-15-57"
+   }
+  ],
+  "step:contacts": [
+   {
+    "handle": "Saltlick",
+    "text": "Your fixer is not your friend. Your fixer is your fixer. Learn the difference before you learn it the hard way.",
+    "stamp": "16:44:10/03-15-57"
+   }
+  ],
+  "step:lifestyle": [
+   {
+    "handle": "Kipper",
+    "text": "Low lifestyle: you'll learn which neighbours to trust. Squatter: you'll learn which ones to run from.",
+    "stamp": "05:19:33/03-16-57"
+   }
+  ],
+  "step:finish": [
+   {
+    "handle": "GridMother",
+    "text": "Board's open. Don't make me write your obituary on it.",
+    "stamp": "06:00:00/03-16-57"
+   },
+   {
+    "handle": "Rustbucket",
+    "text": "Frag it, I'll write it. I've got a template.",
+    "stamp": "06:02:14/03-16-57"
+   }
+  ]
+ }
+}
