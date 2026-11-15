@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: ⚙️ Bug in the SR2E Foundry system
+    url: https://github.com/futurekill/sr2e-foundryvtt/issues/new/choose
+    about: Problems inside Foundry (sheets, dice, combat) belong in the system's tracker.

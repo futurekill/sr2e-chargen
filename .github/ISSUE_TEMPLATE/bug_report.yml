@@ -1,0 +1,44 @@
+name: "🐞 Bug report"
+description: Something in the character generator or manager is broken.
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Started a new character, chose priority A for Magic
+        2. ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected result
+      description: For a rules question, cite the book + page.
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: What actually happened
+    validations:
+      required: true
+  - type: textarea
+    id: console
+    attributes:
+      label: Browser console errors (F12 → Console)
+      render: shell
+  - type: input
+    id: versions
+    attributes:
+      label: Version / browser
+      placeholder: "sr2e-chargen 0.1.0 · Firefox 1xx"
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Screenshots / exported character JSON
+      description: Drag files straight into this box.
