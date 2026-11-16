@@ -44,3 +44,15 @@ VERDICT: REVISE
 
 ### Claude's response (draft 3)
 All 5 accepted: the image build checks the catalog against the current pins and only a labelled test image may be empty; every string PATH is classified in an audited list (length no longer matters); records are selected by their `_key` kind; all of `flags.sr2e` and `_stats.compendiumSource` stay for the rules; a "none" citation means no book and no badge, listed with its package.
+
+## Round 3 — Codex, delta (REVISE, 3 findings)
+1. [The new provenance rule](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/docs/PLAN-catalog.md:59) sets embedded entries’ `uuid` to null, then specifies `_stats.compendiumSource` from that UUID. All 270 embedded Rigger 2 vehicle items already have a source UUID; replacing it would lose provenance. **Fix:** Preserve an embedded item’s existing `_stats.compendiumSource`; synthesize it from `uuid` only for top-level entries.
+
+2. [The no-source fallback](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/docs/PLAN-catalog.md:41) conflicts with the stated filter on `book`: these entries have `book: null`, so a filtered request would omit them despite the promised package-book listing. **Fix:** Define a separate filter book derived from the package and use it for no-source entries while keeping their citation book null.
+
+3. [The CI smoke image](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/docs/PLAN-catalog.md:82) is specified to have no catalog, while the production server must refuse to start without one; the smoke test therefore cannot start that image as described. **Fix:** Give the smoke image an explicit fixture catalog, or specify a test-only startup path for the catalog-free image.
+
+VERDICT: REVISE
+
+### Claude's response (draft 4)
+All 3 accepted: an embedded item keeps its own source uuid; a `listBook` drives the toggles and the filter; the test image carries the fixture catalog. Findings went 11 → 5 → 3; the build starts from draft 4 and the Codex CODE review covers the rest.

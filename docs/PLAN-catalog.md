@@ -1,5 +1,5 @@
 # Plan: milestone 1 — the catalog
-_Draft 3 (2026-11-16), after Codex rounds 1–2 (11 + 5 findings, all accepted; docs/PLAN-catalog-REVIEW-LOG.md). Roadmap: docs/ROADMAP.md (approved 2026-11-16). Requirement: docs/PLAN.md "Content catalog"
+_Draft 4 (2026-11-16), after Codex rounds 1–3 (11 + 5 + 3 findings, all accepted; the last three fixes are not re-reviewed; docs/PLAN-catalog-REVIEW-LOG.md). Roadmap: docs/ROADMAP.md (approved 2026-11-16). Requirement: docs/PLAN.md "Content catalog"
 (the pinned content, the source tag on book text, authenticated routes, citations)._
 
 ## Goal
@@ -42,8 +42,9 @@ type, and see where each one comes from (`SR2 p.231`). Milestone 2 (character cr
      of its citation. **Book toggles filter on `book`** — "the Street Samurai Catalog is on" means its items,
      whichever package carries them.
    - **No printed source** (round 2 #5): eleven contacts cite `book: "none"`, and archetypes cite nothing. Their
-     `book` and `citation` are `null`: never attributed to a book, no badge. They are listed with their PACKAGE's
-     book for the toggles (core contacts appear while the core book is on, which is always).
+     `book` and `citation` are `null`: never attributed to a book, no badge. Every entry also has a `listBook`
+     (round 3 #2) = its `book`, or its PACKAGE's book when it has none; **the toggles and the `book=` filter use
+     `listBook`** (core contacts appear while the core book is on, which is always).
    - `uuid` = the compendium uuid (`Compendium.<package>.<pack>.<Item|Actor>.<_id>`); `id` = `<package>.<pack>.<_id>`
      (a duplicate fails the build).
    - `category` (#8) = the folder path where the pack has folders; otherwise the pack's label from its manifest;
@@ -61,7 +62,8 @@ type, and see where each one comes from (`SR2 p.231`). Milestone 2 (character cr
      a listed set of exceptions; archetypes and embedded items may have none and show no badge.
    - **What the rules read stays** (round 2 #4): ALL of `flags.sr2e` (rule markers, `pairedWeapon`, `vehicleId` …),
      and the entry presents its provenance the way the system's pure rules look for it — `_stats: {
-     compendiumSource: <uuid> }` — since some rules classify an item by its source uuid (the core Cyberarm has no
+     compendiumSource }`: a top-level entry's own uuid; an EMBEDDED item keeps the source uuid it already has
+     (all 270 embedded Rigger 2 vehicle items have one) or none (round 3 #1) — since some rules classify an item by its source uuid (the core Cyberarm has no
      rule flag). `effects` keep their `name` and `changes`.
    - Dropped: the rest of `_stats`, `ownership`, `sort`, flags of other packages, `prototypeToken`.
 5. **Output** (#2). `dist/catalog/catalog.json` = `{ pins: [{ id, version, tag, commit }], books: [{ key, abbr,
@@ -83,7 +85,8 @@ type, and see where each one comes from (`SR2 p.231`). Milestone 2 (character cr
    build:catalog`; the `.dockerignore` lets it through) and runs `tools/check-catalog.mjs` in the build: the image
    build FAILS when the catalog is absent, empty, fails its checksum, or its pins are not exactly those of the
    current `content-pins.json` (a stale catalog). The one exception is the build argument `TEST_IMAGE=1`, which
-   builds an image LABELLED as a test image with no catalog; only CI's smoke test uses it, and the release
+   builds an image LABELLED as a test image that carries the small FIXTURE catalog from `test/fixtures/` (round 3
+   #3: the server never starts without a valid catalog, so the smoke test needs one); only CI's smoke test uses it, and the release
    milestone's publish step refuses a test image. A production server likewise refuses to start without a valid
    catalog. CI's unit tests use a small fixture catalog passed in explicitly; nothing else can run empty.
 
