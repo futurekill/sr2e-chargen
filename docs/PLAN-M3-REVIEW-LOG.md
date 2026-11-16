@@ -53,3 +53,30 @@ All 20 accepted.
 - #11, #12 an `idempotency` table with fingerprints, for every mutation, independent of revision pruning. #13 atomic per-user counters; deleted documents count until purged at 30 days.
 - #14 a dedicated node:sqlite driver with its own tests. #15, #16 one migration owner via the database's lock; restartable migrations, tested on MySQL. #17 bigint timestamps and per-dialect JSON decoding.
 - #18 backups as a separate tool service with its own mount. #19 a maintenance flag every writer checks in its transaction. #20 authenticated catalog routes; source-tag completeness fails the build.
+
+## Round 2 — Codex (REVISE, 8 findings)
+1. [Setup tokens have no generation field](</Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/docs/PLAN-M3.md:69>), yet redemption compares the token’s generation with `settings.admin_gen`; the stated bootstrap guard cannot run as specified. **Fix:** Persist a generation on each setup token and compare it in the redemption transaction.
+
+2. [The last-admin rule](</Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/docs/PLAN-M3.md:99>) has no concurrency guard: two admins can each see the other enabled, then disable each other. **Fix:** Serialize admin disable and demotion through a shared database lock and test concurrent requests.
+
+3. [Idempotency replay after a unique-insert error](</Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/docs/PLAN-M3.md:139>) fails on PostgreSQL because the transaction is then aborted; a prior read can also make the new row invisible in [MySQL’s default repeatable-read snapshot](https://dev.mysql.com/doc/refman/8.4/en/innodb-consistent-read.html). [PostgreSQL documents the failed-transaction state](https://www.postgresql.org/docs/current/errcodes-appendix.html). **Fix:** Use a conflict-safe insert and a replay lookup with a fresh visible snapshot, with concurrent tests on both dialects.
+
+4. The [idempotency fingerprint](</Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/docs/PLAN-M3.md:139>) covers “route” and body but does not explicitly cover the target document ID or expected revision; one key could replay a response for a different target. **Fix:** Fingerprint the concrete path, query parameters, body, and revision precondition.
+
+5. [Reading the maintenance flag](</Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/docs/PLAN-M3.md:117>) does not fence writers on PostgreSQL or MySQL: a writer can read `false` before `db copy` sets it and commit during the copy. The migration lock does not govern those writers. **Fix:** Make every writer acquire the same database lock before checking maintenance, then hold that lock while enabling maintenance and draining writes.
+
+6. The [M3a “portable” envelope](</Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/docs/PLAN-M3.md:125>) omits version fields required by the [parent format](</Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/docs/PLAN.md:121>) and has no document despite being stored as a character or vehicle. **Fix:** Store it as an explicitly separate draft type with a defined migration, or wait for the system schema before persisting portable bundles.
+
+7. The [500 MB quota](</Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/docs/PLAN-M3.md:151>) does not define whether `bytes_used` includes retained full-body revisions; the plan itself identifies a 20 GB per-user worst case. **Fix:** Count the document body and every retained revision, updating the counter atomically on append, prune, and purge.
+
+8. The [M3b backup procedure](</Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/docs/PLAN-M3.md:184>) does not specify a consistent database-and-assets snapshot, nightly execution, or the parent’s required CI restore test, and substitutes SQLite `backup()` for the approved `VACUUM INTO` method. **Fix:** Specify the write fence, nightly job, `VACUUM INTO`, asset manifest, and CI restore test required by the [parent plan](</Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/docs/PLAN.md:360>).
+
+VERDICT: REVISE
+
+### Claude's response (draft 3)
+All 8 accepted.
+- #1 `tokens.generation`. #2 admin-set changes lock the `admin_gen` row first, then count.
+- #3, #4 conflict-safe key insert, locking replay read, locking reads only before the first write; the fingerprint covers the concrete path, query, body and revision.
+- #5 the maintenance row is a lock every write transaction takes in share mode; setting it waits them out.
+- #6 M3a stores an explicit `draft` kind with its own schema, never something portable-looking; characters arrive as a new kind with the vendored schema.
+- #7 `bytes_used` counts every retained revision. #8 backups: nightly, under the fence, `VACUUM INTO`, asset manifest, CI restore test.

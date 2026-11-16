@@ -1,5 +1,5 @@
 # Plan: M3 — the creator skeleton
-_Draft 2 (2026-11-16), after Codex round 1 (20 findings, all accepted; docs/PLAN-M3-REVIEW-LOG.md). Implements milestone **M3** of docs/PLAN.md (approved at round 12): that plan is the
+_Draft 3 (2026-11-16), after Codex rounds 1–2 (20 + 8 findings, all accepted; docs/PLAN-M3-REVIEW-LOG.md). Implements milestone **M3** of docs/PLAN.md (approved at round 12): that plan is the
 requirement (Architecture, Security & currency, Content catalog); this one is HOW and in what order._
 
 **Started out of order, by the user's ruling (2026-11-16):** docs/PLAN.md gates M3 on the M2 derive gate. The skeleton
@@ -71,7 +71,7 @@ its origin is the only accepted `Origin`), `TRUST_PROXY` (the proxy's address/CI
   case-insensitively via a normalised column, password_hash, role admin|user, disabled_at, failed_logins,
   locked_until, doc_count, bytes_used, created_at), `sessions` (id, user_id, token_hash unique,
   csrf_hash, created_at, last_seen_at, expires_at), `tokens` (id, kind invite|setup|reset, token_hash unique, user_id
-  nullable, role, created_by, expires_at, used_at), `documents` (id, owner_id, kind character|vehicle, name, revision,
+  nullable, role, generation (setup tokens: the `admin_gen` they were issued under), created_by, expires_at, used_at), `documents` (id, owner_id, kind draft (character|vehicle arrive with the schema, §5), name, revision,
   body, bytes, created_at, updated_at, deleted_at), `revisions` (document_id, revision, body, bytes, note, created_at;
   unique (document_id, revision)), `audit` (id, at,
   actor_id, action, target, ip — no secrets).
@@ -99,7 +99,7 @@ its origin is the only accepted `Origin`), `TRUST_PROXY` (the proxy's address/CI
 - **First admin and recovery** (round 1 #5, #6): `settings.admin_gen` is a counter. `bootstrap` is allowed only while
   no ENABLED admin exists; it revokes earlier unused setup tokens and issues one carrying the current generation.
   Redeeming a setup token does, in its transaction, `UPDATE settings SET value = value + 1 WHERE key = 'admin_gen' AND
-  value = <the token's generation>` — exactly one row, or the redemption fails — so two links from two racing
+  value = <tokens.generation of the redeemed row>` (round 2 #1: the generation is a column on the token) — exactly one row, or the redemption fails — so two links from two racing
   `bootstrap` runs can create only ONE admin. Disabling (or demoting) the LAST enabled admin is refused, in the web
   app and the CLI alike; if it happens anyway (a direct database edit), `bootstrap` works again.
 - **Sessions**: server-side rows. The cookie `__Host-sid` (HttpOnly, Secure, SameSite=Lax, Path=/) carries 32 random
@@ -114,34 +114,48 @@ its origin is the only accepted `Origin`), `TRUST_PROXY` (the proxy's address/CI
 - **Throttling**: `@fastify/rate-limit` per IP on the auth routes (10/min); per-account lockout in the database —
   after 5 consecutive failures the account locks for 1 minute, doubling to a 1-hour cap, reset on success. The lockout
   answer is the same generic failure.
-- **Maintenance flag** (round 1 #19): `settings.maintenance`; EVERY writer (routes and CLI) reads it inside its
-  write transaction and refuses while it is set, so M3b's `db copy` sets it, waits for the open write transactions
-  to finish (the same lock the migrations use) and only then copies.
+- **The write fence** (round 1 #19, round 2 #5): `settings.maintenance` is a ROW LOCK, not just a value. EVERY write
+  transaction (routes and CLI) begins with a locking read of that row (`SELECT … FOR SHARE` on Postgres and MySQL;
+  on SQLite the transaction is `BEGIN IMMEDIATE`, which already serialises writers) and refuses while it is set.
+  Setting it is an `UPDATE` of the same row: it waits for every transaction holding the share lock to finish, and
+  every later writer waits for it and then reads "on" — so once the update commits, no write is in flight and none
+  can start. M3b's `db copy` and the backup snapshot use it. Write paths use LOCKING reads only before their first
+  write (a plain read would pin a MySQL repeatable-read snapshot and hide later commits; round 2 #3).
+- **Admin-set changes are serialised** (round 2 #2): disable, enable, demote and promote take `settings.admin_gen`
+  `FOR UPDATE` first (SQLite: `BEGIN IMMEDIATE`), THEN count the enabled admins, then write — two admins disabling
+  each other queue on the row, and the second sees one admin left and is refused. Tested with concurrent requests on
+  every dialect.
 - **Admin CLI** (in the image, `chargen admin …`, talks to the database directly): `bootstrap` (only while no admin
   exists; prints a one-time setup link), `invite [--role]`, `invites` (list), `revoke-invite <id>`, `users`,
   `disable <user>`, `enable <user>`, `reset-link <user>`. Admin routes in the web app do the same for a signed-in admin.
 - Every auth event goes to `audit` (login ok/failed/locked, invite created/redeemed/revoked, reset, disable).
 
 ## 5. The library
-- A document = one portable bundle (the system's `sr2e-portable` JSON, docs/PLAN-portable.md there) stored whole in
-  `body`. **No real bundle is accepted until its schema exists** (round 1 #2, #3: the parent requires full schema
+- The library's target is one portable bundle per document (the system's `sr2e-portable` JSON), stored whole in
+  `body`. **No portable bundle is accepted until its schema exists** (round 1 #2, #3: the parent requires full schema
   validation of untrusted JSON and view-only handling of newer versions, and the server must not invent a second
-  schema). So in M3a the ONLY body the server stores is the empty envelope, validated strictly
-  (`additionalProperties: false`): `{ schema: "sr2e-portable", schemaVersion: 1, metadata: { name, notes },
-  documents: [] }`, ≤ 2 MB, parsed with a prototype-pollution-safe reviver (`__proto__`/`constructor`/`prototype`
-  keys rejected). That exercises the whole library (create, edit, revisions, conflict, quota, download) with nothing
-  unvalidated at rest. **Import and real bundles are a gate, not a stub**: they turn on when the system publishes
-  `portable.schema.json` (system M1a), vendored here at a pinned version, with the D10 rule (envelope, system, Foundry
-  and module versions; anything newer than this build understands is VIEW-ONLY, never edited). Import then is the
-  client reading the file and POSTing JSON under the same body limit (round 1 #10) — no multipart parser.
+  schema) — and M3a does not store something that only LOOKS portable (round 2 #6). In M3a the one document kind is
+  an explicit **draft**: `kind = "draft"`, body `{ schema: "sr2e-chargen-draft", schemaVersion: 1, name, notes }`
+  validated strictly (`additionalProperties: false`, ≤ 2 MB, parsed with a prototype-pollution-safe reviver:
+  `__proto__`/`constructor`/`prototype` keys rejected). It exercises the whole library (create, edit, revisions,
+  conflict, quota, download) with nothing unvalidated at rest. Drafts are never converted: when characters arrive
+  they are a new kind beside drafts, so there is nothing to migrate.
+- **Characters, vehicles and import are a gate, not a stub**: kinds `character`/`vehicle` and the import route turn
+  on when the system publishes `portable.schema.json` (system M1a), vendored here at a pinned version, with the D10
+  rule (envelope, system, Foundry and module versions; anything newer than this build understands is VIEW-ONLY, never
+  edited). Import then is the client reading the file and POSTing JSON under the same body limit (round 1 #10) — no
+  multipart parser.
 - **Authorization in one place**: `ownedDocument(db, userId, id)` returns the row or null; every document route goes
   through it; someone else's document and a missing one are the same 404. Admins have no access to others' documents.
 - **Every mutation is idempotent and conditional** (round 1 #11, #12) — create, update, delete, restore, restore a
   revision: each carries an `Idempotency-Key` (UUID), and every one but create the `revision` the client read. In ONE
-  transaction the server FIRST inserts `idempotency (user_id, key, fingerprint)` (fingerprint = SHA-256 of method,
-  route, and body). A unique conflict means the key was used: it re-reads the row — same fingerprint → the stored
-  status and response are returned (also when the first request is still committing: the insert waits on it);
-  a different fingerprint → 422 "that key was used for another request". Otherwise
+  transaction, after the fence, the server claims the key with a CONFLICT-SAFE insert (round 2 #3: `ON CONFLICT DO
+  NOTHING` on Postgres and SQLite, `INSERT IGNORE` on MySQL — a plain insert's unique error would abort a Postgres
+  transaction) of `idempotency (user_id, key, fingerprint)`; it waits for a concurrent holder of the same key to
+  commit or roll back. The fingerprint (round 2 #4) is the SHA-256 of the method, the CONCRETE path (so the target
+  document id), the query, the body and the revision precondition. Zero rows inserted means the key was used: the
+  row is read with a locking read (current data on every dialect) — same fingerprint → the stored status and
+  response are returned; a different fingerprint → 422 "that key was used for another request". Otherwise
   `UPDATE documents SET …, revision = revision + 1 WHERE id = ? AND owner_id = ? AND revision = ?` must affect one row
   (else 409 "someone changed this — reload"), the new body is appended to `revisions`, and the response is stored on
   the key row. Key rows live 24 hours, independent of revision pruning. Delete is soft (`deleted_at`).
@@ -149,7 +163,10 @@ its origin is the only accepted `Origin`), `TRUST_PROXY` (the proxy's address/CI
   update, delete/restore, revision list, get one revision, restore a revision (a NEW revision with the old body),
   download (`Content-Disposition: attachment`, JSON only in M3a).
 - **Quotas, enforced atomically** (round 1 #13): 200 documents and 500 MB per user, 50 revisions kept per document
-  (older ones pruned in the same transaction, the first always kept). `users.doc_count` / `bytes_used` are counters
+  (older ones pruned in the same transaction, the first always kept). `bytes_used` is the bytes of EVERY retained
+  revision of every document the user owns, deleted ones included (round 2 #7; the current body is its latest
+  revision, counted once), raised on append and lowered on prune and purge in the same transaction — so 500 MB is a
+  real ceiling, not 20 GB. `users.doc_count` / `bytes_used` are counters
   changed by conditional updates in the mutation's transaction (`UPDATE users SET doc_count = doc_count + 1 WHERE id
   = ? AND doc_count < 200` must affect one row), so two concurrent creates can't both pass a count. Soft-deleted
   documents STILL count; they are purged (rows, revisions, counters) 30 days after deletion by a sweep at startup
@@ -183,8 +200,11 @@ document body); body limit 2.5 MB on document routes, 16 KB elsewhere. Errors ne
   fail on High/Critical), SBOM, cosign and the GHCR push are M3b. The image is never pushed public by default.
 - **Backups (M3b) fit the read-only image** (round 1 #18): the app image has no shell and no dump tools, so backups
   are a SEPARATE compose service from a small tool image with its own `BACKUP_DIR` mount (a different volume or host
-  path): SQLite through `node:sqlite`'s online `backup()`, Postgres/MySQL through `pg_dump`/`mysqldump` in that tool
-  image, plus the asset files and a checksum manifest; `backup verify` restores into a scratch database there.
+  path), as the parent plan specifies (round 2 #8): it runs NIGHTLY (the service's own schedule loop; documented
+  host-cron alternative); each run takes the write fence, snapshots the database (`VACUUM INTO` for SQLite,
+  `pg_dump`/`mysqldump` otherwise) and copies the asset files under the same fence, releases it, and writes a
+  manifest of asset checksums beside the snapshot — one consistent set. `backup verify` restores into a scratch
+  database and compares checksums, and a CI job runs backup → restore → compare on every dialect.
 - Renovate config with a 7-day minimum release age.
 
 ## 9. Tests (node:test)
