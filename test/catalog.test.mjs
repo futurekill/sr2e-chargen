@@ -61,6 +61,10 @@ test("book wording is moved out of `system`, tagged with its book, and stored as
   assert.deepEqual(rope.text["flags.drug.notes"], { book: "sr2", value: "A note the system wrote about this invented drug." });
   assert.equal(JSON.stringify(c.entries).includes("<p>"), false);
   assert.equal(plain("<p>a &lt;b&gt; &#65;&nbsp;c</p><script>x</script>"), "a <b> A c\nx");
+  assert.equal(plain("<scr<script>ipt>alert(1)</scr</script>ipt>"), "ipt>alert(1)ipt>");   // nested tags leave no tag behind
+  assert.equal(/<\s*script/i.test(plain("<<script>script>x</script>")), false);
+  assert.equal(plain("kept <b>bold</b> and an unclosed <img src=x"), "kept bold and an unclosed");
+  assert.equal(plain("&amp;lt;b&amp;gt;"), "&lt;b&gt;");                                   // decoded once, never twice
 });
 
 const broken = (fn) => { const r = fixtureRepos(); fn(r); return () => assemble(r, BOOKS); };

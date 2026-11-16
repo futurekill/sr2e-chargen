@@ -15,7 +15,8 @@ import { readPinned, readFile, tagCommit } from "./content.mjs";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const PATHS = JSON.parse(readFileSync(join(ROOT, "tools/string-paths.json"), "utf8"));
-const asPattern = (p) => new RegExp(`^${p.replace(/[.[\]]/g, "\\$&").replace(/\{@\}/g, "(@[A-Za-z]+)?")}$`);
+/** A path from string-paths.json → a RegExp: every character literal, except the `{@}` marker (an optional @variant). */
+const asPattern = (p) => new RegExp(`^${p.split("{@}").map(part => part.replace(/[\\^$.*+?()[\]{}|]/g, "\\$&")).join("(@[A-Za-z]+)?")}$`);
 const CLASSES = ["text", "category", "short", "formula"].map(kind => ({ kind, max: PATHS[kind].max ?? null,
   values: PATHS[kind].values ? new Set(PATHS[kind].values) : null, paths: PATHS[kind].paths.map(asPattern) }));
 const NO_BOOK = new Set(PATHS.noBook.ids);
@@ -39,13 +40,25 @@ function dataProblem(cls, value) {
   return null;
 }
 
-/** Compendium HTML → plain text (the client renders text only; nothing here is ever interpreted as markup). */
+/**
+ * Compendium HTML → plain text (the client renders text only; nothing here is ever interpreted as markup).
+ * Tags are removed by a scanner, not a pattern: everything from `<` to the next `>` goes, so no arrangement of
+ * nested or broken tags can leave one behind. Block ends become line breaks. Entities are decoded LAST.
+ */
 export function plain(html) {
+  const src = String(html ?? "");
+  let out = "";
+  for (let i = 0; i < src.length; i++) {
+    if (src[i] !== "<") { out += src[i]; continue; }
+    const end = src.indexOf(">", i);
+    if (end < 0) break;                                   // an unclosed tag: the rest is dropped
+    if (/^<\s*(br|\/p|\/div|\/li|\/h[1-6]|\/tr)\b/i.test(src.slice(i, end + 1))) out += "\n";
+    i = end;
+  }
   const ENT = { amp: "&", lt: "<", gt: ">", quot: "\"", apos: "'", nbsp: " ", mdash: "—", ndash: "–", hellip: "…", times: "×", divide: "÷", yen: "¥" };
-  return String(html ?? "")
-    .replace(/<\s*(br|\/p|\/div|\/li|\/h[1-6]|\/tr)\s*\/?>/gi, "\n").replace(/<[^>]*>/g, "")
-    .replace(/&#(\d+);/g, (_m, n) => String.fromCodePoint(Number(n))).replace(/&#x([0-9a-f]+);/gi, (_m, n) => String.fromCodePoint(parseInt(n, 16)))
-    .replace(/&([a-z]+);/gi, (m, n) => ENT[n.toLowerCase()] ?? m)
+  return out
+    .replace(/&(#\d+|#x[0-9a-f]+|[a-z]+);/gi, (m, n) => (n[0] !== "#" ? ENT[n.toLowerCase()] ?? m
+      : String.fromCodePoint(n[1].toLowerCase() === "x" ? parseInt(n.slice(2), 16) : Number(n.slice(1)))))
     .replace(/[ \t]+/g, " ").replace(/ *\n */g, "\n").replace(/\n{3,}/g, "\n\n").trim();
 }
 
