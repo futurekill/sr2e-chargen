@@ -140,7 +140,7 @@ test("the pull request body lists every book; a repair says so; the token never 
   const changes = [{ dir: "sr2e-x", from: { tag: "v1.0.0", commit: "a".repeat(40) }, to: { tag: "v1.1.0", commit: "b".repeat(40) } }];
   const body = prBody({ pins, report: { changes }, outcomes: { sync: "success", build: "failure", verify: "success", test: "skipped" }, runUrl: "https://x/run/1" });
   assert.match(body, /\| sr2e-x \| v1\.0\.0 \(`aaaaaaaaaaaa`\) \| \*\*v1\.1\.0 \(`bbbbbbbbbbbb`\)\*\* \|/);
-  assert.match(body, /\| sr2e-y \| v2\.0\.0 \(`cccccccccccc`\) \| unchanged \|/);   // an unchanged book is listed too
+  assert.match(body, /\| sr2e-y \| v2\.0\.0 \(`cccccccccccc`\) \| v2\.0\.0 \(`cccccccccccc`\) \(unchanged\) \|/);   // every book: its old and new version
   assert.match(body, /\| Catalog build \| \*\*FAILED\*\* \|/);
   assert.match(body, /tools\/string-paths\.json/);
   assert.match(prBody({ pins, report: { changes: [] }, outcomes: {}, runUrl: "u" }), /^\*\*Repair:\*\*/);

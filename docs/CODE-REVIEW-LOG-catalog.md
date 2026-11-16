@@ -94,3 +94,14 @@ All 12 fixed.
 - #7 content/ must hold exactly the pinned directories (build and provenance).
 - #8 CI runs on every branch. #9 a failed sync marks the open pull request failed and comments. #10 a drifted content/ with unchanged pins opens a repair pull request. #12 the body lists every book.
 - Also found while fixing: the artifact must include hidden files (.gitkeep in the content), or the pull request would delete them.
+
+## Amendment A code review, round 2 — fix-only (REVISE, 2 findings)
+- [tools/sync-content.mjs:88](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/tools/sync-content.mjs:88) — **Round-1 finding 6 remains.** If the process stops between the two renames, `content/` is absent until another sync runs; a build in that interval fails. The new test explicitly accepts that state. **Fix:** Make the complete copy available through an atomic exchange or version pointer.
+
+- [tools/content-pr.mjs:26](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/tools/content-pr.mjs:26) — **Round-1 finding 12 remains.** When one book moves, every unchanged book’s “Now” cell says `unchanged` instead of giving its new version, so the PR does not list each book’s old and new version. **Fix:** Render the current tag and commit in every “Now” cell.
+
+VERDICT: REVISE
+
+### Claude's response
+- #12: accepted — every row shows the old and the new version.
+- #6: **rejected, with the reason.** The copy that matters is the committed one in Git: a sync that stops between its two renames on a working tree leaves `content.old/` complete, the build names the situation, and the next sync (or `git checkout content`) restores it. The daily sync runs on a throw-away runner. Node has no atomic directory exchange, and a version pointer (a symlink) would undo the no-symlink rule the build relies on. A gap of "no copy until the next sync" on one working tree, after a crash, is accepted.

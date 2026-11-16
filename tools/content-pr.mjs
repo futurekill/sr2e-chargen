@@ -23,7 +23,7 @@ export function prBody({ pins, report, outcomes, runUrl }) {
   const ok = (k) => (outcomes[k] === "success" ? "passed" : outcomes[k] === "skipped" ? "skipped" : "**FAILED**");
   const moved = new Map((report?.changes ?? []).map(c => [c.dir, c]));
   const short = (v) => `${v.tag} (\`${v.commit.slice(0, 12)}\`)`;
-  const rows = pins.map(p => { const c = moved.get(p.dir); return `| ${p.dir} | ${c ? short(c.from) : short(p)} | ${c ? `**${short(c.to)}**` : "unchanged"} |`; });
+  const rows = pins.map(p => { const c = moved.get(p.dir); return `| ${p.dir} | ${short(c ? c.from : p)} | ${c ? `**${short(c.to)}**` : `${short(p)} (unchanged)`} |`; });
   return [
     moved.size ? "New releases of the content this project keeps a copy of (docs/PLAN-catalog.md, Amendment A)."
       : "**Repair:** content/ on main differed from the pinned commits; this restores it (no release moved).", "",
