@@ -51,3 +51,46 @@ VERDICT: REVISE
 Accepted: a data string that contains a sentence word (the, is, are, gains, with …) is refused too, so short sentences split by punctuation don't pass. Checked against the pinned content: no data string uses one. The real catalog is unchanged.
 
 The text rule's purpose is that book prose can't sit untagged in an entry. Three rounds have tightened it from "a length limit" to "listed keys, a length, one line, no sentence". Further rounds on this one rule are not planned: the content repositories are the owner's own, and every change to them is reviewed there.
+
+## Amendment A code review, round 1 (REVISE, 12 findings)
+## Findings, ordered by severity
+
+1. **Write token can leak into logs — [tools/content-pr.mjs:48](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/tools/content-pr.mjs:48), [60](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/tools/content-pr.mjs:60), [77](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/tools/content-pr.mjs:77).** A failed `git push` makes Node include its arguments, including the base64 encoded authorization header, in the error message printed to the Actions log. **Fix:** Pass Git authentication through child-process environment configuration and redact errors before logging.
+
+2. **A failed guard fetch can overwrite a person’s branch — [tools/content-pr.mjs:50](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/tools/content-pr.mjs:50).** A transient fetch or authentication error is treated exactly like an absent `content-sync` branch; a later successful `--force` push can replace human commits without checking them. **Fix:** Distinguish “branch absent” from every other fetch error and abort on the latter.
+
+3. **The guard has a race — [tools/content-pr.mjs:50](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/tools/content-pr.mjs:50), [60](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/tools/content-pr.mjs:60).** Someone can push to `content-sync` after the guard fetch and before the unconditional force push; that commit is lost. Workflow concurrency does not serialize a person’s push. **Fix:** Push with `--force-with-lease` against the exact fetched branch head.
+
+4. **The trailer does not establish who made a commit — [tools/content-pr.mjs:37](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/tools/content-pr.mjs:37).** A person’s commit containing `Content-Sync: bot` passes `onlyOurs` and is then overwritten. **Fix:** Guard against a recorded bot-produced commit SHA, and reject branch commits that cannot be authenticated as that run’s output.
+
+5. **The write token is scoped to the whole job — [.github/workflows/content-sync.yml:17](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/.github/workflows/content-sync.yml:17).** Amendment A says only publish receives it, but earlier actions run in a job with write permissions; [GitHub documents](https://docs.github.com/en/actions/concepts/security/github_token) that actions can access `github.token` even when it is not explicitly passed. **Fix:** Put sync and checks in a read-only job, then give a separate publish job write permissions.
+
+6. **The replacement is not atomic — [tools/sync-content.mjs:76](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/tools/sync-content.mjs:76).** If the process stops or the second rename fails after `content/` becomes `content.old`, there is no `content/`; this contradicts A2’s “never half a copy.” **Fix:** Use an atomic directory exchange or an atomic pointer to a complete version, with recovery for interrupted replacement.
+
+7. **Changes at the root of `content/` evade both checks — [tools/content.mjs:101](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/tools/content.mjs:101), [tools/verify-content.mjs:46](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/tools/verify-content.mjs:46).** Add `content/extra.json` or an unpinned directory: the build and provenance check inspect only pinned subdirectories, so CI passes despite A3’s “no unlisted file”; Docker also sends it in the build context. **Fix:** Enumerate the `content/` root and require exactly the pinned directory names.
+
+8. **CI does not run on every push — [.github/workflows/ci.yml:4](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/.github/workflows/ci.yml:4).** A push changing `content/` on a branch without a PR receives no catalog build or provenance check, contrary to A5. **Fix:** Remove the `main` restriction from the `push` trigger.
+
+9. **A failed second sync leaves a prior PR showing stale success — [tools/content-pr.mjs:44](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/tools/content-pr.mjs:44).** If an open sync PR has a successful status and the next daily sync fails during fetch, publish exits without updating that PR or its status; only the workflow run shows failure. **Fix:** On sync failure, mark the existing branch head failed and update the open PR’s check summary without changing its branch.
+
+10. **A repair with unchanged pins is discarded — [tools/content-pr.mjs:47](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/tools/content-pr.mjs:47).** If a committed content file and its record drift from the pinned upstream commit, sync restores them, but `report.changes` is empty and publish opens no repair PR. **Fix:** Publish whenever the staged `content/` or pins differ from `main`, even when no release moved.
+
+11. **The atomicity test fails before replacement begins — [test/content.test.mjs:58](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/test/content.test.mjs:58).** Its moved-tag case is rejected during the initial pin loop, so it cannot detect the missing-`content/` failure between the two renames. **Fix:** Inject a failure at the replacement boundary and assert that a complete old or new copy remains available.
+
+12. **The PR body omits unchanged books — [tools/content-pr.mjs:24](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/tools/content-pr.mjs:24).** When one book updates, the body lists only that book, while A6 calls for each book’s old and new version. **Fix:** Generate rows from every pin, using the change record only to supply prior values.
+
+I ran the permitted content test. Three tests passed; six could not run because this read-only environment rejects temporary-directory creation (`EPERM`). That result does not validate the failing paths above.
+
+VERDICT: REVISE
+
+### Claude's response
+All 12 fixed.
+- #1 git authenticates through the environment (GIT_CONFIG_*), never an argument; every printed error is redacted.
+- #2 the branch is looked up with `ls-remote`: "absent" and "failed" are different; a failure stops the run.
+- #3 the push is leased against the head that was checked (`--force-with-lease`).
+- #4 the guard no longer trusts a trailer: the head must carry the commit status that only this workflow's token writes (creator github-actions[bot]) and be the one commit beyond main.
+- #5 two jobs: `sync` (read-only token) and `publish` (write), with the copy handed over as an artifact.
+- #6 #11 `recoverContent` restores content.old after a stop between the two renames; a test injects the stop.
+- #7 content/ must hold exactly the pinned directories (build and provenance).
+- #8 CI runs on every branch. #9 a failed sync marks the open pull request failed and comments. #10 a drifted content/ with unchanged pins opens a repair pull request. #12 the body lists every book.
+- Also found while fixing: the artifact must include hidden files (.gitkeep in the content), or the pull request would delete them.

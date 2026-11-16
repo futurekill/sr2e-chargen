@@ -13,7 +13,7 @@ import { execFileSync } from "node:child_process";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { listFiles, walkFiles, blobId, checkPin, tagCommit, WANTED, RECORD } from "./content.mjs";
+import { listFiles, walkFiles, blobId, checkPin, tagCommit, checkContentRoot, WANTED, RECORD } from "./content.mjs";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -43,6 +43,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   const scratch = local ? null : mkdtempSync(join(tmpdir(), "sr2e-verify-"));
   const problems = [];
   try {
+    checkContentRoot(join(ROOT, "content"), pins);
     for (const pin of pins) {
       checkPin(pin);
       let repoDir;

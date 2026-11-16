@@ -50,10 +50,20 @@ function writeCopy(dir, pin, files, ids) {
 }
 
 /**
+ * Finish an interrupted swap: `content/` missing while `content.old/` is there means the process stopped between the
+ * two renames — the old copy is complete, so it goes back. Called first by every sync.
+ */
+export function recoverContent(contentDir, fs = { rename: renameSync }) {
+  if (!existsSync(contentDir) && existsSync(`${contentDir}.old`)) fs.rename(`${contentDir}.old`, contentDir);
+  rmSync(`${contentDir}.staging`, { recursive: true, force: true });
+}
+
+/**
  * The whole sync. `pins` is changed in place when `latest` moves one. Returns `{ changes: [{ dir, repo, from, to }] }`.
  * `repoDirOf(pin)` gives the local repository to read (after any fetch).
  */
-export async function sync({ pins, contentDir, repoDirOf, latest = false, fetchInto = null }) {
+export async function sync({ pins, contentDir, repoDirOf, latest = false, fetchInto = null, fs = { rename: renameSync } }) {
+  recoverContent(contentDir, fs);
   const changes = [];
   for (const pin of pins) {
     checkPin(pin);
@@ -73,9 +83,10 @@ export async function sync({ pins, contentDir, repoDirOf, latest = false, fetchI
     writeCopy(join(staging, pin.dir), pin, files, ids);
   }
   for (const pin of pins) readVendored(staging, pin);
+  // The swap: two renames. A stop between them leaves only content.old — complete — which recoverContent restores.
   rmSync(old, { recursive: true, force: true });
-  if (existsSync(contentDir)) renameSync(contentDir, old);
-  renameSync(staging, contentDir);
+  if (existsSync(contentDir)) fs.rename(contentDir, old);
+  fs.rename(staging, contentDir);
   rmSync(old, { recursive: true, force: true });
   return { changes };
 }

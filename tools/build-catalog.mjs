@@ -11,7 +11,7 @@ import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { readVendored, shapeRepo } from "./content.mjs";
+import { readVendored, shapeRepo, checkContentRoot } from "./content.mjs";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const PATHS = JSON.parse(readFileSync(join(ROOT, "tools/string-paths.json"), "utf8"));
@@ -183,6 +183,7 @@ function booksOf(system) {
 }
 
 export function buildCatalog({ pins, contentDir }) {
+  checkContentRoot(contentDir, pins);
   const repos = pins.map(pin => shapeRepo(pin, readVendored(contentDir, pin)));
   const system = repos[0];
   if (system.id !== "sr2e") throw new Error("the first pin must be the system (sr2e)");

@@ -1,5 +1,7 @@
-# The daily content sync (docs/PLAN-catalog.md, Amendment A6): when a content repository has a new release, open (or
-# update) ONE pull request with the new copy in content/ and the new pins. Actions pinned to commit SHAs.
+# The daily content sync (docs/PLAN-catalog.md, Amendment A6): when a content repository has a new release — or
+# content/ on main has drifted from its pins — open (or update) ONE pull request with the copy and the pins.
+# Two jobs: `sync` has a READ-ONLY token and does everything that touches upstream data; `publish` alone can write,
+# and runs only this repository's own script on the handed-over files. Actions pinned to commit SHAs.
 name: Content sync
 on:
   schedule:
@@ -15,16 +17,15 @@ jobs:
   sync:
     runs-on: ubuntu-24.04
     permissions:
-      contents: write          # push the content-sync branch (publish step only)
-      pull-requests: write     # open or update its pull request (publish step only)
-      statuses: write          # the check result on the branch head (publish step only)
+      contents: read
+    outputs:
+      outcomes: ${{ steps.result.outputs.outcomes }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with: { persist-credentials: false, fetch-depth: 0 }
+        with: { persist-credentials: false }
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with: { node-version: "26.13.1", cache: npm }
       - run: npm ci
-      # No token in these steps: the content repositories are public, and nothing upstream reaches a shell.
       - id: sync
         continue-on-error: true
         run: node tools/sync-content.mjs --latest --fetch --report sync-report.json
@@ -40,12 +41,44 @@ jobs:
         if: steps.sync.outcome == 'success'
         continue-on-error: true
         run: npm test
-      - name: Publish the pull request
+      - id: result
         if: always()
+        # Step outcomes are fixed words (success, failure, skipped, cancelled): nothing else enters this string.
+        run: echo 'outcomes={"sync":"${{ steps.sync.outcome }}","build":"${{ steps.build.outcome }}","verify":"${{ steps.verify.outcome }}","test":"${{ steps.test.outcome }}"}' >> "$GITHUB_OUTPUT"
+      - if: steps.sync.outcome == 'success'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: content-sync
+          path: |
+            content/
+            content-pins.json
+            sync-report.json
+          retention-days: 1
+          include-hidden-files: true   # the content has .gitkeep files: the copy must keep them
+
+  publish:
+    needs: sync
+    if: always()
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write          # push the content-sync branch
+      pull-requests: write     # open or update its pull request
+      statuses: write          # the check result on the branch head
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false, fetch-depth: 0 }
+      - if: contains(needs.sync.outputs.outcomes, '"sync":"success"')
+        run: rm -rf content
+      - if: contains(needs.sync.outputs.outcomes, '"sync":"success"')
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with: { name: content-sync, path: . }
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with: { node-version: "26.13.1" }
+      - name: Publish the pull request
         env:
           GH_TOKEN: ${{ github.token }}
-          OUTCOMES: '{"sync":"${{ steps.sync.outcome }}","build":"${{ steps.build.outcome }}","verify":"${{ steps.verify.outcome }}","test":"${{ steps.test.outcome }}"}'
+          OUTCOMES: ${{ needs.sync.outputs.outcomes }}
         run: node tools/content-pr.mjs
       - name: Fail the run when a check failed
-        if: steps.sync.outcome != 'success' || steps.build.outcome == 'failure' || steps.verify.outcome == 'failure' || steps.test.outcome == 'failure'
+        if: contains(needs.sync.outputs.outcomes, 'failure') || !contains(needs.sync.outputs.outcomes, '"sync":"success"')
         run: exit 1

@@ -118,6 +118,16 @@ export function readVendored(contentDir, pin) {
   return files;
 }
 
+/** content/ holds exactly one directory per pin and nothing else (Finder's .DS_Store aside). */
+export function checkContentRoot(contentDir, pins) {
+  if (!existsSync(contentDir)) throw new Error(`no content/ — run: npm run content:sync${existsSync(`${contentDir}.old`) ? " (an interrupted sync left content.old: the sync restores it)" : ""}`);
+  const want = new Set(pins.map(p => p.dir)), have = readdirSync(contentDir).filter(n => n !== ".DS_Store");
+  const extra = have.filter(n => !want.has(n)), missing = [...want].filter(n => !have.includes(n));
+  if (extra.length) throw new Error(`content/ holds ${extra.join(", ")}, which no pin names`);
+  if (missing.length) throw new Error(`content/ has no copy of ${missing.join(", ")} (run: npm run content:sync)`);
+  for (const n of have) if (!lstatSync(join(contentDir, n)).isDirectory()) throw new Error(`content/${n} is not a directory`);
+}
+
 /** Files → what the catalog build reads: `{ id, dir, version, tag, commit, manifest, packs, docs, files }`. */
 export function shapeRepo(pin, files) {
   const manifestBytes = files.get("system.json") ?? files.get("module.json");

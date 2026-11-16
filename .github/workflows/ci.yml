@@ -1,7 +1,7 @@
 # CI (docs/PLAN-M3.md §8). Actions are pinned to commit SHAs (checked 2026-11-16); permissions are least-privilege.
 name: CI
 on:
-  push: { branches: [main] }
+  push: {}                       # every branch (docs/PLAN-catalog.md A5: content/ is checked wherever it changes)
   pull_request: { branches: [main] }
 permissions:
   contents: read
