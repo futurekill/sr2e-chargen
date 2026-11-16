@@ -86,7 +86,7 @@ export async function buildApp({ ctx, config, logger }) {
   if (hasClient) await app.register(fastifyStatic, { root: clientDir, wildcard: false, index: false,
     setHeaders: (reply, path) => reply.header("cache-control", path.includes("/assets/") ? "public, max-age=31536000, immutable" : "no-cache") });
   app.setNotFoundHandler((req, reply) => {
-    if (hasClient && req.method === "GET" && !req.url.startsWith("/api/") && !req.url.startsWith("/assets/")) return reply.header("cache-control", "no-cache").sendFile("index.html");
+    if (hasClient && req.method === "GET" && req.url !== "/api" && !req.url.startsWith("/api/") && !req.url.startsWith("/api?") && !req.url.startsWith("/assets/")) return reply.header("cache-control", "no-cache").sendFile("index.html");
     return fail(reply, 404, "Nothing here.", "not-found");
   });
 

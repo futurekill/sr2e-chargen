@@ -3,7 +3,7 @@
   import { go } from "../lib/router.svelte.js";
   let { id } = $props();
   let doc = $state(null), name = $state(""), notes = $state(""), revisions = $state([]), error = $state(""), saved = $state(""), busy = $state(false);
-  let saveKey = crypto.randomUUID();   // one key per SAVE attempt: a retry of the same save reuses it
+  let unsure = false;   // a save got no answer: it may or may not have landed
   const when = (ms) => new Date(ms).toLocaleString();
   const dirty = $derived(doc && (name !== doc.body.name || notes !== doc.body.notes));
 
@@ -17,14 +17,17 @@
   }
   async function save(ev) {
     ev.preventDefault();
-    busy = true; saved = "";
+    busy = true; saved = ""; error = "";
     try {
-      await mutate("PUT", `/api/documents/${id}`, { name: name.trim(), notes, revision: doc.document.revision }, saveKey);
-      saveKey = crypto.randomUUID();
+      // After a save that got no answer, find out where the draft stands first (the boxes keep what was typed):
+      // if that save did land, this one goes on top of it instead of colliding with it.
+      if (unsure) { doc = await get(`/api/documents/${id}`); unsure = false; }
+      await mutate("PUT", `/api/documents/${id}`, { name: name.trim(), notes, revision: doc.document.revision });
       await load(); saved = "Saved.";
     } catch (err) {
-      error = err.code === "stale" ? "This draft changed somewhere else. Reload to see it — your text is still in the boxes." : err.message;
-      if (err.code !== "network") saveKey = crypto.randomUUID();
+      if (err.code === "network") unsure = true;
+      error = err.code === "stale" ? "This draft changed somewhere else. Reload to see it — your text is still in the boxes."
+        : err.code === "network" ? "The line dropped, so the save may not have landed. Your text is still here: press Save again." : err.message;
     }
     busy = false;
   }
@@ -49,14 +52,20 @@
   <h1>{doc.document.name}</h1>
   <p class="muted">{doc.document.kind} · revision {doc.document.revision} · saved {when(doc.document.updatedAt)}</p>
   <form class="stack wide" onsubmit={save}>
-    <label><span>Name</span><input bind:value={name} maxlength="200" required></label>
-    <label><span>Notes</span><textarea bind:value={notes} maxlength="100000"></textarea></label>
+    <!-- Locked while a save is in flight: what comes back replaces the boxes, so nothing typed meanwhile can be lost. -->
+    <label><span>Name</span><input bind:value={name} maxlength="200" required readonly={busy}></label>
+    <label><span>Notes</span><textarea bind:value={notes} maxlength="100000" readonly={busy}></textarea></label>
     <div class="row">
       <button disabled={busy || !dirty || !name.trim()}>{busy ? "Saving…" : "Save"}</button>
       <a class="button quiet" href={`/api/documents/${id}/download`} download>Download JSON</a>
       <button type="button" class="danger" onclick={remove}>Delete</button>
     </div>
   </form>
+
+  <details>
+    <summary>Stored JSON</summary>
+    <pre class="json">{JSON.stringify(doc.body, null, 2)}</pre>
+  </details>
 
   <h2>History</h2>
   <ul class="list">

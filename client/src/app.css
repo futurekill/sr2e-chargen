@@ -45,3 +45,6 @@ form.stack.wide { max-width: none; }
 .grow { flex: 1 1 14rem; }
 input.check { width: 1.15rem; height: 1.15rem; accent-color: var(--accent); }
 select { width: auto; }
+details { margin: 1.5rem 0 0; }
+summary { cursor: pointer; color: var(--accent); width: fit-content; }
+details[open] > summary { margin-bottom: .6rem; }

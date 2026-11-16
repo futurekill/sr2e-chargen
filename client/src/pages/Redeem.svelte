@@ -1,9 +1,9 @@
 <script>
   import { post } from "../lib/api.js";
-  import { takeFragmentSecret } from "../lib/router.svelte.js";
+  import { linkSecret } from "../lib/router.svelte.js";
   let { mode, onDone } = $props();
-  // The secret arrives in the URL fragment (never sent to a server) and is wiped from the address bar at once.
-  const secret = takeFragmentSecret();
+  // The secret arrived in the URL fragment (never sent to a server); the router wiped it from the address bar at load.
+  const secret = linkSecret;
   let username = $state(""), password = $state(""), again = $state(""), error = $state(""), busy = $state(false), done = $state(false);
   const reset = $derived(mode === "reset");
 

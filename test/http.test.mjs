@@ -162,5 +162,5 @@ test("the built client: the app shell for any page address, immutable assets, JS
   assert.equal(js.statusCode, 200);
   assert.match(js.headers["cache-control"], /immutable/);
   assert.equal((await call("GET", "/assets/nope.js", { origin: null })).statusCode, 404);
-  assert.equal((await call("GET", "/api/nope", { origin: null })).json().code, "not-found");
+  for (const url of ["/api/nope", "/api", "/api?x=1"]) assert.equal((await call("GET", url, { origin: null })).json().code, "not-found", url);
 });

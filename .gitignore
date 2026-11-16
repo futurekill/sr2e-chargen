@@ -6,3 +6,6 @@ data/
 *.db-shm
 .env
 .DS_Store
+
+# A global gitignore hides lockfiles on this machine: this one is tracked on purpose (npm ci needs it).
+!package-lock.json

@@ -4,15 +4,28 @@
   let docs = $state(null), trash = $state([]), error = $state(""), name = $state(""), busy = $state(false);
   const when = (ms) => new Date(ms).toLocaleString();
 
+  /** Every page of a listing (a library holds up to 200; the API hands out 100 at a time). */
+  async function all(query) {
+    const out = [];
+    for (let offset = 0; ; offset += 100) {
+      const page = (await get(`/api/documents?limit=100&offset=${offset}${query}`)).documents;
+      out.push(...page);
+      if (page.length < 100) return out;
+    }
+  }
   async function load() {
-    try { [docs, trash] = await Promise.all([get("/api/documents"), get("/api/documents?deleted=1")]).then(r => r.map(x => x.documents)); error = ""; }
+    try { [docs, trash] = await Promise.all([all(""), all("&deleted=1")]); error = ""; }
     catch (err) { error = err.message; docs ??= []; }
   }
   async function create(ev) {
     ev.preventDefault();
     busy = true;
     try { const { document } = await mutate("POST", "/api/documents", { name: name.trim() }); go(`/doc/${document.id}`); }
-    catch (err) { error = err.message; }
+    catch (err) {
+      // No answer doesn't mean it didn't happen: show what's on file before anyone presses Start again.
+      if (err.code === "network") { await load(); error = "The line dropped. Check the list below before starting it again — it may already be there."; }
+      else error = err.message;
+    }
     busy = false;
   }
   async function restore(d) {

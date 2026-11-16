@@ -15,9 +15,12 @@ addEventListener("click", (ev) => {
   ev.preventDefault();
   go(url.pathname);
 });
-/** Read a one-time secret from the fragment (`#k=…`) and wipe it from the address bar and history at once. */
-export function takeFragmentSecret() {
+/**
+ * A one-time link's secret (`#k=…`), read and wiped from the address bar and history the instant the app's code
+ * loads — before any request, so it can't sit in the URL behind a slow or failed one. Kept in memory only.
+ */
+export const linkSecret = (() => {
   const m = /^#k=([A-Za-z0-9_-]{43})$/.exec(location.hash);
   if (location.hash) history.replaceState(null, "", location.pathname);
   return m ? m[1] : null;
-}
+})();

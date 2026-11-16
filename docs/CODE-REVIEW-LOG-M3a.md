@@ -46,3 +46,29 @@ VERDICT: REVISE
 ### Claude's response
 - `kysely_migration`: **rejected.** No database with that table exists outside this machine's test files: nothing has been released or deployed (M3a is a development build), so there is no old history to honour, and reading a table that never shipped would be dead code.
 - The bootstrap race: **accepted in the form SQLite allows.** Two connections in one process can't race on SQLite (the busy wait blocks the event loop), so the test now runs three `chargen admin bootstrap` PROCESSES at once and redeems all three links: exactly one admin. The bootstrap-vs-redemption lock order across connections is tested when Postgres/MySQL land.
+
+## Round 3 — client, static serving, Postgres/MySQL/MariaDB, container, CI (REVISE, 8 findings)
+1. **Critical — clean builds fail.** [.github/workflows/ci.yml:21](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/.github/workflows/ci.yml:21), [docker/Dockerfile:9](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/docker/Dockerfile:9): `package-lock.json` exists locally but is absent from `HEAD` because a global Git ignore rule hides it; a clean checkout fails at Docker’s `COPY` and CI’s `npm ci`. **Fix:** force-add the lockfile to the repository.
+
+2. **High — a lost create response can produce duplicate drafts.** [client/src/pages/Library.svelte:14](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/client/src/pages/Library.svelte:14), [client/src/lib/api.js:28](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/client/src/lib/api.js:28): if creation commits but the response is lost, pressing Start again sends a new idempotency key and creates a second draft. **Fix:** retain the key and request body for that create attempt until its outcome is resolved.
+
+3. **Medium — a one-time secret can remain in the address bar indefinitely.** [client/src/App.svelte:23](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/client/src/App.svelte:23), [client/src/pages/Redeem.svelte:6](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/client/src/pages/Redeem.svelte:6): `/redeem#k=…` waits for `/api/session` before `Redeem` mounts and clears the fragment; if that request fails, the error screen leaves the secret in the URL. **Fix:** read and clear the fragment synchronously at startup, then pass the secret to the redeem page in memory.
+
+4. **Medium — editing during a save can silently discard text.** [client/src/pages/Document.svelte:12](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/client/src/pages/Document.svelte:12), [client/src/pages/Document.svelte:24](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/client/src/pages/Document.svelte:24): the fields stay editable while the PUT is pending, but the subsequent `load()` overwrites anything typed after submission. **Fix:** disable editing while saving or preserve edits made after the submitted snapshot.
+
+5. **Medium — a changed retry reuses the wrong idempotency key.** [client/src/pages/Document.svelte:22](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/client/src/pages/Document.svelte:22), [client/src/pages/Document.svelte:27](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/client/src/pages/Document.svelte:27): after a response is lost, editing the fields before retry sends a different body with the old key; a committed first save yields `422`, followed by a stale revision on the next attempt. **Fix:** bind a key to an immutable submitted payload and reconcile the document before submitting changed content.
+
+6. **Medium — documents beyond the first page disappear from the client.** [client/src/pages/Library.svelte:8](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/client/src/pages/Library.svelte:8): the API returns 50 documents by default, while the account can hold 200; document 51 and later cannot be found through the library UI. **Fix:** add pagination or load subsequent pages for active and deleted documents.
+
+7. **Low — the required raw JSON view is absent.** [client/src/pages/Document.svelte:49](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/client/src/pages/Document.svelte:49): a user can download a draft but cannot inspect its stored JSON in the document page, as required by PLAN-M3 §6. **Fix:** render the fetched body as escaped, readable JSON in the page.
+
+8. **Low — `/api` returns the SPA shell.** [server/app.mjs:89](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/server/app.mjs:89): `GET /api` does not match the `/api/` exclusion and returns HTML with status 200 instead of the API’s JSON 404. **Fix:** exclude the exact `/api` path as well as its descendants.
+
+VERDICT: REVISE
+
+### Claude's response
+All 8 fixed.
+- #1 `package-lock.json` force-added and un-ignored in the repo's own .gitignore (a global ignore rule hid it); verified by building the image from a clean `git archive` export.
+- #2, #5 after a request that got no answer the client finds out where things stand before sending again (the library reloads its list; a draft re-reads its revision, keeping the typed text), instead of reusing or replacing a key blindly.
+- #3 the link secret is read and wiped at module load, before any request. #4 the fields are read-only while a save is in flight.
+- #6 the library loads every page. #7 a "Stored JSON" view on the draft page. #8 `/api` itself is a JSON 404.
