@@ -1,5 +1,5 @@
 # Plan: milestone 1 — the catalog
-_Draft 4 (2026-11-16), after Codex rounds 1–3 (11 + 5 + 3 findings, all accepted; the last three fixes are not re-reviewed; docs/PLAN-catalog-REVIEW-LOG.md). Roadmap: docs/ROADMAP.md (approved 2026-11-16). Requirement: docs/PLAN.md "Content catalog"
+_Draft 5 (2026-11-16): Amendment A added (the project's own copy of the content). Draft 4 was after Codex rounds 1–3 (11 + 5 + 3 findings, all accepted; the last three fixes are not re-reviewed; docs/PLAN-catalog-REVIEW-LOG.md). Roadmap: docs/ROADMAP.md (approved 2026-11-16). Requirement: docs/PLAN.md "Content catalog"
 (the pinned content, the source tag on book text, authenticated routes, citations)._
 
 ## Goal
@@ -89,6 +89,44 @@ type, and see where each one comes from (`SR2 p.231`). Milestone 2 (character cr
    #3: the server never starts without a valid catalog, so the smoke test needs one); only CI's smoke test uses it, and the release
    milestone's publish step refuses a test image. A production server likewise refuses to start without a valid
    catalog. CI's unit tests use a small fixture catalog passed in explicitly; nothing else can run empty.
+
+## Amendment A — the project's own copy of the content (user ruling 2026-11-16)
+The user ruled: this project keeps **its own copy** of the content, **inside this repository**, kept in sync with the
+Foundry content repositories by a **daily pull request**. It replaces "read the sibling repositories" (§2) for the
+catalog build, and removes CI's missing-content gap (§8).
+
+A1. **Layout.** `content/<dir>/` per pin, holding exactly the files the catalog reads, unchanged: the manifest
+    (`system.json` or `module.json`), every file under `packs-src/`, and for the system `module/rules/books.mjs`.
+    `content/<dir>/CONTENT.json` = `{ dir, id, tag, commit, files: { <path>: <git blob id> } }`.
+A2. **Sync** (`tools/sync-content.mjs`, `npm run content:sync`). Reads each repository from Git objects at the pinned
+    commit (tools/content.mjs, as before: no shell, regular files only) and REPLACES `content/<dir>/` with those
+    files and the record. `--latest` first moves each pin to the repository's newest GitHub release (`gh api
+    repos/<owner>/<repo>/releases/latest`), resolving its commit. Only the content directories and
+    `content-pins.json` are written.
+A3. **The build reads the copy, and checks it.** `tools/build-catalog.mjs` reads `content/`, not the sibling
+    repositories. For each pin it requires: the record's `dir`, `tag` and `commit` equal the pin; every listed file
+    exists, is a regular file (`lstat`: no symlink), and has the listed git blob id (`sha1("blob <size>\0" +
+    bytes)`); no file under `content/<dir>/` is unlisted. A hand edit, a missing file or a stale copy fails the
+    build, naming it. The copy can only change through the sync.
+A4. **The image builds its own catalog.** The Dockerfile copies `content/` and `content-pins.json` and runs the
+    catalog build and check in its build stage. No host-built catalog, no `TEST_IMAGE` exception: CI builds the real
+    image. The invented fixture catalog stays for the unit tests only.
+A5. **CI** also runs the real catalog build on every push (a test that builds `content/` and checks the pins).
+A6. **The daily sync** (`.github/workflows/content-sync.yml`, cron once a day and on demand). With the repository's
+    own token (read-only for the public content repositories, `contents: write` and `pull-requests: write` here):
+    for each pin, look up the newest release; if any moved, fetch only that tag of that repository (`git fetch
+    --depth 1 origin refs/tags/<tag>:refs/tags/<tag>` into a fresh directory), run the sync, run the catalog build
+    and the unit tests, then push the branch `content-sync` (force) and open — or update — ONE pull request whose
+    body lists each book's old and new version and the result of the catalog build. A failed catalog build (for
+    example a new unclassified text field) still opens the pull request, marked as failing, and the workflow ends
+    red: the change is visible, and a person fixes it on that branch.
+    - Known limit: a pull request opened with the repository token does not start other workflows, so the sync
+      workflow runs the build and the tests itself and reports them in the pull request. Merging to `main` runs CI.
+    - The repository setting "Allow GitHub Actions to create and approve pull requests" must be on (it is OFF on
+      2026-11-16): the owner turns it on; the workflow says so if it can't open the pull request.
+A7. **Tests.** The sync writes exactly the commit's files and a correct record (fixture repository made by the
+    test); the build refuses a changed byte, a missing file, an extra file, a symlink, and a record that doesn't
+    match the pins; the vendored `content/` builds and matches `content-pins.json`.
 
 ## Key decisions & tradeoffs
 - **Git objects at a pinned commit, not the working tree**: reproducible, no network, nothing extracted to disk.
