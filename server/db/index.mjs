@@ -41,3 +41,10 @@ export async function migrate(db) {
   if (error) throw error;
   return migrationStatus(db);
 }
+
+/** What every server function takes: the database, its dialect and the clock. Migrated and ready. */
+export async function createContext(url, { now = () => Date.now() } = {}) {
+  const db = openDatabase(url);
+  await migrate(db);
+  return { db, dialect: db.dialectName, now };
+}

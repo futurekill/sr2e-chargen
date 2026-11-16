@@ -8,6 +8,8 @@ import { promisify } from "node:util";
 
 const argon2Async = promisify(argon2);
 export const PARAMS = Object.freeze({ memory: 65536, passes: 3, parallelism: 1, tagLength: 32, saltLength: 16 });
+/** The parameters new hashes get. Production never changes them; the test suites turn the memory down. */
+export const active = { ...PARAMS };
 const LIMITS = { memory: [8192, 1048576], passes: [1, 10], parallelism: [1, 4] };   // what verify() will agree to run
 const b64 = (buf) => buf.toString("base64").replace(/=+$/, "");
 
@@ -43,7 +45,7 @@ export function parsePhc(phc) {
   return { ...p, salt, tag };
 }
 
-export async function hashPassword(password, params = PARAMS) {
+export async function hashPassword(password, params = active) {
   const salt = randomBytes(params.saltLength);
   return encodePhc(params, salt, await derive(password, salt, params));
 }
@@ -53,7 +55,7 @@ export async function verifyPassword(password, phc) {
   if (!p) return { ok: false, rehash: false };
   const tag = await derive(password, p.salt, { ...p, tagLength: p.tag.length });
   const ok = tag.length === p.tag.length && timingSafeEqual(tag, p.tag);
-  const current = p.memory === PARAMS.memory && p.passes === PARAMS.passes && p.parallelism === PARAMS.parallelism && p.tag.length === PARAMS.tagLength;
+  const current = p.memory === active.memory && p.passes === active.passes && p.parallelism === active.parallelism && p.tag.length === active.tagLength;
   return { ok, rehash: ok && !current };
 }
 /** A real hash of a random password: an unknown username verifies against it, so timing doesn't reveal accounts. */
