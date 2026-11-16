@@ -1,5 +1,5 @@
 # Plan: milestone 1 — the catalog
-_Draft 2 (2026-11-16), after Codex round 1 (11 findings, all accepted; docs/PLAN-catalog-REVIEW-LOG.md). Roadmap: docs/ROADMAP.md (approved 2026-11-16). Requirement: docs/PLAN.md "Content catalog"
+_Draft 3 (2026-11-16), after Codex rounds 1–2 (11 + 5 findings, all accepted; docs/PLAN-catalog-REVIEW-LOG.md). Roadmap: docs/ROADMAP.md (approved 2026-11-16). Requirement: docs/PLAN.md "Content catalog"
 (the pinned content, the source tag on book text, authenticated routes, citations)._
 
 ## Goal
@@ -32,30 +32,38 @@ type, and see where each one comes from (`SR2 p.231`). Milestone 2 (character cr
    The working trees are never read. The system's manifest and `module/rules/books.mjs` are read from the SAME
    commit (#9). The repositories are found under `CONTENT_ROOT` (default: the parent directory). A missing
    repository, tag, or commit mismatch fails the build, naming it.
-3. **Select.** Items of every type; actors of type `vehicle` (to buy) and `character` from the `runners` pack
-   (archetypes). Not NPCs, critters, IC, macros, tables, journals, scenes, folders.
+3. **Select.** By the record's KIND first (round 2 #3): its `_key` prefix — `!items!` and `!actors!` only. A folder
+   record has `type: "Item"` too, and is not an item. Then: items of every type; actors of type `vehicle` (to buy)
+   and `character` from the `runners` pack (archetypes). Not NPCs, critters, IC, macros, tables, journals, scenes.
 4. **Shape.** One entry per document:
    `{ id, uuid, package, pack, book, kind: item|actor, type, name, category[], citation: { book, page } | null,
    cost, streetIndex, availability, system, text: { <field>: { book, value } }, items? }`.
    - **Package and book are separate** (#6): `package` = the module (or `sr2e`) it ships in; `book` = the book key
-     of its citation, or the package's own book when it has none. **Book toggles filter on `book`** — "the Street
-     Samurai Catalog is on" means its items, whichever package carries them.
+     of its citation. **Book toggles filter on `book`** — "the Street Samurai Catalog is on" means its items,
+     whichever package carries them.
+   - **No printed source** (round 2 #5): eleven contacts cite `book: "none"`, and archetypes cite nothing. Their
+     `book` and `citation` are `null`: never attributed to a book, no badge. They are listed with their PACKAGE's
+     book for the toggles (core contacts appear while the core book is on, which is always).
    - `uuid` = the compendium uuid (`Compendium.<package>.<pack>.<Item|Actor>.<_id>`); `id` = `<package>.<pack>.<_id>`
      (a duplicate fails the build).
    - `category` (#8) = the folder path where the pack has folders; otherwise the pack's label from its manifest;
      plus `system.category` when the document has one.
-   - **Text** (#5): text is classified BY FIELD, not by length. `TEXT_FIELDS` (`notes`, `biography`, `description`,
-     `otherFeatures`, … — completed from the data when the build is written) are moved, wherever they sit in
-     `system`, to `text.<path>` and tagged with the entry's `book`. Then the build walks every remaining string in
-     `system` and FAILS on unclassified prose: a string of four or more words whose field is not in an explicit
-     `DATA_FIELDS` allow-list (names, codes, formulas). A reduced-content mode can therefore remove ALL book prose.
+   - **Text** (#5, round 2 #2): EVERY string path is classified, whatever its length. `tools/string-paths.json`
+     lists each path that holds a string, per document type (`weapon: system.damage`, `vehicle: system.seating` …),
+     as `data` (a code, a formula, a key, a name the rules read) or `text` (book wording — `notes`, `biography`,
+     `description`, `otherFeatures`, `seating` …). The list is written by auditing every path the pinned content
+     has. `text` paths are moved to `text.<path>` and tagged with the entry's `book`; a string at a path that is
+     NOT in the list fails the build, naming the path. A reduced-content mode can therefore remove all book wording.
    - `text.<field>.value` is stored as PLAIN TEXT (#10): the build strips tags and decodes entities. The client
      renders it as text only (Svelte's escaping; no `{@html}` anywhere), so compendium HTML is never interpreted.
    - `items` (archetypes and vehicles) = the embedded items in the same shape, with `embeddedIn: <entry id>`,
      `uuid: null` and `citation` possibly null (#7). The build requires a citation on every top-level ITEM except
      a listed set of exceptions; archetypes and embedded items may have none and show no badge.
-   - Dropped: `_stats`, `ownership`, `sort`, `flags` other than `flags.sr2e.rule`, `prototypeToken`, `effects`
-     except their `name` and `changes`.
+   - **What the rules read stays** (round 2 #4): ALL of `flags.sr2e` (rule markers, `pairedWeapon`, `vehicleId` …),
+     and the entry presents its provenance the way the system's pure rules look for it — `_stats: {
+     compendiumSource: <uuid> }` — since some rules classify an item by its source uuid (the core Cyberarm has no
+     rule flag). `effects` keep their `name` and `changes`.
+   - Dropped: the rest of `_stats`, `ownership`, `sort`, flags of other packages, `prototypeToken`.
 5. **Output** (#2). `dist/catalog/catalog.json` = `{ pins: [{ id, version, tag, commit }], books: [{ key, abbr,
    title, module, count }], entries: [...] }`, entries sorted by id, keys in a fixed order, NO timestamp: the same
    pins give a byte-identical file. `dist/catalog/manifest.json` = the same without `entries`, plus the file's
@@ -71,11 +79,13 @@ type, and see where each one comes from (`SR2 p.231`). Milestone 2 (character cr
 7. **Client.** A Catalog page: search box, book toggles (ALL at the top; the core book listed first), type filter,
    a result list with the citation badge (abbreviation; the full title on hover and for screen readers), a detail
    view with the stats and the text. Paged with "load more".
-8. **Image** (#1). The Dockerfile COPIES `dist/catalog` (built on the host first: `npm run build:catalog`; the
-   `.dockerignore` lets it through) and the image build FAILS when it is absent or its checksum is wrong — unless
-   the build argument `ALLOW_EMPTY_CATALOG=1` is given, which only CI uses until it has access to the content
-   repositories (the release milestone). A server without a catalog refuses to start in production for the same
-   reason, with the same explicit override. CI's tests use a small fixture catalog.
+8. **Image** (#1, round 2 #1). The Dockerfile COPIES `dist/catalog` (built on the host first: `npm run
+   build:catalog`; the `.dockerignore` lets it through) and runs `tools/check-catalog.mjs` in the build: the image
+   build FAILS when the catalog is absent, empty, fails its checksum, or its pins are not exactly those of the
+   current `content-pins.json` (a stale catalog). The one exception is the build argument `TEST_IMAGE=1`, which
+   builds an image LABELLED as a test image with no catalog; only CI's smoke test uses it, and the release
+   milestone's publish step refuses a test image. A production server likewise refuses to start without a valid
+   catalog. CI's unit tests use a small fixture catalog passed in explicitly; nothing else can run empty.
 
 ## Key decisions & tradeoffs
 - **Git objects at a pinned commit, not the working tree**: reproducible, no network, nothing extracted to disk.
