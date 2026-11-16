@@ -1,0 +1,5 @@
+# Accepted findings, each with a reason and an expiry so it is looked at again (docs/DEPENDENCIES.md).
+[[IgnoredVulns]]
+id = "GHSA-gcqx-w48m-w2h4"
+ignoreUntil = 2027-02-16T00:00:00Z
+reason = "deepmerge via @sveltejs/vite-plugin-svelte: build-time only, merges our own config, never in the image; no fixed version exists (2026-11-16)."
