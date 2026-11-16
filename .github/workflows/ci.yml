@@ -1,0 +1,103 @@
+# CI (docs/PLAN-M3.md §8). Actions are pinned to commit SHAs (checked 2026-11-16); permissions are least-privilege.
+name: CI
+on:
+  push: { branches: [main] }
+  pull_request: { branches: [main] }
+permissions:
+  contents: read
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Lint, build, test (SQLite)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with: { node-version: "26.13.1", cache: npm }
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build
+      - run: npm test
+      - name: Audit (production dependencies must be clean)
+        run: npm audit --omit=dev --audit-level=low
+
+  databases:
+    name: Test (${{ matrix.name }})
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: Postgres, script: "test:postgres" }
+          - { name: MySQL, script: "test:mysql" }
+          - { name: MariaDB, script: "test:mariadb" }
+    services:
+      postgres:
+        image: postgres:18@sha256:2ea8630df176ad090ec92136dee850397c5af8781e4bcf2e4162593691c61bbc
+        env: { POSTGRES_PASSWORD: test }
+        ports: ["55432:5432"]
+        options: --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 20
+      mysql:
+        image: mysql:9@sha256:df90258da46f6e7ff8574ff84f17618aba0765cac749928299c69fd4e7cb8ad8
+        env: { MYSQL_ROOT_PASSWORD: test }
+        ports: ["53306:3306"]
+        options: --health-cmd "mysqladmin ping -ptest" --health-interval 5s --health-timeout 5s --health-retries 30
+      mariadb:
+        image: mariadb:12@sha256:4ebbcf100a3ba320766dfa0e1af008df12261301db6ef72798c7650f70794aed
+        env: { MARIADB_ROOT_PASSWORD: test }
+        ports: ["53307:3306"]
+        options: --health-cmd "healthcheck.sh --connect --innodb_initialized" --health-interval 5s --health-timeout 5s --health-retries 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with: { node-version: "26.13.1", cache: npm }
+      - run: npm ci
+      - run: npm run build
+      - run: npm run ${{ matrix.script }}
+
+  image:
+    name: Docker build
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      # Built, started and probed; never pushed (M3b adds the scan, SBOM, signature and the private registry push).
+      - run: docker build -f docker/Dockerfile -t sr2e-chargen:ci .
+      - name: Run it hardened and wait for healthy
+        run: |
+          docker run -d --name cg --read-only --cap-drop ALL --security-opt no-new-privileges:true --tmpfs /tmp \
+            -v cg-data:/data -e BASE_URL=http://localhost:3000 -p 127.0.0.1:3000:3000 sr2e-chargen:ci
+          for i in $(seq 1 30); do
+            [ "$(docker inspect --format '{{.State.Health.Status}}' cg)" = healthy ] && exit 0
+            sleep 2
+          done
+          docker logs cg; exit 1
+
+  osv:
+    name: OSV-Scanner
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - uses: google/osv-scanner-action/osv-scanner-action@32d3cd482bdadfb38b186c0ad1b031902d55d932 # v2.7.1
+        with:
+          scan-args: |-
+            --lockfile=package-lock.json
+
+  codeql:
+    name: CodeQL
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - uses: github/codeql-action/init@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
+        with: { languages: javascript-typescript }
+      - uses: github/codeql-action/analyze@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
