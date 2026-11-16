@@ -42,3 +42,17 @@ test("invite, list, revoke; disable refuses the last admin; reset link; maintena
   assert.match(await cli(e, "db", "status"), /"pending":\[\]/);
   await assert.rejects(cli(e, "nonsense"), /chargen admin bootstrap/);
 });
+
+test("three bootstrap PROCESSES at once: three links are printed, exactly one makes an admin", async () => {
+  const { execFile } = await import("node:child_process"); const { promisify } = await import("node:util");
+  const e = env();
+  await cli(e, "db", "migrate");
+  const boot = () => promisify(execFile)(process.execPath, ["server/cli.mjs", "admin", "bootstrap"], { env: { ...process.env, ...e } });
+  const secrets = (await Promise.all([boot(), boot(), boot()])).map(o => /#k=([A-Za-z0-9_-]{43})/.exec(o.stdout)[1]);
+  assert.equal(new Set(secrets).size, 3);
+  const ctx = await createContext(e.DATABASE_URL);
+  const results = await Promise.allSettled(secrets.map((secret, i) => A.redeem(ctx, { secret, username: `Boss${i}`, password: "a perfectly fine password" })));
+  assert.equal(results.filter(r => r.status === "fulfilled").length, 1);
+  assert.equal((await A.listUsers(ctx)).length, 1);
+  await ctx.db.destroy();
+});

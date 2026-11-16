@@ -36,3 +36,13 @@ All 10 fixed.
 - #5 MySQL index creation checks first. #6 redemption takes the admin lock first, like bootstrap.
 - #7 delete and restore append their revision rows. #8 the dummy hash is made at startup. #9 mutations take no query string.
 - #10 the prototype probe runs signed in; the bootstrap "race" test renamed for what it tests (the true lock-order race needs Postgres/MySQL).
+
+## Round 2 — fix-only (REVISE, 2 findings)
+- `server/db/index.mjs:30` — **New regression:** the runner ignores the previous `kysely_migration` table. I reproduced a database marked `999-from-the-future` there being accepted and reported as current. **Fix:** read and honor the old migration history before creating or using `migrations`.
+- `test/accounts.test.mjs:24` — **Round 1 #10 remains:** the bootstrap test still runs sequentially and manually revives a token, so a concurrent bootstrap regression would leave it green. **Fix:** run the bootstrap and redemption race through separate database connections.
+
+VERDICT: REVISE
+
+### Claude's response
+- `kysely_migration`: **rejected.** No database with that table exists outside this machine's test files: nothing has been released or deployed (M3a is a development build), so there is no old history to honour, and reading a table that never shipped would be dead code.
+- The bootstrap race: **accepted in the form SQLite allows.** Two connections in one process can't race on SQLite (the busy wait blocks the event loop), so the test now runs three `chargen admin bootstrap` PROCESSES at once and redeems all three links: exactly one admin. The bootstrap-vs-redemption lock order across connections is tested when Postgres/MySQL land.
