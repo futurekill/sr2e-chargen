@@ -24,6 +24,17 @@ export async function session() {
 export const get = (url) => request("GET", url);
 export const post = (url, body = {}) => request("POST", url, body);
 export const del = (url) => request("DELETE", url);
-/** A change to the library: `key` identifies this ACTION, so a retry after a dropped answer can't apply it twice. */
-export const mutate = (method, url, body, key = crypto.randomUUID()) => request(method, url, body, { key });
+/**
+ * A change to the library. Its Idempotency-Key is bound to the EXACT request (method, address, body): if the answer
+ * is lost, sending the identical request again reuses the key, and the server replays the first result instead of
+ * applying it twice. The key is dropped once the server has answered (either way).
+ */
+const unanswered = new Map();
+export async function mutate(method, url, body) {
+  const signature = `${method} ${url} ${JSON.stringify(body)}`;
+  const key = unanswered.get(signature) ?? crypto.randomUUID();
+  unanswered.set(signature, key);
+  try { const data = await request(method, url, body, { key }); unanswered.delete(signature); return data; }
+  catch (err) { if (err.code !== "network") unanswered.delete(signature); throw err; }
+}
 export const forgetSession = () => { csrf = null; };

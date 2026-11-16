@@ -22,8 +22,8 @@
     busy = true;
     try { const { document } = await mutate("POST", "/api/documents", { name: name.trim() }); go(`/doc/${document.id}`); }
     catch (err) {
-      // No answer doesn't mean it didn't happen: show what's on file before anyone presses Start again.
-      if (err.code === "network") { await load(); error = "The line dropped. Check the list below before starting it again — it may already be there."; }
+      // No answer doesn't mean it didn't happen. Pressing Start again with the same name is safe: it replays.
+      if (err.code === "network") error = "The line dropped. Press Start again — if it already went through, you'll get that draft, not a second one.";
       else error = err.message;
     }
     busy = false;

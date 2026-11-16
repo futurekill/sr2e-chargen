@@ -72,3 +72,13 @@ All 8 fixed.
 - #2, #5 after a request that got no answer the client finds out where things stand before sending again (the library reloads its list; a draft re-reads its revision, keeping the typed text), instead of reusing or replacing a key blindly.
 - #3 the link secret is read and wiped at module load, before any request. #4 the fields are read-only while a save is in flight.
 - #6 the library loads every page. #7 a "Stored JSON" view on the draft page. #8 `/api` itself is a JSON 404.
+
+## Round 4 — fix-only (REVISE, 2 findings)
+- `client/src/pages/Library.svelte:23` — **Round 3 #2 remains:** If a create commits but its response is lost, the user can press Start again. The retry uses a new key and creates a second draft, even if the refreshed list shows the first. **Fix:** Keep the original key and request body until that create attempt is resolved.
+
+- `client/src/pages/Document.svelte:25` — **Round 3 #5 remains:** If a save commits at revision 2 but its response is lost, pressing Save again fetches revision 2 and sends a new PUT with a new key, creating an unnecessary revision 3. **Fix:** Retain and replay the original key and payload; reconcile before sending changed content.
+
+VERDICT: REVISE
+
+### Claude's response
+Both accepted: the client binds each Idempotency-Key to the exact request (`mutate` in client/src/lib/api.js), so an identical retry after a dropped answer replays; a draft save retried with the same text goes out as the same request, changed text re-reads the revision first.

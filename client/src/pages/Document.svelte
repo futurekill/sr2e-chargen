@@ -3,7 +3,7 @@
   import { go } from "../lib/router.svelte.js";
   let { id } = $props();
   let doc = $state(null), name = $state(""), notes = $state(""), revisions = $state([]), error = $state(""), saved = $state(""), busy = $state(false);
-  let unsure = false;   // a save got no answer: it may or may not have landed
+  let lost = null;   // the save that got no answer (it may or may not have landed)
   const when = (ms) => new Date(ms).toLocaleString();
   const dirty = $derived(doc && (name !== doc.body.name || notes !== doc.body.notes));
 
@@ -19,13 +19,17 @@
     ev.preventDefault();
     busy = true; saved = ""; error = "";
     try {
-      // After a save that got no answer, find out where the draft stands first (the boxes keep what was typed):
-      // if that save did land, this one goes on top of it instead of colliding with it.
-      if (unsure) { doc = await get(`/api/documents/${id}`); unsure = false; }
-      await mutate("PUT", `/api/documents/${id}`, { name: name.trim(), notes, revision: doc.document.revision });
+      const payload = { name: name.trim(), notes, revision: doc.document.revision };
+      // After a save that got no answer: the SAME text goes out as the same request (the server replays it if it
+      // landed — no second revision). CHANGED text first finds out where the draft stands, then goes on top.
+      if (lost && (lost.name !== payload.name || lost.notes !== payload.notes)) payload.revision = (await get(`/api/documents/${id}`)).document.revision;
+      else if (lost) payload.revision = lost.revision;
+      lost = payload;
+      await mutate("PUT", `/api/documents/${id}`, payload);
+      lost = null;
       await load(); saved = "Saved.";
     } catch (err) {
-      if (err.code === "network") unsure = true;
+      if (err.code !== "network") lost = null;
       error = err.code === "stale" ? "This draft changed somewhere else. Reload to see it — your text is still in the boxes."
         : err.code === "network" ? "The line dropped, so the save may not have landed. Your text is still here: press Save again." : err.message;
     }
