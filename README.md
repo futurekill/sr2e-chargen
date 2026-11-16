@@ -55,6 +55,10 @@ computed the same way in both places. Tests check that both give identical resul
 |---|---|
 | [docs/PLAN.md](docs/PLAN.md) | The approved plan: decisions, architecture, security, exports, milestones |
 | [docs/PLAN-REVIEW-LOG.md](docs/PLAN-REVIEW-LOG.md) | Every review round and how each finding was resolved |
+| [docs/PLAN-M3.md](docs/PLAN-M3.md) | The app skeleton's plan (accounts, library, container), with its review log |
+| [docs/OPERATIONS.md](docs/OPERATIONS.md) | Running it: Docker, settings, the admin CLI |
+| [docs/THREAT-MODEL.md](docs/THREAT-MODEL.md) | What is protected, from whom, and where each defence lives |
+| [docs/DEPENDENCIES.md](docs/DEPENDENCIES.md) | Every dependency and why it is there |
 | [docs/RULES-CHARGEN.md](docs/RULES-CHARGEN.md) | The creation rules captured from the books, with page references (M0) |
 | [docs/GRAPHICS.md](docs/GRAPHICS.md) | The graphics plan for the site and the sheets |
 

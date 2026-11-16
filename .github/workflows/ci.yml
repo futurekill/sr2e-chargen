@@ -104,7 +104,7 @@ jobs:
       # A private repository without GitHub Advanced Security can't upload to code scanning, so the results stay in
       # the job: analysed here, and ANY finding fails it (with the finding printed).
       - uses: github/codeql-action/analyze@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
-        with: { upload: never, output: sarif }
+        with: { upload: never, upload-database: false, output: sarif }
       - name: Fail on findings
         run: |
           node -e '
