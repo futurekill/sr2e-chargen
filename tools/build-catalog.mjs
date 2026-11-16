@@ -21,6 +21,11 @@ const CLASSES = ["text", "category", "short", "formula"].map(kind => ({ kind, ma
 const NO_BOOK = new Set(PATHS.noBook.ids);
 /** A citation's page: `124`, `98–100`, `12, 14`. */
 const PAGE = /^\d{1,3}([–-]\d{1,3})?(, ?\d{1,3}([–-]\d{1,3})?)*$/;
+/**
+ * Words that make a sentence and that no code, key, label or formula in the content uses (checked against the
+ * pinned content): the word-run test alone resets at punctuation ("It gains speed. It gains control.").
+ */
+const SENTENCE_WORD = /(^|\s)(the|is|are|was|were|that|this|these|those|will|which|their|its|has|have|and|when|with|from|your|you|can|must|may|gains?)(?=\s|$|[.,;:!?])/i;
 /** The longest run of plain words in a string. Codes and formulas name a stat or two; a sentence runs on. */
 const wordRun = (s) => Math.max(0, ...(String(s).match(/(?:[A-Za-z]{2,} +)*[A-Za-z]{2,}/g) ?? []).map(m => m.trim().split(/ +/).length));
 /** The class of a string path (`{ kind, max, pattern }`), or null when nobody has classified it. */
@@ -30,7 +35,7 @@ function dataProblem(cls, value) {
   if (cls.values) return cls.values.has(value) ? null : "is not a known category (tools/string-paths.json)";
   if (cls.max && value.length > cls.max) return `is ${value.length} characters (at most ${cls.max} there)`;
   if (/[\r\n]/.test(value)) return "has more than one line";
-  if (wordRun(value) > 4) return "reads as a sentence (more than 4 words in a row)";
+  if (wordRun(value) > 4 || SENTENCE_WORD.test(value)) return "reads as a sentence (more than 4 words in a row, or a sentence word)";
   return null;
 }
 

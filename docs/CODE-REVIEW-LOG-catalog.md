@@ -41,3 +41,13 @@ VERDICT: REVISE
 
 ### Claude's response
 All 4 accepted: a data string may not read as a sentence (more than 4 words in a row), on top of its length limit; a category must be one of the listed values; an effect change must have the SHAPE of rule data (a system path, a number, a mode word); only the eleven listed contacts may cite "none", and a page must look like a page. The real catalog is byte-identical after these checks.
+
+## Round 3 — fix-only (REVISE, 1 finding)
+- [tools/build-catalog.mjs:25](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/tools/build-catalog.mjs:25) — Round-2 finding 2 remains. Setting `system.effects.acceleration` to `"The vehicle gains speed. The rigger gains control."` builds successfully and leaves both prose sentences untagged; the word-run check resets at punctuation. **Fix:** Validate formula paths against permitted rule-expression syntax.
+
+VERDICT: REVISE
+
+### Claude's response
+Accepted: a data string that contains a sentence word (the, is, are, gains, with …) is refused too, so short sentences split by punctuation don't pass. Checked against the pinned content: no data string uses one. The real catalog is unchanged.
+
+The text rule's purpose is that book prose can't sit untagged in an entry. Three rounds have tightened it from "a length limit" to "listed keys, a length, one line, no sentence". Further rounds on this one rule are not planned: the content repositories are the owner's own, and every change to them is reviewed there.

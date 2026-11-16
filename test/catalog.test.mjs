@@ -86,6 +86,10 @@ test("book wording can't hide in a data path: a category is a key, codes are sho
   assert.throws(broken(r => { pistol(r).system.category = "quick_brown_fox_jumps_over_lazy_dog"; }), /not a known category/);   // key-shaped is not enough
   assert.throws(broken(r => { pistol(r).system.effects = { acceleration: "The vehicle gains speed when the rigger wills it so" }; }), /reads as a sentence/);
   assert.throws(broken(r => { pistol(r).system.availability = "ask your friendly local fixer"; }), /reads as a sentence/);
+  assert.throws(broken(r => { pistol(r).system.effects = { acceleration: "The vehicle gains speed. The rigger gains control." }; }), /reads as a sentence/);   // short sentences, split by punctuation
+  assert.throws(broken(r => { pistol(r).system.damageCode = "It is deadly."; }), /reads as a sentence/);
+  assert.doesNotThrow(broken(r => { pistol(r).flags.sr2e.vehicleId = "toyota-mk-guyver-search-and-rescue-robot"; }));   // a slug is not a sentence
+  assert.doesNotThrow(broken(r => { pistol(r).system.effects = { acceleration: "min(2 x R, B) + 1" }; }));
   assert.throws(broken(r => { pistol(r).system.damageCode = prose; }), /system\.damageCode is \d+ characters/);
   assert.throws(broken(r => { pistol(r).system.availability = "two\nlines"; }), /more than one line/);
   assert.throws(broken(r => { pistol(r).flags.sr2e.rule = prose; }), /flags\.sr2e\.rule is \d+ characters/);
