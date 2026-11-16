@@ -15,9 +15,18 @@ import { readPinned, readFile, tagCommit } from "./content.mjs";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const PATHS = JSON.parse(readFileSync(join(ROOT, "tools/string-paths.json"), "utf8"));
-const asPattern = (p) => new RegExp(`^${p.replace(/[.[\]]/g, "\\$&").replace(/\*/g, "[^.]+")}$`);
-const TEXT = PATHS.text.map(asPattern), DATA = PATHS.data.map(asPattern);
-export const classify = (path) => (TEXT.some(r => r.test(path)) ? "text" : DATA.some(r => r.test(path)) ? "data" : null);
+const asPattern = (p) => new RegExp(`^${p.replace(/[.[\]]/g, "\\$&").replace(/\{@\}/g, "(@[A-Za-z]+)?")}$`);
+const CLASSES = ["text", "category", "short", "formula"].map(kind => ({ kind, max: PATHS[kind].max ?? null,
+  pattern: PATHS[kind].pattern ? new RegExp(PATHS[kind].pattern) : null, paths: PATHS[kind].paths.map(asPattern) }));
+/** The class of a string path (`{ kind, max, pattern }`), or null when nobody has classified it. */
+export const classify = (path) => CLASSES.find(c => c.paths.some(r => r.test(path))) ?? null;
+/** Why a string may not stay at a data path, or null: too long, more than one line, or not the path's pattern. */
+function dataProblem(cls, value) {
+  if (cls.pattern && !cls.pattern.test(value)) return `must match ${cls.pattern}`;
+  if (cls.max && value.length > cls.max) return `is ${value.length} characters (at most ${cls.max} there)`;
+  if (/[\r\n]/.test(value)) return "has more than one line";
+  return null;
+}
 
 /** Compendium HTML → plain text (the client renders text only; nothing here is ever interpreted as markup). */
 export function plain(html) {
@@ -29,27 +38,40 @@ export function plain(html) {
     .replace(/[ \t]+/g, " ").replace(/ *\n */g, "\n").replace(/\n{3,}/g, "\n\n").trim();
 }
 
-/** Move every `text` string out of `system` (tagged with `book`); report strings at paths nobody classified. */
-export function splitText(system, book, problems, where) {
-  const text = {};
-  const walk = (node, path, generic) => {
-    for (const [k, v] of Object.entries(node)) {
+/**
+ * Move every `text` string out of `node` (tagged with `book`) and check every other string against its class.
+ * `root` is the path of `node` ("system" or "flags.sr2e"); text keys are relative to the document (`notes`,
+ * `flags.drug.notes`). A string at an unclassified path, or one that doesn't fit its class, is a problem.
+ */
+export function splitText(node, root, book, problems, where, text = {}) {
+  const keyOf = (p) => (root === "system" ? p.slice("system.".length) : p.replace(/^flags\.sr2e\./, "flags."));
+  const check = (value, g, drop, p) => {
+    if (!value) return;
+    const cls = classify(g);
+    if (!cls) return void problems.push(`${where}: a string at ${g} is not classified in tools/string-paths.json ("${value.slice(0, 40)}")`);
+    if (cls.kind === "text") { text[keyOf(p)] = { book, value: plain(value) }; drop(); return; }
+    const why = dataProblem(cls, value);
+    if (why) problems.push(`${where}: the string at ${g} ${why} — book wording belongs in a text path ("${value.slice(0, 40)}")`);
+  };
+  const walk = (n, path, generic) => {
+    for (const [k, v] of Object.entries(n)) {
       const p = `${path}.${k}`, g = `${generic}.${k}`;
-      if (typeof v === "string") {
-        if (!v) continue;
-        const kind = classify(g);
-        if (kind === "text") { text[p.slice("system.".length)] = { book, value: plain(v) }; delete node[k]; }
-        else if (!kind) problems.push(`${where}: a string at ${g} is not classified in tools/string-paths.json ("${v.slice(0, 40)}")`);
-      } else if (Array.isArray(v)) {
-        v.forEach((x, i) => {
-          if (typeof x === "string") { if (x && !classify(`${g}[]`)) problems.push(`${where}: a string at ${g}[] is not classified ("${x.slice(0, 40)}")`); }
-          else if (x && typeof x === "object") walk(x, `${p}[${i}]`, `${g}[]`);
-        });
-      } else if (v && typeof v === "object") walk(v, p, g);
+      if (typeof v === "string") check(v, g, () => { delete n[k]; }, p);
+      else if (Array.isArray(v)) v.forEach((x, i) => {
+        if (typeof x === "string") check(x, `${g}[]`, () => { v[i] = ""; }, `${p}[${i}]`);
+        else if (x && typeof x === "object") walk(x, `${p}[${i}]`, `${g}[]`);
+      });
+      else if (v && typeof v === "object") walk(v, p, g);
     }
   };
-  walk(system, "system", "system");
+  walk(node, root, root);
   return text;
+}
+/** Strings in an effect's name and changes are rule data: short, one line (never book wording). */
+function auditEffect(e, problems, where) {
+  const bad = (v) => typeof v === "string" && (v.length > 80 || /[\r\n]/.test(v));
+  if (bad(e.name)) problems.push(`${where}: an effect name is too long to be a name`);
+  for (const c of e.changes) for (const [k, v] of Object.entries(c)) if (bad(v)) problems.push(`${where}: an effect change's ${k} is too long to be rule data`);
 }
 
 const kindOf = (doc) => /^!(\w+)!/.exec(String(doc._key ?? ""))?.[1] ?? null;
@@ -70,7 +92,11 @@ export function shape(doc, ctx, problems, embeddedIn = null) {
   if (cite?.book && cite.book !== "none" && !citedBook) problems.push(`${where}: cites an unknown book "${cite.book}"`);
   const citation = citedBook ? { book: citedBook, page: String(cite.page ?? "") } : null;
   const listBook = citedBook ?? ctx.packageBook;   // the toggles' book: its own, else the package's (never shown as a citation)
-  const text = splitText(system, listBook, problems, where);
+  const flags = structuredClone(doc.flags?.sr2e ?? {});
+  const text = splitText(system, "system", listBook, problems, where);
+  splitText(flags, "flags.sr2e", listBook, problems, where, text);
+  const effects = (doc.effects ?? []).map(e => ({ name: e.name, disabled: !!e.disabled, transfer: e.transfer !== false, changes: e.changes ?? e.system?.changes ?? [] }));
+  for (const e of effects) auditEffect(e, problems, where);
   const id = embeddedIn ? `${embeddedIn}#${doc._id}` : `${ctx.package}.${ctx.pack}.${doc._id}`;
   const kind = embeddedIn ? "item" : selected(doc, ctx.pack);
   const uuid = embeddedIn ? null : `Compendium.${ctx.package}.${ctx.pack}.${kind === "actor" ? "Actor" : "Item"}.${doc._id}`;
@@ -83,35 +109,65 @@ export function shape(doc, ctx, problems, embeddedIn = null) {
     category, citation, cost: num(system.cost), streetIndex: system.streetIndex ?? null, availability: system.availability ?? null,
     img: typeof doc.img === "string" ? doc.img : null,
     system, text,
-    flags: doc.flags?.sr2e && Object.keys(doc.flags.sr2e).length ? { sr2e: doc.flags.sr2e } : {},
+    flags: Object.keys(flags).length ? { sr2e: flags } : {},
     _stats: { compendiumSource: source },
-    effects: (doc.effects ?? []).map(e => ({ name: e.name, disabled: !!e.disabled, transfer: e.transfer !== false, changes: e.changes ?? e.system?.changes ?? [] })),
+    effects,
     ...(embeddedIn ? { embeddedIn } : {})
   };
   if (Array.isArray(doc.items) && !embeddedIn) entry.items = doc.items.map(i => shape(i, ctx, problems, id));
-  if (!embeddedIn && kind === "item" && !citation && cite?.book !== "none") problems.push(`${where}: an item with no citation (give it one, or cite book "none")`);
+  // Every top-level item cites a book and a page. The one exception: a CONTACT may cite "none" (not printed in any
+  // book) — never a way to drop another item's badge.
+  if (!embeddedIn && kind === "item") {
+    const none = cite?.book === "none";
+    if (none && doc.type !== "contact") problems.push(`${where}: only a contact may cite book "none"`);
+    else if (!none && !citation) problems.push(`${where}: an item with no citation`);
+    else if (citation && !citation.page) problems.push(`${where}: a citation without a page`);
+  }
   return entry;
 }
 
-/** The system's book table at the pinned commit: `{ key: { abbr, title, code, module } }`. */
-async function booksAt(repo, commit) {
+/**
+ * The system's book table at the pinned commit: `{ key: { abbr, title, code, module } }`. PARSED, never evaluated:
+ * a pinned commit is data, and importing it would run whatever it contains on the build host. Every line of the
+ * table must be one plain entry; anything else fails the build.
+ */
+export function parseBooks(src) {
+  const start = src.indexOf("export const BOOKS = Object.freeze({");
+  const end = start < 0 ? -1 : src.indexOf("\n});", start);
+  if (start < 0 || end < 0) throw new Error("books.mjs: the BOOKS table was not found");
+  const books = {}, STR = '"((?:[^"\\\\]|\\\\.)*)"';
+  const line = new RegExp(`^\\s*([a-z][a-z0-9]{0,15}): \\{ abbr: ${STR}, title: ${STR}, code: ${STR}, module: ${STR} \\},?$`);
+  for (const raw of src.slice(src.indexOf("\n", start) + 1, end).split("\n")) {
+    if (!raw.trim()) continue;
+    const m = line.exec(raw);
+    if (!m) throw new Error(`books.mjs: a line of the BOOKS table is not a plain entry: ${raw.trim().slice(0, 60)}`);
+    if (books[m[1]]) throw new Error(`books.mjs: the book key ${m[1]} is there twice`);
+    const [abbr, title, code, module] = m.slice(2).map(v => JSON.parse(`"${v}"`));
+    books[m[1]] = { abbr, title, code, module };
+  }
+  if (!books.sr2 || books.sr2.module !== "sr2e") throw new Error("books.mjs: no core book (sr2 → sr2e)");
+  return books;
+}
+function booksAt(repo, commit) {
   const src = readFile(repo, commit, "module/rules/books.mjs");
   if (!src) throw new Error("the system has no module/rules/books.mjs at its pinned commit");
-  if (/^\s*import\s/m.test(src.toString())) throw new Error("books.mjs imports other modules: the build reads it alone");
-  const mod = await import(`data:text/javascript;base64,${src.toString("base64")}`);
-  return JSON.parse(JSON.stringify(mod.BOOKS));
+  return parseBooks(src.toString("utf8"));
 }
 
 export async function buildCatalog({ pins, contentRoot }) {
   const repos = pins.map(pin => readPinned(contentRoot, pin));
   const system = repos[0];
   if (system.id !== "sr2e") throw new Error("the first pin must be the system (sr2e)");
-  return assemble(repos, await booksAt(system.repo, system.commit));
+  return assemble(repos, booksAt(system.repo, system.commit));
 }
 
 /** Documents → catalog. `repos`: [{ id, version, tag, commit, packs, docs }] (tools/content.mjs readPinned); `books`: the BOOKS table. */
 export function assemble(repos, books) {
-  const bookOfPackage = Object.fromEntries(Object.entries(books).map(([key, b]) => [b.module, key]));
+  // A package's own book: the FIRST book that names it. Two books name the core package (sr2 and vr2); the core
+  // book is first in the table, and that is checked rather than assumed.
+  const bookOfPackage = {};
+  for (const [key, b] of Object.entries(books)) bookOfPackage[b.module] ??= key;
+  if (bookOfPackage.sr2e !== "sr2") throw new Error("the core package's book must be sr2");
   const problems = [], entries = [], seen = new Set();
   for (const repo of repos) {
     const packageBook = bookOfPackage[repo.id];
@@ -132,11 +188,17 @@ export function assemble(repos, books) {
   const count = (key) => entries.reduce((m, e) => { m[e[key]] = (m[e[key]] ?? 0) + 1; return m; }, {});
   const byBook = count("listBook");
   return {
-    pins: repos.map(r => ({ id: r.id, version: r.version, tag: r.tag, commit: r.commit })),
+    pins: repos.map(r => ({ id: r.id, dir: r.dir ?? r.id, version: r.version, tag: r.tag, commit: r.commit })),
     books: Object.entries(books).filter(([key]) => byBook[key]).map(([key, b]) => ({ key, abbr: b.abbr, title: b.title, module: b.module, count: byBook[key] })),
     types: Object.entries(count("type")).sort(([a], [b]) => (a < b ? -1 : 1)).map(([type, n]) => ({ type, count: n })),
     entries
   };
+}
+
+/** The manifest a catalog implies: everything but the entries (their count instead). The server recomputes it. */
+export function manifestOf(catalog) {
+  const { entries, ...rest } = catalog;
+  return { ...rest, entries: entries.length };
 }
 
 /** Write {catalog.json, manifest.json} into `outDir`; the manifest carries the catalog file's SHA-256. */
@@ -144,8 +206,7 @@ export function writeCatalog(catalog, outDir) {
   mkdirSync(outDir, { recursive: true });
   const body = JSON.stringify(catalog);
   writeFileSync(join(outDir, "catalog.json"), body);
-  const { entries, ...rest } = catalog;
-  const manifest = { ...rest, entries: entries.length, sha256: createHash("sha256").update(body).digest("hex") };
+  const manifest = { ...manifestOf(catalog), sha256: createHash("sha256").update(body).digest("hex") };
   writeFileSync(join(outDir, "manifest.json"), `${JSON.stringify(manifest, null, 2)}\n`);
   return manifest;
 }

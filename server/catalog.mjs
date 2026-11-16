@@ -32,9 +32,14 @@ export function loadCatalog(dir, { pins = null } = {}) {
     if (byId.has(e.id)) throw new CatalogError(`duplicate catalog id ${e.id}`);
     byId.set(e.id, e);
   }
+  // The manifest is what the routes hand out: it must be exactly what the checked catalog body implies — never
+  // trusted on its own (its checksum line only proves the BODY).
+  const { entries, ...rest } = catalog, implied = { ...rest, entries: entries.length };
+  const claimed = { ...manifest }; delete claimed.sha256;
+  if (JSON.stringify(claimed) !== JSON.stringify(implied)) throw new CatalogError("the catalog's manifest doesn't describe its catalog");
   if (pins) {
-    const want = JSON.stringify(pins.map(p => [p.dir, p.tag, p.commit])), have = JSON.stringify(catalog.pins.map((p, i) => [pins[i]?.dir, p.tag, p.commit]));
-    if (pins.length !== catalog.pins.length || want !== have) throw new CatalogError("the catalog was built from other pins than content-pins.json (run: npm run build:catalog)");
+    const key = (list) => JSON.stringify(list.map(p => [p.dir, p.tag, p.commit]));
+    if (key(pins) !== key(catalog.pins)) throw new CatalogError("the catalog was built from other pins than content-pins.json (run: npm run build:catalog)");
   }
   // Search index: name and category, lower-cased once. Sorted by name for stable pages.
   const sorted = [...catalog.entries].sort((a, b) => a.name.localeCompare(b.name, "en") || (a.id < b.id ? -1 : 1));

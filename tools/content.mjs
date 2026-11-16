@@ -71,6 +71,6 @@ export function readPinned(contentRoot, { dir, tag, commit }) {
     try { doc = JSON.parse(blobs.get(f.sha).toString("utf8")); } catch (err) { throw new Error(`${dir}: ${f.path} is not valid JSON (${err.message})`, { cause: err }); }
     return { pack: parts[1], path: f.path, doc };
   });
-  return { id: manifest.id, version: manifest.version, tag, commit, manifest, repo,
+  return { id: manifest.id, dir, version: manifest.version, tag, commit, manifest, repo,
     packs: (manifest.packs ?? []).map(p => ({ name: p.name, label: p.label, type: p.type, path: p.path })), docs };
 }

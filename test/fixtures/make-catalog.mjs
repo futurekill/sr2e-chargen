@@ -9,7 +9,8 @@ import { assemble, writeCatalog } from "../../tools/build-catalog.mjs";
 
 export const BOOKS = {
   sr2: { abbr: "SR2", title: "Shadowrun, Second Edition", code: "FASA 7901", module: "sr2e" },
-  ssc: { abbr: "SSC", title: "Street Samurai Catalog", code: "FASA 7104", module: "sr2e-street-samurai-catalog" }
+  ssc: { abbr: "SSC", title: "Street Samurai Catalog", code: "FASA 7104", module: "sr2e-street-samurai-catalog" },
+  vr2: { abbr: "VR2", title: "Virtual Realities 2.0", code: "FASA 7904", module: "sr2e" }   // a SECOND book of the core package, as in the real table
 };
 const id = (n) => `fixture${String(n).padStart(9, "0")}`;
 const item = (n, pack, type, name, system, extra = {}) => ({ pack, path: `packs-src/${pack}/${name}.json`,
@@ -18,7 +19,7 @@ const folder = (n, pack, name, parent = null) => ({ pack, path: `packs-src/${pac
   doc: { _id: id(n), _key: `!folders!${id(n)}`, name, type: "Item", folder: parent } });
 
 export function fixtureRepos() {
-  const core = { id: "sr2e", version: "9.9.9", tag: "v9.9.9", commit: "a".repeat(40),
+  const core = { id: "sr2e", dir: "sr2e-foundryvtt", version: "9.9.9", tag: "v9.9.9", commit: "a".repeat(40),
     packs: [{ name: "weapons", label: "Weapons", type: "Item" }, { name: "gear", label: "Gear", type: "Item" }, { name: "contacts", label: "Contacts", type: "Item" },
       { name: "runners", label: "Archetypes", type: "Actor" }, { name: "vehicles", label: "Vehicles", type: "Actor" }, { name: "critters", label: "Critters", type: "Actor" }],
     docs: [
@@ -27,7 +28,9 @@ export function fixtureRepos() {
         notes: "<p>An <em>invented</em> pistol for the tests.</p><p>Second &amp; last line.</p>" }, { folder: id(2), flags: { sr2e: { rule: "test-rule", pairedWeapon: "x" }, other: { k: 1 } } }),
       item(11, "weapons", "weapon", "Catalog Blade", { citation: { book: "ssc", page: "12" }, cost: 800, damageCode: "(Str)M", notes: "From the other book, shipped in the core package." }),
       item(12, "gear", "gear", "Test Medkit", { citation: { book: "sr2", page: "250" }, cost: 200, availability: "4/48 hrs", notes: "" }),
-      item(13, "gear", "gear", "Zebra Rope", { citation: { book: "sr2", page: "251" }, cost: 15 }),
+      item(13, "gear", "gear", "Zebra Rope", { citation: { book: "sr2", page: "251" }, cost: 15, category: "survival" },
+        { flags: { sr2e: { drug: { key: "test-drug", notes: "A note the system wrote about this invented drug." } } },
+          effects: [{ name: "Rope trick", changes: [{ key: "system.body.mod", mode: 2, value: "1" }] }] }),
       item(14, "contacts", "contact", "Test Fixer", { citation: { book: "none", page: "" }, contactType: "contact", description: "A contact with no printed source." }),
       { pack: "runners", path: "packs-src/runners/Test_Runner.json", doc: { _id: id(20), _key: `!actors!${id(20)}`, name: "Test Runner", type: "character",
         system: { race: "elf", biography: "<p>An invented archetype.</p>" }, flags: {},
@@ -38,7 +41,7 @@ export function fixtureRepos() {
         system: { citation: { book: "sr2", page: "260" }, cost: 30000, seating: "2 bucket + 1 bench", otherFeatures: "An invented feature list" }, flags: {}, items: [] } },
       { pack: "critters", path: "packs-src/critters/Test_Beast.json", doc: { _id: id(40), _key: `!actors!${id(40)}`, name: "Test Beast", type: "npc", system: {}, flags: {} } }
     ] };
-  const ssc = { id: "sr2e-street-samurai-catalog", version: "1.0.0", tag: "v1.0.0", commit: "b".repeat(40), packs: [{ name: "ssc-weapons", label: "SSC Weapons", type: "Item" }],
+  const ssc = { id: "sr2e-street-samurai-catalog", dir: "sr2e-street-samurai-catalog", version: "1.0.0", tag: "v1.0.0", commit: "b".repeat(40), packs: [{ name: "ssc-weapons", label: "SSC Weapons", type: "Item" }],
     docs: [item(50, "ssc-weapons", "weapon", "Catalog Rifle", { citation: { book: "ssc", page: "20" }, cost: 1200, damageCode: "8S", notes: "No folders in this package." })] };
   return [core, ssc];
 }

@@ -1,4 +1,5 @@
 /** Configuration from the environment only (docs/PLAN-M3.md §2). */
+import { fileURLToPath } from "node:url";
 export function loadConfig(env = process.env) {
   const production = env.NODE_ENV === "production";
   const baseUrl = env.BASE_URL ?? (production ? null : "http://localhost:3000");
@@ -18,6 +19,6 @@ export function loadConfig(env = process.env) {
     trustProxy: env.TRUST_PROXY ? env.TRUST_PROXY.split(",").map(s => s.trim()) : false,
     logLevel: env.LOG_LEVEL ?? "info",
     // The built catalog (tools/build-catalog.mjs). A production server refuses to start without a valid one.
-    catalogDir: env.CATALOG_DIR ?? new URL("../catalog/", import.meta.url).pathname
+    catalogDir: env.CATALOG_DIR ?? fileURLToPath(new URL("../catalog/", import.meta.url))
   };
 }

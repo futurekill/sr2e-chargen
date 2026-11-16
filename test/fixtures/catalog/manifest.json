@@ -2,12 +2,14 @@
   "pins": [
     {
       "id": "sr2e",
+      "dir": "sr2e-foundryvtt",
       "version": "9.9.9",
       "tag": "v9.9.9",
       "commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
     },
     {
       "id": "sr2e-street-samurai-catalog",
+      "dir": "sr2e-street-samurai-catalog",
       "version": "1.0.0",
       "tag": "v1.0.0",
       "commit": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
@@ -52,5 +54,5 @@
     }
   ],
   "entries": 8,
-  "sha256": "7db3c3dd040bfcac4015a7b7d0ebdf2f1e8fe391d0253555e0daad025f7ff4cb"
+  "sha256": "66e7249efd68cbd6e8385ed28b97666bad0330e3629dcf09da3e44a6246f2111"
 }
