@@ -17,14 +17,20 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const PATHS = JSON.parse(readFileSync(join(ROOT, "tools/string-paths.json"), "utf8"));
 const asPattern = (p) => new RegExp(`^${p.replace(/[.[\]]/g, "\\$&").replace(/\{@\}/g, "(@[A-Za-z]+)?")}$`);
 const CLASSES = ["text", "category", "short", "formula"].map(kind => ({ kind, max: PATHS[kind].max ?? null,
-  pattern: PATHS[kind].pattern ? new RegExp(PATHS[kind].pattern) : null, paths: PATHS[kind].paths.map(asPattern) }));
+  values: PATHS[kind].values ? new Set(PATHS[kind].values) : null, paths: PATHS[kind].paths.map(asPattern) }));
+const NO_BOOK = new Set(PATHS.noBook.ids);
+/** A citation's page: `124`, `98–100`, `12, 14`. */
+const PAGE = /^\d{1,3}([–-]\d{1,3})?(, ?\d{1,3}([–-]\d{1,3})?)*$/;
+/** The longest run of plain words in a string. Codes and formulas name a stat or two; a sentence runs on. */
+const wordRun = (s) => Math.max(0, ...(String(s).match(/(?:[A-Za-z]{2,} +)*[A-Za-z]{2,}/g) ?? []).map(m => m.trim().split(/ +/).length));
 /** The class of a string path (`{ kind, max, pattern }`), or null when nobody has classified it. */
 export const classify = (path) => CLASSES.find(c => c.paths.some(r => r.test(path))) ?? null;
 /** Why a string may not stay at a data path, or null: too long, more than one line, or not the path's pattern. */
 function dataProblem(cls, value) {
-  if (cls.pattern && !cls.pattern.test(value)) return `must match ${cls.pattern}`;
+  if (cls.values) return cls.values.has(value) ? null : "is not a known category (tools/string-paths.json)";
   if (cls.max && value.length > cls.max) return `is ${value.length} characters (at most ${cls.max} there)`;
   if (/[\r\n]/.test(value)) return "has more than one line";
+  if (wordRun(value) > 4) return "reads as a sentence (more than 4 words in a row)";
   return null;
 }
 
@@ -69,9 +75,13 @@ export function splitText(node, root, book, problems, where, text = {}) {
 }
 /** Strings in an effect's name and changes are rule data: short, one line (never book wording). */
 function auditEffect(e, problems, where) {
-  const bad = (v) => typeof v === "string" && (v.length > 80 || /[\r\n]/.test(v));
-  if (bad(e.name)) problems.push(`${where}: an effect name is too long to be a name`);
-  for (const c of e.changes) for (const [k, v] of Object.entries(c)) if (bad(v)) problems.push(`${where}: an effect change's ${k} is too long to be rule data`);
+  if (typeof e.name !== "string" || e.name.length > 80 || /[\r\n]/.test(e.name)) problems.push(`${where}: an effect name is too long to be a name`);
+  // A change is { key: a system path, value: a number, mode/type: a word } — rule data by its shape, not its length.
+  const SHAPE = { key: /^system\.[A-Za-z0-9_.]{1,80}$/, value: /^-?\d+(\.\d+)?$/, type: /^[a-z][A-Za-z0-9_.]{0,30}$/, mode: /^[a-z][A-Za-z0-9_.]{0,30}$/ };
+  for (const c of e.changes) for (const [k, v] of Object.entries(c)) {
+    if (typeof v !== "string") continue;
+    if (!SHAPE[k] || !SHAPE[k].test(v)) problems.push(`${where}: an effect change's ${k} is not rule data ("${v.slice(0, 40)}")`);
+  }
 }
 
 const kindOf = (doc) => /^!(\w+)!/.exec(String(doc._key ?? ""))?.[1] ?? null;
@@ -119,9 +129,9 @@ export function shape(doc, ctx, problems, embeddedIn = null) {
   // book) — never a way to drop another item's badge.
   if (!embeddedIn && kind === "item") {
     const none = cite?.book === "none";
-    if (none && doc.type !== "contact") problems.push(`${where}: only a contact may cite book "none"`);
+    if (none && !NO_BOOK.has(id)) problems.push(`${where}: only the listed contacts may cite book "none" (tools/string-paths.json noBook)`);
     else if (!none && !citation) problems.push(`${where}: an item with no citation`);
-    else if (citation && !citation.page) problems.push(`${where}: a citation without a page`);
+    else if (citation && !PAGE.test(citation.page)) problems.push(`${where}: "${citation.page.slice(0, 20)}" is not a page`);
   }
   return entry;
 }

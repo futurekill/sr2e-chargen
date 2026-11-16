@@ -13,14 +13,63 @@
     ]
   },
   "category": {
-    "$comment": "The item's category key, shown in search results: a lower-case key of at most 40 characters, nothing else.",
+    "$comment": "The item's category key, shown in search results: one of these values, nothing else. A new category is added here by a person.",
     "paths": [
       "system.category"
     ],
-    "pattern": "^[a-z0-9_]{1,40}$"
+    "values": [
+      "accessories",
+      "active",
+      "attribute",
+      "autosoft",
+      "climbing",
+      "combat",
+      "comms",
+      "cyberdeck",
+      "cyberware",
+      "defense",
+      "detection",
+      "documents",
+      "drug",
+      "electronics",
+      "entertainment",
+      "explosive",
+      "gear",
+      "general",
+      "health",
+      "illusion",
+      "knowledge",
+      "language",
+      "magical",
+      "manipulation",
+      "masking",
+      "medical",
+      "mental",
+      "misc",
+      "navigation",
+      "other",
+      "persona",
+      "physical",
+      "protective",
+      "security",
+      "sensor",
+      "service",
+      "skill",
+      "skillsoft",
+      "smartlink",
+      "social",
+      "survival",
+      "tactical",
+      "targeting",
+      "vehicle",
+      "vision",
+      "weapon_platform",
+      "working",
+      "pistol"
+    ]
   },
   "short": {
-    "$comment": "Codes, keys, short labels and names the rules read: at most 80 characters, one line.",
+    "$comment": "Codes, keys, short labels and names the rules read: at most 80 characters, one line, never more than 4 words in a row.",
     "paths": [
       "system.citation.book",
       "system.citation.page",
@@ -118,7 +167,7 @@
     "max": 80
   },
   "formula": {
-    "$comment": "Formulas and rule expressions (they may name stats in words): at most 200 characters, one line.",
+    "$comment": "Formulas and rule expressions (they may name stats in words): at most 200 characters, one line, never more than 4 words in a row.",
     "paths": [
       "system.drainCode",
       "system.maxRating",
@@ -150,5 +199,22 @@
       "system.effects.speedMult{@}"
     ],
     "max": 200
+  },
+  "noBook": {
+    "$comment": "The ONLY entries that may cite book \"none\" (not printed in any book): the eleven generic contacts.",
+    "ids": [
+      "sr2e.contacts.0931eaa89f5b644b",
+      "sr2e.contacts.124a612a7ae6f7c7",
+      "sr2e.contacts.5bc3c9888a4ba83d",
+      "sr2e.contacts.6b216fdbb8b737f5",
+      "sr2e.contacts.6f7a3c95cabdba3b",
+      "sr2e.contacts.86a41f27bfef9aa8",
+      "sr2e.contacts.8cda90db862c86b1",
+      "sr2e.contacts.ab2344e914739348",
+      "sr2e.contacts.af696156c9fc603c",
+      "sr2e.contacts.f030dfb127bfdc5e",
+      "sr2e.contacts.f95225db373cb94a",
+      "sr2e.contacts.fixture000000014"
+    ]
   }
 }

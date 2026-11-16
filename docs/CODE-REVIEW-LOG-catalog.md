@@ -30,3 +30,14 @@ All 9 fixed.
 - #2, #3, #5 no wildcards in tools/string-paths.json: every key is listed; data strings have a length limit and one line; a category must be a short key; `flags.sr2e` goes through the same classification (a drug's notes are text); effect names and changes are checked.
 - #4 a package's book is the FIRST book that names it, and the core package must map to sr2 (18 real entries had been listed under VR2). The fixture now has the second core book.
 - #6 the server recomputes the manifest from the checked catalog body. #7 only a contact may cite "none"; a citation needs a page. #8 the pin's directory is recorded and compared. #9 `fileURLToPath`.
+
+## Round 2 — fix-only (REVISE, 4 findings)
+- [tools/build-catalog.mjs:24](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/tools/build-catalog.mjs:24) — **Finding 2 remains:** a sentence in `system.effects.acceleration` passes because formula validation checks only length and line breaks. Fix: validate permitted formula syntax.
+- [tools/string-paths.json:18](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/tools/string-paths.json:18) — **Finding 3 remains:** `system.category = "quick_brown_fox_jumps_over_lazy_dog"` passes and appears in search summaries, though it can be book wording. Fix: allow known category values.
+- [tools/build-catalog.mjs:71](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/tools/build-catalog.mjs:71) — **Finding 5 remains:** a short prose sentence in `effects[].changes[].value` passes and remains untagged; reproduced with “The printed rule says the bearer gains this power at dawn.” Fix: validate change values according to their rule type.
+- [tools/build-catalog.mjs:120](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/tools/build-catalog.mjs:120) — **Finding 7 remains:** changing a sourced contact such as Talismonger to `citation.book: "none"` passes, because every contact is exempt. A cited item also accepts `page: "banana"`. Fix: allowlist the eleven uncited contacts and validate cited pages against the system’s page format.
+
+VERDICT: REVISE
+
+### Claude's response
+All 4 accepted: a data string may not read as a sentence (more than 4 words in a row), on top of its length limit; a category must be one of the listed values; an effect change must have the SHAPE of rule data (a system path, a number, a mode word); only the eleven listed contacts may cite "none", and a page must look like a page. The real catalog is byte-identical after these checks.

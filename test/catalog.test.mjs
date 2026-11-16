@@ -82,11 +82,16 @@ test("every string path is classified; an unknown one fails the build, naming it
 
 test("book wording can't hide in a data path: a category is a key, codes are short, rule data is one line", () => {
   const prose = "A whole paragraph of wording from the book, far longer than any code or key a rule would ever read, placed where data belongs.";
-  assert.throws(broken(r => { pistol(r).system.category = "A sentence, not a key"; }), /system\.category must match/);
+  assert.throws(broken(r => { pistol(r).system.category = "A sentence, not a key"; }), /not a known category/);
+  assert.throws(broken(r => { pistol(r).system.category = "quick_brown_fox_jumps_over_lazy_dog"; }), /not a known category/);   // key-shaped is not enough
+  assert.throws(broken(r => { pistol(r).system.effects = { acceleration: "The vehicle gains speed when the rigger wills it so" }; }), /reads as a sentence/);
+  assert.throws(broken(r => { pistol(r).system.availability = "ask your friendly local fixer"; }), /reads as a sentence/);
   assert.throws(broken(r => { pistol(r).system.damageCode = prose; }), /system\.damageCode is \d+ characters/);
   assert.throws(broken(r => { pistol(r).system.availability = "two\nlines"; }), /more than one line/);
   assert.throws(broken(r => { pistol(r).flags.sr2e.rule = prose; }), /flags\.sr2e\.rule is \d+ characters/);
-  assert.throws(broken(r => { r[0].docs[5].doc.effects[0].changes[0].value = prose; }), /effect change's value is too long/);
+  assert.throws(broken(r => { r[0].docs[5].doc.effects[0].changes[0].value = prose; }), /effect change's value is not rule data/);
+  assert.throws(broken(r => { r[0].docs[5].doc.effects[0].changes[0].value = "The bearer gains this power at dawn."; }), /value is not rule data/);
+  assert.throws(broken(r => { r[0].docs[5].doc.effects[0].changes[0].note = "wording"; }), /change's note is not rule data/);
   assert.throws(broken(r => { r[0].docs[5].doc.effects[0].name = prose; }), /effect name is too long/);
   // What reaches a search SUMMARY is only names, keys and numbers.
   const c = built();
@@ -96,8 +101,10 @@ test("book wording can't hide in a data path: a category is a key, codes are sho
 test("citations: every item has a book and a page; only a contact may cite \"none\"; ids and packages are checked", () => {
   assert.throws(broken(r => { delete pistol(r).system.citation; }), /an item with no citation/);
   assert.throws(broken(r => { pistol(r).system.citation.book = "nope"; }), /cites an unknown book "nope"/);
-  assert.throws(broken(r => { pistol(r).system.citation = { book: "none", page: "" }; }), /only a contact may cite book "none"/);
-  assert.throws(broken(r => { pistol(r).system.citation.page = ""; }), /a citation without a page/);
+  assert.throws(broken(r => { pistol(r).system.citation = { book: "none", page: "" }; }), /only the listed contacts may cite book "none"/);
+  assert.throws(broken(r => { const c = structuredClone(r[0].docs[6]); c.doc._id = "fixture000000099"; c.doc._key = "!items!fixture000000099"; r[0].docs.push(c); }), /only the listed contacts/);   // ANOTHER contact may not
+  for (const page of ["", "banana", "12a", "p.12"]) assert.throws(broken(r => { pistol(r).system.citation.page = page; }), /is not a page/, page);
+  for (const page of ["7", "231", "98–100", "12, 14", "12-13,20"]) assert.doesNotThrow(broken(r => { pistol(r).system.citation.page = page; }), page);
   assert.throws(broken(r => { r[0].docs.push(structuredClone(r[0].docs[2])); }), /duplicate catalog id/);
   assert.throws(broken(r => { r[1].id = "sr2e-unknown-module"; }), /no book in the system's BOOKS table/);
 });
