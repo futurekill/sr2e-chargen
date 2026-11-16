@@ -1,0 +1,40 @@
+{
+  "_id": "62247745b5876234",
+  "name": "Ex-Explosive Rounds",
+  "type": "ammo",
+  "img": "systems/sr2e/assets/item_icons/ammo/ex-explosive-rounds.webp",
+  "system": {
+    "ammoType": "ex_explosive",
+    "quantity": 10,
+    "damageModifier": 2,
+    "armorModifier": 0,
+    "cost": 100,
+    "notes": "Improved explosive rounds: Power +2, otherwise the standard explosive-round rules (misfire on an all-1s Attack Test, SR2E p.93). Availability 6/72 hrs. Fields of Fire p.51.",
+    "damageType": "",
+    "armorCalc": "standard",
+    "citation": {
+      "book": "ff",
+      "page": "51"
+    },
+    "streetIndex": 1.5
+  },
+  "effects": [],
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.3.7",
+    "createdTime": 1700000000000,
+    "modifiedTime": 1700000000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!62247745b5876234"
+}

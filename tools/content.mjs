@@ -1,24 +1,37 @@
 /**
- * Read content straight from Git objects at a pinned commit (docs/PLAN-catalog.md §2). No shell, no archive, no
- * temporary files: `git ls-tree` lists the tree, `git cat-file --batch` hands over the blobs. Only regular files
- * are read, so a symlink committed into a pack is refused rather than followed.
+ * The content: the Foundry system and the sourcebook modules, as files (docs/PLAN-catalog.md, Amendment A).
+ * Two sources, one shape:
+ *   - `gitFiles` reads a repository's Git OBJECTS at a pinned commit (no shell, no checkout, regular files only) —
+ *     what the sync copies from;
+ *   - `readVendored` reads this project's own copy in `content/<dir>/` and checks it against its record and the pin.
+ * `shapeRepo` turns either into what the catalog build reads.
  */
 import { execFileSync } from "node:child_process";
-import { existsSync } from "node:fs";
-import { join } from "node:path";
+import { existsSync, lstatSync, readdirSync, readFileSync } from "node:fs";
+import { createHash } from "node:crypto";
+import { join, relative, sep } from "node:path";
+
+export const TAG = /^v\d+\.\d+\.\d+$/;
+export const REPO = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
+export const COMMIT = /^[0-9a-f]{40}$/;
+export const RECORD = "CONTENT.json";
+/** What the catalog reads from each repository. The book table only matters in the system's (the first pin). */
+export const WANTED = ["system.json", "module.json", "packs-src", "module/rules/books.mjs"];
 
 const git = (dir, args, input) => execFileSync("git", ["-C", dir, ...args], { input, maxBuffer: 512 * 1024 * 1024, stdio: ["pipe", "pipe", "pipe"] });
+/** Git's own id of a file's contents: sha1("blob <size>\0" + bytes). */
+export const blobId = (bytes) => createHash("sha1").update(`blob ${bytes.length}\0`).update(bytes).digest("hex");
 
-/** The commit a tag points at, or null. */
+/** The commit a tag points at in a local repository, or null. */
 export function tagCommit(dir, tag) {
   try { return git(dir, ["rev-list", "-n", "1", `refs/tags/${tag}`]).toString().trim(); } catch { return null; }
 }
 
-/** Every regular file under `path` at `commit`: `[{ path, sha }]`. Anything that is not a plain file fails. */
-export function listFiles(dir, commit, path) {
-  const out = git(dir, ["ls-tree", "-r", "-z", commit, "--", path]).toString();
+/** Every regular file under `paths` at `commit`: `[{ path, sha }]`. Anything that is not a plain file fails. */
+export function listFiles(dir, commit, paths) {
+  const out = git(dir, ["ls-tree", "-r", "-z", commit, "--", ...paths]).toString();
   return out.split("\0").filter(Boolean).map(line => {
-    const m = /^(\d{6}) (\w+) ([0-9a-f]{40,64})\t(.*)$/s.exec(line);
+    const m = /^(\d{6}) (\w+) ([0-9a-f]{40})\t(.*)$/s.exec(line);
     if (!m) throw new Error(`${dir}: unreadable tree entry "${line}"`);
     if (m[1] !== "100644" || m[2] !== "blob") throw new Error(`${dir}: ${m[4]} is not a plain file (mode ${m[1]} ${m[2]}) — refused`);
     return { path: m[4], sha: m[3] };
@@ -42,35 +55,84 @@ export function readBlobs(dir, shas) {
   return out;
 }
 
-/** One file at a commit, or null when the commit has no such file. */
-export function readFile(dir, commit, path) {
-  const [f] = listFiles(dir, commit, path).filter(x => x.path === path);
-  return f ? readBlobs(dir, [f.sha]).get(f.sha) : null;
+/** Check a pin's shape before any of it is used in a command or a path. */
+export function checkPin(pin) {
+  if (!pin || typeof pin.dir !== "string" || !/^[A-Za-z0-9_.-]+$/.test(pin.dir) || pin.dir.startsWith(".")) throw new Error(`a pin has a bad dir: ${JSON.stringify(pin?.dir)}`);
+  if (!REPO.test(String(pin.repo))) throw new Error(`${pin.dir}: bad repo ${JSON.stringify(pin.repo)}`);
+  if (!TAG.test(String(pin.tag))) throw new Error(`${pin.dir}: bad tag ${JSON.stringify(pin.tag)}`);
+  if (!COMMIT.test(String(pin.commit))) throw new Error(`${pin.dir}: bad commit ${JSON.stringify(pin.commit)}`);
+  return pin;
 }
 
 /**
- * One pinned repository: its manifest and every `packs-src` document, verified against the pin.
- * @returns {{ id, version, tag, commit, manifest, packs: [{ name, label, type }], docs: [{ pack, path, doc }] }}
+ * A pinned repository's files, from its Git objects: a Map path → Buffer, with each blob id. The tag must still
+ * point at the pinned commit.
  */
-export function readPinned(contentRoot, { dir, tag, commit }) {
-  const repo = join(contentRoot, dir);
-  if (!existsSync(join(repo, ".git"))) throw new Error(`content repository not found: ${repo} (set CONTENT_ROOT)`);
-  if (!/^[0-9a-f]{40,64}$/.test(String(commit))) throw new Error(`${dir}: the pin has no commit`);
-  const actual = tagCommit(repo, tag);
-  if (!actual) throw new Error(`${dir}: no tag ${tag}`);
-  if (actual !== commit) throw new Error(`${dir}: tag ${tag} points at ${actual.slice(0, 12)}, but the pin says ${commit.slice(0, 12)} — the tag moved (run npm run pins:update if that is intended)`);
-  const manifestFile = ["system.json", "module.json"].map(f => [f, readFile(repo, commit, f)]).find(([, b]) => b);
-  if (!manifestFile) throw new Error(`${dir}: no system.json or module.json at ${tag}`);
-  const manifest = JSON.parse(manifestFile[1].toString("utf8"));
-  const files = listFiles(repo, commit, "packs-src").filter(f => f.path.endsWith(".json"));
-  const blobs = readBlobs(repo, files.map(f => f.sha));
-  const docs = files.map(f => {
-    const parts = f.path.split("/");   // packs-src/<pack>/<file>.json
-    if (parts.length !== 3) throw new Error(`${dir}: unexpected path ${f.path}`);
+export function gitFiles(repoDir, pin) {
+  checkPin(pin);
+  if (!existsSync(join(repoDir, ".git"))) throw new Error(`content repository not found: ${repoDir}`);
+  const actual = tagCommit(repoDir, pin.tag);
+  if (!actual) throw new Error(`${pin.dir}: no tag ${pin.tag}`);
+  if (actual !== pin.commit) throw new Error(`${pin.dir}: tag ${pin.tag} points at ${actual.slice(0, 12)}, but the pin says ${pin.commit.slice(0, 12)}`);
+  const list = listFiles(repoDir, pin.commit, WANTED);
+  const blobs = readBlobs(repoDir, list.map(f => f.sha));
+  return { files: new Map(list.map(f => [f.path, blobs.get(f.sha)])), ids: new Map(list.map(f => [f.path, f.sha])) };
+}
+
+/** Every file under `root`, as relative POSIX paths. A symlink, or anything but a file or a directory, fails. */
+export function walkFiles(root) {
+  const out = [];
+  (function walk(dir) {
+    for (const name of readdirSync(dir)) {
+      const p = join(dir, name), st = lstatSync(p);
+      if (st.isSymbolicLink()) throw new Error(`${relative(root, p)} is a symlink — refused`);
+      if (st.isDirectory()) walk(p);
+      else if (st.isFile()) out.push(relative(root, p).split(sep).join("/"));
+      else throw new Error(`${relative(root, p)} is not a regular file — refused`);
+    }
+  })(root);
+  return out.sort();
+}
+
+/**
+ * This project's copy of one pinned repository, CHECKED (Amendment A3): its record names the same dir, tag and
+ * commit as the pin; every recorded file is there with its recorded blob id; nothing else is there.
+ */
+export function readVendored(contentDir, pin) {
+  checkPin(pin);
+  const root = join(contentDir, pin.dir);
+  if (!existsSync(join(root, RECORD))) throw new Error(`${pin.dir}: no copy in content/ (run: npm run content:sync)`);
+  const record = JSON.parse(readFileSync(join(root, RECORD), "utf8"));
+  for (const k of ["dir", "repo", "tag", "commit"]) if (record[k] !== pin[k]) throw new Error(`${pin.dir}: the copy is of ${k} ${record[k]}, the pin says ${pin[k]} (run: npm run content:sync)`);
+  // (.DS_Store: the Mac's Finder writes one into any folder it opens; it is never content.)
+  const listed = Object.keys(record.files ?? {}).sort(), present = walkFiles(root).filter(p => p !== RECORD && !p.endsWith(".DS_Store"));
+  const extra = present.filter(p => !(p in record.files)), missing = listed.filter(p => !present.includes(p));
+  if (extra.length) throw new Error(`${pin.dir}: files in content/ that the sync didn't write: ${extra.slice(0, 5).join(", ")}`);
+  if (missing.length) throw new Error(`${pin.dir}: files missing from content/: ${missing.slice(0, 5).join(", ")}`);
+  const files = new Map();
+  for (const path of listed) {
+    const bytes = readFileSync(join(root, path));
+    if (blobId(bytes) !== record.files[path]) throw new Error(`${pin.dir}: ${path} was changed after the sync (content/ changes only through npm run content:sync)`);
+    files.set(path, bytes);
+  }
+  return files;
+}
+
+/** Files → what the catalog build reads: `{ id, dir, version, tag, commit, manifest, packs, docs, files }`. */
+export function shapeRepo(pin, files) {
+  const manifestBytes = files.get("system.json") ?? files.get("module.json");
+  if (!manifestBytes) throw new Error(`${pin.dir}: no system.json or module.json`);
+  const manifest = JSON.parse(manifestBytes.toString("utf8"));
+  const docs = [];
+  for (const [path, bytes] of files) {
+    if (!path.startsWith("packs-src/") || !path.endsWith(".json")) continue;
+    const parts = path.split("/");
+    if (parts.length !== 3) throw new Error(`${pin.dir}: unexpected path ${path}`);
     let doc;
-    try { doc = JSON.parse(blobs.get(f.sha).toString("utf8")); } catch (err) { throw new Error(`${dir}: ${f.path} is not valid JSON (${err.message})`, { cause: err }); }
-    return { pack: parts[1], path: f.path, doc };
-  });
-  return { id: manifest.id, dir, version: manifest.version, tag, commit, manifest, repo,
+    try { doc = JSON.parse(bytes.toString("utf8")); } catch (err) { throw new Error(`${pin.dir}: ${path} is not valid JSON (${err.message})`, { cause: err }); }
+    docs.push({ pack: parts[1], path, doc });
+  }
+  docs.sort((a, b) => (a.path < b.path ? -1 : 1));
+  return { id: manifest.id, dir: pin.dir, version: manifest.version, tag: pin.tag, commit: pin.commit, manifest, files,
     packs: (manifest.packs ?? []).map(p => ({ name: p.name, label: p.label, type: p.type, path: p.path })), docs };
 }

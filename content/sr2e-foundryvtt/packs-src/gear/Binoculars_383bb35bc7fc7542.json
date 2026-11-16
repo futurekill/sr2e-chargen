@@ -1,0 +1,42 @@
+{
+  "_id": "383bb35bc7fc7542",
+  "name": "Binoculars",
+  "type": "gear",
+  "img": "systems/sr2e/assets/item_icons/gear/binoculars.webp",
+  "system": {
+    "category": "protective",
+    "rating": 0,
+    "quantity": 1,
+    "weight": 1,
+    "cost": 100,
+    "availability": "Always",
+    "legality": "Legal",
+    "equipped": false,
+    "concealability": 5,
+    "streetIndex": 0.8,
+    "notes": "Vision Enhancers, SR2E p.257. 50x magnification. Low-light (+200¥) and thermographic (+250¥) options are separate items.",
+    "citation": {
+      "book": "sr2",
+      "page": "257"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.65.0",
+    "createdTime": 1700000000000,
+    "modifiedTime": 1700000000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "folder": "0b41179239d940fb",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!383bb35bc7fc7542"
+}

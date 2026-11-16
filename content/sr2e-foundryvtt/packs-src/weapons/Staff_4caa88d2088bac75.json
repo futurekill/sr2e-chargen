@@ -1,0 +1,63 @@
+{
+  "_id": "4caa88d2088bac75",
+  "name": "Staff",
+  "type": "weapon",
+  "img": "systems/sr2e/assets/item_icons/weapons/staff.webp",
+  "system": {
+    "weaponType": "melee",
+    "skill": "armed_combat",
+    "damageCode": "(Str+2)M",
+    "damageType": "stun",
+    "concealability": 2,
+    "reach": 2,
+    "firingModes": {
+      "ss": false,
+      "sa": false,
+      "bf": false,
+      "fa": false
+    },
+    "ammo": {
+      "current": 0,
+      "max": 0,
+      "type": ""
+    },
+    "recoilComp": 0,
+    "ranges": {
+      "short": 0,
+      "medium": 0,
+      "long": 0,
+      "extreme": 0
+    },
+    "strengthMin": 0,
+    "weight": 2,
+    "cost": 50,
+    "availability": "3/24 hrs",
+    "legality": "Legal",
+    "equipped": false,
+    "accessories": [],
+    "notes": "SR2E Melee Weapons Table p.101: (Str+2)M Stun, Reach 2, Concealability 2, 50¥.",
+    "citation": {
+      "book": "sr2",
+      "page": "101"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.3.7",
+    "createdTime": 1700000000000,
+    "modifiedTime": 1700000000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "folder": "f052cb5eb3b5a2e2",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!4caa88d2088bac75"
+}

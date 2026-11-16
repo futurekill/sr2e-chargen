@@ -1,0 +1,63 @@
+{
+  "_id": "70c0bef3b69cb30d",
+  "name": "Light Crossbow",
+  "type": "weapon",
+  "img": "systems/sr2e/assets/item_icons/weapons/light-crossbow.webp",
+  "system": {
+    "weaponType": "projectile",
+    "skill": "projectile_weapons",
+    "damageCode": "6L",
+    "damageType": "physical",
+    "concealability": 2,
+    "reach": 0,
+    "firingModes": {
+      "ss": false,
+      "sa": false,
+      "bf": false,
+      "fa": false
+    },
+    "ammo": {
+      "current": 1,
+      "max": 1,
+      "type": "bolt"
+    },
+    "recoilComp": 0,
+    "ranges": {
+      "short": 10,
+      "medium": 40,
+      "long": 100,
+      "extreme": 200
+    },
+    "strengthMin": 2,
+    "weight": 2,
+    "cost": 300,
+    "availability": "4/36 hrs",
+    "legality": "Legal",
+    "equipped": false,
+    "accessories": [],
+    "notes": "Range scales with Strength (×2/×8/×20/×40). SR2E p.254.",
+    "citation": {
+      "book": "sr2",
+      "page": "254"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.19.4",
+    "createdTime": 1700000000000,
+    "modifiedTime": 1700000000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "folder": "d1f22c9f34a7391a",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!70c0bef3b69cb30d"
+}

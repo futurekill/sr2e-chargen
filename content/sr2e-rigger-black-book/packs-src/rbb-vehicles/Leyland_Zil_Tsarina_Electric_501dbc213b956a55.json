@@ -1,0 +1,69 @@
+{
+  "_id": "501dbc213b956a55",
+  "name": "Leyland-Zil Tsarina (Electric)",
+  "type": "vehicle",
+  "img": "modules/sr2e-rigger-black-book/assets/vehicle_portraits/leyland-zil-tsarina-electric.webp",
+  "system": {
+    "vehicleType": "ground",
+    "skill": "car",
+    "handling": 4,
+    "handlingOffRoad": 8,
+    "speed": 25,
+    "acceleration": 0,
+    "body": 1,
+    "armor": 0,
+    "signature": 5,
+    "pilot": 0,
+    "sensor": 0,
+    "cargo": 5,
+    "load": 0,
+    "seating": "1 + 1 bucket seats",
+    "cost": 10000,
+    "availability": "",
+    "conditionMonitor": {
+      "value": 0,
+      "max": 10
+    },
+    "autonav": 1,
+    "notes": "<p>A roomy L-Z chassis car with an unusual front-high seating layout, full canopy and a rear-deck luggage rack.</p><p><em>Off-road handling 8. Max speed 75 m/CT (cruising 25 used for tests). Electric, 200 PF; 2 CF trunk + 3 CF roof rack. Rigger Black Book p.9.</em></p>",
+    "citation": {
+      "book": "rbb",
+      "page": "9"
+    }
+  },
+  "prototypeToken": {
+    "name": "Leyland-Zil Tsarina (Electric)",
+    "displayName": 20,
+    "actorLink": false,
+    "width": 2,
+    "height": 5,
+    "texture": {
+      "src": "modules/sr2e-rigger-black-book/assets/vehicle_portraits/leyland-zil-tsarina-electric.webp",
+      "fit": "contain",
+      "scaleX": 1,
+      "scaleY": 1
+    },
+    "lockRotation": false,
+    "disposition": 0,
+    "displayBars": 0
+  },
+  "effects": [],
+  "folder": null,
+  "sort": 0,
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782200000000,
+    "modifiedTime": 1782200000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!actors!501dbc213b956a55"
+}

@@ -1,0 +1,91 @@
+{
+  "_id": "5ee02cfdde36aa33",
+  "name": "Improved Control Surfaces (Watercraft)",
+  "type": "vehicle_mod",
+  "img": "icons/svg/upgrade.svg",
+  "system": {
+    "modType": "handling",
+    "rating": 1,
+    "cost": 0,
+    "designPoints": 0,
+    "dpPerLevel": 0,
+    "dpTable": [],
+    "cfConsumed": 0,
+    "cfPerLevel": 0,
+    "cfTable": [],
+    "loadReduction": 0,
+    "loadPerLevel": 0,
+    "loadTable": [],
+    "dpFormula": "C x 1.40 x R",
+    "cfFormula": "",
+    "loadFormula": "",
+    "designable": true,
+    "designNuyen": false,
+    "mountPoints": 0,
+    "modKey": "improved-control-surfaces",
+    "maxRating": "2",
+    "restrictions": [
+      "only:boat",
+      "notWith:drive-by-wire"
+    ],
+    "effects": {
+      "handling": "-R"
+    },
+    "stack": "levels",
+    "custom": {
+      "customizable": true,
+      "formulas": {
+        "partsCost": "V x 1.15 x R",
+        "baseTime": "R x 40",
+        "tn": "4",
+        "cf": "0",
+        "load": "0"
+      },
+      "market": [
+        {
+          "availability": "6/12 days",
+          "streetIndex": 2
+        }
+      ],
+      "max": {
+        "value": "2"
+      },
+      "procedure": "test",
+      "fixedHours": 0,
+      "skills": [
+        "vehicleBR"
+      ],
+      "combine": "lowest",
+      "equipment": "Vehicle facility",
+      "pageCust": "p.125",
+      "state": "",
+      "choice": {}
+    },
+    "components": {},
+    "installed": false,
+    "notes": "Reshaped rudders and control surfaces that improve a boat's Handling (watercraft only). Parts cost = vehicle's original cost × 1.15 per 1-point Handling improvement; max −2 Handling; Avail 6/12 days; Street Index 2; Base Time (levels × 40) hrs. Rigger 2 p.125. (Design specifications p.125.)",
+    "citation": {
+      "book": "r2",
+      "page": "125"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "folder": null,
+  "sort": 0,
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.0.1",
+    "createdTime": 1781600000000,
+    "modifiedTime": 1781600000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!5ee02cfdde36aa33"
+}

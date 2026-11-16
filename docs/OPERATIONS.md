@@ -2,10 +2,8 @@
 A development build (M3a): fine to try on your own machine or server; not released, no backups yet.
 
 ## Start it
-1. Build the catalog, then the image, from the repo root:
-   `npm run build:catalog` then `docker build -f docker/Dockerfile -t sr2e-chargen:dev .`
-   The catalog build needs the content repositories (the Foundry system and the sourcebook modules) checked out
-   beside this one, at the versions in `content-pins.json`. The image build fails without a valid catalog.
+1. Build the image from the repo root: `docker build -f docker/Dockerfile -t sr2e-chargen:dev .`
+   The image builds its own catalog from `content/`, this project's copy of the content. Nothing else is needed.
 2. Copy `docker/compose.example.yml` to `compose.yml` and set `BASE_URL` to the address people will type
    (https, exactly). Set `TRUST_PROXY` to your reverse proxy's address or network.
 3. `docker compose up -d`
@@ -38,12 +36,26 @@ A development build (M3a): fine to try on your own machine or server; not releas
 
 Links are shown ONCE and stored only as hashes: if one is lost, make another.
 
-## The catalog
-- `content-pins.json` lists the content: each repository, its release tag, and the commit that tag must point at.
-- To take a new release of a book: change its tag, run `npm run pins:update`, then `npm run build:catalog`. Commit
-  the changed pins. The build stops if a new field holds text that nobody has classified
-  (`tools/string-paths.json`): decide if it is book wording or rule data, and add it there.
-- The server reads the catalog at start. A production server does not start without a valid one.
+## The content and the catalog
+- `content/` is this project's own copy of the content: the Foundry system and the sourcebook modules, the files the
+  catalog reads, exactly as in their releases. `content-pins.json` lists each repository, its release tag, and the
+  commit that tag points at.
+- **Updates come by pull request.** Once a day, the Content sync workflow looks for new releases. When a book has
+  one, it opens (or updates) one pull request named "Content: …" with the new copy and the new pins, and a table of
+  the checks it ran. Review it and merge it.
+  - GitHub holds the CI runs of that pull request for approval: approve them on the pull request, or merge.
+  - If a check failed, the usual cause is a new text field in the content: add it to `tools/string-paths.json` on
+    the `content-sync` branch.
+  - The workflow needs the repository setting **Settings → Actions → General → "Allow GitHub Actions to create and
+    approve pull requests"**. Without it, the workflow stops and says so.
+  - Run it at any time: Actions → Content sync → Run workflow.
+- **By hand** (with the content repositories checked out beside this one): `npm run content:sync` copies the pinned
+  versions; `node tools/sync-content.mjs --latest` moves every pin to its newest release first. Commit `content/` and
+  `content-pins.json` together.
+- **Never edit `content/` by hand.** The catalog build refuses a changed, missing or extra file. CI also compares
+  `content/` with the pinned commits on GitHub (`npm run content:verify`).
+- `npm run build:catalog` builds `catalog/` for a local server. The server reads it at start; a production server
+  does not start without a valid one.
 
 ## Day to day
 - **Updating**: rebuild the image, `docker compose up -d`. Migrations run at start; an older build refuses to start

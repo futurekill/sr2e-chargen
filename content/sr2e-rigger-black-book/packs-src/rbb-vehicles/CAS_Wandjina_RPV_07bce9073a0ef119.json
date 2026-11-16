@@ -1,0 +1,69 @@
+{
+  "_id": "07bce9073a0ef119",
+  "name": "CAS \"Wandjina\" RPV",
+  "type": "vehicle",
+  "img": "modules/sr2e-rigger-black-book/assets/vehicle_portraits/cas-wandjina-rpv.webp",
+  "system": {
+    "vehicleType": "drone",
+    "skill": "",
+    "handling": 3,
+    "handlingOffRoad": null,
+    "speed": 250,
+    "acceleration": 0,
+    "body": 5,
+    "armor": 6,
+    "signature": 4,
+    "pilot": 4,
+    "sensor": 3,
+    "cargo": 2,
+    "load": 0,
+    "seating": "Drone (rigged)",
+    "cost": 75000,
+    "availability": "",
+    "conditionMonitor": {
+      "value": 0,
+      "max": 10
+    },
+    "autonav": 0,
+    "notes": "<p>A combat Remotely Piloted Vehicle from Commonwealth Aerospace (Australia) — built for both assault and recon, with a hardened airframe and weapon hardpoints.</p><p><em>Handling printed 3/5. Max speed 500 m/CT (cruising 250 used for tests). Drone. MultiF/350 liters; 3 km/liter (30 liters/km in stealth mode). Sensor Advanced (3); STOL. Armament: Vengeance/Vanquisher minigun + 3 ordnance hardpoints (centerline 2×2 CF, underwing 3 CF). Stealth mode. Rigger Black Book p.84. Stowing it takes 50 CF of another vehicle's cargo space. Armor 2 as printed (SR1) x3 = 6 for SRII, per Sourcebook Updates p.283.</em></p>",
+    "citation": {
+      "book": "rbb",
+      "page": "84"
+    }
+  },
+  "prototypeToken": {
+    "name": "CAS \"Wandjina\" RPV",
+    "displayName": 20,
+    "actorLink": false,
+    "width": 3,
+    "height": 3,
+    "texture": {
+      "src": "modules/sr2e-rigger-black-book/assets/vehicle_portraits/cas-wandjina-rpv.webp",
+      "fit": "fill",
+      "scaleX": 1,
+      "scaleY": 1
+    },
+    "lockRotation": false,
+    "disposition": 0,
+    "displayBars": 0
+  },
+  "effects": [],
+  "folder": null,
+  "sort": 0,
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782200000000,
+    "modifiedTime": 1782200000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!actors!07bce9073a0ef119"
+}

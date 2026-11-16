@@ -1,0 +1,66 @@
+{
+  "_id": "5a1b2c3d4e5f6071",
+  "name": "Smoke Grenade",
+  "type": "weapon",
+  "img": "systems/sr2e/assets/item_icons/weapons/smoke-grenade.webp",
+  "system": {
+    "weaponType": "grenade",
+    "skill": "throwing_weapons",
+    "damageCode": "0M",
+    "damageType": "physical",
+    "concealability": 6,
+    "reach": 0,
+    "firingModes": {
+      "ss": false,
+      "sa": false,
+      "bf": false,
+      "fa": false
+    },
+    "ammo": {
+      "current": 0,
+      "max": 0,
+      "type": ""
+    },
+    "recoilComp": 0,
+    "ranges": {
+      "short": 5,
+      "medium": 10,
+      "long": 15,
+      "extreme": 20
+    },
+    "strengthMin": 0,
+    "weight": 0.25,
+    "cost": 30,
+    "availability": "3/24 hrs",
+    "legality": "",
+    "equipped": false,
+    "accessories": [],
+    "notes": "Smoke grenade (Fields of Fire p.48; smoke rules p.85). No damage: drops a 10 m radius cloud lasting 2 minutes in still air that obscures vision (Visibility Table +4, SR2E p.89); wind moves and thins it (FoF p.85). Legality is not printed.",
+    "blastType": "smoke",
+    "quantity": 1,
+    "streetIndex": 2,
+    "citation": {
+      "book": "ff",
+      "page": "48"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.13.0",
+    "createdTime": 1700000000000,
+    "modifiedTime": 1700000000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "folder": "dbec753ba06e68f9",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!5a1b2c3d4e5f6071"
+}

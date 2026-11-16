@@ -1,0 +1,41 @@
+{
+  "_id": "cf790469bde1515f",
+  "name": "Armanté \"Executive Suite\" Tuxedo",
+  "type": "armor",
+  "img": "modules/sr2e-neo-anarchists/assets/item_icons/armor/armante-executive-suite-tuxedo.webp",
+  "system": {
+    "ballistic": 3,
+    "impact": 1,
+    "concealability": 12,
+    "weight": 1,
+    "cost": 1100,
+    "availability": "",
+    "legality": "Legal",
+    "equipped": false,
+    "isLayered": true,
+    "notes": "Armanté designer armor clothing. Neo-Anarchists' Guide p.94.",
+    "citation": {
+      "book": "naw",
+      "page": "94"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "folder": null,
+  "sort": 0,
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782300000000,
+    "modifiedTime": 1782300000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!cf790469bde1515f"
+}

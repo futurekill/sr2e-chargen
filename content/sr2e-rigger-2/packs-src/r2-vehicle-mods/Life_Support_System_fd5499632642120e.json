@@ -1,0 +1,84 @@
+{
+  "_id": "fd5499632642120e",
+  "name": "Life Support System",
+  "type": "vehicle_mod",
+  "img": "icons/svg/upgrade.svg",
+  "system": {
+    "modType": "protection",
+    "rating": 1,
+    "cost": 500,
+    "designPoints": 5,
+    "dpPerLevel": 1,
+    "dpTable": [],
+    "cfConsumed": 0,
+    "cfPerLevel": 0,
+    "cfTable": [],
+    "loadReduction": 0,
+    "loadPerLevel": 0,
+    "loadTable": [],
+    "dpFormula": "",
+    "cfFormula": "R / 10",
+    "loadFormula": "R / 10 x 25",
+    "designable": true,
+    "designNuyen": false,
+    "mountPoints": 0,
+    "modKey": "",
+    "maxRating": "",
+    "restrictions": [],
+    "effects": {},
+    "stack": "",
+    "custom": {
+      "customizable": true,
+      "formulas": {
+        "partsCost": "500 + 100 x R",
+        "baseTime": "8",
+        "tn": "3",
+        "cf": "R / 10",
+        "load": "R / 10 x 25"
+      },
+      "market": [
+        {
+          "availability": "8/14 days",
+          "streetIndex": 2.5
+        }
+      ],
+      "max": {},
+      "procedure": "test",
+      "fixedHours": 0,
+      "skills": [
+        "vehicleBR"
+      ],
+      "combine": "lowest",
+      "equipment": "Vehicle shop",
+      "pageCust": "p.128-129",
+      "state": "",
+      "choice": {}
+    },
+    "components": {},
+    "installed": false,
+    "notes": "Provides oxygen and basic climate control inside a sealed vehicle, rated in man-hours of support. Parts cost = 500¥ + 100¥ per man-hour; load −(25 kg per 10 man-hours); Avail 8/14 days. Rigger 2 p.128. Design: Rating = man-hours of support. (Design specifications p.128.)",
+    "citation": {
+      "book": "r2",
+      "page": "128"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "folder": null,
+  "sort": 0,
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.0.1",
+    "createdTime": 1781600000000,
+    "modifiedTime": 1781600000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!fd5499632642120e"
+}

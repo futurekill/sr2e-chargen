@@ -1,0 +1,78 @@
+{
+  "_id": "dd6ac5a0eeed0e53",
+  "name": "Bone Lacing (Plastic)",
+  "type": "cyberware",
+  "img": "modules/sr2e-shadowtech/assets/item_icons/cyberware/bone-lacing-plastic.webp",
+  "system": {
+    "location": "bodyware",
+    "grade": "standard",
+    "essenceCost": 0.5,
+    "rating": 1,
+    "cost": 7500,
+    "availability": "",
+    "streetIndex": "",
+    "legality": "Legal",
+    "installed": true,
+    "isWeapon": false,
+    "weaponType": "melee",
+    "skill": "armed combat",
+    "damageCode": "",
+    "damageType": "physical",
+    "reach": 0,
+    "combatTnMod": 0,
+    "isVcr": false,
+    "noReactionBonus": false,
+    "isTacticalComputer": false,
+    "unarmedPowerBonus": 1,
+    "armorBallistic": 0,
+    "armorImpact": 0,
+    "cranialDeck": false,
+    "deck": {
+      "active": false,
+      "mpcp": 0,
+      "hardening": 0,
+      "activeMemory": 0,
+      "storageMemory": 0,
+      "loadSpeed": 0,
+      "ioSpeed": 0,
+      "response": 0
+    },
+    "ratingStats": [],
+    "attributeMods": {
+      "body": 1,
+      "quickness": 0,
+      "strength": 0,
+      "charisma": 0,
+      "intelligence": 0,
+      "willpower": 0,
+      "reaction": 0,
+      "initiativeDice": 0
+    },
+    "capacity": 0,
+    "modules": [],
+    "notes": "Reinforced bones: +1 Body, unarmed blows become (Str+1)M — automated (the book prints the 1e code (Str+1)M2; SR2 staging is always 2, so the digit is dropped). May instead do Physical at half Power, round up (not automated — halve it by hand). +5 kg weight; Barrier Rating 6; doesn't show on metal detectors (Shadowtech p.42).",
+    "citation": {
+      "book": "st",
+      "page": "42"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "folder": null,
+  "sort": 0,
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784000000000,
+    "modifiedTime": 1784000000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!dd6ac5a0eeed0e53"
+}

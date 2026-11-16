@@ -1,0 +1,64 @@
+{
+  "_id": "85d3807a401d11c0",
+  "name": "Panther Assault Cannon",
+  "type": "weapon",
+  "img": "systems/sr2e/assets/item_icons/weapons/panther-assault-cannon.webp",
+  "system": {
+    "weaponType": "heavy",
+    "skill": "gunnery",
+    "damageCode": "18D",
+    "damageType": "physical",
+    "concealability": 99,
+    "reach": 0,
+    "firingModes": {
+      "ss": true,
+      "sa": false,
+      "bf": false,
+      "fa": false
+    },
+    "ammo": {
+      "current": 20,
+      "max": 20,
+      "type": "ac"
+    },
+    "recoilComp": 2,
+    "ranges": {
+      "short": 50,
+      "medium": 150,
+      "long": 450,
+      "extreme": 1300
+    },
+    "strengthMin": 0,
+    "weight": 20,
+    "cost": 6500,
+    "availability": "16/14 days",
+    "legality": "Restricted",
+    "equipped": false,
+    "accessories": [],
+    "notes": "SR2E p.234. The Ares Panther is the definitive assault cannon—fires explosive-equivalent shells with limited armor-piercing capability.",
+    "streetIndex": 2,
+    "citation": {
+      "book": "sr2",
+      "page": "234"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.3.7",
+    "createdTime": 1700000000000,
+    "modifiedTime": 1700000000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "folder": "2cf4944bd0e889c9",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!85d3807a401d11c0"
+}

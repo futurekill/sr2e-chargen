@@ -1,0 +1,64 @@
+{
+  "_id": "cb1c78e3f231e934",
+  "name": "AK-98",
+  "type": "weapon",
+  "img": "systems/sr2e/assets/item_icons/weapons/ak-98.webp",
+  "system": {
+    "weaponType": "firearm",
+    "skill": "firearms",
+    "damageCode": "8M",
+    "damageType": "physical",
+    "concealability": 2,
+    "reach": 0,
+    "firingModes": {
+      "ss": false,
+      "sa": true,
+      "bf": true,
+      "fa": true
+    },
+    "ammo": {
+      "current": 38,
+      "max": 38,
+      "type": "rifle"
+    },
+    "recoilComp": 2,
+    "ranges": {
+      "short": 15,
+      "medium": 40,
+      "long": 100,
+      "extreme": 250
+    },
+    "strengthMin": 0,
+    "weight": 6,
+    "cost": 2500,
+    "availability": "8/4 days",
+    "legality": "Forbidden",
+    "equipped": false,
+    "accessories": [],
+    "notes": "Assault rifle with an integral grenade launcher. SR2E p.254-255.",
+    "streetIndex": 4,
+    "citation": {
+      "book": "sr2",
+      "page": "254–255"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.19.3",
+    "createdTime": 1700000000000,
+    "modifiedTime": 1700000000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "folder": "f3dfac8b61f358e2",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!cb1c78e3f231e934"
+}

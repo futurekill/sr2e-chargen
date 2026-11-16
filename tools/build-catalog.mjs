@@ -1,17 +1,17 @@
 #!/usr/bin/env node
 /**
- * Build the catalog (docs/PLAN-catalog.md): read the pinned content from Git, select what a character can have,
+ * Build the catalog (docs/PLAN-catalog.md): read this project's checked copy of the pinned content (content/,
+ * Amendment A), select what a character can have,
  * shape each document, tag every piece of book wording with its book, and write catalog/.
  * The same pins give a byte-identical catalog.json (no timestamp, sorted entries).
  *
- *   node tools/build-catalog.mjs            build catalog/ from content-pins.json
- *   node tools/build-catalog.mjs --pins     rewrite the pins' commits from their tags (a reviewed change)
+ *   node tools/build-catalog.mjs [outDir]    build outDir (default catalog/) from content/ and content-pins.json
  */
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { readPinned, readFile, tagCommit } from "./content.mjs";
+import { readVendored, shapeRepo } from "./content.mjs";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const PATHS = JSON.parse(readFileSync(join(ROOT, "tools/string-paths.json"), "utf8"));
@@ -176,17 +176,17 @@ export function parseBooks(src) {
   if (!books.sr2 || books.sr2.module !== "sr2e") throw new Error("books.mjs: no core book (sr2 → sr2e)");
   return books;
 }
-function booksAt(repo, commit) {
-  const src = readFile(repo, commit, "module/rules/books.mjs");
-  if (!src) throw new Error("the system has no module/rules/books.mjs at its pinned commit");
+function booksOf(system) {
+  const src = system.files.get("module/rules/books.mjs");
+  if (!src) throw new Error("the system's copy has no module/rules/books.mjs");
   return parseBooks(src.toString("utf8"));
 }
 
-export async function buildCatalog({ pins, contentRoot }) {
-  const repos = pins.map(pin => readPinned(contentRoot, pin));
+export function buildCatalog({ pins, contentDir }) {
+  const repos = pins.map(pin => shapeRepo(pin, readVendored(contentDir, pin)));
   const system = repos[0];
   if (system.id !== "sr2e") throw new Error("the first pin must be the system (sr2e)");
-  return assemble(repos, booksAt(system.repo, system.commit));
+  return assemble(repos, booksOf(system));
 }
 
 /** Documents → catalog. `repos`: [{ id, version, tag, commit, packs, docs }] (tools/content.mjs readPinned); `books`: the BOOKS table. */
@@ -240,22 +240,11 @@ export function writeCatalog(catalog, outDir) {
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const pinsPath = join(ROOT, "content-pins.json"), file = JSON.parse(readFileSync(pinsPath, "utf8"));
-  const contentRoot = process.env.CONTENT_ROOT ? resolve(process.env.CONTENT_ROOT) : resolve(ROOT, "..");
+  const pins = JSON.parse(readFileSync(join(ROOT, "content-pins.json"), "utf8")).content;
   try {
-    if (process.argv.includes("--pins")) {
-      for (const pin of file.content) {
-        const c = tagCommit(join(contentRoot, pin.dir), pin.tag);
-        if (!c) throw new Error(`${pin.dir}: no tag ${pin.tag}`);
-        if (c !== pin.commit) console.log(`${pin.dir} ${pin.tag}: ${String(pin.commit).slice(0, 12)} → ${c.slice(0, 12)}`);
-        pin.commit = c;
-      }
-      writeFileSync(pinsPath, `${JSON.stringify(file, null, 2)}\n`);
-      console.log("pins written");
-    } else {
-      const manifest = writeCatalog(await buildCatalog({ pins: file.content, contentRoot }), join(ROOT, "catalog"));
-      console.log(`catalog: ${manifest.entries} entries from ${manifest.pins.length} packages, ${manifest.books.length} books — sha256 ${manifest.sha256.slice(0, 16)}…`);
-      for (const b of manifest.books) console.log(`  ${b.abbr.padEnd(12)} ${String(b.count).padStart(5)}  ${b.title}`);
-    }
+    const out = process.argv[2] ? resolve(process.argv[2]) : join(ROOT, "catalog");
+    const manifest = writeCatalog(buildCatalog({ pins, contentDir: join(ROOT, "content") }), out);
+    console.log(`catalog: ${manifest.entries} entries from ${manifest.pins.length} packages, ${manifest.books.length} books — sha256 ${manifest.sha256.slice(0, 16)}…`);
+    for (const b of manifest.books) console.log(`  ${b.abbr.padEnd(12)} ${String(b.count).padStart(5)}  ${b.title}`);
   } catch (err) { console.error(err.message); process.exitCode = 1; }
 }

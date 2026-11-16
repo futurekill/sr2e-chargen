@@ -1,0 +1,51 @@
+{
+  "_id": "id4a6kszemfkdbut",
+  "name": "Wired Reflexes (Level 1)",
+  "type": "cyberware",
+  "img": "systems/sr2e/assets/item_icons/cyberware/wired-reflexes-level-1.webp",
+  "system": {
+    "location": "bodyware",
+    "grade": "standard",
+    "essenceCost": 2,
+    "rating": 1,
+    "cost": 55000,
+    "availability": "4/8 days",
+    "legality": "Restricted",
+    "installed": true,
+    "attributeMods": {
+      "body": 0,
+      "quickness": 0,
+      "strength": 0,
+      "charisma": 0,
+      "intelligence": 0,
+      "willpower": 0,
+      "reaction": 2,
+      "initiativeDice": 1
+    },
+    "ratingStats": [],
+    "notes": "SR2E p.247 (table p.261). Implanted neural boosters and adrenaline stimulators: each level adds +2 Reaction and +1D6 Initiative. Level 1: Essence 2, 55,000¥.",
+    "citation": {
+      "book": "sr2",
+      "page": "261"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.26.0",
+    "createdTime": 1700000000000,
+    "modifiedTime": 1700000000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "folder": "7d40a1986afd7f8a",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!id4a6kszemfkdbut"
+}

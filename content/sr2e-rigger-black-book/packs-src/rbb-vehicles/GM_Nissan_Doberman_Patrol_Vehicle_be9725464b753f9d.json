@@ -1,0 +1,69 @@
+{
+  "_id": "be9725464b753f9d",
+  "name": "GM-Nissan \"Doberman\" Patrol Vehicle",
+  "type": "vehicle",
+  "img": "modules/sr2e-rigger-black-book/assets/vehicle_portraits/gm-nissan-doberman-patrol-vehicle.webp",
+  "system": {
+    "vehicleType": "drone",
+    "skill": "",
+    "handling": 3,
+    "handlingOffRoad": null,
+    "speed": 35,
+    "acceleration": 0,
+    "body": 3,
+    "armor": 6,
+    "signature": 3,
+    "pilot": 2,
+    "sensor": 3,
+    "cargo": 1,
+    "load": 0,
+    "seating": "Drone (rigged)",
+    "cost": 10000,
+    "availability": "",
+    "conditionMonitor": {
+      "value": 0,
+      "max": 10
+    },
+    "autonav": 0,
+    "notes": "<p>The classic perimeter-patrol drone — thermographic and motion sensors, heavy armor and a micro-turret, equally effective day or night.</p><p><em>Handling printed 3/5. Max speed 70 m/CT (cruising 35 used for tests). Drone. Fuel 25 liters; 20 km/liter. Sensor Advanced (printed without a rating; 3 as the Wandjina's). Micro-turret + forward firmpoint: twin LMG or shotgun (gel/standard); optional Defiance Super Shock taser. Rigger Black Book p.85. Stowing it takes 20 CF of another vehicle's cargo space. Armor 2 as printed (SR1) x3 = 6 for SRII, per Sourcebook Updates p.283.</em></p>",
+    "citation": {
+      "book": "rbb",
+      "page": "85"
+    }
+  },
+  "prototypeToken": {
+    "name": "GM-Nissan \"Doberman\" Patrol Vehicle",
+    "displayName": 20,
+    "actorLink": false,
+    "width": 2,
+    "height": 3,
+    "texture": {
+      "src": "modules/sr2e-rigger-black-book/assets/vehicle_portraits/gm-nissan-doberman-patrol-vehicle.webp",
+      "fit": "fill",
+      "scaleX": 1,
+      "scaleY": 1
+    },
+    "lockRotation": false,
+    "disposition": 0,
+    "displayBars": 0
+  },
+  "effects": [],
+  "folder": null,
+  "sort": 0,
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782200000000,
+    "modifiedTime": 1782200000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!actors!be9725464b753f9d"
+}

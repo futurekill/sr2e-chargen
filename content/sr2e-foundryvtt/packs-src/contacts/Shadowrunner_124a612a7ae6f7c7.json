@@ -1,0 +1,37 @@
+{
+  "_id": "124a612a7ae6f7c7",
+  "name": "Shadowrunner",
+  "type": "contact",
+  "img": "systems/sr2e/assets/contact_portraits/shadowrunner.webp",
+  "system": {
+    "contactType": "contact",
+    "archetype": "Shadowrunner",
+    "loyalty": 1,
+    "influence": 2,
+    "description": "",
+    "notes": "GM-invented archetype — NOT printed in the SR2E core rulebook. Another runner. Good for backup and intel.",
+    "citation": {
+      "book": "none",
+      "page": ""
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.3.7",
+    "createdTime": 1700000000000,
+    "modifiedTime": 1700000000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "folder": "45589ec5e8ab55e1",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!124a612a7ae6f7c7"
+}

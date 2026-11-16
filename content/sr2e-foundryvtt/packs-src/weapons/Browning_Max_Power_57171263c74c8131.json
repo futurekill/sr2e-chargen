@@ -1,0 +1,64 @@
+{
+  "_id": "57171263c74c8131",
+  "name": "Browning Max-Power",
+  "type": "weapon",
+  "img": "systems/sr2e/assets/item_icons/weapons/browning-max-power.webp",
+  "system": {
+    "weaponType": "firearm",
+    "skill": "firearms",
+    "damageCode": "9M",
+    "damageType": "physical",
+    "concealability": 6,
+    "reach": 0,
+    "firingModes": {
+      "ss": false,
+      "sa": true,
+      "bf": false,
+      "fa": false
+    },
+    "ammo": {
+      "current": 10,
+      "max": 10,
+      "type": "pistol"
+    },
+    "recoilComp": 0,
+    "ranges": {
+      "short": 5,
+      "medium": 20,
+      "long": 40,
+      "extreme": 60
+    },
+    "strengthMin": 0,
+    "weight": 2,
+    "cost": 450,
+    "availability": "3/24 hrs",
+    "legality": "Legal",
+    "equipped": false,
+    "accessories": [],
+    "notes": "SR2E p.231. The main competitor to the Ares Predator. Heavy frame, hard-hitting—the samurai's sidearm of choice.",
+    "streetIndex": 1,
+    "citation": {
+      "book": "sr2",
+      "page": "231"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.3.7",
+    "createdTime": 1700000000000,
+    "modifiedTime": 1700000000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "folder": "3dbc556f1edc8bf0",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!57171263c74c8131"
+}

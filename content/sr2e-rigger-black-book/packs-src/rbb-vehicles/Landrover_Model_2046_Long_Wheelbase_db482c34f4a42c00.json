@@ -1,0 +1,69 @@
+{
+  "_id": "db482c34f4a42c00",
+  "name": "Landrover Model 2046 (Long Wheelbase)",
+  "type": "vehicle",
+  "img": "modules/sr2e-rigger-black-book/assets/vehicle_portraits/landrover-model-2046-long-wheelbase.webp",
+  "system": {
+    "vehicleType": "ground",
+    "skill": "car",
+    "handling": 3,
+    "handlingOffRoad": 3,
+    "speed": 30,
+    "acceleration": 0,
+    "body": 3,
+    "armor": 0,
+    "signature": 2,
+    "pilot": 0,
+    "sensor": 0,
+    "cargo": 45,
+    "load": 0,
+    "seating": "Twin bucket + 6 folding bench",
+    "cost": 45000,
+    "availability": "",
+    "conditionMonitor": {
+      "value": 0,
+      "max": 10
+    },
+    "autonav": 2,
+    "notes": "<p>The long-wheelbase Landrover 2046 — more seating and cargo, same rugged go-anywhere drivetrain.</p><p><em>Max speed 90 m/CT (cruising 30 used for tests). Multifuel/75 liters; 80 km/liter; off-road speed 25/75. Rigger Black Book p.27.</em></p>",
+    "citation": {
+      "book": "rbb",
+      "page": "27"
+    }
+  },
+  "prototypeToken": {
+    "name": "Landrover Model 2046 (Long Wheelbase)",
+    "displayName": 20,
+    "actorLink": false,
+    "width": 2,
+    "height": 4,
+    "texture": {
+      "src": "modules/sr2e-rigger-black-book/assets/vehicle_portraits/landrover-model-2046-long-wheelbase.webp",
+      "fit": "fill",
+      "scaleX": 1,
+      "scaleY": 1
+    },
+    "lockRotation": false,
+    "disposition": 0,
+    "displayBars": 0
+  },
+  "effects": [],
+  "folder": null,
+  "sort": 0,
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782200000000,
+    "modifiedTime": 1782200000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!actors!db482c34f4a42c00"
+}

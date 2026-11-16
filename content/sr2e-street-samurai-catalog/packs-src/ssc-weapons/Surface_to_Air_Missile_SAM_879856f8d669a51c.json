@@ -1,0 +1,70 @@
+{
+  "_id": "879856f8d669a51c",
+  "name": "Surface-to-Air Missile (SAM)",
+  "type": "weapon",
+  "img": "modules/sr2e-street-samurai-catalog/assets/item_icons/weapon/surface-to-air-missile-sam.webp",
+  "system": {
+    "weaponType": "heavy",
+    "skill": "heavy_weapons",
+    "damageCode": "13D",
+    "damageType": "physical",
+    "concealability": 99,
+    "reach": 0,
+    "firingModes": {
+      "ss": true,
+      "sa": false,
+      "bf": false,
+      "fa": false
+    },
+    "ammo": {
+      "current": 1,
+      "max": 1,
+      "type": "missile",
+      "guided": {
+        "kind": "missile",
+        "intelligence": 4,
+        "sensor": 0
+      }
+    },
+    "recoilComp": 0,
+    "smartgunCompatible": false,
+    "ranges": {
+      "short": 70,
+      "medium": 150,
+      "long": 450,
+      "extreme": 5000
+    },
+    "strengthMin": 0,
+    "weight": 1.5,
+    "cost": 2500,
+    "availability": "18/21 days",
+    "legality": "Forbidden",
+    "streetIndex": 4,
+    "equipped": false,
+    "accessories": [],
+    "notes": "A shoulder-launched guided surface-to-air missile (Intelligence 4 guidance); fired from a man-pack missile launcher; uses the Missile Launcher range brackets with extreme range out to 5,000 m (SSC p.59).",
+    "citation": {
+      "book": "ssc",
+      "page": "59"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "folder": null,
+  "sort": 0,
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.1.0",
+    "createdTime": 1781600000000,
+    "modifiedTime": 1781600000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!879856f8d669a51c"
+}

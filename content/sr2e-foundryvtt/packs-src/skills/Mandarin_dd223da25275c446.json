@@ -1,0 +1,45 @@
+{
+  "_id": "dd223da25275c446",
+  "name": "Mandarin",
+  "type": "skill",
+  "img": "systems/sr2e/assets/item_icons/skills/mandarin.webp",
+  "system": {
+    "category": "language",
+    "linkedAttribute": "intelligence",
+    "rating": 0,
+    "concentration": {
+      "name": "",
+      "rating": 0
+    },
+    "specialization": {
+      "name": "",
+      "rating": 0
+    },
+    "isMagical": false,
+    "notes": "Sixth World language (SR2E p.69).",
+    "languageFamily": "Sino-Tibetan",
+    "citation": {
+      "book": "sr2",
+      "page": "69"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.21.4",
+    "createdTime": 1700000000000,
+    "modifiedTime": 1700000000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "folder": "6091424e8154735e",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!dd223da25275c446"
+}

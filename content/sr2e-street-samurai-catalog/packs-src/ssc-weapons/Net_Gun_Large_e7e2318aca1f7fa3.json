@@ -1,0 +1,65 @@
+{
+  "_id": "e7e2318aca1f7fa3",
+  "name": "Net Gun (Large)",
+  "type": "weapon",
+  "img": "modules/sr2e-street-samurai-catalog/assets/item_icons/weapon/net-gun-large.webp",
+  "system": {
+    "weaponType": "firearm",
+    "skill": "firearms",
+    "damageCode": "Special",
+    "damageType": "physical",
+    "concealability": 3,
+    "reach": 0,
+    "firingModes": {
+      "ss": false,
+      "sa": true,
+      "bf": false,
+      "fa": false
+    },
+    "ammo": {
+      "current": 4,
+      "max": 4,
+      "type": "net"
+    },
+    "recoilComp": 0,
+    "smartgunCompatible": false,
+    "ranges": {
+      "short": 5,
+      "medium": 15,
+      "long": 30,
+      "extreme": 50
+    },
+    "strengthMin": 0,
+    "weight": 4.5,
+    "cost": 1150,
+    "availability": "8/36 hrs",
+    "legality": "Restricted",
+    "streetIndex": 2,
+    "equipped": false,
+    "accessories": [],
+    "notes": "The heavier net gun — a larger, stronger net for bigger quarry. A hit posts a net card (sr2e 0.105+): the target resists with Strength (+ Combat Pool) against TN 5 (normal net) or 8 (large), 3 when a normal net hits a large target, and needs more than twice the attacker's successes; an entangled target can't move and escapes once per turn, the TN falling by 1 per turn. Street Samurai Catalog p.72.",
+    "citation": {
+      "book": "ssc",
+      "page": "72"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "folder": null,
+  "sort": 0,
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.1.0",
+    "createdTime": 1781600000000,
+    "modifiedTime": 1781600000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!e7e2318aca1f7fa3"
+}

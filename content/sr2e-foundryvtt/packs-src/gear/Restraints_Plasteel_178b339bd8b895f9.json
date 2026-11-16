@@ -1,0 +1,41 @@
+{
+  "_id": "178b339bd8b895f9",
+  "name": "Restraints (Plasteel)",
+  "type": "gear",
+  "img": "systems/sr2e/assets/item_icons/gear/restraints-plasteel.webp",
+  "system": {
+    "category": "gear",
+    "rating": 0,
+    "quantity": 1,
+    "weight": 0,
+    "cost": 20,
+    "availability": "Always",
+    "legality": "Legal",
+    "equipped": false,
+    "concealability": 10,
+    "notes": "SR2E p.250. Disposable restraints.",
+    "citation": {
+      "book": "sr2",
+      "page": "250"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.3.7",
+    "createdTime": 1700000000000,
+    "modifiedTime": 1700000000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "folder": "2fe64ec78fbaa63b",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!178b339bd8b895f9"
+}

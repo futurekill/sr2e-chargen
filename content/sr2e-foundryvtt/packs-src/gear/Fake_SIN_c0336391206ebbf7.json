@@ -1,0 +1,41 @@
+{
+  "_id": "c0336391206ebbf7",
+  "name": "Fake SIN",
+  "type": "gear",
+  "img": "systems/sr2e/assets/item_icons/gear/fake-sin.webp",
+  "system": {
+    "category": "documents",
+    "rating": 1,
+    "quantity": 1,
+    "weight": 0,
+    "cost": 500,
+    "availability": "Always",
+    "legality": "Legal",
+    "equipped": false,
+    "concealability": 10,
+    "notes": "SR2E p.249. A low-grade false System Identification Number. Fools casual checks but won't stand up to deep scrutiny.",
+    "citation": {
+      "book": "sr2",
+      "page": "249"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.3.7",
+    "createdTime": 1700000000000,
+    "modifiedTime": 1700000000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "folder": "89dafba75132dc2b",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!c0336391206ebbf7"
+}

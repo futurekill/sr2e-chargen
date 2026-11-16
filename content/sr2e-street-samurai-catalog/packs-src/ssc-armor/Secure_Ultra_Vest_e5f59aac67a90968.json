@@ -1,0 +1,42 @@
+{
+  "_id": "e5f59aac67a90968",
+  "name": "Secure Ultra-Vest",
+  "type": "armor",
+  "img": "modules/sr2e-street-samurai-catalog/assets/item_icons/armor/secure-ultra-vest.webp",
+  "system": {
+    "ballistic": 4,
+    "impact": 3,
+    "concealability": 14,
+    "weight": 2.5,
+    "cost": 350,
+    "availability": "3/36 hrs",
+    "legality": "Legal",
+    "equipped": false,
+    "isLayered": false,
+    "notes": "A beefed-up concealable vest, trading a little bulk for real stopping power. Street Index 0.9. SSC.",
+    "streetIndex": 0.9,
+    "citation": {
+      "book": "ssc",
+      "page": "41"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "folder": null,
+  "sort": 0,
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.1.0",
+    "createdTime": 1781600000000,
+    "modifiedTime": 1781600000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!e5f59aac67a90968"
+}

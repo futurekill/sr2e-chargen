@@ -1,0 +1,98 @@
+{
+  "_id": "9bb79f6ecaa63087",
+  "name": "Off-Road Suspension",
+  "type": "vehicle_mod",
+  "img": "icons/svg/upgrade.svg",
+  "system": {
+    "modType": "handling",
+    "rating": 1,
+    "cost": 0,
+    "designPoints": 0,
+    "dpPerLevel": 0,
+    "dpTable": [],
+    "cfConsumed": 0,
+    "cfPerLevel": 0,
+    "cfTable": [],
+    "loadReduction": 0,
+    "loadPerLevel": 0,
+    "loadTable": [],
+    "dpFormula": "C x 1.50 x R",
+    "cfFormula": "",
+    "loadFormula": "",
+    "designable": true,
+    "designNuyen": false,
+    "mountPoints": 0,
+    "modKey": "off-road-suspension",
+    "maxRating": "2",
+    "restrictions": [
+      "only:bike,car"
+    ],
+    "effects": {
+      "handling": "R",
+      "handlingOff": "-R",
+      "speed": "-15",
+      "economyMult": "1.15",
+      "economyMult@bike": "1.30",
+      "economyMult@transport": "1.40"
+    },
+    "stack": "levels",
+    "custom": {
+      "customizable": true,
+      "formulas": {
+        "partsCost": "V x 1.35 x R",
+        "partsCost@bike": "V x 1.2 x R",
+        "partsCost@transport": "V x 1.5 x R",
+        "partsCost@tractor": "V x 1.5 x R",
+        "baseTime": "R x 40",
+        "tn": "4",
+        "cf": "0",
+        "load": "0"
+      },
+      "market": [
+        {
+          "availability": "6/12 days",
+          "streetIndex": 2
+        }
+      ],
+      "max": {
+        "value": "2"
+      },
+      "procedure": "test",
+      "fixedHours": 0,
+      "skills": [
+        "vehicleBR"
+      ],
+      "combine": "lowest",
+      "equipment": "Vehicle facility",
+      "pageCust": "p.125",
+      "state": "",
+      "choice": {}
+    },
+    "components": {},
+    "installed": false,
+    "notes": "Improves off-road Handling at the expense of fuel economy and on-road Handling. Parts cost = original cost × 1.35/point (cars), × 1.20/point (motorcycles), or × 1.50/point (medium/heavy transports & tractors); max +2/−2 Handling; economy ×1.15 (cars) / ×1.30 (bikes) / ×1.40 (transports); Avail 6/12 days; Street Index 2. Rigger 2 p.125. (Design specifications p.125.)",
+    "citation": {
+      "book": "r2",
+      "page": "125"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "folder": null,
+  "sort": 0,
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.0.1",
+    "createdTime": 1781600000000,
+    "modifiedTime": 1781600000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!9bb79f6ecaa63087"
+}

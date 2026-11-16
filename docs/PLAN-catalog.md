@@ -81,7 +81,8 @@ type, and see where each one comes from (`SR2 p.231`). Milestone 2 (character cr
 7. **Client.** A Catalog page: search box, book toggles (ALL at the top; the core book listed first), type filter,
    a result list with the citation badge (abbreviation; the full title on hover and for screen readers), a detail
    view with the stats and the text. Paged with "load more".
-8. **Image** (#1, round 2 #1). The Dockerfile COPIES `catalog/` (a tracked directory whose contents are build output, not committed) (built on the host first: `npm run
+8. **Image** (#1, round 2 #1). _Superseded by Amendment A4: the image builds its own catalog from `content/`; there
+   is no test image._ The Dockerfile COPIES `catalog/` (a tracked directory whose contents are build output, not committed) (built on the host first: `npm run
    build:catalog`; the `.dockerignore` lets it through) and runs `tools/check-catalog.mjs` in the build: the image
    build FAILS when the catalog is absent, empty, fails its checksum, or its pins are not exactly those of the
    current `content-pins.json` (a stale catalog). The one exception is the build argument `TEST_IMAGE=1`, which

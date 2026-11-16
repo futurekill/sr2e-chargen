@@ -1,0 +1,65 @@
+{
+  "_id": "3ec249d7d0ed9187",
+  "name": "SCK Model 100",
+  "type": "weapon",
+  "img": "modules/sr2e-street-samurai-catalog/assets/item_icons/weapon/sck-model-100.webp",
+  "system": {
+    "weaponType": "firearm",
+    "skill": "firearms",
+    "damageCode": "7M",
+    "damageType": "physical",
+    "concealability": 4,
+    "reach": 0,
+    "firingModes": {
+      "ss": false,
+      "sa": true,
+      "bf": true,
+      "fa": false
+    },
+    "ammo": {
+      "current": 30,
+      "max": 30,
+      "type": "smg"
+    },
+    "recoilComp": 0,
+    "smartgunCompatible": false,
+    "ranges": {
+      "short": 10,
+      "medium": 40,
+      "long": 80,
+      "extreme": 150
+    },
+    "strengthMin": 0,
+    "weight": 4.5,
+    "cost": 1000,
+    "availability": "5/36 hrs",
+    "legality": "Restricted",
+    "streetIndex": 1,
+    "equipped": false,
+    "accessories": [],
+    "notes": "A solid, hard-hitting submachine gun balancing capacity and control. SSC.",
+    "citation": {
+      "book": "ssc",
+      "page": "33"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "folder": null,
+  "sort": 0,
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.1.0",
+    "createdTime": 1781600000000,
+    "modifiedTime": 1781600000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!3ec249d7d0ed9187"
+}

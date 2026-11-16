@@ -1,0 +1,64 @@
+{
+  "_id": "ca17afcb8c61ee53",
+  "name": "Streetline Special",
+  "type": "weapon",
+  "img": "systems/sr2e/assets/item_icons/weapons/streetline-special.webp",
+  "system": {
+    "weaponType": "firearm",
+    "skill": "firearms",
+    "damageCode": "4L",
+    "damageType": "physical",
+    "concealability": 8,
+    "reach": 0,
+    "firingModes": {
+      "ss": true,
+      "sa": false,
+      "bf": false,
+      "fa": false
+    },
+    "ammo": {
+      "current": 6,
+      "max": 6,
+      "type": "pistol"
+    },
+    "recoilComp": 0,
+    "ranges": {
+      "short": 5,
+      "medium": 15,
+      "long": 30,
+      "extreme": 50
+    },
+    "strengthMin": 0,
+    "weight": 0.5,
+    "cost": 100,
+    "availability": "2/12 hrs",
+    "legality": "Restricted",
+    "equipped": false,
+    "accessories": [],
+    "notes": "A cheap, easily-hidden hold-out pistol. SR2E p.254-255.",
+    "streetIndex": 0.75,
+    "citation": {
+      "book": "sr2",
+      "page": "254–255"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.19.3",
+    "createdTime": 1700000000000,
+    "modifiedTime": 1700000000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "folder": "7a26d1f9222684e7",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!ca17afcb8c61ee53"
+}

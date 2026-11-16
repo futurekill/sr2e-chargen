@@ -1,0 +1,88 @@
+{
+  "_id": "48e025abbf84b0d3",
+  "name": "Vehicle Gyroscopic Stabilizer",
+  "type": "vehicle_mod",
+  "img": "icons/svg/upgrade.svg",
+  "system": {
+    "modType": "weapon",
+    "rating": 1,
+    "cost": 1000,
+    "designPoints": 0,
+    "dpPerLevel": 15,
+    "dpTable": [],
+    "cfConsumed": 1,
+    "cfPerLevel": 0,
+    "cfTable": [],
+    "loadReduction": 0,
+    "loadPerLevel": 0,
+    "loadTable": [],
+    "dpFormula": "",
+    "cfFormula": "",
+    "loadFormula": "R + 24",
+    "designable": true,
+    "designNuyen": false,
+    "mountPoints": 0,
+    "modKey": "gyro",
+    "maxRating": "2 x B",
+    "restrictions": [
+      "notWith:recoil-adjuster"
+    ],
+    "effects": {},
+    "stack": "levels",
+    "custom": {
+      "customizable": true,
+      "formulas": {
+        "partsCost": "1000 x R",
+        "baseTime": "24",
+        "tn": "4",
+        "cf": "1",
+        "load": "R + 24"
+      },
+      "market": [
+        {
+          "availability": "8/72 hours",
+          "streetIndex": 1.5
+        }
+      ],
+      "max": {
+        "value": "2 x B"
+      },
+      "procedure": "test",
+      "fixedHours": 0,
+      "skills": [
+        "vehicleBR"
+      ],
+      "combine": "lowest",
+      "equipment": "Vehicle kit",
+      "pageCust": "p.136",
+      "state": "",
+      "choice": {}
+    },
+    "components": {},
+    "installed": false,
+    "notes": "Stabilizes weapons in fixed mounts/turrets — each level negates 1 point of combined recoil + movement modifiers (not compatible with gunnery recoil adjusters). If total active rating exceeds the vehicle's Body, Handling worsens by 1 per point over Body. Parts cost 1,000¥/level; max 2 × Body; load −(Rating × 24) kg; Avail 8/72 hrs; Street Index 1; Base Time 24 hrs. Rigger 2 p.136. (Design specifications p.136.)",
+    "citation": {
+      "book": "r2",
+      "page": "136"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "folder": null,
+  "sort": 0,
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.0.1",
+    "createdTime": 1781600000000,
+    "modifiedTime": 1781600000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!48e025abbf84b0d3"
+}

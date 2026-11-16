@@ -1,0 +1,64 @@
+{
+  "_id": "bf3fccff73f9ea2d",
+  "name": "Eichiro Hatamoto II",
+  "type": "weapon",
+  "img": "modules/sr2e-neo-anarchists/assets/item_icons/weapon/eichiro-hatamoto-ii.webp",
+  "system": {
+    "weaponType": "firearm",
+    "skill": "firearms",
+    "damageCode": "8S",
+    "damageType": "physical",
+    "concealability": 6,
+    "reach": 0,
+    "firingModes": {
+      "ss": true,
+      "sa": false,
+      "bf": false,
+      "fa": false
+    },
+    "ammo": {
+      "current": 1,
+      "max": 1,
+      "type": "pistol"
+    },
+    "recoilComp": 0,
+    "ranges": {
+      "short": 10,
+      "medium": 20,
+      "long": 50,
+      "extreme": 100
+    },
+    "strengthMin": 0,
+    "weight": 2.5,
+    "cost": 1200,
+    "availability": "12/7 days",
+    "legality": "Restricted",
+    "equipped": false,
+    "accessories": [],
+    "notes": "A polymer single-shot personal-defense pistol chambered for shotgun rounds, with a wraparound grip and wrist brace (undetectable by metal scanners). Damage: the SR2 code the book prints, \"3M3 (8S)\" → 8S. Street Index 2. Neo-Anarchists' Guide p.32.",
+    "streetIndex": 2,
+    "citation": {
+      "book": "naw",
+      "page": "32"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "folder": null,
+  "sort": 0,
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782300000000,
+    "modifiedTime": 1782300000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!bf3fccff73f9ea2d"
+}

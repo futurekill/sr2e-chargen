@@ -1,0 +1,44 @@
+{
+  "_id": "9a7647347341cce8",
+  "name": "Bipod",
+  "type": "gear",
+  "img": "systems/sr2e/assets/item_icons/gear/bipod.webp",
+  "system": {
+    "category": "accessories",
+    "rating": 0,
+    "quantity": 1,
+    "weight": 2,
+    "cost": 400,
+    "availability": "6/12 hrs",
+    "legality": "Legal",
+    "equipped": false,
+    "concealability": 10,
+    "notes": "SR2E p.240. Two-legged under-barrel brace: 2 points of recoil compensation, but only when set up — fired low to the ground from a sitting or lying position (tick 'deployed' in the attack dialog). Does not affect Concealability. Freely removable and transferable between weapons.",
+    "weaponAccessory": true,
+    "accessoryRecoilComp": 2,
+    "requiresDeployment": true,
+    "citation": {
+      "book": "sr2",
+      "page": "240"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.3.7",
+    "createdTime": 1700000000000,
+    "modifiedTime": 1700000000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "folder": "e11d3232c7db0d25",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!9a7647347341cce8"
+}

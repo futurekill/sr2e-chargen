@@ -1,0 +1,43 @@
+{
+  "_id": "babb4ebd9ecc8d8c",
+  "name": "Taser Dart",
+  "type": "ammo",
+  "img": "systems/sr2e/assets/item_icons/ammo/taser-dart.webp",
+  "system": {
+    "ammoType": "taser",
+    "quantity": 10,
+    "damageModifier": 0,
+    "armorModifier": 0,
+    "damageType": "",
+    "armorCalc": "standard",
+    "cost": 50,
+    "streetIndex": 1.5,
+    "concealability": 3,
+    "weight": 0.5,
+    "availability": "6/36 hrs",
+    "notes": "Taser dart, per 10. Damage is Special — see the taser rules. AMMUNITION table, SR2E p.256.",
+    "citation": {
+      "book": "sr2",
+      "page": "256"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.69.0",
+    "createdTime": 1700000000000,
+    "modifiedTime": 1700000000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!babb4ebd9ecc8d8c"
+}

@@ -1,0 +1,64 @@
+{
+  "_id": "10a2227418893aae",
+  "name": "Remington 750",
+  "type": "weapon",
+  "img": "systems/sr2e/assets/item_icons/weapons/remington-750.webp",
+  "system": {
+    "weaponType": "firearm",
+    "skill": "firearms",
+    "damageCode": "7S",
+    "damageType": "physical",
+    "concealability": 3,
+    "reach": 0,
+    "firingModes": {
+      "ss": false,
+      "sa": true,
+      "bf": false,
+      "fa": false
+    },
+    "ammo": {
+      "current": 5,
+      "max": 5,
+      "type": "rifle"
+    },
+    "recoilComp": 0,
+    "ranges": {
+      "short": 30,
+      "medium": 60,
+      "long": 150,
+      "extreme": 300
+    },
+    "strengthMin": 0,
+    "weight": 3,
+    "cost": 600,
+    "availability": "3/24 hrs",
+    "legality": "Restricted",
+    "equipped": false,
+    "accessories": [],
+    "notes": "A semi-automatic sporting rifle. SR2E p.254-255.",
+    "streetIndex": 1,
+    "citation": {
+      "book": "sr2",
+      "page": "254–255"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.19.3",
+    "createdTime": 1700000000000,
+    "modifiedTime": 1700000000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "folder": "c07931b8ddd4ff16",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!10a2227418893aae"
+}

@@ -1,0 +1,39 @@
+{
+  "_id": "906690c7cd805b83",
+  "name": "Buckshot",
+  "type": "ammo",
+  "img": "systems/sr2e/assets/item_icons/ammo/buckshot.webp",
+  "system": {
+    "ammoType": "buckshot",
+    "quantity": 10,
+    "damageModifier": 0,
+    "armorModifier": 0,
+    "cost": 15,
+    "notes": "Shot rounds use the Flechette Rounds rules. SR2E p.94.",
+    "damageType": "",
+    "armorCalc": "flechette",
+    "citation": {
+      "book": "sr2",
+      "page": "94"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.3.7",
+    "createdTime": 1700000000000,
+    "modifiedTime": 1700000000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!906690c7cd805b83"
+}

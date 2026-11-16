@@ -1,0 +1,36 @@
+{
+  "_id": "c377428add7b0ac1",
+  "name": "Good Reputation",
+  "type": "quality",
+  "img": "modules/sr2e-shadowrun-companion/assets/item_icons/quality/good-reputation.webp",
+  "system": {
+    "kind": "edge",
+    "category": "social",
+    "pointValue": 1,
+    "source": "Shadowrun Companion",
+    "notes": "1 or 2 points: a positive reputation in the shadows; bonus to relevant social tests.",
+    "citation": {
+      "book": "sc",
+      "page": "32"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "folder": null,
+  "sort": 0,
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.0.1",
+    "createdTime": 1782000000000,
+    "modifiedTime": 1782000000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!c377428add7b0ac1"
+}

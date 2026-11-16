@@ -1,0 +1,87 @@
+{
+  "_id": "063180a43cf2b945",
+  "name": "SunCell Power",
+  "type": "vehicle_mod",
+  "img": "icons/svg/upgrade.svg",
+  "system": {
+    "modType": "engine",
+    "rating": 0,
+    "cost": 500,
+    "designPoints": 5,
+    "dpPerLevel": 0,
+    "dpTable": [],
+    "cfConsumed": 0,
+    "cfPerLevel": 0,
+    "cfTable": [],
+    "loadReduction": 0,
+    "loadPerLevel": 0,
+    "loadTable": [],
+    "dpFormula": "",
+    "cfFormula": "",
+    "loadFormula": "",
+    "designable": true,
+    "designNuyen": false,
+    "mountPoints": 0,
+    "modKey": "",
+    "maxRating": "",
+    "restrictions": [
+      "engine:electric",
+      "not:bike"
+    ],
+    "effects": {},
+    "stack": "",
+    "custom": {
+      "customizable": true,
+      "formulas": {
+        "partsCost": "500",
+        "baseTime": "8",
+        "tn": "4",
+        "cf": "1",
+        "load": "0"
+      },
+      "market": [
+        {
+          "availability": "3/72 hours",
+          "streetIndex": 1
+        }
+      ],
+      "max": {},
+      "procedure": "test",
+      "fixedHours": 0,
+      "skills": [
+        "vehicleBR"
+      ],
+      "combine": "lowest",
+      "equipment": "Vehicle shop",
+      "pageCust": "p.121",
+      "state": "",
+      "choice": {}
+    },
+    "components": {},
+    "installed": false,
+    "notes": "Externally-mounted solar cells that feed an electric vehicle Body × 25 PF/hour on a sunny day (half in cloud, none at night/heavy overcast); not for motorcycles. Design 5 points; parts cost 500¥; Avail 3/72 hrs; Street Index 1; Base Time 8 hrs. Rigger 2 p.121. (Design specifications p.121.)",
+    "citation": {
+      "book": "r2",
+      "page": "121"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "folder": null,
+  "sort": 0,
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.0.1",
+    "createdTime": 1781600000000,
+    "modifiedTime": 1781600000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!063180a43cf2b945"
+}

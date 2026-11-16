@@ -1,63 +1,75 @@
 {
-  "$comment": "The content the catalog is built from (docs/PLAN-catalog.md). The COMMIT is the pin; the build fails if the tag no longer points at it. The first entry is the system (the core book).",
+  "$comment": "The content this project keeps its own copy of, in content/ (docs/PLAN-catalog.md Amendment A). `repo` is the public GitHub repository, `tag` its release, `commit` the pin (the tag must point at it). Change it only with `npm run content:sync` (tools/sync-content.mjs). The first entry is the system (the core book).",
   "content": [
     {
       "dir": "sr2e-foundryvtt",
+      "repo": "futurekill/sr2e-foundryvtt",
       "tag": "v0.160.0",
       "commit": "59b33a077441e6d0afa086f094f5130524febffa"
     },
     {
       "dir": "sr2e-corporate-security",
+      "repo": "futurekill/sr2e-corporate-security",
       "tag": "v0.3.0",
       "commit": "31a8795495a73576efa5c95cf1af3c6e60b8da46"
     },
     {
       "dir": "sr2e-cyberpirates",
+      "repo": "futurekill/sr2e-cyberpirates",
       "tag": "v0.6.0",
       "commit": "626282fbf6ce1453f04e19f7775d55fb2a0c7499"
     },
     {
       "dir": "sr2e-cybertechnology",
+      "repo": "futurekill/sr2e-cybertechnology",
       "tag": "v0.3.0",
       "commit": "0b2b6cba2a4577d2d2a0b65e52bcd78f6fe8f6da"
     },
     {
       "dir": "sr2e-fields-of-fire",
+      "repo": "futurekill/sr2e-fields-of-fire",
       "tag": "v0.4.1",
       "commit": "b9b03c5f18721a5b9cd0740f57f787c89f19e876"
     },
     {
       "dir": "sr2e-grimoire",
+      "repo": "futurekill/sr2e-grimoire",
       "tag": "v0.5.0",
       "commit": "a64ad487051b751923ee1fa639df684dbccfd8e3"
     },
     {
       "dir": "sr2e-neo-anarchists",
+      "repo": "futurekill/sr2e-neo-anarchists",
       "tag": "v0.4.0",
       "commit": "261ff9d82ed71e975a6854d2a151f4062cad6a45"
     },
     {
       "dir": "sr2e-rigger-2",
+      "repo": "futurekill/sr2e-rigger-2",
       "tag": "v0.12.2",
       "commit": "6d11e5629b1c7efb770c1afbd4abafac868fdcf2"
     },
     {
       "dir": "sr2e-rigger-black-book",
+      "repo": "futurekill/sr2e-rigger-black-book",
       "tag": "v0.7.0",
       "commit": "dc9f12888f19140f43419687337d2ee6449832db"
     },
     {
       "dir": "sr2e-shadowrun-companion",
+      "repo": "futurekill/sr2e-shadowrun-companion",
       "tag": "v0.5.0",
       "commit": "9f06470730853dfffcb1693d4a6afc314ce8399a"
     },
     {
       "dir": "sr2e-shadowtech",
+      "repo": "futurekill/sr2e-shadowtech",
       "tag": "v0.9.0",
       "commit": "385f7868590c344bc76fa288a47fc183d81cfbc5"
     },
     {
       "dir": "sr2e-street-samurai-catalog",
+      "repo": "futurekill/sr2e-street-samurai-catalog",
       "tag": "v0.5.0",
       "commit": "165e5b8598f593295612e3308249dfb5faad21af"
     }

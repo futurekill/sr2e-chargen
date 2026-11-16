@@ -1,0 +1,64 @@
+{
+  "_id": "9a954abc8f8a3315",
+  "name": "AK-97",
+  "type": "weapon",
+  "img": "systems/sr2e/assets/item_icons/weapons/ak-97.webp",
+  "system": {
+    "weaponType": "firearm",
+    "skill": "firearms",
+    "damageCode": "8M",
+    "damageType": "physical",
+    "concealability": 3,
+    "reach": 0,
+    "firingModes": {
+      "ss": false,
+      "sa": true,
+      "bf": true,
+      "fa": true
+    },
+    "ammo": {
+      "current": 38,
+      "max": 38,
+      "type": "rifle"
+    },
+    "recoilComp": 2,
+    "ranges": {
+      "short": 15,
+      "medium": 40,
+      "long": 100,
+      "extreme": 250
+    },
+    "strengthMin": 0,
+    "weight": 4.5,
+    "cost": 700,
+    "availability": "3/36 hrs",
+    "legality": "Legal",
+    "equipped": false,
+    "accessories": [],
+    "notes": "Assault rifle (SR2E p.94). The ubiquitous Soviet-derived assault rifle; a separate SMG/carbine variant also exists. SA/BF/FA.",
+    "streetIndex": 2,
+    "citation": {
+      "book": "sr2",
+      "page": "94"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.3.7",
+    "createdTime": 1700000000000,
+    "modifiedTime": 1700000000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "folder": "f3dfac8b61f358e2",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!9a954abc8f8a3315"
+}

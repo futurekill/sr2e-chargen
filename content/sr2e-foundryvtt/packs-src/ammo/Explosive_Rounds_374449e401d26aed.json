@@ -1,0 +1,40 @@
+{
+  "_id": "374449e401d26aed",
+  "name": "Explosive Rounds",
+  "type": "ammo",
+  "img": "systems/sr2e/assets/item_icons/ammo/explosive-rounds.webp",
+  "system": {
+    "ammoType": "explosive",
+    "quantity": 10,
+    "damageModifier": 1,
+    "armorModifier": 0,
+    "cost": 50,
+    "notes": "Power +1. Misfires on an all-1s Attack Test: the shooter resists the weapon's normal Damage Code with no Combat Pool. SR2E p.93.",
+    "damageType": "",
+    "armorCalc": "standard",
+    "streetIndex": 0.8,
+    "citation": {
+      "book": "sr2",
+      "page": "93"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.3.7",
+    "createdTime": 1700000000000,
+    "modifiedTime": 1700000000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!374449e401d26aed"
+}

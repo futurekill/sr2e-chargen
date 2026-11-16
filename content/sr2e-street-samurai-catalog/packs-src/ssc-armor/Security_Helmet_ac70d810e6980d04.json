@@ -1,0 +1,42 @@
+{
+  "_id": "ac70d810e6980d04",
+  "name": "Security Helmet",
+  "type": "armor",
+  "img": "modules/sr2e-street-samurai-catalog/assets/item_icons/armor/security-helmet.webp",
+  "system": {
+    "ballistic": 1,
+    "impact": 2,
+    "concealability": 99,
+    "weight": 0,
+    "cost": 250,
+    "availability": "12/14 days",
+    "legality": "Restricted",
+    "equipped": false,
+    "isLayered": false,
+    "notes": "The matching hard helmet for the security-armor line — sealed, padded, and built to take a hit. Street Index 2. SSC.",
+    "streetIndex": 2,
+    "citation": {
+      "book": "ssc",
+      "page": "70"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "folder": null,
+  "sort": 0,
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.1.0",
+    "createdTime": 1781600000000,
+    "modifiedTime": 1781600000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!ac70d810e6980d04"
+}

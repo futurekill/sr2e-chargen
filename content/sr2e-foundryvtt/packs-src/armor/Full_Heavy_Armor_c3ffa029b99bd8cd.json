@@ -1,0 +1,43 @@
+{
+  "_id": "c3ffa029b99bd8cd",
+  "name": "Full Heavy Armor",
+  "type": "armor",
+  "img": "systems/sr2e/assets/item_icons/armor/full-heavy-armor.webp",
+  "system": {
+    "ballistic": 8,
+    "impact": 6,
+    "concealability": 0,
+    "weight": 0,
+    "cost": 20000,
+    "availability": "16/14 days",
+    "legality": "Forbidden",
+    "equipped": false,
+    "isLayered": false,
+    "notes": "Full heavy suit — Body+15 to encumbrance; military-grade. SR2E p.257. Heavy armor: reduces the Combat Pool by 1 die per point of Ballistic over the wearer's Quickness (SR2E p.84).",
+    "heavyArmor": true,
+    "streetIndex": 3,
+    "citation": {
+      "book": "sr2",
+      "page": "84"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.19.5",
+    "createdTime": 1700000000000,
+    "modifiedTime": 1700000000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!c3ffa029b99bd8cd"
+}

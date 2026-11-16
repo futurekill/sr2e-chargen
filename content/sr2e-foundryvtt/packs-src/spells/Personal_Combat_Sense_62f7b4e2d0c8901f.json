@@ -1,0 +1,82 @@
+{
+  "_id": "62f7b4e2d0c8901f",
+  "name": "Personal Combat Sense",
+  "type": "spell",
+  "system": {
+    "category": "detection",
+    "subcategory": "",
+    "type": "physical",
+    "range": "self",
+    "duration": "sustained",
+    "force": 1,
+    "drainCode": "((F / 2) + 1)M",
+    "target": "4",
+    "damageCode": "",
+    "isAreaEffect": false,
+    "isVoluntary": false,
+    "notes": "This personal form of the combat sense spell affects only the caster.",
+    "citation": {
+      "book": "sr2",
+      "page": "153"
+    }
+  },
+  "img": "systems/sr2e/assets/item_icons/spells/personal-combat-sense.webp",
+  "effects": [
+    {
+      "_id": "b4b1db56cc4bd253",
+      "name": "Personal Combat Sense",
+      "img": "icons/svg/eye.svg",
+      "transfer": false,
+      "disabled": false,
+      "changes": [
+        {
+          "key": "system.dicePools.combat.bonus",
+          "mode": 2,
+          "value": "1",
+          "priority": null
+        }
+      ],
+      "description": "<p>Adds dice to the Combat Pool while sustained (SR2E p.84). Edit the value to match the casting result.</p>",
+      "duration": {
+        "startTime": null,
+        "combat": null
+      },
+      "flags": {},
+      "statuses": [],
+      "tint": "#ffffff",
+      "origin": null,
+      "type": "base",
+      "system": {},
+      "_stats": {
+        "coreVersion": "13.351",
+        "systemId": null,
+        "systemVersion": null,
+        "createdTime": null,
+        "modifiedTime": null,
+        "lastModifiedBy": null,
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null
+      },
+      "sort": 0
+    }
+  ],
+  "folder": "f998bf7f58ce1843",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": null,
+    "systemVersion": null,
+    "createdTime": null,
+    "modifiedTime": null,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!62f7b4e2d0c8901f"
+}

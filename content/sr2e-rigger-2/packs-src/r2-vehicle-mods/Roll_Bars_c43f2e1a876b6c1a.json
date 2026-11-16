@@ -1,0 +1,84 @@
+{
+  "_id": "c43f2e1a876b6c1a",
+  "name": "Roll Bars",
+  "type": "vehicle_mod",
+  "img": "icons/svg/upgrade.svg",
+  "system": {
+    "modType": "protection",
+    "rating": 0,
+    "cost": 2000,
+    "designPoints": 0,
+    "dpPerLevel": 0,
+    "dpTable": [],
+    "cfConsumed": 0,
+    "cfPerLevel": 0,
+    "cfTable": [],
+    "loadReduction": 0,
+    "loadPerLevel": 0,
+    "loadTable": [],
+    "dpFormula": "",
+    "cfFormula": "",
+    "loadFormula": "",
+    "designable": true,
+    "designNuyen": false,
+    "mountPoints": 0,
+    "modKey": "roll-bars",
+    "maxRating": "",
+    "restrictions": [],
+    "effects": {},
+    "stack": "",
+    "custom": {
+      "customizable": true,
+      "formulas": {
+        "partsCost": "2000",
+        "baseTime": "24",
+        "tn": "3",
+        "cf": "0",
+        "load": "0"
+      },
+      "market": [
+        {
+          "availability": "3/72 hours",
+          "streetIndex": 1
+        }
+      ],
+      "max": {},
+      "procedure": "test",
+      "fixedHours": 0,
+      "skills": [
+        "vehicleBR"
+      ],
+      "combine": "lowest",
+      "equipment": "Vehicle shop",
+      "pageCust": "p.129",
+      "state": "",
+      "choice": {}
+    },
+    "components": {},
+    "installed": false,
+    "notes": "Adds rigidity that mitigates roll-over damage: negates the doubled Damage Resistance penalty for hard-tops and grants +3 dice to the occupant's Damage Resistance Test in a roll. Also required to mount some weapons on civilian vehicles. Parts cost 2,000¥; Avail 3/72 hrs; Street Index 1; Base Time 24 hrs. Rigger 2 p.129. (Design specifications p.129.)",
+    "citation": {
+      "book": "r2",
+      "page": "129"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "folder": null,
+  "sort": 0,
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.0.1",
+    "createdTime": 1781600000000,
+    "modifiedTime": 1781600000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!c43f2e1a876b6c1a"
+}

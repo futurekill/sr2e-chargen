@@ -21,6 +21,10 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm run build
+      - name: Build the catalog from content/ (the project's own copy, checked against its record)
+        run: npm run build:catalog
+      - name: Provenance — content/ is exactly the pinned commits of the public content repositories
+        run: npm run content:verify
       - run: npm test
       - name: Audit (production dependencies must be clean)
         run: npm audit --omit=dev --audit-level=low
@@ -67,8 +71,8 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with: { persist-credentials: false }
       # Built, started and probed; never pushed (M3b adds the scan, SBOM, signature and the private registry push).
-      # A labelled TEST image with the fixture catalog: CI has no access to the content repositories yet.
-      - run: docker build -f docker/Dockerfile --build-arg TEST_IMAGE=1 -t sr2e-chargen:ci .
+      # The real image: it builds its own catalog from content/.
+      - run: docker build -f docker/Dockerfile -t sr2e-chargen:ci .
       - name: Run it hardened and wait for healthy
         run: |
           docker run -d --name cg --read-only --cap-drop ALL --security-opt no-new-privileges:true --tmpfs /tmp \

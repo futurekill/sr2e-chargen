@@ -1,0 +1,65 @@
+{
+  "_id": "e4a49454c4714f59",
+  "name": "Beretta Model 70",
+  "type": "weapon",
+  "img": "modules/sr2e-street-samurai-catalog/assets/item_icons/weapon/beretta-model-70.webp",
+  "system": {
+    "weaponType": "firearm",
+    "skill": "firearms",
+    "damageCode": "6M",
+    "damageType": "physical",
+    "concealability": 3,
+    "reach": 0,
+    "firingModes": {
+      "ss": false,
+      "sa": false,
+      "bf": true,
+      "fa": true
+    },
+    "ammo": {
+      "current": 35,
+      "max": 35,
+      "type": "smg"
+    },
+    "recoilComp": 0,
+    "smartgunCompatible": false,
+    "ranges": {
+      "short": 10,
+      "medium": 40,
+      "long": 80,
+      "extreme": 150
+    },
+    "strengthMin": 0,
+    "weight": 3.75,
+    "cost": 900,
+    "availability": "5/3 days",
+    "legality": "Restricted",
+    "streetIndex": 1,
+    "equipped": false,
+    "accessories": [],
+    "notes": "A controllable submachine gun prized for its handling and deep magazine. SSC.",
+    "citation": {
+      "book": "ssc",
+      "page": "29"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "folder": null,
+  "sort": 0,
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.1.0",
+    "createdTime": 1781600000000,
+    "modifiedTime": 1781600000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!e4a49454c4714f59"
+}

@@ -1,0 +1,37 @@
+{
+  "_id": "af696156c9fc603c",
+  "name": "Arms Dealer",
+  "type": "contact",
+  "img": "systems/sr2e/assets/contact_portraits/arms-dealer.webp",
+  "system": {
+    "contactType": "contact",
+    "archetype": "Arms Dealer",
+    "loyalty": 1,
+    "influence": 3,
+    "description": "",
+    "notes": "GM-invented archetype — NOT printed in the SR2E core rulebook. Weapons, ammo, and military hardware.",
+    "citation": {
+      "book": "none",
+      "page": ""
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.3.7",
+    "createdTime": 1700000000000,
+    "modifiedTime": 1700000000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "folder": "45589ec5e8ab55e1",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!af696156c9fc603c"
+}

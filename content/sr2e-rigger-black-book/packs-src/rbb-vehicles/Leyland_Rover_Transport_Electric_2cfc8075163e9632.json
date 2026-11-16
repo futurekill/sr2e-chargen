@@ -1,0 +1,69 @@
+{
+  "_id": "2cfc8075163e9632",
+  "name": "Leyland-Rover Transport (Electric)",
+  "type": "vehicle",
+  "img": "modules/sr2e-rigger-black-book/assets/vehicle_portraits/leyland-rover-transport-electric.webp",
+  "system": {
+    "vehicleType": "ground",
+    "skill": "car",
+    "handling": 4,
+    "handlingOffRoad": 8,
+    "speed": 25,
+    "acceleration": 0,
+    "body": 3,
+    "armor": 0,
+    "signature": 5,
+    "pilot": 0,
+    "sensor": 0,
+    "cargo": 90,
+    "load": 0,
+    "seating": "Single + 1 folding bench (Enclosed-Box cab)",
+    "cost": 40000,
+    "availability": "",
+    "conditionMonitor": {
+      "value": 0,
+      "max": 10
+    },
+    "autonav": 2,
+    "notes": "<p>A medium-size delivery van, electric chassis — built around a common base that accepts several body types. Shown with the Enclosed-Box cab.</p><p><em>Off-road handling 8. Max speed 75 m/CT (cruising 25 used for tests). Electric, 200 PF; 2 PF/km. Cabs: Minibus (+20,000¥), Enclosed-Box (+15,000¥, 90 CF), Open-Tray (+10,000¥). Chassis 25,000¥. Rigger Black Book p.29.</em></p>",
+    "citation": {
+      "book": "rbb",
+      "page": "29"
+    }
+  },
+  "prototypeToken": {
+    "name": "Leyland-Rover Transport (Electric)",
+    "displayName": 20,
+    "actorLink": false,
+    "width": 2,
+    "height": 4,
+    "texture": {
+      "src": "modules/sr2e-rigger-black-book/assets/vehicle_portraits/leyland-rover-transport-electric.webp",
+      "fit": "contain",
+      "scaleX": 1,
+      "scaleY": 1
+    },
+    "lockRotation": false,
+    "disposition": 0,
+    "displayBars": 0
+  },
+  "effects": [],
+  "folder": null,
+  "sort": 0,
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782200000000,
+    "modifiedTime": 1782200000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!actors!2cfc8075163e9632"
+}

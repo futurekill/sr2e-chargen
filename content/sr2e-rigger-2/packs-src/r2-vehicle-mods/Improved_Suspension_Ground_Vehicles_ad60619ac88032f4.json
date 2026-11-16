@@ -1,0 +1,92 @@
+{
+  "_id": "ad60619ac88032f4",
+  "name": "Improved Suspension (Ground Vehicles)",
+  "type": "vehicle_mod",
+  "img": "icons/svg/upgrade.svg",
+  "system": {
+    "modType": "handling",
+    "rating": 1,
+    "cost": 0,
+    "designPoints": 0,
+    "dpPerLevel": 0,
+    "dpTable": [],
+    "cfConsumed": 0,
+    "cfPerLevel": 0,
+    "cfTable": [],
+    "loadReduction": 0,
+    "loadPerLevel": 0,
+    "loadTable": [],
+    "dpFormula": "C x 1.25 x R",
+    "cfFormula": "",
+    "loadFormula": "",
+    "designable": true,
+    "designNuyen": false,
+    "mountPoints": 0,
+    "modKey": "improved-suspension",
+    "maxRating": "2",
+    "restrictions": [
+      "only:bike,car",
+      "notWith:drive-by-wire"
+    ],
+    "effects": {
+      "handling": "-R",
+      "handlingOff@bike": "-R"
+    },
+    "stack": "levels",
+    "custom": {
+      "customizable": true,
+      "formulas": {
+        "partsCost": "V x 1.10 x R",
+        "baseTime": "R x 40",
+        "tn": "4",
+        "cf": "0",
+        "load": "0"
+      },
+      "market": [
+        {
+          "availability": "6/12 days",
+          "streetIndex": 2
+        }
+      ],
+      "max": {
+        "value": "2"
+      },
+      "procedure": "test",
+      "fixedHours": 0,
+      "skills": [
+        "vehicleBR"
+      ],
+      "combine": "lowest",
+      "equipment": "Vehicle facility",
+      "pageCust": "p.125",
+      "state": "",
+      "choice": {}
+    },
+    "components": {},
+    "installed": false,
+    "notes": "Upgraded suspension that improves on-road Handling (ground vehicles only). Parts cost = vehicle's original cost × 1.10 per 1-point Handling improvement; max −2 Handling; Avail 6/12 days; Street Index 2; Base Time (increment × 40) hrs. Rigger 2 p.125. (Design specifications p.125.)",
+    "citation": {
+      "book": "r2",
+      "page": "125"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "folder": null,
+  "sort": 0,
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.0.1",
+    "createdTime": 1781600000000,
+    "modifiedTime": 1781600000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!ad60619ac88032f4"
+}

@@ -1,0 +1,64 @@
+{
+  "_id": "0a8d5df14974178d",
+  "name": "Walther Palm Pistol",
+  "type": "weapon",
+  "img": "systems/sr2e/assets/item_icons/weapons/walther-palm-pistol.webp",
+  "system": {
+    "weaponType": "firearm",
+    "skill": "firearms",
+    "damageCode": "4L",
+    "damageType": "physical",
+    "concealability": 9,
+    "reach": 0,
+    "firingModes": {
+      "ss": true,
+      "sa": false,
+      "bf": false,
+      "fa": false
+    },
+    "ammo": {
+      "current": 2,
+      "max": 2,
+      "type": "pistol"
+    },
+    "recoilComp": 0,
+    "ranges": {
+      "short": 5,
+      "medium": 15,
+      "long": 30,
+      "extreme": 50
+    },
+    "strengthMin": 0,
+    "weight": 0.25,
+    "cost": 200,
+    "availability": "3/12 hrs",
+    "legality": "Legal",
+    "equipped": false,
+    "accessories": [],
+    "notes": "SR2E p.230. A tiny hold-out pistol small enough to palm. Fires two rounds, SS mode only. Extremely concealable.",
+    "streetIndex": 0.75,
+    "citation": {
+      "book": "sr2",
+      "page": "230"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.3.7",
+    "createdTime": 1700000000000,
+    "modifiedTime": 1700000000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "folder": "7a26d1f9222684e7",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!0a8d5df14974178d"
+}

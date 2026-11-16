@@ -1,0 +1,42 @@
+{
+  "_id": "9a1406a95c7f5159",
+  "name": "Binoculars (Thermographic)",
+  "type": "gear",
+  "img": "systems/sr2e/assets/item_icons/gear/binoculars-thermographic.webp",
+  "system": {
+    "category": "protective",
+    "rating": 0,
+    "quantity": 1,
+    "weight": 1,
+    "cost": 350,
+    "availability": "4/48 hrs",
+    "legality": "Legal",
+    "equipped": false,
+    "concealability": 5,
+    "streetIndex": 1.25,
+    "notes": "Vision Enhancers, SR2E p.257. Binoculars (50x) with the thermographic option: 100¥ base + 250¥. Street Index 1.25.",
+    "citation": {
+      "book": "sr2",
+      "page": "257"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.65.0",
+    "createdTime": 1700000000000,
+    "modifiedTime": 1700000000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "folder": "0b41179239d940fb",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!9a1406a95c7f5159"
+}

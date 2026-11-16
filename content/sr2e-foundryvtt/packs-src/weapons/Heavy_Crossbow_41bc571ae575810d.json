@@ -1,0 +1,63 @@
+{
+  "_id": "41bc571ae575810d",
+  "name": "Heavy Crossbow",
+  "type": "weapon",
+  "img": "systems/sr2e/assets/item_icons/weapons/heavy-crossbow.webp",
+  "system": {
+    "weaponType": "projectile",
+    "skill": "projectile_weapons",
+    "damageCode": "8S",
+    "damageType": "physical",
+    "concealability": 99,
+    "reach": 0,
+    "firingModes": {
+      "ss": false,
+      "sa": false,
+      "bf": false,
+      "fa": false
+    },
+    "ammo": {
+      "current": 1,
+      "max": 1,
+      "type": "bolt"
+    },
+    "recoilComp": 0,
+    "ranges": {
+      "short": 25,
+      "medium": 75,
+      "long": 200,
+      "extreme": 300
+    },
+    "strengthMin": 5,
+    "weight": 4,
+    "cost": 750,
+    "availability": "6/36 hrs",
+    "legality": "Restricted",
+    "equipped": false,
+    "accessories": [],
+    "notes": "Range scales with Strength (×5/×15/×40/×60). SR2E p.254.",
+    "citation": {
+      "book": "sr2",
+      "page": "254"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.19.4",
+    "createdTime": 1700000000000,
+    "modifiedTime": 1700000000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "folder": "d1f22c9f34a7391a",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!41bc571ae575810d"
+}

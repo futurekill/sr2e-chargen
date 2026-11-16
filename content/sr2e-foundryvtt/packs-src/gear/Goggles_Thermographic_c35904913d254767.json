@@ -1,0 +1,42 @@
+{
+  "_id": "c35904913d254767",
+  "name": "Goggles (Thermographic)",
+  "type": "gear",
+  "img": "systems/sr2e/assets/item_icons/gear/goggles-thermographic.webp",
+  "system": {
+    "category": "protective",
+    "rating": 0,
+    "quantity": 1,
+    "weight": 0,
+    "cost": 2200,
+    "availability": "6/48 hrs",
+    "legality": "Legal",
+    "equipped": false,
+    "concealability": 6,
+    "notes": "Vision Enhancers, SR2E p.257. Goggles (20x magnification) with the thermographic option: 1,500¥ base + 700¥. Street Index 2.",
+    "streetIndex": 2,
+    "citation": {
+      "book": "sr2",
+      "page": "257"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.3.7",
+    "createdTime": 1700000000000,
+    "modifiedTime": 1700000000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "folder": "0b41179239d940fb",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!c35904913d254767"
+}

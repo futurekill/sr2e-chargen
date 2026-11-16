@@ -1,0 +1,47 @@
+{
+  "_id": "883a5b3c8bb552c6",
+  "name": "Improved Gyro Mount",
+  "type": "gear",
+  "img": "modules/sr2e-street-samurai-catalog/assets/item_icons/gear/improved-gyro-mount.webp",
+  "system": {
+    "category": "accessories",
+    "rating": 5,
+    "quantity": 1,
+    "weight": 5,
+    "cost": 3500,
+    "availability": "6/48 hrs",
+    "legality": "Legal",
+    "equipped": false,
+    "concealability": 0,
+    "weaponAccessory": true,
+    "linkedWeaponId": "",
+    "combatTnMod": 0,
+    "accessoryRecoilComp": 5,
+    "requiresSmartgun": false,
+    "notes": "An under-barrel gyro stabilizer that soaks up recoil and motion for rock-steady fire (RC 5). Concealability −6. Street Index 1. SSC. Street Index 1 per the core book Sourcebook Updates table, p.280.",
+    "streetIndex": 1,
+    "citation": {
+      "book": "sr2",
+      "page": "280"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "folder": null,
+  "sort": 0,
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.1.0",
+    "createdTime": 1781600000000,
+    "modifiedTime": 1781600000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!883a5b3c8bb552c6"
+}

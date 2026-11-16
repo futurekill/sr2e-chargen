@@ -1,0 +1,65 @@
+{
+  "_id": "b52801a7ae9d9883",
+  "name": "Browning Ultra-Power",
+  "type": "weapon",
+  "img": "modules/sr2e-street-samurai-catalog/assets/item_icons/weapon/browning-ultra-power.webp",
+  "system": {
+    "weaponType": "firearm",
+    "skill": "firearms",
+    "damageCode": "9M",
+    "damageType": "physical",
+    "concealability": 6,
+    "reach": 0,
+    "firingModes": {
+      "ss": false,
+      "sa": true,
+      "bf": false,
+      "fa": false
+    },
+    "ammo": {
+      "current": 10,
+      "max": 10,
+      "type": "pistol"
+    },
+    "recoilComp": 0,
+    "smartgunCompatible": false,
+    "ranges": {
+      "short": 5,
+      "medium": 20,
+      "long": 40,
+      "extreme": 60
+    },
+    "strengthMin": 0,
+    "weight": 2.25,
+    "cost": 525,
+    "availability": "4/24 hrs",
+    "legality": "Restricted",
+    "streetIndex": 1.5,
+    "equipped": false,
+    "accessories": [],
+    "notes": "A classic heavy pistol with a reputation for reliability and old-fashioned stopping power. SSC.",
+    "citation": {
+      "book": "ssc",
+      "page": "20"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "folder": null,
+  "sort": 0,
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.1.0",
+    "createdTime": 1781600000000,
+    "modifiedTime": 1781600000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!b52801a7ae9d9883"
+}

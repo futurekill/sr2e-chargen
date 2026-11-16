@@ -1,0 +1,42 @@
+{
+  "_id": "e60470cf68f666ea",
+  "name": "Armor Vest",
+  "type": "armor",
+  "img": "systems/sr2e/assets/item_icons/armor/armor-vest.webp",
+  "system": {
+    "ballistic": 2,
+    "impact": 1,
+    "concealability": 12,
+    "weight": 0,
+    "cost": 200,
+    "availability": "2/36 hrs",
+    "legality": "Legal",
+    "equipped": false,
+    "isLayered": false,
+    "notes": "SR2E p.242. Slim-line protection worn under normal clothing. Rigid plates available for improved coverage.",
+    "streetIndex": 0.8,
+    "citation": {
+      "book": "sr2",
+      "page": "242"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.3.7",
+    "createdTime": 1700000000000,
+    "modifiedTime": 1700000000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!e60470cf68f666ea"
+}

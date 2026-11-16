@@ -1,0 +1,113 @@
+{
+  "_id": "c57bdeab331af5cf",
+  "name": "Sprawl Outskirts Encounters",
+  "img": "icons/svg/d20-black.svg",
+  "description": "SR2E sprawl outskirts / barrens encounter table.",
+  "formula": "1d6",
+  "displayRoll": true,
+  "replacement": true,
+  "results": [
+    {
+      "_id": "cc831426d3ca8d0f",
+      "type": "text",
+      "text": "Go-gang patrol \u2014 1d6 gangers on bikes, looking for trouble or a toll.",
+      "img": "icons/svg/d20-black.svg",
+      "weight": 1,
+      "range": [
+        1,
+        1
+      ],
+      "drawn": false,
+      "documentUuid": null,
+      "flags": {}
+    },
+    {
+      "_id": "439a76ead50c4d11",
+      "type": "text",
+      "text": "Scavengers and squatters \u2014 wary, non-hostile unless cornered; maybe info for nuyen.",
+      "img": "icons/svg/d20-black.svg",
+      "weight": 1,
+      "range": [
+        2,
+        2
+      ],
+      "drawn": false,
+      "documentUuid": null,
+      "flags": {}
+    },
+    {
+      "_id": "ef003a0f9fb421e3",
+      "type": "text",
+      "text": "A lone fixer or runner cutting through \u2014 wary professional, open to a deal.",
+      "img": "icons/svg/d20-black.svg",
+      "weight": 1,
+      "range": [
+        3,
+        3
+      ],
+      "drawn": false,
+      "documentUuid": null,
+      "flags": {}
+    },
+    {
+      "_id": "7791e69dd99d2e89",
+      "type": "text",
+      "text": "Corp security sweep \u2014 a patrol vehicle and 1d6 guards where they shouldn't be.",
+      "img": "icons/svg/d20-black.svg",
+      "weight": 1,
+      "range": [
+        4,
+        4
+      ],
+      "drawn": false,
+      "documentUuid": null,
+      "flags": {}
+    },
+    {
+      "_id": "f70ec37512e709f7",
+      "type": "text",
+      "text": "Paranormal critter \u2014 a devil-rat pack or worse, drawn by the desolation.",
+      "img": "icons/svg/d20-black.svg",
+      "weight": 1,
+      "range": [
+        5,
+        5
+      ],
+      "drawn": false,
+      "documentUuid": null,
+      "flags": {}
+    },
+    {
+      "_id": "bf28e011ca78839c",
+      "type": "text",
+      "text": "Nothing but wind and rust \u2014 eerie quiet (roll again in 1d6 minutes).",
+      "img": "icons/svg/d20-black.svg",
+      "weight": 1,
+      "range": [
+        6,
+        6
+      ],
+      "drawn": false,
+      "documentUuid": null,
+      "flags": {}
+    }
+  ],
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.3.7",
+    "createdTime": 1700000000000,
+    "modifiedTime": 1700000000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!tables!c57bdeab331af5cf"
+}

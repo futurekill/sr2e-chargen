@@ -1,0 +1,93 @@
+{
+  "_id": "887c4288f2947aa5",
+  "name": "Ablative Armor",
+  "type": "vehicle_mod",
+  "img": "icons/svg/upgrade.svg",
+  "system": {
+    "modType": "armor",
+    "rating": 3,
+    "cost": 700,
+    "designPoints": 0,
+    "dpPerLevel": 0,
+    "dpTable": [],
+    "cfConsumed": 0,
+    "cfPerLevel": 0,
+    "cfTable": [],
+    "loadReduction": 0,
+    "loadPerLevel": 0,
+    "loadTable": [],
+    "dpFormula": "",
+    "cfFormula": "",
+    "loadFormula": "B x 100",
+    "designable": false,
+    "designNuyen": false,
+    "mountPoints": 0,
+    "modKey": "ablative-armor",
+    "maxRating": "",
+    "restrictions": [],
+    "effects": {
+      "armor": "min(2 x R, B)"
+    },
+    "stack": "",
+    "custom": {
+      "customizable": true,
+      "formulas": {
+        "load": "B x 100",
+        "cf": "0",
+        "set": "1"
+      },
+      "market": [
+        {
+          "cost": 700,
+          "availability": "8/14 days",
+          "streetIndex": 2
+        },
+        {
+          "cost": 1600,
+          "availability": "12/14 days",
+          "streetIndex": 2
+        },
+        {
+          "cost": 2500,
+          "availability": "14/21 days",
+          "streetIndex": 2
+        }
+      ],
+      "max": {},
+      "procedure": "fixed",
+      "fixedHours": 6,
+      "skills": [],
+      "combine": "lowest",
+      "equipment": "",
+      "pageCust": "p.127",
+      "state": "",
+      "choice": {}
+    },
+    "components": {},
+    "installed": false,
+    "notes": "Sacrificial ceramic-metallic plates (~10 cm each) that reduce damage and flake away; max added Armor equals the vehicle's Body. Customization-only (no Skill Test, 6 hrs to fit/replace), reduces Load by (Body × 100). Tier cost/availability: L1 700¥ 8/14 days, L2 1,500¥ 12/14 days, L3 2,500¥ 14/21 days; Street Index 2. Rigger 2 p.127. (Design specifications p.127.)",
+    "citation": {
+      "book": "r2",
+      "page": "127"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "folder": null,
+  "sort": 0,
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.0.1",
+    "createdTime": 1781600000000,
+    "modifiedTime": 1781600000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!887c4288f2947aa5"
+}

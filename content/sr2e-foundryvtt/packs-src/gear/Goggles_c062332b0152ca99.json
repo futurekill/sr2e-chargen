@@ -1,0 +1,42 @@
+{
+  "_id": "c062332b0152ca99",
+  "name": "Goggles",
+  "type": "gear",
+  "img": "systems/sr2e/assets/item_icons/gear/goggles.webp",
+  "system": {
+    "category": "protective",
+    "rating": 0,
+    "quantity": 1,
+    "weight": 0,
+    "cost": 1500,
+    "availability": "4/48 hrs",
+    "legality": "Legal",
+    "equipped": false,
+    "concealability": 6,
+    "streetIndex": 1.5,
+    "notes": "Vision Enhancers, SR2E p.257. Standard goggles, 20x magnification. Low-light (+500¥) and thermographic (+700¥) options are separate items.",
+    "citation": {
+      "book": "sr2",
+      "page": "257"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.65.0",
+    "createdTime": 1700000000000,
+    "modifiedTime": 1700000000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "folder": "0b41179239d940fb",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!c062332b0152ca99"
+}

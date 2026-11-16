@@ -1,0 +1,799 @@
+{
+  "_id": "sr2eHowToGuides1",
+  "name": "How-To Guides",
+  "folder": null,
+  "sort": 50000,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.0.1",
+    "createdTime": 1782000000000,
+    "modifiedTime": 1782000000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "pages": [
+    {
+      "_id": "3ba50808f81a3b66",
+      "name": "Design a custom vehicle",
+      "type": "text",
+      "title": {
+        "show": true,
+        "level": 1
+      },
+      "image": {},
+      "video": {
+        "controls": true,
+        "volume": 0.5
+      },
+      "src": null,
+      "system": {},
+      "sort": 100000,
+      "ownership": {
+        "default": -1
+      },
+      "flags": {},
+      "text": {
+        "format": 1,
+        "content": "<p><strong>Goal:</strong> a rigger (or anyone) designs their own vehicle by Rigger 2&#39;s rules (pp.108–146) and gets it on their\ncharacter.</p>\n<p><img src=\"systems/sr2e/assets/guides/workshop.gif\" alt=\"The Workshop: pick the sports car chassis and engine, buy Speed, Acceleration and Load, add drive-by-wire and armor, check the review and create the vehicle\"></p>\n<p><strong>GM, once:</strong> turn on the <strong>Rigger 2</strong> module (it brings the design tables and the modifications). To let players\nbuild their own, give them <strong>Create New Actors</strong> in <strong>Settings → Configure Permissions</strong>.</p>\n<p><strong>The designer</strong></p>\n<ol>\n<li><strong>Open the Workshop.</strong> On your character&#39;s <strong>Vehicles</strong> tab click <strong>Design a vehicle</strong> (the new vehicle is linked\nto you), or use <strong>Vehicle Workshop</strong> at the top of the Actors sidebar.</li>\n<li><strong>Chassis.</strong> Pick a category (bikes, cars, boats, aircraft, drones…), then a chassis. Each card shows its\nHandling, Body, Cargo and Design Points.</li>\n<li><strong>Power plant.</strong> Only the engines the book lists for that chassis are offered, grouped by fuel.</li>\n<li><strong>Design options.</strong> Buy Speed, Acceleration, Load, Cargo, better Handling, Economy, fuel, Signature, smart\nmaterials, amenities, engine customization and so on. <strong>max</strong> buys up to the plant&#39;s maximum. A + that&#39;s greyed\nout has hit a limit (hover the row for the rule).</li>\n<li><strong>Modifications.</strong> Search the catalog and click + to add. A row you can&#39;t add says why (wrong vehicle, needs\nanother mod first…). Set ratings in the Installed table. Mods that change stats (turbocharging, drive-by-wire,\nsuspension, armor…) show in the summary. Drive-by-wire asks how to split its one-time +10%.</li>\n<li><strong>Price.</strong> Set the Mark-Up (luxury, security, military, unusual features). The price is Design Points × Mark-Up\n× 100¥.</li>\n<li><strong>Review</strong>, name it at the top, and click <strong>Create vehicle</strong>.</li>\n</ol>\n<p><strong>Good to know</strong></p>\n<ul>\n<li>Anything wrong with the design (over the Load, over a maximum, a mod that doesn&#39;t fit) is listed in red in the\nsummary, and the vehicle can&#39;t be saved until it&#39;s fixed.</li>\n<li>To change a design later, open the vehicle&#39;s <strong>Design</strong> tab → <strong>Open the Workshop</strong>. Mods added on the sheet after\nthe vehicle was built are <em>customizations</em>: they take space but cost no Design Points, and the Workshop leaves them\nalone.</li>\n<li>Redesigning a vehicle that wasn&#39;t built in the Workshop (one from a compendium) asks first and shows what changes.</li>\n</ul>\n"
+      }
+    },
+    {
+      "_id": "251f726da8f0d7d0",
+      "name": "Customize a vehicle",
+      "type": "text",
+      "title": {
+        "show": true,
+        "level": 1
+      },
+      "image": {},
+      "video": {
+        "controls": true,
+        "volume": 0.5
+      },
+      "src": null,
+      "system": {},
+      "sort": 200000,
+      "ownership": {
+        "default": -1
+      },
+      "flags": {},
+      "text": {
+        "format": 1,
+        "content": "<p><strong>Goal:</strong> fit a turbocharger, armor, sensors or anything else to a vehicle that already exists, by the customization\nrules (Rigger 2 pp.118–146).</p>\n<p><img src=\"systems/sr2e/assets/guides/customize-vehicle.gif\" alt=\"Buying turbocharging, testing the installation and finishing it: Speed 210 → 225\"></p>\n<p><strong>GM, once:</strong> turn on the <strong>Rigger 2</strong> module. For a production vehicle, check its <strong>Fuel type</strong> (under More): engine\nmodifications need it. For engine customization on a production vehicle, enter its <strong>power plant cost</strong> there too.</p>\n<p><strong>The player</strong></p>\n<ol>\n<li><strong>Open Customize</strong> on the vehicle&#39;s sheet (Modifications header).</li>\n<li><strong>Pick the modification.</strong> Each row shows the parts price (with the Street Index), Availability, the Installation\nTest (skill and Target Number), the base time and the room it takes. A row you can&#39;t buy says why. Set the levels\n(or the rating) and <strong>Paid by</strong>, then <strong>Buy</strong>.</li>\n<li><strong>Wait for the GM&#39;s client</strong> to approve it (it checks the vehicle as it is right now). Your character pays; the\nparts appear on the vehicle as <em>parts bought</em>.</li>\n<li><strong>Test.</strong> On the vehicle&#39;s sheet, <strong>Test</strong> on that row: pick who does the work and roll. The card gives the time:\nbase time ÷ successes.</li>\n<li><strong>Finish</strong> when that time has passed in play: the modification works from now on.</li>\n</ol>\n<p><strong>Good to know</strong></p>\n<ul>\n<li>Levels are fixed while a modification is being installed; the GM can change them (the test is then needed again).</li>\n<li>A test that fails keeps the parts; try again.</li>\n<li>Removing a bought modification can&#39;t be undone (no refund unless the GM gives one).</li>\n</ul>\n"
+      }
+    },
+    {
+      "_id": "8be80b88c728b32f",
+      "name": "Update vehicles to the Rigger 2 Vehicle List",
+      "type": "text",
+      "title": {
+        "show": true,
+        "level": 1
+      },
+      "image": {},
+      "video": {
+        "controls": true,
+        "volume": 0.5
+      },
+      "src": null,
+      "system": {},
+      "sort": 300000,
+      "ownership": {
+        "default": -1
+      },
+      "flags": {},
+      "text": {
+        "format": 1,
+        "content": "<p><strong>Goal:</strong> give vehicles already in your world the Rigger 2 Vehicle List stats (Rigger 2 pp.148–166), which supersede\nthe core book&#39;s and the other sourcebooks&#39; while the Rigger 2 module is on.</p>\n<p><img src=\"systems/sr2e/assets/guides/vehicle-list-update.png\" alt=\"The Rigger 2 stats window: each vehicle with the stats and factory equipment that would change\"></p>\n<p><strong>New imports need nothing:</strong> with Rigger 2 on, a vehicle dragged in from any compendium the list covers already\ngets the list&#39;s stats and its factory equipment (and any weapon the book includes).</p>\n<p><strong>The GM</strong></p>\n<ol>\n<li><strong>Open the window:</strong> Actors sidebar → <strong>Rigger 2 stats</strong>.</li>\n<li><strong>Check each row:</strong> every vehicle (unlinked tokens too) with the stats that would change and the factory equipment\nthat would be added or marked. Rows matched only by name, or with an older item at another rating, start\nunticked: check them, and for the older item pick <em>adopt it</em> or <em>keep it as aftermarket</em>.</li>\n<li><strong>Update the ticked vehicles.</strong> Anything edited since the window opened is skipped; open it again to review.</li>\n</ol>\n<p><strong>Good to know</strong></p>\n<ul>\n<li>Designed vehicles (Workshop or the old Design tab) and bought customizations are never changed.</li>\n<li>A world copy you duplicated keeps its own stats; only the window changes vehicles already in the world.</li>\n</ul>\n"
+      }
+    },
+    {
+      "_id": "756053c0c0fab6dc",
+      "name": "Run a vehicle chase",
+      "type": "text",
+      "title": {
+        "show": true,
+        "level": 1
+      },
+      "image": {},
+      "video": {
+        "controls": true,
+        "volume": 0.5
+      },
+      "src": null,
+      "system": {},
+      "sort": 400000,
+      "ownership": {
+        "default": -1
+      },
+      "flags": {},
+      "text": {
+        "format": 1,
+        "content": "<p><strong>Goal:</strong> a Combat Turn of vehicle combat by the core rules (pp.105–109): who&#39;s where, who shoots, who crashes.</p>\n<p><img src=\"systems/sr2e/assets/guides/vehicle-chase.png\" alt=\"The Vehicles tab: the vehicle under control, with Test, Ram, Escape, Hit and Command\"></p>\n<p><strong>Each driver, once</strong></p>\n<ol>\n<li><strong>Vehicles tab → Control</strong> on the vehicle you drive. Riggers also toggle <strong>Jacked In</strong>.</li>\n</ol>\n<p><strong>Every Combat Turn</strong></p>\n<ol>\n<li><strong>Position Test:</strong> Test → Position Test, pick the terrain, add Control Pool dice if you have them (they stay\nspent for the turn). Decide your intention in secret; the card lists what your successes buy for each.</li>\n<li><strong>Shoot:</strong> gunners fire as usual; the attack dialog adds the Moving Target modifier from the two speeds.</li>\n<li><strong>Crash Tests:</strong> when a card says <em>Crash Test required</em>, the driver clicks it (the GM, for an NPC driver).\nFailing crashes the vehicle; everyone aboard clicks <strong>Resist (occupant)</strong> on the crash card.</li>\n<li><strong>Escape:</strong> the pursuer clicks <strong>Escape</strong> and picks the two Position Test cards; no success = the quarry escapes.</li>\n</ol>\n<p><strong>Ramming</strong> (within a metre): <strong>Ram</strong>, then the other driver clicks <strong>Resist ram</strong>; the loser makes a Crash Test.\n<strong>Hitting something:</strong> <strong>Hit</strong>, with the speed and the barrier&#39;s rating.</p>\n<p><strong>Good to know</strong></p>\n<ul>\n<li>Out of combat, the Handling Test uses the Vehicle Operation Table instead (p.183), including the rigger&#39;s −2 per\nrig level.</li>\n<li>A vehicle destroyed by gunfire or spells crashes by itself.</li>\n</ul>\n"
+      }
+    },
+    {
+      "_id": "f38e8b7ef6e8157e",
+      "name": "Run a Rigger 2 chase",
+      "type": "text",
+      "title": {
+        "show": true,
+        "level": 1
+      },
+      "image": {},
+      "video": {
+        "controls": true,
+        "volume": 0.5
+      },
+      "src": null,
+      "system": {},
+      "sort": 500000,
+      "ownership": {
+        "default": -1
+      },
+      "flags": {},
+      "text": {
+        "format": 1,
+        "content": "<p><strong>Goal:</strong> a vehicle chase by <em>Rigger 2</em> (pp.41–49): speeds, distances, Maneuver Scores and who can act when.</p>\n<p><img src=\"systems/sr2e/assets/guides/vehicle-r2-chase.png\" alt=\"The Chase window: two cars, their Maneuver Scores, the action buttons and the pursuit\"></p>\n<p><strong>The GM, before the first Combat Turn</strong></p>\n<ol>\n<li>Settings → Vehicle ruleset → <strong>Rigger 2</strong>. Make a combat as usual.</li>\n<li>Combat tracker → <strong>Chase</strong> → <strong>Set up a chase</strong>. <strong>Add</strong> each vehicle with its driver, speed and terrain, and each\npedestrian. <strong>Pursuit:</strong> who chases whom, and how far apart. Tick passengers in each vehicle&#39;s <strong>Aboard</strong> list.</li>\n<li>Players tell you their starting speeds; you set the NPCs&#39;. Then <strong>Begin Combat</strong>.</li>\n</ol>\n<p><strong>Every Combat Turn</strong></p>\n<ol>\n<li>Each driver: <strong>Driver Points</strong>, adding any Control Pool dice. The Maneuver Score appears.</li>\n<li>On your action: <strong>Accelerate</strong>, <strong>Brake</strong>, <strong>Position</strong>, <strong>Stop at…</strong> or <strong>Hide</strong> — the dialog shows the dice and\nthe TN with every modifier. Use Karma if you like, then <strong>Apply to the chase</strong> on the card.</li>\n<li>Passengers shoot and cast as usual, but only in Combat Phases up to the vehicle&#39;s Driver Points.</li>\n<li>Lost them? Anyone aboard the pursuer clicks <strong>Relocate</strong> on the pursuit row.</li>\n<li><strong>Next Turn</strong> as usual: distances change and pools refresh on their own.</li>\n</ol>\n<p><strong>Good to know</strong></p>\n<ul>\n<li>A sports car is quicker in a chase than a van: set each vehicle&#39;s <strong>Class</strong> on its sheet if the design doesn&#39;t say.</li>\n<li>Above the Speed Rating the row turns orange: 1 Stress each turn you stay there.</li>\n<li><strong>Ram</strong> is on the pursuit row: close in (within your Acceleration) or change speed by twice the distance first.</li>\n<li>Took a Serious hit? Click <strong>Crash Test</strong> on the card, then <strong>Apply the result</strong>. If you crash, resist for the vehicle,\nthen everyone aboard clicks their own <strong>Resist</strong> on the crash card (and says whether they wore a seat belt).</li>\n</ul>\n"
+      }
+    },
+    {
+      "_id": "98dc22f09297da3f",
+      "name": "Use a vehicle's sensors (Rigger 2)",
+      "type": "text",
+      "title": {
+        "show": true,
+        "level": 1
+      },
+      "image": {},
+      "video": {
+        "controls": true,
+        "volume": 0.5
+      },
+      "src": null,
+      "system": {},
+      "sort": 600000,
+      "ownership": {
+        "default": -1
+      },
+      "flags": {},
+      "text": {
+        "format": 1,
+        "content": "<p><strong>Goal:</strong> spot and lock on to a target with a vehicle&#39;s sensors, and jam or be jammed (<em>Rigger 2</em> pp.27–32).</p>\n<p><img src=\"systems/sr2e/assets/guides/vehicle-r2-sensors.png\" alt=\"The Sensors panel and a Sensor Test card\"></p>\n<ol>\n<li>On the vehicle&#39;s sheet (Rigger 2 panel) click <strong>Sensors</strong>.</li>\n<li>Target the token you want to find, then <strong>Sensor Test</strong>. Tick the conditions that apply and <strong>Roll</strong>. The card says\nwhat you found; any success locks on until you lose contact.</li>\n<li>Out of range? The panel shows each transmitter&#39;s range. Tick the conditions around you (urban, high elevation…)\nand <strong>Apply</strong>; ask the GM for a Flux boost if the vehicle has an Electronics Port or amplifiers.</li>\n<li>Being jammed? Switch on your <strong>ECCM</strong> (a Simple Action) before the next Sensor Test. Jamming them? Switch on your\n<strong>ECM</strong>: anyone whose sensors are inside its range sees your vehicle as harder to spot.</li>\n<li>Want sharper eyes? <strong>Customize</strong> → buy a <strong>Sensor Upgrade</strong> (magnification, thermographic, flare compensation…).</li>\n</ol>\n"
+      }
+    },
+    {
+      "_id": "d09a0c357a3b7380",
+      "name": "Fire missiles and indirect fire (Rigger 2)",
+      "type": "text",
+      "title": {
+        "show": true,
+        "level": 1
+      },
+      "image": {},
+      "video": {
+        "controls": true,
+        "volume": 0.5
+      },
+      "src": null,
+      "system": {},
+      "sort": 700000,
+      "ownership": {
+        "default": -1
+      },
+      "flags": {},
+      "text": {
+        "format": 1,
+        "content": "<p><strong>Goal:</strong> launch a guided missile, and call it in on a spotter&#39;s lock (<em>Rigger 2</em> pp.56–61).</p>\n<p><img src=\"systems/sr2e/assets/guides/vehicle-r2-gunnery.png\" alt=\"The attack dialog's Rigger 2 gunnery section, and a missile's Phase 0 card\"></p>\n<ol>\n<li>Lock on first: the vehicle&#39;s <strong>Sensors → Sensor Test</strong> against the targeted token.</li>\n<li>Fire the missile weapon (or launcher) as usual. On the attack dialog&#39;s <strong>Tactics</strong> tab pick <strong>Launch missile —\ncontinuous lock</strong> (stay on it: no other targets, +2 on Driving Tests) or <strong>fire-and-forget</strong>, then <strong>Attack</strong>.</li>\n<li>Keep playing the Turn. When the GM ends it, each missile posts a <strong>Phase 0</strong> card: the gunner clicks <strong>Missile\nAttack Test</strong> and resolves damage as usual. The next Turn starts once every missile has struck.</li>\n<li><strong>Indirect:</strong> the spotter targets the enemy and clicks 🎯 (Combat tab, or the Sensors panel for a vehicle), picks\nthe missile and rolls. The firer then picks <strong>Launch missile — indirect</strong> and that spotter&#39;s lock. If the spotter\nloses the target, use the card&#39;s <strong>Area-effect attack</strong> button: pick the device and range, roll, and the card gives\nthe scatter.</li>\n</ol>\n"
+      }
+    },
+    {
+      "_id": "a3bb81ee4ccf9902",
+      "name": "Drive by the Rigger 2 rules",
+      "type": "text",
+      "title": {
+        "show": true,
+        "level": 1
+      },
+      "image": {},
+      "video": {
+        "controls": true,
+        "volume": 0.5
+      },
+      "src": null,
+      "system": {},
+      "sort": 800000,
+      "ownership": {
+        "default": -1
+      },
+      "flags": {},
+      "text": {
+        "format": 1,
+        "content": "<p><strong>Goal:</strong> Driving Tests, Stress and repairs by <em>Rigger 2</em> (pp.20–26) instead of the core vehicle chapter.</p>\n<p><img src=\"systems/sr2e/assets/guides/vehicle-r2-drive.png\" alt=\"The vehicle sheet's Rigger 2 panel, and a resolved Driving Test that hit the Stress Rule of One\"></p>\n<p><strong>The GM, once</strong></p>\n<ol>\n<li><strong>Game Settings → Configure Settings → Shadowrun 2E → Vehicle ruleset: Rigger 2.</strong> Every client reloads.\nVehicle combat (Position, Crash, Ram) stays the core rules for now, labelled &quot;core&quot;.</li>\n</ol>\n<p><strong>Driving</strong></p>\n<ol>\n<li><strong>Vehicles tab → Drive</strong> on the vehicle. Pick the control mode (manual, datajack −1, rigged −2 per rig level) and\ntick the Driving Test Modifiers that apply. The vehicle&#39;s Autonav adds dice; riggers can add Control Pool.</li>\n<li><strong>Push it</strong> for extra dice if you must: 2 Stress per die, at most the vehicle&#39;s Body in Stress.</li>\n<li>Spend any Karma on the roll, then click <strong>Resolve</strong> on the card. A failed test gets the GM&#39;s Stress Test; as many\n1s as your skill adds 1D6 Stress; a system failure asks for a Crash Test.</li>\n<li>A drone nobody is rigging drives itself: <strong>Drive (Pilot)</strong> on the drone&#39;s sheet.</li>\n</ol>\n<p><strong>Wear and repair</strong> (vehicle sheet, Rigger 2 panel)</p>\n<ul>\n<li><strong>Exceed speed:</strong> +1 Stress for going past the Speed Rating (at most ×1.5).</li>\n<li><strong>Stress Test</strong> (GM): 2D6 against Stress whenever the vehicle runs.</li>\n<li><strong>Overhaul:</strong> in a Vehicle Facility, Build/Repair against Stress + 4; every 2 successes remove 1 Stress (never below 1).</li>\n<li><strong>Repair:</strong> click it once per step: quote (TN boxes + 2, parts 5% of the vehicle&#39;s cost a box), parts arrive, the\nBuild/Repair Test sets the hours, then <strong>Finish</strong> (or take it back mid-repair and resume later).</li>\n</ul>\n<p><strong>Good to know</strong></p>\n<ul>\n<li>Engine customizations can fail (p.120, both rulesets): the GM gets a secret check when one is finished or added in\nthe Workshop, and a failure adds permanent Stress. Only <strong>Factory engine</strong> (GM) removes it. Engines customized\nbefore 0.147.0: the GM clicks <strong>Check engine</strong> once.</li>\n<li>The Whiz Kid example on p.21 prints TN 8, but its rows add up to 7; the system uses the table.</li>\n</ul>\n"
+      }
+    },
+    {
+      "_id": "ffeccecd09ddb22f",
+      "name": "Pull, lift, use arms and fly (Rigger 2)",
+      "type": "text",
+      "title": {
+        "show": true,
+        "level": 1
+      },
+      "image": {},
+      "video": {
+        "controls": true,
+        "volume": 0.5
+      },
+      "src": null,
+      "system": {},
+      "sort": 900000,
+      "ownership": {
+        "default": -1
+      },
+      "flags": {},
+      "text": {
+        "format": 1,
+        "content": "<p><strong>Goal:</strong> <em>Rigger 2</em>&#39;s special vehicle operations (pp.33–36) from the vehicle sheet&#39;s Rigger 2 panel.</p>\n<p><img src=\"systems/sr2e/assets/guides/vehicle-r2-special-ops.png\" alt=\"The Rigger 2 panel of a drone with mechanical arms: its arm Strength, and the Pull / lift, Arm Test, Arm skill and Arm melee buttons\"></p>\n<p><strong>Pull or lift a load</strong></p>\n<ol>\n<li><strong>Pull / lift</strong>: enter the weight (and the Load of any other vehicles pulling with it), the conditions, how stuck it\nis (the GM&#39;s +1 to +4), rollers and bracing. Within the Load Rating no test is needed; up to twice it, the vehicle\nrolls its Body (you can push for Stress dice).</li>\n<li>Over the Load Rating it moves at half or a quarter of its Speed and takes Stress every hour or minute, even if the\ntest failed: click <strong>+1 Stress</strong> on the card each time. Over 1.5 × Load it also rolls Body (4) once, or takes 1 Stress.</li>\n</ol>\n<p><strong>Mechanical arms</strong></p>\n<ol>\n<li><strong>Arm Test</strong> for anything the arm does: the controller&#39;s Quickness (a rigger may add Control Pool up to Quickness;\na drone on its own uses its Pilot) against the vehicle&#39;s Handling; the GM may raise or lower it.</li>\n<li><strong>Arm skill</strong> for a skill used through the arm (defusing a bomb with Demolitions): the skill&#39;s TN + 1 per Handling\npoint above 3.</li>\n<li><strong>Arm melee</strong>: the controlling character attacks with the arm&#39;s Strength (Body × Body, plus Strength bought for it)\nthrough the usual melee dialog, +1 TN per Handling point above 3.</li>\n</ol>\n<p><strong>Fly</strong></p>\n<ol>\n<li><strong>Takeoff / landing</strong> shows the runway it needs. From an irregular surface, in bad weather or under fire, choose the\ntakeoff or landing test: a Driving Test at TN 3 (takeoff) or 4 (landing) plus the modifiers you tick. A rough\nsurface also opens a 6L damage resistance for the aircraft.</li>\n</ol>\n<p><strong>Good to know</strong></p>\n<ul>\n<li>A vehicle on legs walks and runs by the character rules (the sheet shows both speeds) and can&#39;t join a chase.</li>\n<li>A hovercraft&#39;s Driving Test refuses a significant slope and shows the hovercraft terrain table; its crash damage\nnever goes past Serious.</li>\n<li>For a monorail or train, the GM ticks <strong>Rail vehicle</strong>: its Driving Test is speeding up or slowing down to throw off\nan attacker.</li>\n</ul>\n"
+      }
+    },
+    {
+      "_id": "ec7d380ca47d6ceb",
+      "name": "Run a drone network (Rigger 2)",
+      "type": "text",
+      "title": {
+        "show": true,
+        "level": 1
+      },
+      "image": {},
+      "video": {
+        "controls": true,
+        "volume": 0.5
+      },
+      "src": null,
+      "system": {},
+      "sort": 1000000,
+      "ownership": {
+        "default": -1
+      },
+      "flags": {},
+      "text": {
+        "format": 1,
+        "content": "<p><strong>Goal:</strong> a rigger controls several drones through a remote-control deck — commanding them from the captain&#39;s chair,\njumping into one, and running a group with BattleTac IVIS (Rigger 2 pp.62–67). Needs the Rigger 2 vehicle ruleset.</p>\n<p><img src=\"systems/sr2e/assets/guides/rc-deck-panel.png\" alt=\"The deck panel: connected, jumped into the Roto-Drone as primary, the Doberman holding a standing order; drones affiliated during a running combat sit out that Turn (Rigger 2 p.64)\"></p>\n<p><strong>Set up</strong></p>\n<ol>\n<li>Give the rigger an RC deck (Rigger 2 module) and link the drones on the <strong>Vehicles</strong> tab.</li>\n<li>Open the deck&#39;s panel from the Vehicles tab. Pick each drone and click <strong>Subscribe</strong>, then <strong>Affiliate</strong> (a Simple\nAction each; at most the deck&#39;s Rating at once).</li>\n<li>Click <strong>Connect</strong>. Your drones are now in the <strong>captain&#39;s chair</strong>.</li>\n</ol>\n<p><strong>Run it</strong></p>\n<ul>\n<li><strong>Command</strong> a drone: describe the order; the GM rates it (Skill Success Table); the drone rolls its Comprehension\nTest. The successes show as its standing order.</li>\n<li><strong>Group command</strong>: tick the drones and give one order. With an IVIS master unit on the deck (and receivers in the\ndrones) you roll the IVIS Test first (pick Vehicle Tactics, or a Tactics / Military Theory default at a higher TN)\nand split its successes between the test and the group&#39;s IVIS Pool.</li>\n<li><strong>Jump in</strong> (jacked in, with a VCR) to drive one drone rigged with your pools; <strong>Return to the captain&#39;s chair</strong> to\nleave it. Your other drones become secondaries meanwhile.</li>\n<li><strong>Fire a drone&#39;s weapon</strong> from its sheet: the primary uses your Gunnery; any other drone rolls its Pilot.</li>\n</ul>\n<p><em>Tips</em></p>\n<ul>\n<li>In a chase, add the drone without a driver: you act for it.</li>\n<li>A deck installed in a vehicle can be <strong>Hardwired</strong> to it from the panel.</li>\n<li>Deleting a connected deck dumps you: resist the Stun and roll Willpower from the card.</li>\n<li>More in <a href=\"https://github.com/futurekill/sr2e-foundryvtt/wiki/Vehicles-and-Rigging\">Vehicles and Rigging</a>.</li>\n</ul>\n"
+      }
+    },
+    {
+      "_id": "47dd2ceddfb7c2ed",
+      "name": "Jam or hack a drone network (Rigger 2)",
+      "type": "text",
+      "title": {
+        "show": true,
+        "level": 1
+      },
+      "image": {},
+      "video": {
+        "controls": true,
+        "volume": 0.5
+      },
+      "src": null,
+      "system": {},
+      "sort": 1100000,
+      "ownership": {
+        "default": -1
+      },
+      "flags": {},
+      "text": {
+        "format": 1,
+        "content": "<p><strong>Goal:</strong> a rigger listens in on, confuses or jams another rigger&#39;s drone network, and the other rigger fights back\n(Rigger 2 pp.68–72). Both need a connected remote-control deck; jamming also needs an ECM suite on a vehicle.</p>\n<p><img src=\"systems/sr2e/assets/guides/rc-ew-panels.png\" alt=\"Electronic warfare: the target deck (left) lists the intruder's boxes per channel with Regenerate; the intruder's deck (right) shows the intercepted channels with Read, MIJI and Intercept\"></p>\n<p><strong>Attack</strong></p>\n<ol>\n<li>Open your deck&#39;s panel. Under <strong>Electronic warfare → Other networks</strong> pick their network. If it shows a lock, click\n<strong>Break encryption</strong> first.</li>\n<li>Click <strong>Intercept</strong>, tick the channels you want and roll. Each success is one channel; the GM chooses any you\ndidn&#39;t name.</li>\n<li><strong>Read</strong> a channel to learn its traffic — the system channel reports one drone you pick: position, heading,\nammunition and damage (they may notice and switch frequencies) — or click <strong>MIJI…</strong> and pick an\nattack and a channel: meaconing, intrusion or jamming. Roll your Flux; the defender gets a Resist card.</li>\n</ol>\n<p><strong>Defend</strong></p>\n<ol>\n<li>Click <strong>Resist</strong> on the card and roll your deck&#39;s Flux. The result card shows the boxes.</li>\n<li>On your panel, <strong>Regenerate</strong> a channel against one intruder, <strong>Block</strong> a bogus object, and <strong>Reconnect</strong> a lost\ncarrier once at least one box is clear.</li>\n</ol>\n<p><strong>Take their whole network (interference, p.72)</strong></p>\n<p><img src=\"systems/sr2e/assets/guides/rc-contest-panels.png\" alt=\"An interference contest: the target deck (left) shows the intruder's 7 boxes on its system channel; the intruder's deck (right) lists the contest with both sides' boxes and an Interfere button\"></p>\n<ol>\n<li>With a protocol emulation module and their <strong>system</strong> channel intercepted, click <strong>Interfere</strong> beside MIJI…; roll\nyour deck&#39;s Flux. They roll a <strong>Resist</strong> card.</li>\n<li>The loser of each exchange takes the net successes as boxes on its own system channel. The <strong>Interference contest</strong>\nrow on both panels shows the count; either side clicks <strong>Interfere</strong> for the next exchange.</li>\n<li>At 10 boxes (or if they disconnect while you stay) their network is yours: their drones obey you, starting from the\ncaptain&#39;s chair. Disconnect it to give it back.</li>\n</ol>\n<p><strong>Good to know:</strong> the degradation applies to the tests the book names — your drones&#39; own tests (meaconing), commands\nand IVIS (command jamming), and everything you do while remotely rigged into a jammed drone (simsense jamming).</p>\n"
+      }
+    },
+    {
+      "_id": "cea7482c9dfe283b",
+      "name": "Play a rigger by the Rigger 2 rules",
+      "type": "text",
+      "title": {
+        "show": true,
+        "level": 1
+      },
+      "image": {},
+      "video": {
+        "controls": true,
+        "volume": 0.5
+      },
+      "src": null,
+      "system": {},
+      "sort": 1200000,
+      "ownership": {
+        "default": -1
+      },
+      "flags": {},
+      "text": {
+        "format": 1,
+        "content": "<p><strong>Goal:</strong> a rigger whose Control Pool, defaulting, decking and Edges and Flaws follow <em>Rigger 2</em> (pp.12–19).</p>\n<p><img src=\"systems/sr2e/assets/guides/rigger-r2-vehicles-tab.png\" alt=\"A rigger's Vehicles tab under Rigger 2: VCR 3 with move-by-wire 1 gives Control Pool 9, with the VCR switch, decker datajack and Vertigo toggles\"></p>\n<p><strong>Set up the character</strong></p>\n<ol>\n<li>Install the <strong>Vehicle Control Rig</strong> cyberware. Want to switch it off for decking? Tick <strong>Reflex Trigger</strong> on the\nVCR item <em>before</em> installing it (+13,000¥, +0.2 Essence).</li>\n<li>A second, decker datajack? Tick <strong>Decker datajack</strong> on the Vehicles tab.</li>\n<li>Drag the rigger&#39;s Edges and Flaws from the Rigger 2 module (Vehicle Empathy, Simsense Vertigo…) onto the sheet.</li>\n</ol>\n<p><strong>In play</strong></p>\n<ul>\n<li><strong>Vehicles tab:</strong> the Control Pool already counts natural Quickness and any move-by-wire.</li>\n<li><strong>Drive</strong> in <em>Rigged</em> mode: a missing vehicle skill defaults at half cost; Vehicle Empathy has its own checkbox.</li>\n<li><strong>Decking:</strong> jack into the Matrix with the rig on and every test shows &quot;+1 rigger decking&quot;; tick <strong>VCR switched\noff</strong> to avoid it (no rig until you switch it back).</li>\n<li><strong>Simsense Vertigo:</strong> tick <strong>Using simsense</strong> for a display link or simrig; rigging, decking and smartlinked shots\ncount by themselves.</li>\n<li><strong>Gremlins:</strong> the GM clicks the dice icon on the Flaw when the character picks up a gadget.</li>\n</ul>\n<p><strong>Good to know</strong></p>\n<ul>\n<li>An encephalon runs a vehicle activesoft without skillwires, but only for rigged tests.</li>\n<li>Installations needing two Build/Repair skills keep the test that passed; roll again for the other at +1.</li>\n</ul>\n"
+      }
+    },
+    {
+      "_id": "2742d83a82a3fedd",
+      "name": "Pay your vehicles' upkeep (Rigger 2)",
+      "type": "text",
+      "title": {
+        "show": true,
+        "level": 1
+      },
+      "image": {},
+      "video": {
+        "controls": true,
+        "volume": 0.5
+      },
+      "src": null,
+      "system": {},
+      "sort": 1300000,
+      "ownership": {
+        "default": -1
+      },
+      "flags": {},
+      "text": {
+        "format": 1,
+        "content": "<p><strong>Goal:</strong> the monthly maintenance overhead from <em>Rigger 2</em> p.18–19.</p>\n<p><img src=\"systems/sr2e/assets/guides/vehicle-overhead.png\" alt=\"The overhead dialog: each linked vehicle's due and missed months, Restore on a paid missed month, the Lifestyle credit and Good Karma\"></p>\n<p><strong>The GM, when a month of game time has passed</strong></p>\n<ol>\n<li><strong>Actors sidebar → Month ends</strong> → confirm. Every vehicle linked to a character gets its bill for the month.</li>\n</ol>\n<p><strong>Each player</strong></p>\n<ol>\n<li><strong>Vehicles tab → Overhead.</strong> Tick the months to pay. Leave <strong>Use the Lifestyle credit</strong> on (Middle 200¥, High\n1,500¥, Luxury 3,000¥ a month), and add Good Karma if you like (500¥ a point). <strong>Pay.</strong></li>\n<li>Skipped a month? It&#39;s <strong>missed</strong> once the next month ends, and the vehicle takes 1 Stress. Pay it together with the\ncurrent month, then click <strong>Restore</strong> on it: 1 Good Karma and a Vehicle B/R (4) Test win the Stress Point back.</li>\n</ol>\n<p><strong>Good to know</strong></p>\n<ul>\n<li>The bill is 1% of the vehicle&#39;s value plus 10¥ per Stress Point it took that month: drive gently.</li>\n<li>A payment stuck halfway (a disconnect) shows <strong>Release</strong> on its month; the GM&#39;s client settles any payment that was\nalready charged.</li>\n</ul>\n"
+      }
+    },
+    {
+      "_id": "2ee6f48dadf6f3ab",
+      "name": "Set up a Matrix jackpoint",
+      "type": "text",
+      "title": {
+        "show": true,
+        "level": 1
+      },
+      "image": {},
+      "video": {
+        "controls": true,
+        "volume": 0.5
+      },
+      "src": null,
+      "system": {},
+      "sort": 1400000,
+      "ownership": {
+        "default": -1
+      },
+      "flags": {},
+      "text": {
+        "format": 1,
+        "content": "<p><strong>Goal:</strong> the decker walks up to a terminal on the map, jacks in, and only their screen\nmoves to a Matrix map. Everyone else stays in meat space.</p>\n<p><img src=\"systems/sr2e/assets/guides/jackpoint-jack-in.gif\" alt=\"The decker walks to the desk terminal, opens the token HUD, clicks Jack in, and their view moves to the Matrix scene\"></p>\n<p><strong>GM, once per location</strong></p>\n<ol>\n<li><p><strong>Make the Matrix scene.</strong> A new scene with the host&#39;s map (any image works; a dark\nscene with a coloured grid is fine). Give the players <strong>Limited</strong> or <strong>Observer</strong>\npermission on it, or their view can&#39;t follow. Draw a <strong>Region</strong> where personas arrive\n(the &quot;entry area&quot;). No behaviour is needed on it. Make it big enough for the whole\nteam: each persona goes on its own free square inside it.</p>\n</li>\n<li><p><strong>Mark the jackpoint.</strong> On the real scene, draw a Region over the terminal or data\nport, where the decker will stand. In its config, <strong>Behaviors → +</strong> and pick\n<strong>Matrix jackpoint</strong>, then fill in:</p>\n<ul>\n<li><strong>Entry area on the Matrix scene</strong>: drag the entry Region from step 1 onto the\nfield (or paste its UUID).</li>\n<li><strong>What it is</strong> (optional): the text on the Jack in button, e.g. &quot;Strice\nmainframe port&quot;.</li>\n<li><strong>Host</strong> (optional): the Host actor the decker is most likely working against.</li>\n<li><strong>Trace modifier (VR2.0)</strong> (optional): added to the decker&#39;s Trace Factor here\n(Virtual Realities 2.0 p.28).</li>\n</ul>\n<p>When you save, the system warns you if the entry area is missing or no player can\nsee the Matrix scene.</p>\n<p><img src=\"systems/sr2e/assets/guides/jackpoint-config.jpg\" alt=\"The Matrix jackpoint behaviour, pointing at the entry Region on the Matrix scene\"></p>\n</li>\n<li><p><strong>Personas: nothing to do.</strong> When a decker jacks in, their persona token appears in\nthe entry area (your client makes it, so you need to be logged in — if you weren&#39;t,\nit appears the moment you are). When they jack out it&#39;s removed.</p>\n<ul>\n<li><em>Want a permanent one instead?</em> Drag the decker onto the Matrix scene, right-click\nthe token and click the <strong>astronaut</strong> button (<strong>Matrix persona</strong>). A hand-placed\npersona is used instead of a new one and stays between runs, dimmed while nobody\nis jacked in.</li>\n<li><em>Like the one that appeared?</em> Right-click it and click the <strong>pin</strong> button (<strong>Keep\nthis persona</strong>): it becomes hand-placed and stays.</li>\n<li>Anything on the entry area that reacts to a token entering (a Pause Game, a\nTeleport, a script) runs when a persona appears there, so you can use it as an\nalert.</li>\n</ul>\n</li>\n</ol>\n<p><strong>At the table</strong></p>\n<ol>\n<li><p>The decker moves their token into the jackpoint Region.</p>\n</li>\n<li><p>They right-click their token: the HUD now has a <strong>network-port</strong> button, <strong>Jack in: (what\nit is)</strong>. If it&#39;s greyed out, hover it for the reason (no working cyberdeck, not\nstanding in the Region, …).</p>\n</li>\n<li><p>They click it. Matrix mode goes on, a chat line says where they jacked in, their\npersona appears in the entry area, and only that player&#39;s screen switches to the\nMatrix scene, centred on it.</p>\n<p><img src=\"systems/sr2e/assets/guides/persona-tokens.gif\" alt=\"Jack in: the persona appears on the Matrix scene; Jack out: it's gone and the view is back in the office\"></p>\n</li>\n<li><p>Their body stays on the map with a <strong>cyan outline</strong>, so everyone can see who is\njacked in (and vulnerable).</p>\n<p><img src=\"systems/sr2e/assets/guides/jackpoint-body.jpg\" alt=\"The body left behind at the desk, outlined in cyan\"></p>\n</li>\n<li><p>To come back: <strong>Jack out</strong> (the plug with an ✕, where the Jack in button was) on the persona or the body. Dump\nshock, or the GM turning off Matrix mode on the sheet, also brings them back.</p>\n<p><img src=\"systems/sr2e/assets/guides/jackpoint-persona-hud.jpg\" alt=\"A hand-placed persona's token HUD: the GM's Matrix persona marker and the Jack out button\"></p>\n</li>\n</ol>\n<p><em>Tips</em></p>\n<ul>\n<li><p>Player characters with linked tokens only. For an NPC decker, use the Matrix mode\ntoggle on its sheet.</p>\n</li>\n<li><p>The sheet&#39;s own <strong>Jack In</strong> button never moves anyone&#39;s view: it&#39;s for tables that\ndon&#39;t use Matrix maps.</p>\n</li>\n<li><p>A player can only follow one jacked-in character per browser window. A reload while\njacked in puts them straight back on the Matrix scene.</p>\n</li>\n<li><p><strong>The persona&#39;s look:</strong> the decker can pick a <strong>Matrix icon</strong> in the Persona box on\ntheir Matrix tab; blank uses their token image.</p>\n<p><img src=\"systems/sr2e/assets/guides/matrix-icon.jpg\" alt=\"The Matrix icon field\"></p>\n</li>\n<li><p>Deleting the jackpoint, its Region, the entry area or the Matrix scene ends any live\nsession there. Pointing the jackpoint at a different entry area mid-run doesn&#39;t move a\npersona that&#39;s already in.</p>\n</li>\n<li><p>Deleting a persona that appeared on its own while the decker is in just brings a new\none: jack them out to remove it.</p>\n</li>\n<li><p>More in <a href=\"https://github.com/futurekill/sr2e-foundryvtt/wiki/The-Matrix\">The Matrix</a>.</p>\n</li>\n</ul>\n"
+      }
+    },
+    {
+      "_id": "81ee9099e02867d6",
+      "name": "Set up a fat-bacteria zone",
+      "type": "text",
+      "title": {
+        "show": true,
+        "level": 1
+      },
+      "image": {},
+      "video": {
+        "controls": true,
+        "volume": 0.5
+      },
+      "src": null,
+      "system": {},
+      "sort": 1500000,
+      "ownership": {
+        "default": -1
+      },
+      "flags": {},
+      "text": {
+        "format": 1,
+        "content": "<p><strong>Goal:</strong> a corp facility has fat bacteria (FAB) in its walls and air. Astral intruders\nslow to a crawl inside, assensing from inside is harder, and with FAB-UV the guards can\nlight it up and <em>see</em> a projecting mage (Corporate Security Handbook p.103).</p>\n<p><strong>GM, once per facility</strong></p>\n<ol>\n<li>On the scene, draw a <strong>Region</strong> over the FAB-filled space (a room, a vault, the\nwhole floor).</li>\n<li>In its config, <strong>Behaviors → +</strong> and pick <strong>Fat bacteria zone</strong>. Choose the\n<strong>Strain</strong>:<ul>\n<li><strong>FAB-1</strong>: restricts astral movement only.</li>\n<li><strong>FAB-UV (glows under UV)</strong>: also reveals astral intruders when the UV lights are on.</li>\n</ul>\n</li>\n<li>Optional: set the Region&#39;s <strong>Visibility</strong> to <em>Always</em> if the players should see the\nzone drawn on the map (by default only the GM sees Regions, on the Regions layer).</li>\n<li>If the FAB is also in the walls, give those walls <strong>Astral barrier → Fat bacteria</strong>\nin their wall config: they then stop astral forms like a living wall\n(<a href=\"https://github.com/futurekill/sr2e-foundryvtt/wiki/Astral-Space\">Astral Space</a>).</li>\n</ol>\n<p><img src=\"systems/sr2e/assets/guides/fab-config.jpg\" alt=\"The Fat bacteria zone behaviour: strain, UV lights, and the search button\"></p>\n<p><strong>What it does on its own</strong></p>\n<ul>\n<li><strong>Movement:</strong> an astral form inside the zone is held to normal astral speed. Outside,\na projecting magician can switch on <strong>fast astral movement</strong> from the form&#39;s token\nHUD (the ⏩ button): Magic in kilometres per action, but they can&#39;t assense or see\ndetail. The speed caps are enforced in combat when <em>Limit movement in combat</em> is on\n(Game Settings).</li>\n<li><strong>Assensing:</strong> the <strong>eye</strong> button on an astrally active token&#39;s HUD rolls Assense\n(Sorcery or Conjuring, p.146). From inside the zone it takes <strong>+4</strong> to the TN, shown\non the roll.</li>\n<li>Spellcasting and astral combat are not affected (the book).</li>\n</ul>\n<p><img src=\"systems/sr2e/assets/guides/fab-astral-form.gif\" alt=\"An astral form moving into the zone; its HUD shows Assense (+4 inside) and fast astral movement\"></p>\n<p><strong>Lighting it up (FAB-UV only)</strong></p>\n<ol>\n<li>When the guards hit the UV, open the behaviour (Region config → the behaviour&#39;s\ngear) and tick <strong>UV lights on</strong>. Save.</li>\n<li>Select the guards doing the search (mundane tokens with an actor). Then click\n<strong>Search for astral intruders (selected tokens search)</strong> at the bottom of the\nbehaviour&#39;s config.</li>\n<li>In the dialog, pick who rolls (the others lower the TN) and tick any intruder that\nknows it&#39;s being searched for: an aware intruder rolls Stealth against it.</li>\n<li>The roll: <strong>Perception (Intelligence), TN 6, +1 per 50 m² of zone, −1 per two\nsearchers</strong>. The result goes to the GM in chat. Each intruder spotted becomes\n<strong>visible to everyone</strong> while it stays in the lit zone. Attacks against it are at\n+4, −1 per success beyond the first.</li>\n</ol>\n<p><img src=\"systems/sr2e/assets/guides/fab-uv-search.gif\" alt=\"The GM selects the guard, runs the search, and the spotted intruder shows up in the GM's chat\"></p>\n<p><img src=\"systems/sr2e/assets/guides/fab-uv-reveal.jpg\" alt=\"A player's view of the same zone before and after a successful search\"></p>\n<p><em>Tips</em></p>\n<ul>\n<li>The reveal ends as soon as the intruder leaves the zone, the UV goes off, or the\nbehaviour is disabled. Coming back in, or relighting, needs a new search.</li>\n<li>Astral tokens of <strong>friendly</strong> disposition, and ones a player owns, are always\nvisible to that player. Give an intruder <strong>hostile</strong> or <strong>neutral</strong> disposition, or\nthe players will see it before anyone searches.</li>\n<li>An unlinked NPC mage on the astral plane: mark its token <strong>astral-only</strong> from the\ntoken HUD (the crossed-out eye button) so mundane viewers can&#39;t see it.</li>\n</ul>\n"
+      }
+    },
+    {
+      "_id": "2f8dc1516aa0d4b3",
+      "name": "Run a ritual",
+      "type": "text",
+      "title": {
+        "show": true,
+        "level": 1
+      },
+      "image": {},
+      "video": {
+        "controls": true,
+        "volume": 0.5
+      },
+      "src": null,
+      "system": {},
+      "sort": 1600000,
+      "ownership": {
+        "default": -1
+      },
+      "flags": {},
+      "text": {
+        "format": 1,
+        "content": "<p><strong>Goal:</strong> a magician (and anyone who knows the same spell) casts a non-combat spell by\nritual sorcery (p.133–137). The GM runs it; players roll when asked.</p>\n<p><img src=\"systems/sr2e/assets/guides/ritual-start.jpg\" alt=\"The ritual worksheet\"></p>\n<ol>\n<li><strong>Open the worksheet.</strong> On the leader&#39;s <strong>Magic</strong> tab, the GM clicks the ritual\nbutton (the circle of nodes) on the spell&#39;s row. Combat spells don&#39;t have one.</li>\n<li><strong>Fill it in.</strong><ul>\n<li><strong>Force</strong> and the <strong>leader&#39;s Magic Pool dice</strong>.</li>\n<li><strong>Members</strong>: every other character who knows the spell is listed. Tick the ones\ntaking part and set their pool dice. Pick an <strong>astral guide</strong> if one is used.</li>\n<li><strong>Subject</strong>: a targeted character, a specific place or object, or (area spells)\nan area you click on the map. Name it.</li>\n<li>Tick <strong>Target in sight or astrally observed</strong> if no material link is needed\n(p.136), and the <strong>lodge / circle</strong> box if one rated at least the Force is ready.</li>\n<li>The <strong>materials</strong> cost is shown: it&#39;s spent whatever happens.</li>\n</ul>\n</li>\n<li><strong>Start.</strong> The system checks the book&#39;s requirements and whispers the GM a ritual\ncard. Everything from here is on that card, so the ritual can always be resumed\nfrom chat.</li>\n<li><strong>Pay for materials.</strong> <strong>Charge materials</strong> takes the nuyen from the leader;\n<strong>Materials supplied</strong> if they&#39;re already on hand.</li>\n<li><strong>Material link</strong> (skipped if the target is in sight). The test is rolled; players\nmay spend Karma on it. Then <strong>Finalise link</strong>.</li>\n<li><strong>Sending.</strong> Roll, then <strong>Finalise sending</strong>. Each stage records the time it took.\nThe GM advances world time.</li>\n<li><strong>Determine the effect.</strong> Choose how many Ritual Magic Pool dice to use and the TN,\nroll, then <strong>Finalise effect</strong>. <strong>Publish the effect</strong> posts the result (resist\ncards, healing, an area).</li>\n<li><strong>Sustaining</strong> (sustained spells): <strong>Sustaining</strong> asks how. Not at all, with leftover\npool dice (dice × the leader&#39;s Magic in hours), by an elemental (Force days), or with\nthe team locked in (+2 to every member&#39;s Drain test).</li>\n<li><strong>Drain.</strong> Every member gets a <strong>Resist Drain</strong> button on the card. Each rolls,\nthen <strong>Finalise</strong> applies their damage.</li>\n</ol>\n<p><em>If something goes wrong:</em> <strong>Withdraw a member</strong>, <strong>Guide driven off</strong> and\n<strong>Terminate</strong> are on the card during the link, sending and effect stages. A stage with\nno successes aborts the ritual, and everyone still resists Drain (p.135).</p>\n"
+      }
+    },
+    {
+      "_id": "ae9f2b98ac95a667",
+      "name": "Conjure and use an elemental",
+      "type": "text",
+      "title": {
+        "show": true,
+        "level": 1
+      },
+      "image": {},
+      "video": {
+        "controls": true,
+        "volume": 0.5
+      },
+      "src": null,
+      "system": {},
+      "sort": 1700000,
+      "ownership": {
+        "default": -1
+      },
+      "flags": {},
+      "text": {
+        "format": 1,
+        "content": "<p><strong>Goal:</strong> a hermetic mage summons an elemental (p.140–142) and uses its services.</p>\n<ol>\n<li><strong>Summon.</strong> On the Magic tab, click <strong>Summon Elemental</strong>. Pick the element and the\nForce. The rite&#39;s materials cost 1,000¥ × Force and are used up whether or not it\nworks (untick <strong>Pay materials</strong> if the GM supplies them). Roll Conjuring, then resist the\nCharisma-based Drain.<ul>\n<li>Players need the GM to give them <strong>Create New Actors</strong> (Game Settings → Configure\nPermissions), or the summon stops before anything is rolled.</li>\n</ul>\n</li>\n<li><strong>It arrives away.</strong> The bound elemental is listed under <strong>Spirits</strong> with its\nservices, but it has no token yet.</li>\n<li><strong>Call it.</strong> Open the elemental&#39;s sheet and click <strong>Call</strong>. It appears on the map\nand its 24-hour clock starts.</li>\n<li><strong>Use it.</strong><ul>\n<li><strong>Fight for me</strong>: one service for the whole fight. <strong>Stand down</strong> when it&#39;s over.</li>\n<li><strong>Aid Sorcery</strong>: when casting a spell of its element&#39;s category, the cast dialog\nhas an <strong>Aid Sorcery</strong> section. Choose the elemental and how many of its dice go\nto the spell test and to Drain. Each die lowers its Force; starting the aid costs\na service.</li>\n<li><strong>Aid Study</strong>: the Learn a spell dialog offers its Force in dice, once per spell\n(1 service).</li>\n<li><strong>Sustain a spell</strong>: on a sustained spell&#39;s row, click the hand icon. The\nelemental holds it (1 service), you lose the +2 TN, and it burns one point of\nForce per Combat Turn. Take the spell back (same icon) before its Force runs out,\nor the spell ends.</li>\n</ul>\n</li>\n<li><strong>Days.</strong> Each full day it&#39;s present costs a service: <strong>Charge day(s)</strong> when the\nsheet says it&#39;s owed.</li>\n<li><strong>Send away</strong> returns it to astral space, on call. <strong>Re-call (1 service)</strong> brings it\nback at full Force. When the last service is spent, it departs.</li>\n</ol>\n<p>See <a href=\"https://github.com/futurekill/sr2e-foundryvtt/wiki/Spirits-and-Conjuring\">Spirits and Conjuring</a> for nature spirits and banishing.</p>\n"
+      }
+    },
+    {
+      "_id": "31787ed8fedde570",
+      "name": "Track a character's addiction",
+      "type": "text",
+      "title": {
+        "show": true,
+        "level": 1
+      },
+      "image": {},
+      "video": {
+        "controls": true,
+        "volume": 0.5
+      },
+      "src": null,
+      "system": {},
+      "sort": 1800000,
+      "ownership": {
+        "default": -1
+      },
+      "flags": {},
+      "text": {
+        "format": 1,
+        "content": "<p><strong>Goal:</strong> the Shadowtech drug rules (p.85–88) run themselves on game time.\nNeeds the <strong>Shadowtech</strong> module.</p>\n<p><img src=\"systems/sr2e/assets/guides/substances.jpg\" alt=\"The Substances section\"></p>\n<ol>\n<li><strong>Take a dose.</strong> On the Gear tab, the syringe on the drug&#39;s row uses one dose: it\nrolls the duration and applies the effects. <strong>Active drugs</strong> shows the time left.</li>\n<li><strong>Addiction and Tolerance tests.</strong> When the effect ends, a card offers the tests.\nThe player rolls them from the card.</li>\n<li><strong>Watch the Substances section.</strong> It lists each drug: doses taken, current\nAddiction and Tolerance (the printed values in brackets), whether the character is\naddicted (Physical, Mental or both), and when the next dose is due.</li>\n<li><strong>Advance time.</strong> The section follows the GM&#39;s world clock. Advancing time in\nFoundry (or with Calendaria) makes doses come due, withdrawal start, and boxes or\nEssence go. &quot;Substance time waits for a GM to connect&quot; means no GM is online.</li>\n<li><strong>Hold out longer</strong> (player, the hourglass): Body (physical) or Willpower (mental)\nagainst Addiction, once per dose.</li>\n<li><strong>Recovery</strong> (GM): the walking figure starts recovery, Willpower vs Addiction +1\n(mental), +3 (physical) or +4 (both). One substance at a time. <strong>Cleansing therapy</strong>\n(the hand) clears physical addiction and returns lost boxes. <strong>Gene cleansing</strong>\n(DNA icon) clears immunity.</li>\n<li><strong>Corrections.</strong> The pencil records a hand correction. Nothing is deleted.</li>\n</ol>\n<p><strong>A character who was already a user:</strong> the GM gives them the drug item, then clicks\n<strong>Import history</strong> in the Substances header. Enter the doses taken so far, any boxes or\nEssence already lost, the hours since the last dose, and whether they&#39;re addicted now.\nLeave Addiction and Tolerance blank to have them worked out from the doses.</p>\n<p>More in <a href=\"https://github.com/futurekill/sr2e-foundryvtt/wiki/Gear,-Buying-and-Drugs\">Gear, Buying and Drugs</a>.</p>\n"
+      }
+    },
+    {
+      "_id": "7e47289ce66c24e0",
+      "name": "Write a program (VR2.0)",
+      "type": "text",
+      "title": {
+        "show": true,
+        "level": 1
+      },
+      "image": {},
+      "video": {
+        "controls": true,
+        "volume": 0.5
+      },
+      "src": null,
+      "system": {},
+      "sort": 1900000,
+      "ownership": {
+        "default": -1
+      },
+      "flags": {},
+      "text": {
+        "format": 1,
+        "content": "<p><strong>Goal:</strong> a decker writes their own utility, with options, and logs the days of work until it&#39;s done\n(Virtual Realities 2.0 pp.100–104).</p>\n<p><img src=\"systems/sr2e/assets/guides/programming.gif\" alt=\"The decker clicks Write a new program, sets the design, rolls the programming test, and logs days of work until the program is written\"></p>\n<p><strong>GM, once:</strong> in <strong>Settings → Configure Settings → SR2E</strong>, set <strong>Matrix ruleset</strong> to <em>Virtual Realities 2.0</em>.\nFor the options, also tick <strong>VR2.0 utility options</strong>. Everyone&#39;s client reloads.</p>\n<p><strong>The decker</strong></p>\n<ol>\n<li><strong>Start a project.</strong> On the Matrix tab, click the code button on the <strong>Programs</strong> header (<strong>Write a new\nprogram</strong>). A &quot;New program&quot; opens; it shows as <em>unwritten</em> until it&#39;s done.</li>\n<li><strong>Design it.</strong> Name it after the utility (Attack, Browse, Armor…), set its <strong>Rating</strong>, and for an attack its\n<strong>Damage Level</strong>. With utility options on, <strong>+ Add option</strong> adds options. One the utility can&#39;t take is struck\nthrough with the reason. The sheet shows the size and design size, and the price.</li>\n<li><strong>Roll the test.</strong> Click the code button on the program&#39;s row. Tick any team members, then <strong>Roll</strong>: Computer\nagainst the program&#39;s rating. The card shows the base time ÷ your successes. You can still spend Karma on it.</li>\n<li><strong>Log the work.</strong> Click the code button again for each stretch of work: days worked, and your tools (or each\nteam member&#39;s bonus). The first log locks the test&#39;s successes. The row shows <em>writing 4/10d</em>.</li>\n<li><strong>Done.</strong> When the days reach the period, the program is written and works like any other.</li>\n</ol>\n<p><strong>Good to know</strong></p>\n<ul>\n<li>The design is locked while it&#39;s being written. The ⊘ button abandons the work.</li>\n<li>A program that fails its test (no successes) or is abandoned stays unwritten. Roll again to retry.</li>\n<li>Black Hammer and Killjoy can&#39;t be written above half your Computer (rounded up). A team writes one point higher\nthan its best member, with at most half that member&#39;s Computer in members.</li>\n</ul>\n"
+      }
+    },
+    {
+      "_id": "3c7184e172c5c621",
+      "name": "Upgrade a program (VR2.0)",
+      "type": "text",
+      "title": {
+        "show": true,
+        "level": 1
+      },
+      "image": {},
+      "video": {
+        "controls": true,
+        "volume": 0.5
+      },
+      "src": null,
+      "system": {},
+      "sort": 2000000,
+      "ownership": {
+        "default": -1
+      },
+      "flags": {},
+      "text": {
+        "format": 1,
+        "content": "<p><strong>Goal:</strong> a decker raises a program&#39;s rating, or adds options to it, without losing the version they have\n(Virtual Realities 2.0 p.107).</p>\n<p><img src=\"systems/sr2e/assets/guides/upgrade.gif\" alt=\"The decker clicks the up arrow on Browse, sets the new rating, rolls the test, and logs days until the upgrade is applied\"></p>\n<p><strong>Needs:</strong> the Matrix ruleset on <em>Virtual Realities 2.0</em> (GM settings); for options, <strong>VR2.0 utility options</strong> too.\nThe program must have its source code: not ticked <strong>Object code only</strong>, or written by the decker.</p>\n<p><strong>The decker</strong></p>\n<ol>\n<li><strong>Upgrade.</strong> Click the <strong>↑</strong> button on the program&#39;s row. Set the <strong>new rating</strong> and tick any options to add\n(rated ones take a rating; Limit takes its target), then <strong>Next</strong>.</li>\n<li><strong>Roll the test.</strong> Tick any team members, then <strong>Roll</strong>: Computer against the <strong>new</strong> rating. The base time is\nthe new version&#39;s less the current one&#39;s, ÷ your successes.</li>\n<li><strong>Log the work</strong> with the code button, as for writing. The row shows <em>upgrading to 4 3/5d</em>. The program still\nworks at its old rating meanwhile, and its design is locked.</li>\n<li><strong>Done.</strong> When the days reach the period, the new version replaces the old one (the GM&#39;s client writes it). If the\nrow says <em>upgrade done: applying</em> for long, click <strong>↑</strong> again to resend it.</li>\n</ol>\n<p><strong>Good to know</strong></p>\n<ul>\n<li>No money moves: you programmed it. A loaded program counts as new object code.</li>\n<li>Adding Limit makes the design smaller, so there&#39;s no base time: it&#39;s done on the test.</li>\n<li>Command sets and frame cores can&#39;t be upgraded. The ⊘ button abandons an upgrade; the old version stays.</li>\n</ul>\n"
+      }
+    },
+    {
+      "_id": "053780d8d28d0772",
+      "name": "Hit several IC with an Area attack (VR2.0)",
+      "type": "text",
+      "title": {
+        "show": true,
+        "level": 1
+      },
+      "image": {},
+      "video": {
+        "controls": true,
+        "volume": 0.5
+      },
+      "src": null,
+      "system": {},
+      "sort": 2100000,
+      "ownership": {
+        "default": -1
+      },
+      "flags": {},
+      "text": {
+        "format": 1,
+        "content": "<p><strong>Goal:</strong> one Attack Test that hits more than one icon (Virtual Realities 2.0 p.103).</p>\n<p><img src=\"systems/sr2e/assets/guides/area-attack.gif\" alt=\"The decker targets two IC, ticks the second one in the attack dialog and attacks; each IC then resists its own card\"></p>\n<p><strong>Needs:</strong> the Matrix ruleset on <em>Virtual Realities 2.0</em> and <strong>VR2.0 utility options</strong> ticked (GM settings), and an\nattack utility with the <strong>Area</strong> option. Its rating is how many icons it can hit; give it a rating on the\nprogram&#39;s sheet. Write it yourself (<a href=\"https://github.com/futurekill/sr2e-foundryvtt/wiki/How-To-Guides#write-a-program-vr20\">Write a program</a>) or add the option to one you have.</p>\n<p><strong>The decker</strong></p>\n<ol>\n<li><strong>Target the icons.</strong> Target the main one, then shift-click the others (up to the Area rating in all).</li>\n<li><strong>Attack.</strong> Click <strong>Matrix Attack</strong>, pick the host and the Area program. The dialog lists your other targets\nunder <strong>Area — also attack</strong>: tick the ones to include.</li>\n<li><strong>One roll, a card per target.</strong> The dice are rolled once. Each target gets its own card, with its own target\nnumber (+1 for every target engaged) and its own successes.</li>\n</ol>\n<p><strong>The GM</strong>\n4. <strong>Resist each card.</strong> Each target resists on its own card. IC armor (or a decker&#39;s Armor utility) gets +2 against\n   an Area attack.</p>\n<p><strong>Good to know</strong></p>\n<ul>\n<li>Karma Pool on that shared roll is the GM&#39;s call, as for area spells.</li>\n<li>Shield, Targeting, Penetration and the other options still apply per target.</li>\n</ul>\n"
+      }
+    },
+    {
+      "_id": "77173a5e0017f762",
+      "name": "Draw IC off with a Decoy (VR2.0)",
+      "type": "text",
+      "title": {
+        "show": true,
+        "level": 1
+      },
+      "image": {},
+      "video": {
+        "controls": true,
+        "volume": 0.5
+      },
+      "src": null,
+      "system": {},
+      "sort": 2200000,
+      "ownership": {
+        "default": -1
+      },
+      "flags": {},
+      "text": {
+        "format": 1,
+        "content": "<p><strong>Goal:</strong> a decker puts up a decoy copy of their icon so proactive IC attack it instead of them (Virtual Realities\n2.0 p.112).</p>\n<p><img src=\"systems/sr2e/assets/guides/decoy.gif\" alt=\"The decker runs Decoy; the killer IC's attack goes to the decoy, and the GM clicks Hit the decoy\"></p>\n<p><strong>The decker</strong></p>\n<ol>\n<li>On the Matrix tab, click <strong>System Operation</strong>, pick the host and <strong>Decoy (Control, Mirrors)</strong>, and click <strong>Run</strong>.\nYou need Mirrors loaded.</li>\n<li>If the test succeeds, the card says how strong the decoy is: your successes.</li>\n</ol>\n<p><strong>The GM, when IC attack</strong></p>\n<ol>\n<li>Attack the decker as usual (target their token, then <strong>Matrix Attack</strong> on the IC). With a decoy up, the attack\nmust come from the active GM&#39;s client.</li>\n<li>The system rolls 1D6 first. At or below the decoy&#39;s successes, the card says <strong>the decoy drew it</strong>.</li>\n<li>Click <strong>Hit the decoy</strong>: the damage goes on the decoy, not the decker. At 10 boxes the decoy is gone.</li>\n</ol>\n<p><em>Tips</em></p>\n<ul>\n<li>Trace IC ignores decoys.</li>\n<li>One decoy at a time: a new successful Decoy replaces it. A failed one leaves the old decoy up.</li>\n<li>The decoy lasts until it&#39;s destroyed, the decker logs on to another host, or jacks out.</li>\n<li>A Karma reroll on the Decoy test changes the decoy&#39;s strength too.</li>\n<li>More in <a href=\"https://github.com/futurekill/sr2e-foundryvtt/wiki/The-Matrix\">The Matrix</a>.</li>\n</ul>\n"
+      }
+    },
+    {
+      "_id": "d8dc8a19c07b1752",
+      "name": "Set up the grids (VR2.0)",
+      "type": "text",
+      "title": {
+        "show": true,
+        "level": 1
+      },
+      "image": {},
+      "video": {
+        "controls": true,
+        "volume": 0.5
+      },
+      "src": null,
+      "system": {},
+      "sort": 2300000,
+      "ownership": {
+        "default": -1
+      },
+      "flags": {},
+      "text": {
+        "format": 1,
+        "content": "<p><strong>Goal:</strong> give the Matrix its shape, so deckers move from jackpoint to grid to host as the book describes (Virtual\nRealities 2.0 pp.14–30).</p>\n<p><img src=\"systems/sr2e/assets/guides/grids.gif\" alt=\"A decker at a trid jackpoint logs on to the LTG, then to a host on it\"></p>\n<p><strong>The GM, once</strong></p>\n<ol>\n<li><strong>Settings → Configure Settings → VR2.0 grid topology</strong>: tick it.</li>\n<li>In the Actors directory, click <strong>New grid</strong> and pick the RTG (or a German LTG) from the book&#39;s table. For a local\ngrid of your own, open the RTG and click <strong>Create LTG</strong>.</li>\n<li>Open each host. In its <strong>Grid</strong> section, set <strong>Attached to</strong> its LTG. For a host reached only through another\n(a tiered network), leave that empty and <strong>Link</strong> it to the host in front of it.</li>\n<li>For a corporate PLTG, set the host&#39;s <strong>Kind</strong> to PLTG and add its <strong>Entry points</strong> (LTGs).</li>\n<li>Tick <strong>Unlisted address</strong> on anything the deckers must find first.</li>\n<li>On each jackpoint behaviour, set its <strong>kind</strong>. Set <strong>Wired to</strong> to its LTG (a trid jackpoint) or to the host it\ncontrols (a workstation, remote device or console).</li>\n</ol>\n<p><strong>The decker</strong></p>\n<ol>\n<li>Jack in. The Matrix tab says <strong>At the jackpoint</strong>.</li>\n<li><strong>System Operation</strong>: the dialog offers only what you can reach. Log on to the LTG, then to a host on it.</li>\n<li>To move to another host on the same grid, log on to it directly. To go back up, click <strong>Disconnect to grid</strong>.</li>\n</ol>\n<p><em>Tips</em></p>\n<ul>\n<li>An RTG and its LTGs share one security tally, so the RTG&#39;s sheaf is the one to fill in.</li>\n<li>A PLTG inherits the public tally when you get in, and its triggers can go off at once.</li>\n<li>Can&#39;t find a host? Run <strong>Locate Access Node</strong> on the RTG. On a success, the GM reveals its address.</li>\n<li>Jacking out at the jackpoint, before logging on to anything, is free.</li>\n<li>Each host&#39;s sheet lists what&#39;s <strong>Reachable from here</strong>.</li>\n<li>More in <a href=\"https://github.com/futurekill/sr2e-foundryvtt/wiki/The-Matrix\">The Matrix</a>.</li>\n</ul>\n"
+      }
+    },
+    {
+      "_id": "b2c1e0e52cf3e32c",
+      "name": "Get past a hub (VR2.0)",
+      "type": "text",
+      "title": {
+        "show": true,
+        "level": 1
+      },
+      "image": {},
+      "video": {
+        "controls": true,
+        "volume": 0.5
+      },
+      "src": null,
+      "system": {},
+      "sort": 2400000,
+      "ownership": {
+        "default": -1
+      },
+      "flags": {},
+      "text": {
+        "format": 1,
+        "content": "<p><strong>Goal:</strong> reach a host that sits behind a corporate hub, and shake the hub&#39;s trace IC on the way (Virtual Realities\n2.0 p.36). Needs <em>VR2.0 grid topology</em> on.</p>\n<p><img src=\"systems/sr2e/assets/guides/hub.gif\" alt=\"A decker on a hub finds its connections with Analyze Subsystem, then logs on to the host behind it; the hub's trace IC crashes\"></p>\n<p><strong>The GM, once</strong></p>\n<ol>\n<li>Attach the hub to its LTG (<strong>Attached to</strong> in its Grid section).</li>\n<li>On each host behind it, leave <strong>Attached to</strong> empty and <strong>Link</strong> it to the hub.</li>\n<li>Optional: on the hub, set <strong>Connections hidden in</strong> to a subsystem other than Access.</li>\n</ol>\n<p><strong>The decker</strong></p>\n<ol>\n<li>Log on to the hub.</li>\n<li><strong>System Operation → Analyze Subsystem</strong> on the hub, with the targeted subsystem set to Access (or wherever the GM\nhid the connections). On a success, a card says you&#39;ve found them.</li>\n<li><strong>System Operation → Logon to Host</strong> and pick the host behind the hub. If the hub&#39;s trace IC is hunting you, its\nrating is added to the TN: leaving counts as a Graceful Logoff.</li>\n<li>On a success the hub loses your datatrail: its trace crashes, and the hub forgets your tally.</li>\n</ol>\n<p><em>Tips</em></p>\n<ul>\n<li>To reach another host behind the hub, log on back to the hub first, then onward. Hosts behind it aren&#39;t linked to\neach other.</li>\n<li>Locate File or Locate Slave on the hub searches the whole network.</li>\n<li>On a public grid, a trace IC loses interest as soon as you log on to a host.</li>\n<li>More in <a href=\"https://github.com/futurekill/sr2e-foundryvtt/wiki/The-Matrix\">The Matrix</a>.</li>\n</ul>\n"
+      }
+    },
+    {
+      "_id": "1a15d509c6bc3049",
+      "name": "Deck through a satellite (VR2.0)",
+      "type": "text",
+      "title": {
+        "show": true,
+        "level": 1
+      },
+      "image": {},
+      "video": {
+        "controls": true,
+        "volume": 0.5
+      },
+      "src": null,
+      "system": {},
+      "sort": 2500000,
+      "ownership": {
+        "default": -1
+      },
+      "flags": {},
+      "text": {
+        "format": 1,
+        "content": "<p><strong>Goal:</strong> jack in through a communications satellite, so a trace can find the satellite but never the decker\n(Virtual Realities 2.0 p.30). Needs <em>VR2.0 grid topology</em> on.</p>\n<p><img src=\"systems/sr2e/assets/guides/satellite.gif\" alt=\"A decker at a satellite uplink locks onto ComSat 7, logs on to it, then reaches an RTG on the far side of the world\"></p>\n<p><strong>The GM, once</strong></p>\n<ol>\n<li>In the Actors directory, <strong>New grid → Create satellite</strong>. Pick Orange-Average for a communications satellite, or\nRed-Hard for a military or corporate one.</li>\n<li>Draw a Region where the dish is and give it the <strong>Matrix jackpoint</strong> behaviour. Set <strong>Kind</strong> to <em>Satellite\nuplink</em>, and <strong>Wired to</strong> to the satellite (or leave it empty for any satellite).</li>\n</ol>\n<p><strong>The decker</strong></p>\n<ol>\n<li>On the deck (or the Matrix tab&#39;s cyberdeck block), tick <strong>Satlink</strong> and pick your dish.</li>\n<li>Jack in at the uplink. The Matrix tab shows <strong>Locate satellite</strong>: pick the satellite and the conditions (downtown is\nhardest; a large dish or a fixed-base station helps). Bad weather adds 2.</li>\n<li>On a success you lock onto it. On a miss, try again in about five minutes; Karma can buy the success.</li>\n<li><strong>System Operation → Logon to LTG</strong> onto the satellite, then <strong>Logon to RTG</strong> to any RTG on earth.</li>\n</ol>\n<p><em>Tips</em></p>\n<ul>\n<li>The uplink is +2 to every Access Test, and signal lag costs −2 Reaction.</li>\n<li>The satellite&#39;s security tally follows you into the RTG you log on to.</li>\n<li>A trace that completes finds only the satellite: no physical response, and the grid can&#39;t dump you.</li>\n<li>More in <a href=\"https://github.com/futurekill/sr2e-foundryvtt/wiki/The-Matrix\">The Matrix</a>.</li>\n</ul>\n"
+      }
+    },
+    {
+      "_id": "dd8bc72c14805121",
+      "name": "Build and load a frame core (VR2.0)",
+      "type": "text",
+      "title": {
+        "show": true,
+        "level": 1
+      },
+      "image": {},
+      "video": {
+        "controls": true,
+        "volume": 0.5
+      },
+      "src": null,
+      "system": {},
+      "sort": 2600000,
+      "ownership": {
+        "default": -1
+      },
+      "flags": {},
+      "text": {
+        "format": 1,
+        "content": "<p><strong>Goal:</strong> write a frame core and load programs onto it (Virtual Realities 2.0 pp.105–106). Running frames on a host\ncomes in a later release.</p>\n<p><img src=\"systems/sr2e/assets/guides/frame-load.gif\" alt=\"Load programs onto a frame core: pick the programs, roll the loading test, log the days\"></p>\n<p><strong>Write the core</strong></p>\n<ol>\n<li>On the Matrix tab, add a new program and open it. Set <strong>Frame core</strong> to <em>Dumb</em> or <em>Smart</em> and its rating (the\nCore Rating).</li>\n<li>Give it Bod, Evasion, Masking and Sensor: together no more than the Core Rating. A smart core needs a <strong>DINAB</strong>\noption (no higher than your Computer) and can put points into Initiative.</li>\n<li>Click the programming button (&lt;/&gt;) on its row and write it as any program.</li>\n</ol>\n<p><strong>Load it</strong></p>\n<ol>\n<li>Click <strong>Load programs…</strong> (the box icon) on the core&#39;s row and tick the programs: their ratings may total the\nCore Rating less its Initiative points.</li>\n<li>Roll the loading test, then log days with the same button until it&#39;s done.</li>\n<li>The row lists the loaded copies and the frame&#39;s size.</li>\n</ol>\n<p><em>Tips</em></p>\n<ul>\n<li>The copies are frozen: improving a program later doesn&#39;t change a loaded frame. Load again to take the new version.</li>\n<li>Changing the core&#39;s attributes means writing a new core, and its old load no longer counts.</li>\n<li>More in <a href=\"https://github.com/futurekill/sr2e-foundryvtt/wiki/The-Matrix\">The Matrix</a>.</li>\n</ul>\n"
+      }
+    },
+    {
+      "_id": "525144a94a5edff8",
+      "name": "Upload and run a frame (VR2.0)",
+      "type": "text",
+      "title": {
+        "show": true,
+        "level": 1
+      },
+      "image": {},
+      "video": {
+        "controls": true,
+        "volume": 0.5
+      },
+      "src": null,
+      "system": {},
+      "sort": 2700000,
+      "ownership": {
+        "default": -1
+      },
+      "flags": {},
+      "text": {
+        "format": 1,
+        "content": "<p><strong>Goal:</strong> put a frame you&#39;ve built onto a host, where it runs as its own icon (Virtual Realities 2.0 pp.105–107).\nThe server must have been restarted since the update to 0.136.0 (a new actor type).</p>\n<p><img src=\"systems/sr2e/assets/guides/frame-upload.gif\" alt=\"A decker uploads a frame; the GM finishes the upload and the frame appears, with its sheet\"></p>\n<p><strong>The decker</strong></p>\n<ol>\n<li>Build and load a frame core (see <em>Build and load a frame core</em>).</li>\n<li>Jack in and log on to the host where it should run.</li>\n<li>Click the upload icon on the core&#39;s row. If the core is squeezed, click <strong>Decompress frame</strong> first.</li>\n<li>Stay on the host until the upload finishes. The chat card says how long it takes.</li>\n</ol>\n<p><strong>The GM</strong></p>\n<ul>\n<li>In combat, the upload counts down by itself, 3 seconds per round.</li>\n<li>Outside combat, click <strong>Upload finished (GM)</strong> on the card when that time has passed.</li>\n<li>The frame appears as a Frame actor, and as a token beside the decker&#39;s persona if it has one on a Matrix scene.</li>\n</ul>\n<p><em>Tips</em></p>\n<ul>\n<li>A dumb frame crashes as soon as its decker leaves that host. A smart one keeps running.</li>\n<li>Frames can be attacked: they resist with their own Bod and their Armor copy, and crash at 10 boxes.</li>\n<li>More in <a href=\"https://github.com/futurekill/sr2e-foundryvtt/wiki/The-Matrix\">The Matrix</a>.</li>\n</ul>\n"
+      }
+    },
+    {
+      "_id": "0714dcad905ae049",
+      "name": "Command a dumb frame (VR2.0)",
+      "type": "text",
+      "title": {
+        "show": true,
+        "level": 1
+      },
+      "image": {},
+      "video": {
+        "controls": true,
+        "volume": 0.5
+      },
+      "src": null,
+      "system": {},
+      "sort": 2800000,
+      "ownership": {
+        "default": -1
+      },
+      "flags": {},
+      "text": {
+        "format": 1,
+        "content": "<p><strong>Goal:</strong> make a running dumb frame work for you: run an operation, attack, or act as a decoy (Virtual Realities 2.0\npp.106–107).</p>\n<p><img src=\"systems/sr2e/assets/guides/frame-command.gif\" alt=\"A decker commands a frame: an operation through it, then a Decoy that makes it a decoy frame\"></p>\n<p><strong>The decker</strong></p>\n<ol>\n<li>Upload a dumb frame and stay on its host (see <em>Upload and run a frame</em>).</li>\n<li>On the Matrix tab, click <strong>Command…</strong> on the frame&#39;s row.</li>\n<li>Pick what it does: a System Operation, an attack or Scan Icon or a maneuver (target the icon first), or an event\ntrigger. Set your Hacking Pool and Karma as for your own tests.</li>\n<li>Each command is a Simple Action of yours. For another attack, give another command.</li>\n</ol>\n<p><strong>A decoy frame</strong></p>\n<ol>\n<li>Command the frame to run <strong>Decoy</strong> (it needs a Mirrors program).</li>\n<li>While you stay inactive, every IC attack on you goes to the frame instead. A Null Operation still counts as waiting.</li>\n<li>Your own next action ends it: chat says so.</li>\n</ol>\n<p><strong>The GM</strong></p>\n<ul>\n<li>Roll IC attacks on a decker with a decoy frame yourself: the system sends them to the frame.</li>\n<li>Fire an event trigger from the frame&#39;s sheet when the event happens.</li>\n</ul>\n<p><em>Tips</em></p>\n<ul>\n<li>A core with DINAB can run a program for free once per action: tick <em>Run by the core&#39;s DINAB</em>.</li>\n<li>Cripplers lower a frame&#39;s attributes; its sheet shows &quot;Bod 1 of 3&quot; and so on.</li>\n<li>More in <a href=\"https://github.com/futurekill/sr2e-foundryvtt/wiki/The-Matrix\">The Matrix</a>.</li>\n</ul>\n"
+      }
+    },
+    {
+      "_id": "03ea079cb785287f",
+      "name": "Run a smart frame (VR2.0)",
+      "type": "text",
+      "title": {
+        "show": true,
+        "level": 1
+      },
+      "image": {},
+      "video": {
+        "controls": true,
+        "volume": 0.5
+      },
+      "src": null,
+      "system": {},
+      "sort": 2900000,
+      "ownership": {
+        "default": -1
+      },
+      "flags": {},
+      "text": {
+        "format": 1,
+        "content": "<p><strong>Goal:</strong> put a smart frame to work: it acts on its own turns, with its own skill and tally (Virtual Realities 2.0\npp.105–107).</p>\n<p><img src=\"systems/sr2e/assets/guides/smart-frame.gif\" alt=\"A smart frame takes an order, then acts on its own from its sheet\"></p>\n<p><strong>The decker</strong></p>\n<ol>\n<li>Build, load and upload a <strong>smart</strong> frame core (see <em>Build and load a frame core</em> and <em>Upload and run a frame</em>).</li>\n<li>On its host, click <strong>Order…</strong> on the frame&#39;s row and type its basic order. It&#39;s a Free Action.</li>\n</ol>\n<p><strong>Running the frame</strong> (the decker&#39;s player, or the GM)</p>\n<ol>\n<li>Open the frame&#39;s sheet and click <strong>Act…</strong>.</li>\n<li>Pick a System Operation, or target an icon and pick an attack, Scan Icon or a maneuver.</li>\n<li>The frame rolls its DINAB rating; its own tally rises on its sheet.</li>\n</ol>\n<p><strong>In combat</strong></p>\n<ul>\n<li>The frame joins a combat its decker fights in, with Core Rating + 1D6 (+1 die per Initiative point), and acts on its\nown turns. Remove it from the tracker and it stays out.</li>\n</ul>\n<p><em>Tips</em></p>\n<ul>\n<li>It keeps running after the decker jacks out, until it crashes or its host shuts down.</li>\n<li>Trace IC can&#39;t trace a smart frame. Decoy needs a dumb frame.</li>\n<li>More in <a href=\"https://github.com/futurekill/sr2e-foundryvtt/wiki/The-Matrix\">The Matrix</a>.</li>\n</ul>\n"
+      }
+    },
+    {
+      "_id": "2fb3bdcd8280c112",
+      "name": "Run an SK (VR2.0)",
+      "type": "text",
+      "title": {
+        "show": true,
+        "level": 1
+      },
+      "image": {},
+      "video": {
+        "controls": true,
+        "volume": 0.5
+      },
+      "src": null,
+      "system": {},
+      "sort": 3000000,
+      "ownership": {
+        "default": -1
+      },
+      "flags": {},
+      "text": {
+        "format": 1,
+        "content": "<p><strong>Goal:</strong> put a semi-autonomous knowbot into a run: create it, give it utilities, and move it between hosts (Virtual\nRealities 2.0 pp.140–141). This is the GM&#39;s.</p>\n<p><img src=\"systems/sr2e/assets/guides/sk.gif\" alt=\"The GM creates an SK, allocates its Utility Pool and logs it on to another host\"></p>\n<p><strong>Create it</strong></p>\n<ol>\n<li>Make its native host (a Host actor).</li>\n<li>In the Actor Directory, click <strong>New SK</strong>. Pick the native host and a preset, or leave MPCP and the pool blank to\nroll them.</li>\n</ol>\n<p><strong>Give it utilities</strong></p>\n<ol>\n<li>On its sheet, click <strong>Allocate…</strong>. Type a utility and its rating on each row (up to its MPCP), and pick Initiative\npoints.</li>\n<li>Black hammer and killjoy cost 2 points per rating point. Restore and medic points stay until it has been home.</li>\n</ol>\n<p><strong>Run it</strong></p>\n<ul>\n<li><strong>Act…</strong>: an operation, an attack, Scan Icon or a maneuver, with its MPCP as its skill.</li>\n<li><strong>Graceful Logoff</strong> to leave a host, then <strong>Logon to Host…</strong> to arrive elsewhere. Home needs no test.</li>\n<li>Damaged? Log it on to its native host: it&#39;s repaired. Already home: <strong>Regenerate</strong>.</li>\n</ul>\n<p><em>Tips</em></p>\n<ul>\n<li>Add it to a combat from its token, like IC.</li>\n<li>Ten boxes crash it for good; the sheet stays as a record.</li>\n<li>More in <a href=\"https://github.com/futurekill/sr2e-foundryvtt/wiki/The-Matrix\">The Matrix</a>.</li>\n</ul>\n"
+      }
+    },
+    {
+      "_id": "184d411938818d6f",
+      "name": "Leave a command set (VR2.0)",
+      "type": "text",
+      "title": {
+        "show": true,
+        "level": 1
+      },
+      "image": {},
+      "video": {
+        "controls": true,
+        "volume": 0.5
+      },
+      "src": null,
+      "system": {},
+      "sort": 3100000,
+      "ownership": {
+        "default": -1
+      },
+      "flags": {},
+      "text": {
+        "format": 1,
+        "content": "<p><strong>Goal:</strong> leave orders on a host that run later, like opening a security door at a set time (Virtual Realities 2.0\npp.104–105).</p>\n<p><img src=\"systems/sr2e/assets/guides/command-set.gif\" alt=\"A decker leaves a command set: the task's test, then settling it; the host sheet counts down\"></p>\n<p><strong>The decker</strong></p>\n<ol>\n<li>Log on to the host. On the Matrix tab, click <strong>Command set…</strong>.</li>\n<li>Name it, write the orders, and pick its tests (the GM says which: Slave for a device, Files for a file, Access for a\nSAN, Control when in doubt).</li>\n<li>Click <strong>Test</strong> beside the set on the Matrix tab, roll, spend any Karma, then <strong>Settle step</strong> on the card. Repeat for\neach test.</li>\n</ol>\n<p><strong>A complex set</strong></p>\n<ol>\n<li><strong>New command-set program</strong> (Matrix tab) creates the program: its size rolls 1D6 × 20 Mp.</li>\n<li>In Command set…, pick it: it uploads like a frame. When the upload finishes, a Control Test loads it, then its tests.</li>\n</ol>\n<p><strong>The GM</strong></p>\n<ul>\n<li>The host&#39;s sheet lists each set: its tests, its status, and how long it stays undetected (24 ÷ the host&#39;s successes,\nin hours; 48 if none).</li>\n<li>Mark it <strong>Executed</strong> when it runs its orders, <strong>Purged</strong> if security finds it early, or <strong>Cancel</strong> an unfinished one.</li>\n</ul>\n<p><em>Tips</em></p>\n<ul>\n<li>Deception lowers every test&#39;s target number.</li>\n<li>Finish the tests before you leave the host.</li>\n<li>More in <a href=\"https://github.com/futurekill/sr2e-foundryvtt/wiki/The-Matrix\">The Matrix</a>.</li>\n</ul>\n"
+      }
+    }
+  ],
+  "_key": "!journal!sr2eHowToGuides1"
+}

@@ -1,0 +1,42 @@
+{
+  "_id": "3045f28769659918",
+  "name": "Real Leather",
+  "type": "armor",
+  "img": "systems/sr2e/assets/item_icons/armor/real-leather.webp",
+  "system": {
+    "ballistic": 0,
+    "impact": 2,
+    "concealability": 0,
+    "weight": 0,
+    "cost": 750,
+    "availability": "Always",
+    "legality": "Legal",
+    "equipped": false,
+    "isLayered": false,
+    "notes": "Real-leather clothing — modest impact protection, social cachet. SR2E p.257.",
+    "streetIndex": 0.75,
+    "citation": {
+      "book": "sr2",
+      "page": "257"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.19.5",
+    "createdTime": 1700000000000,
+    "modifiedTime": 1700000000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!3045f28769659918"
+}

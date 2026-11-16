@@ -1,0 +1,41 @@
+{
+  "_id": "190bbf3b8cbfd15b",
+  "name": "Power Focus",
+  "type": "focus",
+  "img": "systems/sr2e/assets/item_icons/foci/power-focus.webp",
+  "system": {
+    "focusType": "power",
+    "force": 1,
+    "bondingCost": 5,
+    "bonded": false,
+    "active": false,
+    "cost": 20000,
+    "notes": "SR2E p.138, p.164. Adds Force to all magical dice pools. Bonding costs 5 x Force in Karma. Force 1.",
+    "costPerForce": 105000,
+    "streetIndex": 2,
+    "availability": "6/72 hrs",
+    "citation": {
+      "book": "sr2",
+      "page": "138"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.3.7",
+    "createdTime": 1700000000000,
+    "modifiedTime": 1700000000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!190bbf3b8cbfd15b"
+}

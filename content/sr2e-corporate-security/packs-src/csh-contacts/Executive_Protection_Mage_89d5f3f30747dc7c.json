@@ -1,0 +1,703 @@
+{
+  "_id": "89d5f3f30747dc7c",
+  "name": "Executive Protection Mage",
+  "type": "npc",
+  "img": "modules/sr2e-corporate-security/assets/contact_portraits/executive-protection-mage.webp",
+  "system": {
+    "biography": "<p>Not an ordinary mage: protection, detection and offensive spells juggled with equal ability, and always ready to give immediate magical medical aid.</p>\n<p><strong>Cyberware:</strong> Cybereyes with Electronic Magnification 3, Flare Compensation and Low-Light</p>\n<p>The book doesn't print this magician's tradition; it's set to hermetic. Change it if you like.</p>\n<p><strong>Gear:</strong> As appropriate.</p>\n<p><strong>Professional Rating:</strong> 3-4 (the sheet stores 3; the book prints a range)</p>\n<p><em>Corporate Security Handbook p.109.</em></p>",
+    "race": "human",
+    "professionalRating": 3,
+    "body": {
+      "base": 3,
+      "mod": 0,
+      "value": 3,
+      "racial": 0
+    },
+    "quickness": {
+      "base": 5,
+      "mod": 0,
+      "value": 5,
+      "racial": 0
+    },
+    "strength": {
+      "base": 3,
+      "mod": 0,
+      "value": 3,
+      "racial": 0
+    },
+    "charisma": {
+      "base": 3,
+      "mod": 0,
+      "value": 3,
+      "racial": 0
+    },
+    "intelligence": {
+      "base": 5,
+      "mod": 0,
+      "value": 5,
+      "racial": 0
+    },
+    "willpower": {
+      "base": 6,
+      "mod": 0,
+      "value": 6,
+      "racial": 0
+    },
+    "essence": {
+      "value": 5.8,
+      "max": 6
+    },
+    "reaction": {
+      "mod": 0
+    },
+    "initiative": {
+      "base": 0,
+      "dice": 1,
+      "mod": 0
+    },
+    "magic": {
+      "value": 5,
+      "max": 5,
+      "type": "full_magician",
+      "tradition": "hermetic"
+    },
+    "dicePools": {
+      "magic": {
+        "value": 6,
+        "max": 6
+      }
+    }
+  },
+  "items": [
+    {
+      "_id": "d6b54553e28e69c9",
+      "name": "Biotech",
+      "type": "skill",
+      "img": "icons/svg/book.svg",
+      "system": {
+        "category": "active",
+        "rating": 4,
+        "linkedAttribute": "intelligence",
+        "allocated": null,
+        "ratingsFinalized": true,
+        "concentration": {
+          "name": "",
+          "rating": 0
+        },
+        "specialization": {
+          "name": "",
+          "rating": 0
+        },
+        "description": ""
+      },
+      "effects": [],
+      "flags": {},
+      "_stats": {
+        "coreVersion": "13.351",
+        "systemId": "sr2e",
+        "systemVersion": "0.102.0",
+        "createdTime": 1790000000000,
+        "modifiedTime": 1790000000000,
+        "lastModifiedBy": null,
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null
+      },
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      }
+    },
+    {
+      "_id": "87bb063354fe7e89",
+      "name": "Conjuring",
+      "type": "skill",
+      "img": "icons/svg/book.svg",
+      "system": {
+        "category": "active",
+        "rating": 3,
+        "linkedAttribute": "intelligence",
+        "allocated": null,
+        "ratingsFinalized": true,
+        "concentration": {
+          "name": "",
+          "rating": 0
+        },
+        "specialization": {
+          "name": "",
+          "rating": 0
+        },
+        "description": ""
+      },
+      "effects": [],
+      "flags": {},
+      "_stats": {
+        "coreVersion": "13.351",
+        "systemId": "sr2e",
+        "systemVersion": "0.102.0",
+        "createdTime": 1790000000000,
+        "modifiedTime": 1790000000000,
+        "lastModifiedBy": null,
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null
+      },
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      }
+    },
+    {
+      "_id": "1b3577f73a08c0fb",
+      "name": "Etiquette (Corporate)",
+      "type": "skill",
+      "img": "icons/svg/book.svg",
+      "system": {
+        "category": "active",
+        "rating": 2,
+        "linkedAttribute": "intelligence",
+        "allocated": null,
+        "ratingsFinalized": true,
+        "concentration": {
+          "name": "",
+          "rating": 0
+        },
+        "specialization": {
+          "name": "",
+          "rating": 0
+        },
+        "description": ""
+      },
+      "effects": [],
+      "flags": {},
+      "_stats": {
+        "coreVersion": "13.351",
+        "systemId": "sr2e",
+        "systemVersion": "0.102.0",
+        "createdTime": 1790000000000,
+        "modifiedTime": 1790000000000,
+        "lastModifiedBy": null,
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null
+      },
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      }
+    },
+    {
+      "_id": "b0a19548580f8303",
+      "name": "Firearms",
+      "type": "skill",
+      "img": "icons/svg/book.svg",
+      "system": {
+        "category": "active",
+        "rating": 3,
+        "linkedAttribute": "intelligence",
+        "allocated": null,
+        "ratingsFinalized": true,
+        "concentration": {
+          "name": "",
+          "rating": 0
+        },
+        "specialization": {
+          "name": "",
+          "rating": 0
+        },
+        "description": ""
+      },
+      "effects": [],
+      "flags": {},
+      "_stats": {
+        "coreVersion": "13.351",
+        "systemId": "sr2e",
+        "systemVersion": "0.102.0",
+        "createdTime": 1790000000000,
+        "modifiedTime": 1790000000000,
+        "lastModifiedBy": null,
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null
+      },
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      }
+    },
+    {
+      "_id": "8fc1fbc0eac9c2db",
+      "name": "Magical Theory",
+      "type": "skill",
+      "img": "icons/svg/book.svg",
+      "system": {
+        "category": "knowledge",
+        "rating": 4,
+        "linkedAttribute": "intelligence",
+        "allocated": null,
+        "ratingsFinalized": true,
+        "concentration": {
+          "name": "",
+          "rating": 0
+        },
+        "specialization": {
+          "name": "",
+          "rating": 0
+        },
+        "description": ""
+      },
+      "effects": [],
+      "flags": {},
+      "_stats": {
+        "coreVersion": "13.351",
+        "systemId": "sr2e",
+        "systemVersion": "0.102.0",
+        "createdTime": 1790000000000,
+        "modifiedTime": 1790000000000,
+        "lastModifiedBy": null,
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null
+      },
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      }
+    },
+    {
+      "_id": "ec35d9c34c50d2ae",
+      "name": "Sorcery",
+      "type": "skill",
+      "img": "icons/svg/book.svg",
+      "system": {
+        "category": "active",
+        "rating": 6,
+        "linkedAttribute": "intelligence",
+        "allocated": null,
+        "ratingsFinalized": true,
+        "concentration": {
+          "name": "",
+          "rating": 0
+        },
+        "specialization": {
+          "name": "",
+          "rating": 0
+        },
+        "description": ""
+      },
+      "effects": [],
+      "flags": {},
+      "_stats": {
+        "coreVersion": "13.351",
+        "systemId": "sr2e",
+        "systemVersion": "0.102.0",
+        "createdTime": 1790000000000,
+        "modifiedTime": 1790000000000,
+        "lastModifiedBy": null,
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null
+      },
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      }
+    },
+    {
+      "_id": "4461263f93c93d81",
+      "name": "Unarmed Combat",
+      "type": "skill",
+      "img": "icons/svg/book.svg",
+      "system": {
+        "category": "active",
+        "rating": 2,
+        "linkedAttribute": "intelligence",
+        "allocated": null,
+        "ratingsFinalized": true,
+        "concentration": {
+          "name": "",
+          "rating": 0
+        },
+        "specialization": {
+          "name": "",
+          "rating": 0
+        },
+        "description": ""
+      },
+      "effects": [],
+      "flags": {},
+      "_stats": {
+        "coreVersion": "13.351",
+        "systemId": "sr2e",
+        "systemVersion": "0.102.0",
+        "createdTime": 1790000000000,
+        "modifiedTime": 1790000000000,
+        "lastModifiedBy": null,
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null
+      },
+      "folder": null,
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      }
+    },
+    {
+      "_id": "7b30c00069985ce8",
+      "name": "Blast Barrier",
+      "type": "spell",
+      "img": "systems/sr2e/assets/item_icons/spells/barrier.webp",
+      "system": {
+        "category": "manipulation",
+        "subcategory": "transformation",
+        "type": "physical",
+        "range": "los",
+        "duration": "sustained",
+        "force": 3,
+        "drainCode": "((F / 2) + 2)M",
+        "target": "6",
+        "damageCode": "",
+        "isAreaEffect": true,
+        "isVoluntary": false,
+        "notes": "Like physical barrier (SR2 p.158), but protects against blast from grenades and similar weapons. Barrier Rating equals the Force; Impact armour may be added. The personal form drains ((F / 2) + 2)L. Grimoire (2nd ed.) p.131.",
+        "citation": {
+          "book": "sr2",
+          "page": "158"
+        }
+      },
+      "effects": [],
+      "flags": {},
+      "sort": 0,
+      "_stats": {
+        "coreVersion": "13.351",
+        "systemId": "sr2e",
+        "systemVersion": "0.105.0",
+        "createdTime": 1792000000000,
+        "modifiedTime": 1792000000000,
+        "lastModifiedBy": null,
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null
+      },
+      "ownership": {
+        "default": 0
+      }
+    },
+    {
+      "_id": "8cbb8c6ca24e3d25",
+      "name": "Bullet Barrier",
+      "type": "spell",
+      "img": "systems/sr2e/assets/item_icons/spells/barrier.webp",
+      "system": {
+        "category": "manipulation",
+        "subcategory": "transformation",
+        "type": "physical",
+        "range": "los",
+        "duration": "sustained",
+        "force": 3,
+        "drainCode": "((F / 2) + 2)M",
+        "target": "6",
+        "damageCode": "",
+        "isAreaEffect": true,
+        "isVoluntary": false,
+        "notes": "Like physical barrier (SR2 p.158), but protects against bullets and other ballistic weapons. Barrier Rating equals the Force; Ballistic armour can be added. The personal form drains ((F / 2) + 2)L. Grimoire (2nd ed.) p.131.",
+        "citation": {
+          "book": "sr2",
+          "page": "158"
+        }
+      },
+      "effects": [],
+      "flags": {},
+      "sort": 0,
+      "_stats": {
+        "coreVersion": "13.351",
+        "systemId": "sr2e",
+        "systemVersion": "0.105.0",
+        "createdTime": 1792000000000,
+        "modifiedTime": 1792000000000,
+        "lastModifiedBy": null,
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null
+      },
+      "ownership": {
+        "default": 0
+      }
+    },
+    {
+      "_id": "bf19e8ecf184dcbe",
+      "name": "Combat Sense",
+      "type": "spell",
+      "system": {
+        "category": "detection",
+        "subcategory": "",
+        "type": "physical",
+        "range": "limited",
+        "duration": "sustained",
+        "force": 3,
+        "drainCode": "((F / 2) + 1)S",
+        "target": "4",
+        "damageCode": "",
+        "isAreaEffect": false,
+        "isVoluntary": true,
+        "notes": "A hypersense spell requiring a voluntary subject. The subject becomes able to subconsciously analyze combat or other dangerous situations. The theory is that the spell allows precognition, with the subject sensing events a split second before they occur. Every 2 successes adds to the subject's Combat Pool for the duration of the spell."
+      },
+      "img": "systems/sr2e/assets/item_icons/spells/combat-sense.webp",
+      "effects": [
+        {
+          "_id": "b26a2d1b65b7dba8",
+          "name": "Combat Sense",
+          "img": "icons/svg/eye.svg",
+          "transfer": false,
+          "disabled": false,
+          "changes": [
+            {
+              "key": "system.dicePools.combat.bonus",
+              "mode": 2,
+              "value": "1",
+              "priority": null
+            }
+          ],
+          "description": "<p>Adds dice to the Combat Pool while sustained (SR2E p.84). Edit the value to match the casting result.</p>",
+          "duration": {
+            "startTime": null,
+            "combat": null
+          },
+          "flags": {},
+          "statuses": [],
+          "tint": "#ffffff",
+          "origin": null,
+          "type": "base",
+          "system": {},
+          "_stats": {
+            "coreVersion": "13.351",
+            "systemId": null,
+            "systemVersion": null,
+            "createdTime": null,
+            "modifiedTime": null,
+            "lastModifiedBy": null,
+            "compendiumSource": null,
+            "duplicateSource": null,
+            "exportSource": null
+          },
+          "sort": 0
+        }
+      ],
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      },
+      "flags": {},
+      "_stats": {
+        "coreVersion": "13.351",
+        "systemId": null,
+        "systemVersion": null,
+        "createdTime": null,
+        "modifiedTime": null,
+        "lastModifiedBy": null,
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null
+      }
+    },
+    {
+      "_id": "6fe2a1b294904167",
+      "name": "Detect Enemies (Extended)",
+      "type": "spell",
+      "img": "systems/sr2e/assets/item_icons/spells/detect-enemies.webp",
+      "system": {
+        "category": "detection",
+        "subcategory": "",
+        "type": "mana",
+        "range": "limited",
+        "duration": "sustained",
+        "force": 3,
+        "drainCode": "(F / 2)S",
+        "target": "4",
+        "damageCode": "",
+        "isAreaEffect": true,
+        "isVoluntary": true,
+        "notes": "Detect enemies (SR2 p.153) with the Extended Range option. Range is printed \"Extended\": the successes on the separate Force Success Test used for limited range, multiplied by ten times the magician's Magic, in metres (Grimoire p.123). Grimoire (2nd ed.) p.128.",
+        "citation": {
+          "book": "grim",
+          "page": "123"
+        }
+      },
+      "effects": [],
+      "flags": {},
+      "sort": 0,
+      "_stats": {
+        "coreVersion": "13.351",
+        "systemId": "sr2e",
+        "systemVersion": "0.105.0",
+        "createdTime": 1792000000000,
+        "modifiedTime": 1792000000000,
+        "lastModifiedBy": null,
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null
+      },
+      "ownership": {
+        "default": 0
+      }
+    },
+    {
+      "_id": "1dd2a26cccbff60b",
+      "name": "Stabilize",
+      "type": "spell",
+      "img": "systems/sr2e/assets/item_icons/spells/stabilize.webp",
+      "system": {
+        "category": "health",
+        "type": "mana",
+        "range": "touch",
+        "duration": "permanent",
+        "force": 3,
+        "drainCode": "-1(S)",
+        "target": "",
+        "damageCode": "",
+        "isAreaEffect": false,
+        "isVoluntary": false,
+        "notes": "SR2E p.185. Stabilizes a dying character.",
+        "citation": {
+          "book": "sr2",
+          "page": "185"
+        }
+      },
+      "effects": [],
+      "flags": {},
+      "_stats": {
+        "coreVersion": "13.351",
+        "systemId": "sr2e",
+        "systemVersion": "0.3.7",
+        "createdTime": 1700000000000,
+        "modifiedTime": 1700000000000,
+        "lastModifiedBy": null,
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null
+      },
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      }
+    },
+    {
+      "_id": "66209355b309a065",
+      "name": "Spell Barrier",
+      "type": "spell",
+      "img": "systems/sr2e/assets/item_icons/spells/mana-barrier.webp",
+      "system": {
+        "category": "manipulation",
+        "subcategory": "transformation",
+        "type": "mana",
+        "range": "los",
+        "duration": "sustained",
+        "force": 3,
+        "drainCode": "((F / 2) + 1)M",
+        "target": "6",
+        "damageCode": "",
+        "isAreaEffect": true,
+        "isVoluntary": false,
+        "notes": "Like mana barrier (SR2 p.158), but protects against spells. The personal form drains ((F / 2) + 2)L. Drain from the Table of Spells (p.134), ((F / 2) + 1)M; the entry prints ((F / 2) + 2)M, but the anti-spell barrier is designed to drain less (p.125). Grimoire (2nd ed.) p.132.",
+        "citation": {
+          "book": "grim",
+          "page": "132"
+        }
+      },
+      "effects": [],
+      "flags": {},
+      "sort": 0,
+      "_stats": {
+        "coreVersion": "13.351",
+        "systemId": "sr2e",
+        "systemVersion": "0.105.0",
+        "createdTime": 1792000000000,
+        "modifiedTime": 1792000000000,
+        "lastModifiedBy": null,
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null
+      },
+      "ownership": {
+        "default": 0
+      }
+    },
+    {
+      "_id": "b7b19828e880a58c",
+      "name": "Treat",
+      "type": "spell",
+      "img": "systems/sr2e/assets/item_icons/spells/heal.webp",
+      "system": {
+        "category": "health",
+        "type": "mana",
+        "range": "touch",
+        "duration": "permanent",
+        "force": 3,
+        "drainCode": "(F / 2)W",
+        "target": "",
+        "damageCode": "",
+        "isAreaEffect": false,
+        "isVoluntary": false,
+        "notes": "SR2E p.155. Target number 8 − subject's Essence. Boxes healed = successes. Treat must be applied within one hour of the injury. A character can only be magically treated or healed once per set of injuries. Type Mana, Range Touch, Permanent. Drain is (F / 2) at the subject's current Wound Level.",
+        "healsDamage": true,
+        "healingTnBase": 8,
+        "citation": {
+          "book": "sr2",
+          "page": "155"
+        }
+      },
+      "effects": [],
+      "flags": {},
+      "_stats": {
+        "coreVersion": "13.351",
+        "systemId": "sr2e",
+        "systemVersion": "0.3.7",
+        "createdTime": 1700000000000,
+        "modifiedTime": 1700000000000,
+        "lastModifiedBy": null,
+        "compendiumSource": null,
+        "duplicateSource": null,
+        "exportSource": null
+      },
+      "sort": 0,
+      "ownership": {
+        "default": 0
+      }
+    }
+  ],
+  "effects": [],
+  "flags": {},
+  "folder": null,
+  "sort": 0,
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.102.0",
+    "createdTime": 1790000000000,
+    "modifiedTime": 1790000000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "ownership": {
+    "default": 0
+  },
+  "prototypeToken": {
+    "name": "Executive Protection Mage",
+    "actorLink": false,
+    "disposition": -1,
+    "texture": {
+      "src": "modules/sr2e-corporate-security/assets/contact_portraits/executive-protection-mage.webp"
+    },
+    "lockRotation": true
+  },
+  "_key": "!actors!89d5f3f30747dc7c"
+}

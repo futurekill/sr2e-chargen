@@ -1,0 +1,36 @@
+{
+  "_id": "f5020f4041e576de",
+  "name": "Total Pacifist",
+  "type": "quality",
+  "img": "modules/sr2e-shadowrun-companion/assets/item_icons/quality/total-pacifist.webp",
+  "system": {
+    "kind": "flaw",
+    "category": "mental",
+    "pointValue": -5,
+    "source": "Shadowrun Companion",
+    "notes": "Will not harm or kill under any circumstances.",
+    "citation": {
+      "book": "sc",
+      "page": "30"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "folder": null,
+  "sort": 0,
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.0.1",
+    "createdTime": 1782000000000,
+    "modifiedTime": 1782000000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!f5020f4041e576de"
+}

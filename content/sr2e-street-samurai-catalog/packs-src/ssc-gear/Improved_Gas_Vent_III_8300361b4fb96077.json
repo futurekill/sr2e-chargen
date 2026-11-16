@@ -1,0 +1,46 @@
+{
+  "_id": "8300361b4fb96077",
+  "name": "Improved Gas-Vent III",
+  "type": "gear",
+  "img": "modules/sr2e-street-samurai-catalog/assets/item_icons/gear/improved-gas-vent-iii.webp",
+  "system": {
+    "category": "accessories",
+    "rating": 3,
+    "quantity": 1,
+    "weight": 0.5,
+    "cost": 800,
+    "availability": "2/24 hrs",
+    "legality": "Legal",
+    "equipped": false,
+    "concealability": 0,
+    "weaponAccessory": true,
+    "linkedWeaponId": "",
+    "combatTnMod": 0,
+    "accessoryRecoilComp": 3,
+    "requiresSmartgun": false,
+    "notes": "A heavier barrel gas-vent for serious recoil control (RC 3). Concealability −1. Street Index 0.9. SSC.",
+    "citation": {
+      "book": "ssc",
+      "page": "38"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "folder": null,
+  "sort": 0,
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.1.0",
+    "createdTime": 1781600000000,
+    "modifiedTime": 1781600000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!8300361b4fb96077"
+}

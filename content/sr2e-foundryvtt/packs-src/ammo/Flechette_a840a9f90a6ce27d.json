@@ -1,0 +1,40 @@
+{
+  "_id": "a840a9f90a6ce27d",
+  "name": "Flechette",
+  "type": "ammo",
+  "img": "systems/sr2e/assets/item_icons/ammo/flechette.webp",
+  "system": {
+    "ammoType": "flechette",
+    "quantity": 10,
+    "damageModifier": 0,
+    "armorModifier": 0,
+    "cost": 100,
+    "notes": "+1 Damage Level vs unarmored targets. Armor counts as double Impact or normal Ballistic, whichever is higher. SR2E p.93.",
+    "damageType": "",
+    "armorCalc": "flechette",
+    "streetIndex": 0.8,
+    "citation": {
+      "book": "sr2",
+      "page": "93"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.3.7",
+    "createdTime": 1700000000000,
+    "modifiedTime": 1700000000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!a840a9f90a6ce27d"
+}

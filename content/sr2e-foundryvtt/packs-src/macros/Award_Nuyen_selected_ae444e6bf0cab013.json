@@ -1,0 +1,31 @@
+{
+  "_id": "ae444e6bf0cab013",
+  "name": "Award Nuyen (selected)",
+  "type": "script",
+  "scope": "global",
+  "author": null,
+  "img": "icons/svg/coins.svg",
+  "command": "/* SR2E — hotbar slot 20. Opens the payout dialog with the selected characters ticked (none selected: the players' characters).\n   See docs/MACROS.md for the VIA macro-pad layout. */\n// Split evenly as you type; type a runner's amount to fix it. Leftover goes to the communal pot.\nreturn game.sr2e.awardNuyen();\n",
+  "folder": null,
+  "sort": 20000,
+  "ownership": {
+    "default": 2
+  },
+  "flags": {
+    "sr2e": {
+      "suggestedSlot": 20
+    }
+  },
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": null,
+    "createdTime": 1784000000000,
+    "modifiedTime": 1784000000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!macros!ae444e6bf0cab013"
+}

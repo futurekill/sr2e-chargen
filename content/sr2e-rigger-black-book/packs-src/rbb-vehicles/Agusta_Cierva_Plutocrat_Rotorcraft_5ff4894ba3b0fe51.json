@@ -1,0 +1,69 @@
+{
+  "_id": "5ff4894ba3b0fe51",
+  "name": "Agusta-Cierva \"Plutocrat\" Rotorcraft",
+  "type": "vehicle",
+  "img": "modules/sr2e-rigger-black-book/assets/vehicle_portraits/agusta-cierva-plutocrat-rotorcraft.webp",
+  "system": {
+    "vehicleType": "rotor",
+    "skill": "rotorcraft",
+    "handling": 4,
+    "handlingOffRoad": null,
+    "speed": 200,
+    "acceleration": 0,
+    "body": 4,
+    "armor": 3,
+    "signature": 4,
+    "pilot": 0,
+    "sensor": 0,
+    "cargo": 15,
+    "load": 0,
+    "seating": "Twin bucket + 6 bench",
+    "cost": 950000,
+    "availability": "",
+    "conditionMonitor": {
+      "value": 0,
+      "max": 10
+    },
+    "autonav": 4,
+    "notes": "<p>A purpose-designed luxury transport chopper with real-leather upholstery, wood paneling and the finest onboard facilities — VTOL site-access for the corp exec.</p><p><em>Max speed 450 m/CT (cruising 200 used for tests). IC/1,000 liters; 1.5 km/liter. An armed variant is a separate actor. Rigger Black Book p.56. Armor 1 as printed (SR1) x3 = 3 for SRII, per Sourcebook Updates p.283.</em></p>",
+    "citation": {
+      "book": "rbb",
+      "page": "56"
+    }
+  },
+  "prototypeToken": {
+    "name": "Agusta-Cierva \"Plutocrat\" Rotorcraft",
+    "displayName": 20,
+    "actorLink": false,
+    "width": 12,
+    "height": 15,
+    "texture": {
+      "src": "modules/sr2e-rigger-black-book/assets/vehicle_portraits/agusta-cierva-plutocrat-rotorcraft.webp",
+      "fit": "fill",
+      "scaleX": 1,
+      "scaleY": 1
+    },
+    "lockRotation": false,
+    "disposition": 0,
+    "displayBars": 0
+  },
+  "effects": [],
+  "folder": null,
+  "sort": 0,
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782200000000,
+    "modifiedTime": 1782200000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!actors!5ff4894ba3b0fe51"
+}

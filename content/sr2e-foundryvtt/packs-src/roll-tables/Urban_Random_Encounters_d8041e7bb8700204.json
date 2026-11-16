@@ -1,0 +1,113 @@
+{
+  "_id": "d8041e7bb8700204",
+  "name": "Urban Random Encounters",
+  "img": "icons/svg/d20-black.svg",
+  "description": "SR2E urban random encounter table.",
+  "formula": "1d6",
+  "displayRoll": true,
+  "replacement": true,
+  "results": [
+    {
+      "_id": "827b1598dba1b5a1",
+      "type": "text",
+      "text": "Lone Star patrol \u2014 a beat cop or cruiser running IDs.",
+      "img": "icons/svg/d20-black.svg",
+      "weight": 1,
+      "range": [
+        1,
+        1
+      ],
+      "drawn": false,
+      "documentUuid": null,
+      "flags": {}
+    },
+    {
+      "_id": "9017aa2b74f85e4c",
+      "type": "text",
+      "text": "Corporate suits with a discreet bodyguard or two.",
+      "img": "icons/svg/d20-black.svg",
+      "weight": 1,
+      "range": [
+        2,
+        2
+      ],
+      "drawn": false,
+      "documentUuid": null,
+      "flags": {}
+    },
+    {
+      "_id": "ee06674cbb413849",
+      "type": "text",
+      "text": "A street vendor or fixer who might become a contact.",
+      "img": "icons/svg/d20-black.svg",
+      "weight": 1,
+      "range": [
+        3,
+        3
+      ],
+      "drawn": false,
+      "documentUuid": null,
+      "flags": {}
+    },
+    {
+      "_id": "fe587af6e944d257",
+      "type": "text",
+      "text": "Gang shakedown \u2014 local toughs working a corner for tolls.",
+      "img": "icons/svg/d20-black.svg",
+      "weight": 1,
+      "range": [
+        4,
+        4
+      ],
+      "drawn": false,
+      "documentUuid": null,
+      "flags": {}
+    },
+    {
+      "_id": "a3d2e9b4485aaf95",
+      "type": "text",
+      "text": "Media drone or reporter sniffing for a story (bad if you're hot).",
+      "img": "icons/svg/d20-black.svg",
+      "weight": 1,
+      "range": [
+        5,
+        5
+      ],
+      "drawn": false,
+      "documentUuid": null,
+      "flags": {}
+    },
+    {
+      "_id": "02e5625106499ec4",
+      "type": "text",
+      "text": "Ordinary crowd \u2014 no incident; good cover to blend in.",
+      "img": "icons/svg/d20-black.svg",
+      "weight": 1,
+      "range": [
+        6,
+        6
+      ],
+      "drawn": false,
+      "documentUuid": null,
+      "flags": {}
+    }
+  ],
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.3.7",
+    "createdTime": 1700000000000,
+    "modifiedTime": 1700000000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!tables!d8041e7bb8700204"
+}

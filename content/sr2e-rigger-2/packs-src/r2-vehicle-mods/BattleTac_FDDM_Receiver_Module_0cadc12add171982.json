@@ -1,0 +1,90 @@
+{
+  "_id": "0cadc12add171982",
+  "name": "BattleTac FDDM Receiver Module",
+  "type": "vehicle_mod",
+  "img": "icons/svg/upgrade.svg",
+  "system": {
+    "modType": "electronics",
+    "rating": 0,
+    "cost": 35000,
+    "designPoints": 0,
+    "dpPerLevel": 0,
+    "dpTable": [],
+    "cfConsumed": 0,
+    "cfPerLevel": 0,
+    "cfTable": [],
+    "loadReduction": 0,
+    "loadPerLevel": 0,
+    "loadTable": [],
+    "dpFormula": "P x 350",
+    "cfFormula": "",
+    "loadFormula": "",
+    "designable": true,
+    "designNuyen": false,
+    "mountPoints": 0,
+    "modKey": "fddm-receiver",
+    "maxRating": "",
+    "restrictions": [
+      "needsRemote"
+    ],
+    "effects": {},
+    "stack": "",
+    "custom": {
+      "customizable": true,
+      "formulas": {
+        "partsCost": "P x 35000",
+        "baseTime": "64",
+        "tn": "4",
+        "cf": "0",
+        "load": "0"
+      },
+      "market": [
+        {
+          "availability": "10/21 days",
+          "streetIndex": 3
+        }
+      ],
+      "max": {},
+      "procedure": "test",
+      "fixedHours": 0,
+      "skills": [
+        "computerBR"
+      ],
+      "combine": "lowest",
+      "equipment": "Microtronics shop",
+      "pageCust": "p.136",
+      "state": "",
+      "choice": {}
+    },
+    "components": {},
+    "installed": false,
+    "notes": "Lets a remote-controlled vehicle/drone share targeting data over a BattleTac FDDM network, enabling indirect fire on targets outside its own line of sight. Parts cost = Pilot Rating × 35,000¥; design = Pilot × 350 points; Avail 10/21 days; Street Index 3; Base Time 64 hrs; needs Computer B/R + a microtronics shop. Rigger 2 p.136. (Design specifications p.136.)",
+    "citation": {
+      "book": "r2",
+      "page": "136"
+    }
+  },
+  "effects": [],
+  "flags": {
+    "sr2e": {
+      "rule": "fddm"
+    }
+  },
+  "folder": null,
+  "sort": 0,
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.0.1",
+    "createdTime": 1781600000000,
+    "modifiedTime": 1781600000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!0cadc12add171982"
+}

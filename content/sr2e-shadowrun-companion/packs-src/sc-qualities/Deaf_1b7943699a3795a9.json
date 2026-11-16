@@ -1,0 +1,36 @@
+{
+  "_id": "1b7943699a3795a9",
+  "name": "Deaf",
+  "type": "quality",
+  "img": "modules/sr2e-shadowrun-companion/assets/item_icons/quality/deaf.webp",
+  "system": {
+    "kind": "flaw",
+    "category": "physical",
+    "pointValue": -3,
+    "source": "Shadowrun Companion",
+    "notes": "Cannot hear.",
+    "citation": {
+      "book": "sc",
+      "page": "26"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "folder": null,
+  "sort": 0,
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.0.1",
+    "createdTime": 1782000000000,
+    "modifiedTime": 1782000000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!1b7943699a3795a9"
+}

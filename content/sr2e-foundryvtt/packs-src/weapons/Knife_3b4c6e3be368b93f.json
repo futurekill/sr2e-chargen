@@ -1,0 +1,64 @@
+{
+  "_id": "3b4c6e3be368b93f",
+  "name": "Knife",
+  "type": "weapon",
+  "img": "systems/sr2e/assets/item_icons/weapons/knife.webp",
+  "system": {
+    "weaponType": "melee",
+    "skill": "armed_combat",
+    "damageCode": "(Str)L",
+    "damageType": "physical",
+    "concealability": 8,
+    "reach": 0,
+    "firingModes": {
+      "ss": false,
+      "sa": false,
+      "bf": false,
+      "fa": false
+    },
+    "ammo": {
+      "current": 0,
+      "max": 0,
+      "type": ""
+    },
+    "recoilComp": 0,
+    "ranges": {
+      "short": 0,
+      "medium": 0,
+      "long": 0,
+      "extreme": 0
+    },
+    "strengthMin": 0,
+    "weight": 0.5,
+    "cost": 30,
+    "availability": "2/4 hrs",
+    "legality": "Legal",
+    "equipped": false,
+    "accessories": [],
+    "notes": "SR2E Melee Weapons Table p.101: (Str)L, Reach 0, Concealability 8, 30¥.",
+    "streetIndex": 0.75,
+    "citation": {
+      "book": "sr2",
+      "page": "101"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.3.7",
+    "createdTime": 1700000000000,
+    "modifiedTime": 1700000000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "folder": "f052cb5eb3b5a2e2",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!3b4c6e3be368b93f"
+}

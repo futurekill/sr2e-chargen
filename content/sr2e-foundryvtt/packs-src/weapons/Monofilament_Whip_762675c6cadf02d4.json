@@ -1,0 +1,64 @@
+{
+  "_id": "762675c6cadf02d4",
+  "name": "Monofilament Whip",
+  "type": "weapon",
+  "img": "systems/sr2e/assets/item_icons/weapons/monofilament-whip.webp",
+  "system": {
+    "weaponType": "melee",
+    "skill": "armed_combat",
+    "damageCode": "10S",
+    "damageType": "physical",
+    "concealability": 10,
+    "reach": 2,
+    "firingModes": {
+      "ss": false,
+      "sa": false,
+      "bf": false,
+      "fa": false
+    },
+    "ammo": {
+      "current": 0,
+      "max": 0,
+      "type": ""
+    },
+    "recoilComp": 0,
+    "ranges": {
+      "short": 0,
+      "medium": 0,
+      "long": 0,
+      "extreme": 0
+    },
+    "strengthMin": 0,
+    "weight": 0,
+    "cost": 3000,
+    "availability": "24/14 days",
+    "legality": "Restricted",
+    "equipped": false,
+    "accessories": [],
+    "notes": "SR2E Melee Weapons Table p.101: 10S, Reach 2, Concealability 10, 3,000¥.",
+    "streetIndex": 3,
+    "citation": {
+      "book": "sr2",
+      "page": "101"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.3.7",
+    "createdTime": 1700000000000,
+    "modifiedTime": 1700000000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "folder": "f052cb5eb3b5a2e2",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!762675c6cadf02d4"
+}

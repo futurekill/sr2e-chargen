@@ -1,0 +1,38 @@
+{
+  "_id": "5c42b61d6451f131",
+  "name": "Bod",
+  "type": "program",
+  "img": "systems/sr2e/assets/item_icons/programs/bod.webp",
+  "system": {
+    "category": "persona",
+    "rating": 1,
+    "size": 1,
+    "multiplier": 3,
+    "cost": 100,
+    "loaded": false,
+    "notes": "SR2E p.262. Persona program: your Matrix body's physical resistance. Higher Bod means harder to damage.",
+    "citation": {
+      "book": "sr2",
+      "page": "262"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.3.7",
+    "createdTime": 1700000000000,
+    "modifiedTime": 1700000000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "folder": "9ba19d8747ee864e",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!5c42b61d6451f131"
+}

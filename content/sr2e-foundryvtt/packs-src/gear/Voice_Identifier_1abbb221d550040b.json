@@ -1,0 +1,48 @@
+{
+  "_id": "1abbb221d550040b",
+  "name": "Voice Identifier",
+  "type": "gear",
+  "img": "systems/sr2e/assets/item_icons/gear/voice-identifier.webp",
+  "system": {
+    "category": "security",
+    "rating": 1,
+    "quantity": 1,
+    "weight": 0,
+    "cost": 2000,
+    "availability": "Rating/72 hrs",
+    "legality": "Restricted",
+    "equipped": false,
+    "concealability": 5,
+    "weaponAccessory": false,
+    "linkedWeaponId": "",
+    "combatTnMod": 0,
+    "accessoryRecoilComp": 0,
+    "requiresSmartgun": false,
+    "notes": "Identifies/authenticates voiceprints. Rated item — cost shown is per Rating point (×Rating). SR2E p.258. Priced 2,000¥ x Rating (p.258).",
+    "streetIndex": 2,
+    "costPerRating": 2000,
+    "citation": {
+      "book": "sr2",
+      "page": "258"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.19.5",
+    "createdTime": 1700000000000,
+    "modifiedTime": 1700000000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "folder": "62cceca98a9fec8e",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!1abbb221d550040b"
+}

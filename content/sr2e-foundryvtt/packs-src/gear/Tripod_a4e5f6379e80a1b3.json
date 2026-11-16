@@ -1,0 +1,44 @@
+{
+  "_id": "a4e5f6379e80a1b3",
+  "name": "Tripod",
+  "type": "gear",
+  "img": "systems/sr2e/assets/item_icons/gear/tripod.webp",
+  "system": {
+    "category": "accessories",
+    "rating": 0,
+    "quantity": 1,
+    "weight": 8,
+    "cost": 600,
+    "availability": "10/12 hrs",
+    "legality": "Legal",
+    "equipped": false,
+    "concealability": 0,
+    "notes": "SR2E p.241. Heavy stable mounting for heavy weapons: 6 points of recoil compensation when set up (tick 'deployed' in the attack dialog). Not concealable.",
+    "weaponAccessory": true,
+    "accessoryRecoilComp": 6,
+    "requiresDeployment": true,
+    "citation": {
+      "book": "sr2",
+      "page": "241"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.26.0",
+    "createdTime": 1700000000000,
+    "modifiedTime": 1700000000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "folder": "e11d3232c7db0d25",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!a4e5f6379e80a1b3"
+}

@@ -1,0 +1,41 @@
+{
+  "_id": "2def0e8e49e5fe86",
+  "name": "DocWagon Contract (Basic)",
+  "type": "gear",
+  "img": "systems/sr2e/assets/item_icons/gear/docwagon-contract-basic.webp",
+  "system": {
+    "category": "medical",
+    "rating": 0,
+    "quantity": 1,
+    "weight": 0,
+    "cost": 5000,
+    "availability": "Always",
+    "legality": "Legal",
+    "equipped": false,
+    "concealability": 10,
+    "notes": "SR2E p.250. DocWagon™ Basic: sealed-band wrist phone beacon, HTR ambulance on call. 5,000¥/year.",
+    "citation": {
+      "book": "sr2",
+      "page": "250"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.3.7",
+    "createdTime": 1700000000000,
+    "modifiedTime": 1700000000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "folder": "db653a93393074a8",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!2def0e8e49e5fe86"
+}

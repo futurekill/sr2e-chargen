@@ -1,0 +1,65 @@
+{
+  "_id": "be368e93a153a309",
+  "name": "Ranger-X Bow",
+  "type": "weapon",
+  "img": "modules/sr2e-street-samurai-catalog/assets/item_icons/weapon/ranger-x-bow.webp",
+  "system": {
+    "weaponType": "projectile",
+    "skill": "projectile_weapons",
+    "damageCode": "(Str+4)M",
+    "damageType": "physical",
+    "concealability": 3,
+    "reach": 0,
+    "firingModes": {
+      "ss": false,
+      "sa": false,
+      "bf": false,
+      "fa": false
+    },
+    "ammo": {
+      "current": 0,
+      "max": 0,
+      "type": "arrow"
+    },
+    "recoilComp": 0,
+    "smartgunCompatible": false,
+    "ranges": {
+      "short": 10,
+      "medium": 30,
+      "long": 60,
+      "extreme": 90
+    },
+    "strengthMin": 2,
+    "weight": 1.5,
+    "cost": 120,
+    "availability": "5/36 hrs",
+    "legality": "Legal",
+    "streetIndex": 2,
+    "equipped": false,
+    "accessories": [],
+    "notes": "A silent compound hunting bow — no muzzle flash, no report, no ballistic trail. Minimum Strength 2, +1 Str per extra rating; cost is 120¥ × Strength rating. SSC.",
+    "citation": {
+      "book": "ssc",
+      "page": "14"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "folder": null,
+  "sort": 0,
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.1.0",
+    "createdTime": 1781600000000,
+    "modifiedTime": 1781600000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!be368e93a153a309"
+}

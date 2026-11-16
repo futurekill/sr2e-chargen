@@ -1,0 +1,98 @@
+{
+  "_id": "deeb7a3a4d1f7379",
+  "name": "Winch",
+  "type": "vehicle_mod",
+  "img": "icons/svg/upgrade.svg",
+  "system": {
+    "modType": "accessory",
+    "rating": 1,
+    "cost": 0,
+    "designPoints": 0,
+    "dpPerLevel": 1,
+    "dpTable": [],
+    "cfConsumed": 0,
+    "cfPerLevel": 0,
+    "cfTable": [],
+    "loadReduction": 0,
+    "loadPerLevel": 0,
+    "loadTable": [],
+    "dpFormula": "",
+    "cfFormula": "",
+    "loadFormula": "B x 2.5",
+    "designable": true,
+    "designNuyen": false,
+    "mountPoints": 0,
+    "modKey": "",
+    "maxRating": "",
+    "restrictions": [],
+    "effects": {},
+    "stack": "",
+    "custom": {
+      "customizable": true,
+      "formulas": {
+        "partsCost": "R x 75",
+        "baseTime": "B x 16",
+        "tn": "4",
+        "cf": "1",
+        "load": "B x 2.5"
+      },
+      "market": [
+        {
+          "availability": "6/14 days",
+          "streetIndex": 2
+        }
+      ],
+      "max": {
+        "byBody": [
+          5,
+          25,
+          200,
+          750,
+          2000,
+          5000,
+          20000,
+          30000,
+          45000,
+          60000
+        ],
+        "beyond": "B x B x 750"
+      },
+      "procedure": "test",
+      "fixedHours": 0,
+      "skills": [
+        "vehicleBR"
+      ],
+      "combine": "lowest",
+      "equipment": "Vehicle facility",
+      "pageCust": "p.146",
+      "state": "",
+      "choice": {}
+    },
+    "components": {},
+    "installed": false,
+    "notes": "A bumper winch for pulling/towing/lifting, with its own Load Rating up to the Winch Capacity Table max by Body: B0 5 kg, B1 25, B2 200, B3 750, B4 2,000, B5 5,000, B6 20,000, B7 30,000, B8 45,000, B9 60,000, B10+ Body²×750. Parts cost = Load Rating × 75¥; load −(Body × 2.5) kg; Avail 6/14 days; Street Index 1.5; Base Time 1 day. Rigger 2 p.146. Design: Rating = the winch's Load Rating in kg (Winch Capacity Table). (Design specifications p.146.)",
+    "citation": {
+      "book": "r2",
+      "page": "146"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "folder": null,
+  "sort": 0,
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.0.1",
+    "createdTime": 1781600000000,
+    "modifiedTime": 1781600000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!deeb7a3a4d1f7379"
+}

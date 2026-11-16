@@ -1,0 +1,38 @@
+{
+  "_id": "e441aa8c5e6c89c0",
+  "name": "Sensor",
+  "type": "program",
+  "img": "systems/sr2e/assets/item_icons/programs/sensor.webp",
+  "system": {
+    "category": "persona",
+    "rating": 1,
+    "size": 1,
+    "multiplier": 2,
+    "cost": 100,
+    "loaded": false,
+    "notes": "SR2E p.262. Persona program: detection and scanning in the Matrix. Alerts you to IC and system features.",
+    "citation": {
+      "book": "sr2",
+      "page": "262"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.3.7",
+    "createdTime": 1700000000000,
+    "modifiedTime": 1700000000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "folder": "98e1d44911c7d22d",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!e441aa8c5e6c89c0"
+}

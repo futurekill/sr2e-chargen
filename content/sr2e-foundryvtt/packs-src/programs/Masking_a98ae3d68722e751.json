@@ -1,0 +1,38 @@
+{
+  "_id": "a98ae3d68722e751",
+  "name": "Masking",
+  "type": "program",
+  "img": "systems/sr2e/assets/item_icons/programs/masking.webp",
+  "system": {
+    "category": "persona",
+    "rating": 1,
+    "size": 2,
+    "multiplier": 2,
+    "cost": 200,
+    "loaded": false,
+    "notes": "SR2E p.262. Persona program: how well your persona blends with legitimate Matrix traffic.",
+    "citation": {
+      "book": "sr2",
+      "page": "262"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.3.7",
+    "createdTime": 1700000000000,
+    "modifiedTime": 1700000000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "folder": "120e03b51358b4ba",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!a98ae3d68722e751"
+}

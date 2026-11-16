@@ -1,0 +1,65 @@
+{
+  "_id": "291c852dda187f4f",
+  "name": "Seco LD-120",
+  "type": "weapon",
+  "img": "modules/sr2e-street-samurai-catalog/assets/item_icons/weapon/seco-ld-120.webp",
+  "system": {
+    "weaponType": "firearm",
+    "skill": "firearms",
+    "damageCode": "6L",
+    "damageType": "physical",
+    "concealability": 5,
+    "reach": 0,
+    "firingModes": {
+      "ss": false,
+      "sa": true,
+      "bf": false,
+      "fa": false
+    },
+    "ammo": {
+      "current": 12,
+      "max": 22,
+      "type": "pistol"
+    },
+    "recoilComp": 0,
+    "smartgunCompatible": false,
+    "ranges": {
+      "short": 5,
+      "medium": 15,
+      "long": 30,
+      "extreme": 50
+    },
+    "strengthMin": 0,
+    "weight": 1.25,
+    "cost": 400,
+    "availability": "3/12 hrs",
+    "legality": "Legal",
+    "streetIndex": 0.8,
+    "equipped": false,
+    "accessories": [],
+    "notes": "A cheap, no-frills light pistol — disposable and forgettable, which is exactly the point. SSC.",
+    "citation": {
+      "book": "ssc",
+      "page": "24"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "folder": null,
+  "sort": 0,
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.1.0",
+    "createdTime": 1781600000000,
+    "modifiedTime": 1781600000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!291c852dda187f4f"
+}

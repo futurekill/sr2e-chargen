@@ -1,0 +1,65 @@
+{
+  "_id": "92a4f1ecb7c5ab6b",
+  "name": "Generic Under-Barrel Grenade Launcher",
+  "type": "weapon",
+  "img": "systems/sr2e/assets/item_icons/weapons/generic-under-barrel-grenade-launcher.webp",
+  "system": {
+    "weaponType": "heavy",
+    "skill": "firearms",
+    "damageCode": "10S",
+    "damageType": "physical",
+    "concealability": 99,
+    "reach": 0,
+    "firingModes": {
+      "ss": true,
+      "sa": false,
+      "bf": false,
+      "fa": false
+    },
+    "ammo": {
+      "current": 6,
+      "max": 6,
+      "type": "grenade"
+    },
+    "recoilComp": 0,
+    "ranges": {
+      "short": 50,
+      "medium": 100,
+      "long": 150,
+      "extreme": 300
+    },
+    "strengthMin": 0,
+    "weight": 2,
+    "cost": 1700,
+    "availability": "8/4 days",
+    "legality": "Forbidden",
+    "equipped": false,
+    "accessories": [],
+    "notes": "Under-barrel grenade launcher — a weapon in its own right (SR2E p.240): fires mini-grenades from its own 6-round magazine (SS), Heavy Weapons skill, and detonates as an area blast with launcher scatter (p.96). Set the damage code / blast type to match the chambered round (default: offensive HE 10S). Book: −3 Concealability, cannot be removed once mounted (p.240).",
+    "blastType": "offensive",
+    "streetIndex": 3,
+    "citation": {
+      "book": "sr2",
+      "page": "240"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.19.4",
+    "createdTime": 1700000000000,
+    "modifiedTime": 1700000000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "folder": "987834caf0814add",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!92a4f1ecb7c5ab6b"
+}

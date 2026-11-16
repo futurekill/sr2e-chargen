@@ -1,0 +1,52 @@
+{
+  "_id": "399qebdkfbz9i75m",
+  "name": "Radio Receiver (Headware)",
+  "type": "cyberware",
+  "img": "systems/sr2e/assets/item_icons/cyberware/radio-receiver-headware.webp",
+  "system": {
+    "location": "headware",
+    "grade": "standard",
+    "essenceCost": 0.4,
+    "rating": 0,
+    "cost": 2000,
+    "availability": "2/24hrs",
+    "legality": "Restricted",
+    "installed": true,
+    "attributeMods": {
+      "body": 0,
+      "quickness": 0,
+      "strength": 0,
+      "charisma": 0,
+      "intelligence": 0,
+      "willpower": 0,
+      "reaction": 0,
+      "initiativeDice": 0
+    },
+    "ratingStats": [],
+    "notes": "SR2E p.245 (table p.260). Receive-only implant radio. Essence .4, 2,000¥.",
+    "streetIndex": "0.8",
+    "citation": {
+      "book": "sr2",
+      "page": "260"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.3.44",
+    "createdTime": 1700000000000,
+    "modifiedTime": 1700000000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "folder": "83a100ae5b1e34cd",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!399qebdkfbz9i75m"
+}

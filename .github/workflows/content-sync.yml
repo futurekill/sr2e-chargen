@@ -1,0 +1,51 @@
+# The daily content sync (docs/PLAN-catalog.md, Amendment A6): when a content repository has a new release, open (or
+# update) ONE pull request with the new copy in content/ and the new pins. Actions pinned to commit SHAs.
+name: Content sync
+on:
+  schedule:
+    - cron: "17 6 * * *"
+  workflow_dispatch: {}
+permissions:
+  contents: read
+concurrency:
+  group: content-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write          # push the content-sync branch (publish step only)
+      pull-requests: write     # open or update its pull request (publish step only)
+      statuses: write          # the check result on the branch head (publish step only)
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false, fetch-depth: 0 }
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with: { node-version: "26.13.1", cache: npm }
+      - run: npm ci
+      # No token in these steps: the content repositories are public, and nothing upstream reaches a shell.
+      - id: sync
+        continue-on-error: true
+        run: node tools/sync-content.mjs --latest --fetch --report sync-report.json
+      - id: build
+        if: steps.sync.outcome == 'success'
+        continue-on-error: true
+        run: node tools/build-catalog.mjs
+      - id: verify
+        if: steps.sync.outcome == 'success'
+        continue-on-error: true
+        run: node tools/verify-content.mjs
+      - id: test
+        if: steps.sync.outcome == 'success'
+        continue-on-error: true
+        run: npm test
+      - name: Publish the pull request
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          OUTCOMES: '{"sync":"${{ steps.sync.outcome }}","build":"${{ steps.build.outcome }}","verify":"${{ steps.verify.outcome }}","test":"${{ steps.test.outcome }}"}'
+        run: node tools/content-pr.mjs
+      - name: Fail the run when a check failed
+        if: steps.sync.outcome != 'success' || steps.build.outcome == 'failure' || steps.verify.outcome == 'failure' || steps.test.outcome == 'failure'
+        run: exit 1

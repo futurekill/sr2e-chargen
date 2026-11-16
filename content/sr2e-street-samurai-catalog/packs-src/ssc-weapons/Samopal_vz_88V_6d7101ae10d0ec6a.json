@@ -1,0 +1,65 @@
+{
+  "_id": "6d7101ae10d0ec6a",
+  "name": "Samopal vz 88V",
+  "type": "weapon",
+  "img": "modules/sr2e-street-samurai-catalog/assets/item_icons/weapon/sakal-vz-88v.webp",
+  "system": {
+    "weaponType": "firearm",
+    "skill": "firearms",
+    "damageCode": "8M",
+    "damageType": "physical",
+    "concealability": 2,
+    "reach": 0,
+    "firingModes": {
+      "ss": false,
+      "sa": true,
+      "bf": true,
+      "fa": true
+    },
+    "ammo": {
+      "current": 35,
+      "max": 35,
+      "type": "rifle"
+    },
+    "recoilComp": 0,
+    "smartgunCompatible": false,
+    "ranges": {
+      "short": 15,
+      "medium": 40,
+      "long": 100,
+      "extreme": 250
+    },
+    "strengthMin": 0,
+    "weight": 5.5,
+    "cost": 1800,
+    "availability": "5/36 hrs",
+    "legality": "Restricted",
+    "streetIndex": 2,
+    "equipped": false,
+    "accessories": [],
+    "notes": "An Eastern-bloc assault rifle: cheap, rugged, and plentiful on the surplus market — it just keeps running. SSC.",
+    "citation": {
+      "book": "ssc",
+      "page": "52"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "folder": null,
+  "sort": 0,
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.1.0",
+    "createdTime": 1781600000000,
+    "modifiedTime": 1781600000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!6d7101ae10d0ec6a"
+}

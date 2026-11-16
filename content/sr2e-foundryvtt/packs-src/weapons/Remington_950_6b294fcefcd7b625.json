@@ -1,0 +1,64 @@
+{
+  "_id": "6b294fcefcd7b625",
+  "name": "Remington 950",
+  "type": "weapon",
+  "img": "systems/sr2e/assets/item_icons/weapons/remington-950.webp",
+  "system": {
+    "weaponType": "firearm",
+    "skill": "firearms",
+    "damageCode": "9S",
+    "damageType": "physical",
+    "concealability": 2,
+    "reach": 0,
+    "firingModes": {
+      "ss": false,
+      "sa": true,
+      "bf": false,
+      "fa": false
+    },
+    "ammo": {
+      "current": 5,
+      "max": 5,
+      "type": "rifle"
+    },
+    "recoilComp": 0,
+    "ranges": {
+      "short": 30,
+      "medium": 60,
+      "long": 150,
+      "extreme": 300
+    },
+    "strengthMin": 0,
+    "weight": 4,
+    "cost": 800,
+    "availability": "3/24 hrs",
+    "legality": "Legal",
+    "equipped": false,
+    "accessories": [],
+    "notes": "SR2E p.233. Heavier sister to the 750, designed for tough game and armor penetration. SA capable.",
+    "streetIndex": 1,
+    "citation": {
+      "book": "sr2",
+      "page": "233"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.3.7",
+    "createdTime": 1700000000000,
+    "modifiedTime": 1700000000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "folder": "c07931b8ddd4ff16",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!6b294fcefcd7b625"
+}

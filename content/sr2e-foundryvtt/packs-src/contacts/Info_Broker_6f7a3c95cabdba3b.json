@@ -1,0 +1,37 @@
+{
+  "_id": "6f7a3c95cabdba3b",
+  "name": "Info Broker",
+  "type": "contact",
+  "img": "systems/sr2e/assets/contact_portraits/info-broker.webp",
+  "system": {
+    "contactType": "contact",
+    "archetype": "Info Broker",
+    "loyalty": 1,
+    "influence": 3,
+    "description": "",
+    "notes": "GM-invented archetype — NOT printed in the SR2E core rulebook. Data, gossip, and secrets for nuyen.",
+    "citation": {
+      "book": "none",
+      "page": ""
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.3.7",
+    "createdTime": 1700000000000,
+    "modifiedTime": 1700000000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "folder": "45589ec5e8ab55e1",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!6f7a3c95cabdba3b"
+}

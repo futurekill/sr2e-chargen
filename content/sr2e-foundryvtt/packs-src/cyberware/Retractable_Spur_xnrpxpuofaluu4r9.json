@@ -1,0 +1,57 @@
+{
+  "_id": "xnrpxpuofaluu4r9",
+  "name": "Retractable Spur",
+  "type": "cyberware",
+  "img": "systems/sr2e/assets/item_icons/cyberware/retractable-spur.webp",
+  "system": {
+    "location": "bodyware",
+    "grade": "standard",
+    "essenceCost": 0.3,
+    "rating": 0,
+    "cost": 11500,
+    "availability": "5/72hrs",
+    "legality": "Restricted",
+    "installed": true,
+    "attributeMods": {
+      "body": 0,
+      "quickness": 0,
+      "strength": 0,
+      "charisma": 0,
+      "intelligence": 0,
+      "willpower": 0,
+      "reaction": 0,
+      "initiativeDice": 0
+    },
+    "ratingStats": [],
+    "notes": "SR2E p.246 (table p.261). Retractable forearm blade — (Str+2)L damage. Essence .3, 11,500¥.",
+    "isWeapon": true,
+    "weaponType": "melee",
+    "skill": "armed combat",
+    "damageType": "physical",
+    "reach": 0,
+    "damageCode": "(Str+2)L",
+    "citation": {
+      "book": "sr2",
+      "page": "261"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.3.44",
+    "createdTime": 1700000000000,
+    "modifiedTime": 1700000000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "folder": "2de86a11c72f9302",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!xnrpxpuofaluu4r9"
+}

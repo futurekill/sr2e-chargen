@@ -1,0 +1,65 @@
+{
+  "_id": "4852f2eafdf57de9",
+  "name": "Ingram Smartgun",
+  "type": "weapon",
+  "img": "modules/sr2e-street-samurai-catalog/assets/item_icons/weapon/ingram-smartgun.webp",
+  "system": {
+    "weaponType": "firearm",
+    "skill": "firearms",
+    "damageCode": "7M",
+    "damageType": "physical",
+    "concealability": 5,
+    "reach": 0,
+    "firingModes": {
+      "ss": false,
+      "sa": false,
+      "bf": true,
+      "fa": true
+    },
+    "ammo": {
+      "current": 32,
+      "max": 32,
+      "type": "smg"
+    },
+    "recoilComp": 0,
+    "smartgunCompatible": true,
+    "ranges": {
+      "short": 10,
+      "medium": 40,
+      "long": 80,
+      "extreme": 150
+    },
+    "strengthMin": 0,
+    "weight": 3,
+    "cost": 950,
+    "availability": "4/24 hrs",
+    "legality": "Restricted",
+    "streetIndex": 1,
+    "equipped": false,
+    "accessories": [],
+    "notes": "A submachine gun with a factory-integral smartgun system — point-and-hit firepower for the wired runner. SSC.",
+    "citation": {
+      "book": "ssc",
+      "page": "31"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "folder": null,
+  "sort": 0,
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.1.0",
+    "createdTime": 1781600000000,
+    "modifiedTime": 1781600000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!4852f2eafdf57de9"
+}

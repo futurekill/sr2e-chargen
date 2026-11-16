@@ -1,0 +1,69 @@
+{
+  "_id": "b73d0eb5d019dda8",
+  "name": "Sikorsky-Bell Microskimmer",
+  "type": "vehicle",
+  "img": "modules/sr2e-rigger-black-book/assets/vehicle_portraits/sikorsky-bell-microskimmer.webp",
+  "system": {
+    "vehicleType": "drone",
+    "skill": "",
+    "handling": 5,
+    "handlingOffRoad": null,
+    "speed": 30,
+    "acceleration": 0,
+    "body": 1,
+    "armor": 0,
+    "signature": 3,
+    "pilot": 1,
+    "sensor": 1,
+    "cargo": 0,
+    "load": 0,
+    "seating": "Drone (rigged)",
+    "cost": 2750,
+    "availability": "",
+    "conditionMonitor": {
+      "value": 0,
+      "max": 10
+    },
+    "autonav": 0,
+    "notes": "<p>A trash-can-sized ACV drone carrying a full sensor suite at high speed over any terrain — fully electric and floatable on water.</p><p><em>Max speed 90 m/CT (cruising 30 used for tests). Drone. Sensor Standard (1). 8 hours stationary operation. Rigger Black Book p.83. Stowing it takes 2 CF of another vehicle's cargo space.</em></p>",
+    "citation": {
+      "book": "rbb",
+      "page": "83"
+    }
+  },
+  "prototypeToken": {
+    "name": "Sikorsky-Bell Microskimmer",
+    "displayName": 20,
+    "actorLink": false,
+    "width": 1,
+    "height": 1,
+    "texture": {
+      "src": "modules/sr2e-rigger-black-book/assets/vehicle_portraits/sikorsky-bell-microskimmer.webp",
+      "fit": "fill",
+      "scaleX": 1,
+      "scaleY": 1
+    },
+    "lockRotation": false,
+    "disposition": 0,
+    "displayBars": 0
+  },
+  "effects": [],
+  "folder": null,
+  "sort": 0,
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782200000000,
+    "modifiedTime": 1782200000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!actors!b73d0eb5d019dda8"
+}

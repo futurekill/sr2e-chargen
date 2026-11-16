@@ -1,0 +1,79 @@
+{
+  "_id": "8909765213aeb1f9",
+  "name": "Atropine",
+  "type": "gear",
+  "img": "modules/sr2e-shadowtech/assets/item_icons/gear/atropine.webp",
+  "system": {
+    "category": "drug",
+    "rating": 0,
+    "quantity": 1,
+    "streetIndex": 1,
+    "weight": 0,
+    "cost": 600,
+    "availability": "5/12 hrs",
+    "legality": "Legal",
+    "equipped": false,
+    "concealability": 0,
+    "weaponAccessory": false,
+    "linkedWeaponId": "",
+    "combatTnMod": 0,
+    "accessoryRecoilComp": 0,
+    "requiresSmartgun": false,
+    "notes": "Distilled alkaloid (belladonna). Rating 5D (printed 5D2), Speed special, Vector injection, 600¥/dose. Legal, 5/12 hrs, Street Index 1 (Shadowtech p.96).",
+    "citation": {
+      "book": "st",
+      "page": "96"
+    }
+  },
+  "effects": [],
+  "flags": {
+    "sr2e": {
+      "drug": {
+        "key": "atropine",
+        "damage": {
+          "power": 5,
+          "level": "D",
+          "type": "physical"
+        },
+        "repeatMinutes": 15,
+        "duration": null,
+        "addiction": null,
+        "tolerance": 0,
+        "strength": 0,
+        "notes": "TN penalties applied automatically (+1 Active, +1 more in melee and close-range firearms; +2 Knowledge, Technical, B/R, Language and Magic). Hallucinations and fever are the GM's. Damage repeats every 15 minutes until neutralised or filtered out (Shadowtech p.96).",
+        "absorb": 0,
+        "stimulant": false,
+        "overload": false,
+        "tn": {
+          "active": 1,
+          "meleeClose": 1,
+          "knowledge": 2,
+          "language": 2,
+          "build_repair": 2,
+          "technical": 2,
+          "magic": 2
+        },
+        "activatesPump": false,
+        "noRepeat": false,
+        "limitsPump": false
+      }
+    }
+  },
+  "folder": null,
+  "sort": 0,
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.1.0",
+    "createdTime": 1784000000000,
+    "modifiedTime": 1784000000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!8909765213aeb1f9"
+}

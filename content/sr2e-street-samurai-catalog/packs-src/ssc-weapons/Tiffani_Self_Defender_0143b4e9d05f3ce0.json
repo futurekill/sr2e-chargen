@@ -1,0 +1,65 @@
+{
+  "_id": "0143b4e9d05f3ce0",
+  "name": "Tiffani Self-Defender",
+  "type": "weapon",
+  "img": "modules/sr2e-street-samurai-catalog/assets/item_icons/weapon/tiffani-self-defender.webp",
+  "system": {
+    "weaponType": "firearm",
+    "skill": "firearms",
+    "damageCode": "4L",
+    "damageType": "physical",
+    "concealability": 8,
+    "reach": 0,
+    "firingModes": {
+      "ss": true,
+      "sa": false,
+      "bf": false,
+      "fa": false
+    },
+    "ammo": {
+      "current": 4,
+      "max": 4,
+      "type": "pistol"
+    },
+    "recoilComp": 0,
+    "smartgunCompatible": false,
+    "ranges": {
+      "short": 5,
+      "medium": 15,
+      "long": 30,
+      "extreme": 50
+    },
+    "strengthMin": 0,
+    "weight": 0.5,
+    "cost": 450,
+    "availability": "2/12 hrs",
+    "legality": "Legal",
+    "streetIndex": 0.75,
+    "equipped": false,
+    "accessories": [],
+    "notes": "A tiny hold-out pistol designed to disappear in a palm, a clutch, or a waistband — a last word when everything else has failed. SSC.",
+    "citation": {
+      "book": "ssc",
+      "page": "25"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "folder": null,
+  "sort": 0,
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.1.0",
+    "createdTime": 1781600000000,
+    "modifiedTime": 1781600000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!0143b4e9d05f3ce0"
+}

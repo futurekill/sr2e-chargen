@@ -1,0 +1,74 @@
+{
+  "_id": "1c6jtaztn4kz6186",
+  "name": "Vehicle Control Rig",
+  "type": "cyberware",
+  "img": "systems/sr2e/assets/item_icons/cyberware/vehicle-control-rig.webp",
+  "system": {
+    "location": "bodyware",
+    "grade": "standard",
+    "essenceCost": 2,
+    "rating": 1,
+    "cost": 12000,
+    "availability": "6/48 hrs",
+    "legality": "Restricted",
+    "installed": true,
+    "attributeMods": {
+      "body": 0,
+      "quickness": 0,
+      "strength": 0,
+      "charisma": 0,
+      "intelligence": 0,
+      "willpower": 0,
+      "reaction": 0,
+      "initiativeDice": 0
+    },
+    "ratingStats": [
+      {
+        "rating": 1,
+        "essenceCost": 2,
+        "cost": 12000,
+        "availability": "6/48 hrs",
+        "streetIndex": ""
+      },
+      {
+        "rating": 2,
+        "essenceCost": 3,
+        "cost": 60000,
+        "availability": "8/48 hrs",
+        "streetIndex": ""
+      },
+      {
+        "rating": 3,
+        "essenceCost": 5,
+        "cost": 300000,
+        "availability": "8/48 hrs",
+        "streetIndex": ""
+      }
+    ],
+    "notes": "SR2E p.246 (table p.261). Datajack-linked vehicle rig: Level 1 Essence 2 (12,000¥), Level 2 Essence 3 (60,000¥), Level 3 Essence 5 (300,000¥).",
+    "isVcr": true,
+    "citation": {
+      "book": "sr2",
+      "page": "261"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.3.44",
+    "createdTime": 1700000000000,
+    "modifiedTime": 1700000000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "folder": "7d40a1986afd7f8a",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!1c6jtaztn4kz6186"
+}

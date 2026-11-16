@@ -1,0 +1,41 @@
+{
+  "_id": "d137270f62c9e909",
+  "name": "Ranger-X Arrows",
+  "type": "ammo",
+  "img": "modules/sr2e-street-samurai-catalog/assets/item_icons/ammo/ranger-x-arrows.webp",
+  "system": {
+    "ammoType": "arrow",
+    "quantity": 1,
+    "damageModifier": 0,
+    "armorModifier": 0,
+    "damageType": "",
+    "armorCalc": "",
+    "cost": 18,
+    "notes": "Precision-fletched arrows for the Ranger-X Bow — silent, deniable, and recoverable; damage is the bow's. 18¥ each. Street Index 1. SSC (pg-102).",
+    "streetIndex": 1,
+    "concealability": 4,
+    "citation": {
+      "book": "ssc",
+      "page": "15"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "folder": null,
+  "sort": 0,
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.1.0",
+    "createdTime": 1781600000000,
+    "modifiedTime": 1781600000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!d137270f62c9e909"
+}

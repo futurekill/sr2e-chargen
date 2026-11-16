@@ -1,0 +1,38 @@
+{
+  "_id": "98b247ee492f7437",
+  "name": "Smoke",
+  "type": "program",
+  "img": "systems/sr2e/assets/item_icons/programs/smoke.webp",
+  "system": {
+    "category": "defense",
+    "rating": 1,
+    "size": 4,
+    "multiplier": 2,
+    "cost": 400,
+    "loaded": false,
+    "notes": "SR2E p.175. Defense utility: adds its rating to every target number in the node (including the deck's own tests); degrades by 1 each Combat Turn.",
+    "citation": {
+      "book": "sr2",
+      "page": "175"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.8.0",
+    "createdTime": 1700000000000,
+    "modifiedTime": 1700000000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "folder": "9ba19d8747ee864e",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!98b247ee492f7437"
+}

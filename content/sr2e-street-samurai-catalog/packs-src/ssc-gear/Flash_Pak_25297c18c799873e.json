@@ -1,0 +1,47 @@
+{
+  "_id": "25297c18c799873e",
+  "name": "Flash-Pak",
+  "type": "gear",
+  "img": "modules/sr2e-street-samurai-catalog/assets/item_icons/gear/flash-pak.webp",
+  "system": {
+    "category": "explosive",
+    "rating": 0,
+    "quantity": 1,
+    "weight": 0.2,
+    "cost": 250,
+    "availability": "3/36 hrs",
+    "legality": "Restricted",
+    "equipped": false,
+    "concealability": 12,
+    "weaponAccessory": false,
+    "linkedWeaponId": "",
+    "combatTnMod": 0,
+    "accessoryRecoilComp": 0,
+    "requiresSmartgun": false,
+    "notes": "A handheld strobe that hammers the vision of anyone looking at it — Special. Street Index 1. SSC. Street Index 1 per the core book Sourcebook Updates table, p.280.",
+    "streetIndex": 1,
+    "citation": {
+      "book": "sr2",
+      "page": "280"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "folder": null,
+  "sort": 0,
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.1.0",
+    "createdTime": 1781600000000,
+    "modifiedTime": 1781600000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!25297c18c799873e"
+}

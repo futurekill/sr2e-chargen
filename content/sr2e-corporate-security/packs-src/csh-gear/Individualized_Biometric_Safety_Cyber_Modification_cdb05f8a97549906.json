@@ -1,0 +1,41 @@
+{
+  "_id": "cdb05f8a97549906",
+  "name": "Individualized Biometric Safety (Cyber Modification)",
+  "type": "cyberware",
+  "img": "modules/sr2e-corporate-security/assets/item_icons/cyberware/individualized-biometric-safety-cyber-modification.webp",
+  "system": {
+    "location": "bodyware",
+    "grade": "standard",
+    "essenceCost": 0,
+    "rating": 1,
+    "cost": 800,
+    "availability": "3/36 hrs",
+    "streetIndex": "1.5",
+    "legality": "",
+    "installed": true,
+    "notes": "The IBS for owners with a cyberarm or cyberhand: mounted in the cyberhand, it holds a pass-chip that links to the weapon's IBS. No Essence cost is printed (it modifies an existing cyberhand). Corporate Security Handbook p.71.",
+    "citation": {
+      "book": "csh",
+      "page": "71"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "folder": null,
+  "sort": 0,
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.102.0",
+    "createdTime": 1790000000000,
+    "modifiedTime": 1790000000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!cdb05f8a97549906"
+}

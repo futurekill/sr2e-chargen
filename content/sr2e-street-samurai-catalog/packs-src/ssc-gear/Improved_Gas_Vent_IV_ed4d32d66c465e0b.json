@@ -1,0 +1,46 @@
+{
+  "_id": "ed4d32d66c465e0b",
+  "name": "Improved Gas-Vent IV",
+  "type": "gear",
+  "img": "modules/sr2e-street-samurai-catalog/assets/item_icons/gear/improved-gas-vent-iv.webp",
+  "system": {
+    "category": "accessories",
+    "rating": 4,
+    "quantity": 1,
+    "weight": 0.75,
+    "cost": 1000,
+    "availability": "2/24 hrs",
+    "legality": "Legal",
+    "equipped": false,
+    "concealability": 0,
+    "weaponAccessory": true,
+    "linkedWeaponId": "",
+    "combatTnMod": 0,
+    "accessoryRecoilComp": 4,
+    "requiresSmartgun": false,
+    "notes": "The top-grade gas-vent — flattens recoil at the cost of a bulkier muzzle (RC 4). Concealability −2. Street Index 1. SSC.",
+    "citation": {
+      "book": "ssc",
+      "page": "38"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "folder": null,
+  "sort": 0,
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.1.0",
+    "createdTime": 1781600000000,
+    "modifiedTime": 1781600000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!ed4d32d66c465e0b"
+}

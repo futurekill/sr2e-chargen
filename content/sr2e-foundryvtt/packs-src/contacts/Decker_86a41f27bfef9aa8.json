@@ -1,0 +1,37 @@
+{
+  "_id": "86a41f27bfef9aa8",
+  "name": "Decker",
+  "type": "contact",
+  "img": "systems/sr2e/assets/contact_portraits/decker.webp",
+  "system": {
+    "contactType": "contact",
+    "archetype": "Decker",
+    "loyalty": 1,
+    "influence": 2,
+    "description": "",
+    "notes": "GM-invented archetype — NOT printed in the SR2E core rulebook. Matrix infiltration and data extraction.",
+    "citation": {
+      "book": "none",
+      "page": ""
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.3.7",
+    "createdTime": 1700000000000,
+    "modifiedTime": 1700000000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "folder": "45589ec5e8ab55e1",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!86a41f27bfef9aa8"
+}

@@ -1,0 +1,46 @@
+{
+  "_id": "dde35e91ba1c2c31",
+  "name": "Rangefinder (Weapon Mount)",
+  "type": "gear",
+  "img": "modules/sr2e-street-samurai-catalog/assets/item_icons/gear/rangefinder-weapon-mount.webp",
+  "system": {
+    "category": "accessories",
+    "rating": 0,
+    "quantity": 1,
+    "weight": 0.1,
+    "cost": 150,
+    "availability": "2/24 hrs",
+    "legality": "Legal",
+    "equipped": false,
+    "concealability": 0,
+    "weaponAccessory": true,
+    "linkedWeaponId": "",
+    "combatTnMod": 0,
+    "accessoryRecoilComp": 0,
+    "requiresSmartgun": false,
+    "notes": "An under-barrel rangefinder that calls the exact distance to target — steadier shots at long range. Street Index 0.8. SSC.",
+    "citation": {
+      "book": "ssc",
+      "page": "37"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "folder": null,
+  "sort": 0,
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.1.0",
+    "createdTime": 1781600000000,
+    "modifiedTime": 1781600000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!dde35e91ba1c2c31"
+}

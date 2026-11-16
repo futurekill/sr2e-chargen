@@ -1,0 +1,51 @@
+{
+  "_id": "83bcfb29d71996ad",
+  "name": "Data Lock",
+  "type": "cyberware",
+  "img": "systems/sr2e/assets/item_icons/cyberware/data-lock.webp",
+  "system": {
+    "location": "headware",
+    "grade": "standard",
+    "essenceCost": 0.2,
+    "rating": 0,
+    "cost": 1000,
+    "availability": "6/36 hrs",
+    "legality": "Restricted",
+    "installed": true,
+    "attributeMods": {
+      "body": 0,
+      "quickness": 0,
+      "strength": 0,
+      "charisma": 0,
+      "intelligence": 0,
+      "willpower": 0,
+      "reaction": 0,
+      "initiativeDice": 0
+    },
+    "notes": "SR2E p.244 (table p.260). Head memory accessible only via external jack + access code. Essence .2, 1,000¥.",
+    "streetIndex": "1.5",
+    "citation": {
+      "book": "sr2",
+      "page": "260"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.3.7",
+    "createdTime": 1700000000000,
+    "modifiedTime": 1700000000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "folder": "1c9a771b95382e71",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!83bcfb29d71996ad"
+}

@@ -1,0 +1,90 @@
+{
+  "_id": "3c352b0b89f1974b",
+  "name": "Active Thermal Masking",
+  "type": "vehicle_mod",
+  "img": "icons/svg/upgrade.svg",
+  "system": {
+    "modType": "signature",
+    "rating": 1,
+    "cost": 0,
+    "designPoints": 0,
+    "dpPerLevel": 0,
+    "dpTable": [],
+    "cfConsumed": 3,
+    "cfPerLevel": 0,
+    "cfTable": [],
+    "loadReduction": 100,
+    "loadPerLevel": 0,
+    "loadTable": [],
+    "dpFormula": "K x (2 x R + 0.125 x R x (R - 1))",
+    "cfFormula": "",
+    "loadFormula": "",
+    "designable": true,
+    "designNuyen": false,
+    "mountPoints": 0,
+    "modKey": "active-thermal-masking",
+    "maxRating": "min(2, L)",
+    "restrictions": [
+      "engine:methane,gasoline,diesel,jetPropeller,jetTurbine",
+      "not:bike",
+      "needsEngineCustom"
+    ],
+    "effects": {},
+    "stack": "levels",
+    "custom": {
+      "customizable": true,
+      "formulas": {
+        "partsCost": "EY x (2 x R + 0.125 x R x (R0 + R1 - 1))",
+        "baseTime": "R x 8",
+        "tn": "4",
+        "cf": "3",
+        "load": "100"
+      },
+      "market": [
+        {
+          "availability": "8/21 days",
+          "streetIndex": 2
+        }
+      ],
+      "max": {
+        "value": "min(2, L)"
+      },
+      "procedure": "test",
+      "fixedHours": 0,
+      "skills": [
+        "vehicleBR"
+      ],
+      "combine": "lowest",
+      "equipment": "Vehicle facility",
+      "pageCust": "p.130",
+      "state": "",
+      "choice": {}
+    },
+    "components": {},
+    "installed": false,
+    "notes": "A high-powered coolant system that actively absorbs engine heat; each active level masks +1 Signature but costs 15 m of Speed Rating while running. Cost = engine-customization cost × 2 for the first level, +0.25 to the multiplier per added level; max equals the engine-customization level; Avail 8/21 days; Street Index 2; load −100 kg. Rigger 2 p.130. Design: Needs engine customization; each level costs the engine customization's DP × 2, +0.25 per further level. (Design specifications p.130.)",
+    "citation": {
+      "book": "r2",
+      "page": "130"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "folder": null,
+  "sort": 0,
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.0.1",
+    "createdTime": 1781600000000,
+    "modifiedTime": 1781600000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!3c352b0b89f1974b"
+}

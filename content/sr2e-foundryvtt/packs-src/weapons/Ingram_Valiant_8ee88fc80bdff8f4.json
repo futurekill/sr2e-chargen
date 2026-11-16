@@ -1,0 +1,64 @@
+{
+  "_id": "8ee88fc80bdff8f4",
+  "name": "Ingram Valiant",
+  "type": "weapon",
+  "img": "systems/sr2e/assets/item_icons/weapons/light-machine-gun-generic.webp",
+  "system": {
+    "weaponType": "firearm",
+    "skill": "firearms",
+    "damageCode": "7S",
+    "damageType": "physical",
+    "concealability": 99,
+    "reach": 0,
+    "firingModes": {
+      "ss": false,
+      "sa": false,
+      "bf": true,
+      "fa": true
+    },
+    "ammo": {
+      "current": 50,
+      "max": 50,
+      "type": "belt"
+    },
+    "recoilComp": 1,
+    "ranges": {
+      "short": 20,
+      "medium": 40,
+      "long": 80,
+      "extreme": 150
+    },
+    "strengthMin": 0,
+    "weight": 9,
+    "cost": 1500,
+    "availability": "6/5 days",
+    "legality": "Restricted",
+    "equipped": false,
+    "accessories": [],
+    "notes": "Light machine gun, belt-fed 50 (c). Popular with merc units worldwide; the most common LMG model. Has a hip-brace recoil pad (Rating 1) and an ammunition bin slung over the shoulder. The only entry the book's Light Machine Guns section lists — there is no generic LMG. Light Machine Guns is a FIREARMS concentration (p.70); Gunnery governs heavy weapons \"on tripods, vehicle mounts, pintles, or in fixed emplacements\", so a VEHICLE-MOUNTED Valiant is fired with Gunnery even though the weapon itself is a firearm. SR2E p.238, p.255.",
+    "streetIndex": 2,
+    "citation": {
+      "book": "sr2",
+      "page": "238"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.3.7",
+    "createdTime": 1700000000000,
+    "modifiedTime": 1700000000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "folder": "b7f21c9e4a35d806",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!8ee88fc80bdff8f4"
+}

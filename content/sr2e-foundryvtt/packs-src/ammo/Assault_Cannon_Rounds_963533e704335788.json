@@ -1,0 +1,40 @@
+{
+  "_id": "963533e704335788",
+  "name": "Assault Cannon Rounds",
+  "type": "ammo",
+  "img": "systems/sr2e/assets/item_icons/ammo/assault-cannon-rounds.webp",
+  "system": {
+    "ammoType": "ac",
+    "quantity": 10,
+    "damageModifier": 0,
+    "armorModifier": 0,
+    "cost": 450,
+    "notes": "Heavy assault-cannon shells — explosive-equivalent with limited armour-piercing. ~1.25 wt/unit. Feeds the Panther and vehicle-mounted assault cannons. SR2E p.256.",
+    "damageType": "",
+    "armorCalc": "standard",
+    "streetIndex": 2,
+    "citation": {
+      "book": "sr2",
+      "page": "256"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.13.0",
+    "createdTime": 1700000000000,
+    "modifiedTime": 1700000000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!963533e704335788"
+}

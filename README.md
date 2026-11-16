@@ -30,8 +30,8 @@ DATABASE_URL=sqlite://./data/dev.db BASE_URL=http://localhost:3000 node server/c
 DATABASE_URL=sqlite://./data/dev.db BASE_URL=http://localhost:3000 npm start
 ```
 Open the setup link the bootstrap command printed (it works once), pick a handle and password, and you're the admin.
-`npm run build:catalog` reads the content repositories (the Foundry system and the sourcebook modules, checked out
-beside this one) at the versions pinned in `content-pins.json`.
+`npm run build:catalog` reads `content/`, this project's own copy of the content (the Foundry system and the
+sourcebook modules at the releases in `content-pins.json`). A daily workflow proposes updates as pull requests.
 `node server/cli.mjs` with no arguments lists the admin commands. `npm test` runs the suite. Needs Node 26.13+.
 
 ## What it will do

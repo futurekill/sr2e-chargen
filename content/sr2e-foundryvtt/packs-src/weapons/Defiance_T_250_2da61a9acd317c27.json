@@ -1,0 +1,65 @@
+{
+  "_id": "2da61a9acd317c27",
+  "name": "Defiance T-250",
+  "type": "weapon",
+  "img": "systems/sr2e/assets/item_icons/weapons/defiance-t-250.webp",
+  "system": {
+    "weaponType": "firearm",
+    "skill": "firearms",
+    "damageCode": "10S",
+    "damageType": "physical",
+    "concealability": 4,
+    "reach": 0,
+    "firingModes": {
+      "ss": false,
+      "sa": true,
+      "bf": false,
+      "fa": false
+    },
+    "ammo": {
+      "current": 5,
+      "max": 5,
+      "type": "shell"
+    },
+    "recoilComp": 0,
+    "ranges": {
+      "short": 10,
+      "medium": 20,
+      "long": 50,
+      "extreme": 100
+    },
+    "strengthMin": 0,
+    "weight": 3,
+    "cost": 500,
+    "availability": "3/24 hrs",
+    "legality": "Legal",
+    "equipped": false,
+    "accessories": [],
+    "notes": "SR2E p.233. A popular autoloading shotgun, available in full-size and short-barrel versions. No under-barrel mount. Can fire shot rounds (spread cone, choke 3; SR2E p.95).",
+    "choke": 3,
+    "streetIndex": 1,
+    "citation": {
+      "book": "sr2",
+      "page": "239"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.3.7",
+    "createdTime": 1700000000000,
+    "modifiedTime": 1700000000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "folder": "5fabbe9e956b1018",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!2da61a9acd317c27"
+}

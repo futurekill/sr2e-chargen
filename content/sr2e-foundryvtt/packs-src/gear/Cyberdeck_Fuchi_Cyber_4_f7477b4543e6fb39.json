@@ -1,0 +1,51 @@
+{
+  "_id": "f7477b4543e6fb39",
+  "name": "Cyberdeck (Fuchi Cyber-4)",
+  "type": "gear",
+  "img": "systems/sr2e/assets/item_icons/gear/cyberdeck-fuchi-cyber-4.webp",
+  "system": {
+    "category": "cyberdeck",
+    "rating": 0,
+    "quantity": 1,
+    "weight": 0,
+    "cost": 5000,
+    "availability": "Always",
+    "legality": "Legal",
+    "equipped": false,
+    "concealability": 10,
+    "notes": "SR2E p.262. Fuchi's solid mid-tier offering. MPCP 6, 100/500/20/20. Reliable and well-supported.",
+    "deck": {
+      "active": false,
+      "hardening": 0,
+      "response": 0,
+      "mpcp": 6,
+      "activeMemory": 100,
+      "storageMemory": 500,
+      "ioSpeed": 20,
+      "loadSpeed": 20
+    },
+    "citation": {
+      "book": "sr2",
+      "page": "262"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.3.7",
+    "createdTime": 1700000000000,
+    "modifiedTime": 1700000000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "folder": "d0bc5190d943d28f",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!f7477b4543e6fb39"
+}

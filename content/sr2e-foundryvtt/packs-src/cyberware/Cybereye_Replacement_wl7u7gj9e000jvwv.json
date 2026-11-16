@@ -1,0 +1,54 @@
+{
+  "_id": "wl7u7gj9e000jvwv",
+  "name": "Cybereyes",
+  "type": "cyberware",
+  "img": "systems/sr2e/assets/item_icons/cyberware/cybereyes.webp",
+  "system": {
+    "location": "headware",
+    "grade": "standard",
+    "essenceCost": 0.2,
+    "rating": 0,
+    "cost": 5000,
+    "availability": "2/24hrs",
+    "legality": "Legal",
+    "installed": true,
+    "capacity": 0.5,
+    "modules": [],
+    "attributeMods": {
+      "body": 0,
+      "quickness": 0,
+      "strength": 0,
+      "charisma": 0,
+      "intelligence": 0,
+      "willpower": 0,
+      "reaction": 0,
+      "initiativeDice": 0
+    },
+    "ratingStats": [],
+    "notes": "SR2E p.247. Prosthetic cybereyes (base 0.2 Essence). They accept vision-enhancement modules up to 0.5 Essence at no further cost; only module essence beyond that adds to the total. Toggle the modules your eyes carry below.",
+    "streetIndex": "0.75",
+    "citation": {
+      "book": "sr2",
+      "page": "247"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.9.9",
+    "createdTime": 1700000000000,
+    "modifiedTime": 1700000000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "folder": "b99b5f276be14335",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!wl7u7gj9e000jvwv"
+}

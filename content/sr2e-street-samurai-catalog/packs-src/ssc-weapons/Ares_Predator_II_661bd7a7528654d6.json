@@ -1,0 +1,65 @@
+{
+  "_id": "661bd7a7528654d6",
+  "name": "Ares Predator II",
+  "type": "weapon",
+  "img": "modules/sr2e-street-samurai-catalog/assets/item_icons/weapon/ares-predator-ii.webp",
+  "system": {
+    "weaponType": "firearm",
+    "skill": "firearms",
+    "damageCode": "9M",
+    "damageType": "physical",
+    "concealability": 4,
+    "reach": 0,
+    "firingModes": {
+      "ss": false,
+      "sa": true,
+      "bf": false,
+      "fa": false
+    },
+    "ammo": {
+      "current": 15,
+      "max": 15,
+      "type": "pistol"
+    },
+    "recoilComp": 0,
+    "smartgunCompatible": false,
+    "ranges": {
+      "short": 5,
+      "medium": 20,
+      "long": 40,
+      "extreme": 60
+    },
+    "strengthMin": 0,
+    "weight": 2.5,
+    "cost": 550,
+    "availability": "4/24 hrs",
+    "legality": "Restricted",
+    "streetIndex": 0.5,
+    "equipped": false,
+    "accessories": [],
+    "notes": "The iconic heavy pistol of the shadows — accurate, hard-hitting, and seemingly in every other holster on the street. SSC.",
+    "citation": {
+      "book": "ssc",
+      "page": "18"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "folder": null,
+  "sort": 0,
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.1.0",
+    "createdTime": 1781600000000,
+    "modifiedTime": 1781600000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!661bd7a7528654d6"
+}

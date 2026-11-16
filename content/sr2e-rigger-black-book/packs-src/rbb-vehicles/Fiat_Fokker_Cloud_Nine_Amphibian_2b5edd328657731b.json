@@ -1,0 +1,69 @@
+{
+  "_id": "2b5edd328657731b",
+  "name": "Fiat-Fokker \"Cloud Nine\" Amphibian",
+  "type": "vehicle",
+  "img": "modules/sr2e-rigger-black-book/assets/vehicle_portraits/fiat-fokker-cloud-nine-amphibian.webp",
+  "system": {
+    "vehicleType": "aircraft",
+    "skill": "aircraft",
+    "handling": 4,
+    "handlingOffRoad": null,
+    "speed": 300,
+    "acceleration": 0,
+    "body": 3,
+    "armor": 0,
+    "signature": 3,
+    "pilot": 0,
+    "sensor": 0,
+    "cargo": 10,
+    "load": 0,
+    "seating": "Twin bucket + 6 bench",
+    "cost": 175000,
+    "availability": "",
+    "conditionMonitor": {
+      "value": 0,
+      "max": 10
+    },
+    "autonav": 2,
+    "notes": "<p>A purpose-built reinforced-boat-hull amphibian — a classic European pleasure craft with STOL (water) / VSTOL (land) capability and a roomy cabin.</p><p><em>Max speed 450 m/CT (cruising 300 used for tests). IC/250 liters; 3 km/liter. STOL (water), VSTOL (land). Rigger Black Book p.47.</em></p>",
+    "citation": {
+      "book": "rbb",
+      "page": "47"
+    }
+  },
+  "prototypeToken": {
+    "name": "Fiat-Fokker \"Cloud Nine\" Amphibian",
+    "displayName": 20,
+    "actorLink": false,
+    "width": 8,
+    "height": 8,
+    "texture": {
+      "src": "modules/sr2e-rigger-black-book/assets/vehicle_portraits/fiat-fokker-cloud-nine-amphibian.webp",
+      "fit": "fill",
+      "scaleX": 1,
+      "scaleY": 1
+    },
+    "lockRotation": false,
+    "disposition": 0,
+    "displayBars": 0
+  },
+  "effects": [],
+  "folder": null,
+  "sort": 0,
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782200000000,
+    "modifiedTime": 1782200000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!actors!2b5edd328657731b"
+}

@@ -1,0 +1,73 @@
+{
+  "_id": "3e91423944a00b1c",
+  "name": "Steel Lynx",
+  "type": "vehicle",
+  "img": "modules/sr2e-fields-of-fire/assets/vehicle_portraits/steel-lynx.webp",
+  "system": {
+    "vehicleType": "drone",
+    "skill": "",
+    "handling": 4,
+    "speed": 40,
+    "acceleration": 0,
+    "body": 4,
+    "armor": 12,
+    "signature": 5,
+    "pilot": 2,
+    "sensor": 1,
+    "cargo": 0,
+    "load": 0,
+    "seating": "0",
+    "cost": 15000,
+    "availability": "",
+    "autonav": 0,
+    "conditionMonitor": {
+      "value": 0,
+      "max": 10
+    },
+    "notes": "Tracked ground combat drone. Handling 4/6, Speed 40/80, Economy 3 km/PF, Power 30 PF (duration limited by power), Standard (I) sensors, set-up 3 min. Remote-control gear; 8 CF free for sensors/ECM-ECCM/control gear/weapons — common fit is a micro-turret mounting an LMG, HVAR, or flechette cannon. Replaceable power pack 3,000¥. Fields of Fire p.68.<p><em>Fields of Fire p.68: Speed 40/80 m/CT (cruising/maximum; Speed holds the cruising speed). Handling printed 4/6. Stowing it takes 20 CF of another vehicle's cargo space.</em></p>",
+    "handlingOffRoad": null,
+    "citation": {
+      "book": "ff",
+      "page": "68"
+    }
+  },
+  "items": [],
+  "effects": [],
+  "folder": null,
+  "sort": 0,
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.0.1",
+    "createdTime": 1782000000000,
+    "modifiedTime": 1782000000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "prototypeToken": {
+    "name": "Steel Lynx",
+    "displayName": 0,
+    "actorLink": false,
+    "width": 1,
+    "height": 1,
+    "texture": {
+      "src": "modules/sr2e-fields-of-fire/assets/vehicle_portraits/steel-lynx.webp",
+      "anchorX": 0.5,
+      "anchorY": 0.5,
+      "scaleX": 1,
+      "scaleY": 1,
+      "fit": "contain",
+      "tint": "#ffffff"
+    },
+    "disposition": 0,
+    "displayBars": 0,
+    "lockRotation": false
+  },
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!actors!3e91423944a00b1c"
+}

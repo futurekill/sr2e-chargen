@@ -1,0 +1,47 @@
+{
+  "_id": "a0526c0bd4a182b1",
+  "name": "Bow Accessory Mount",
+  "type": "gear",
+  "img": "modules/sr2e-street-samurai-catalog/assets/item_icons/gear/bow-accessory-mount.webp",
+  "system": {
+    "category": "accessories",
+    "rating": 0,
+    "quantity": 1,
+    "weight": 0.1,
+    "cost": 100,
+    "availability": "2/24 hrs",
+    "legality": "Legal",
+    "equipped": false,
+    "concealability": 0,
+    "weaponAccessory": true,
+    "linkedWeaponId": "",
+    "combatTnMod": 0,
+    "accessoryRecoilComp": 0,
+    "requiresSmartgun": false,
+    "notes": "An adapter that lets a bow carry firearm-style accessories like sights and rangefinders. Concealability −1. Street Index 0.9. SSC. Street Index 0.9 per the core book Sourcebook Updates table, p.280.",
+    "streetIndex": 0.9,
+    "citation": {
+      "book": "ssc",
+      "page": "13"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "folder": null,
+  "sort": 0,
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.1.0",
+    "createdTime": 1781600000000,
+    "modifiedTime": 1781600000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!a0526c0bd4a182b1"
+}

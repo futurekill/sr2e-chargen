@@ -1,0 +1,64 @@
+{
+  "_id": "fc78a2546b6130e3",
+  "name": "Fichetti Security 500a",
+  "type": "weapon",
+  "img": "systems/sr2e/assets/item_icons/weapons/fichetti-security-500a.webp",
+  "system": {
+    "weaponType": "firearm",
+    "skill": "firearms",
+    "damageCode": "6L",
+    "damageType": "physical",
+    "concealability": 6,
+    "reach": 0,
+    "firingModes": {
+      "ss": false,
+      "sa": true,
+      "bf": false,
+      "fa": false
+    },
+    "ammo": {
+      "current": 25,
+      "max": 25,
+      "type": "pistol"
+    },
+    "recoilComp": 0,
+    "ranges": {
+      "short": 5,
+      "medium": 15,
+      "long": 30,
+      "extreme": 50
+    },
+    "strengthMin": 0,
+    "weight": 1.25,
+    "cost": 450,
+    "availability": "3/12 hrs",
+    "legality": "Restricted",
+    "equipped": false,
+    "accessories": [],
+    "notes": "Extended-clip variant of the Security 500. SR2E p.254-255.",
+    "streetIndex": 0.8,
+    "citation": {
+      "book": "sr2",
+      "page": "254–255"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.19.3",
+    "createdTime": 1700000000000,
+    "modifiedTime": 1700000000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "folder": "98405438f908d172",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!fc78a2546b6130e3"
+}

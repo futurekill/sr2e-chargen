@@ -1,0 +1,48 @@
+{
+  "_id": "7c2033e677f20c81",
+  "name": "Ball Gyrojets",
+  "type": "ammo",
+  "img": "modules/sr2e-cyberpirates/assets/item_icons/ammo/ball-gyrojets.webp",
+  "system": {
+    "ammoType": "gyrojet",
+    "quantity": 10,
+    "damageModifier": 0,
+    "armorModifier": 0,
+    "damageType": "",
+    "armorCalc": "standard",
+    "cost": 50,
+    "streetIndex": 2,
+    "notes": "FN-AAL gyrojet clip of 10, 10M. Cyberpirates p.172. Availability 3/36 hrs, weight 1.75 kg, Concealability 8.",
+    "citation": {
+      "book": "cp",
+      "page": "172"
+    }
+  },
+  "effects": [],
+  "flags": {
+    "sr2e-cyberpirates": {
+      "source": {
+        "page": 172,
+        "cell": "FN-AAL Gyrojet Ammunition: Ball",
+        "verified": "300dpi+visual"
+      }
+    }
+  },
+  "folder": null,
+  "sort": 0,
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.121.0",
+    "createdTime": 1793000000000,
+    "modifiedTime": 1793000000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!7c2033e677f20c81"
+}

@@ -1,0 +1,39 @@
+{
+  "_id": "e4b172d1c4f60f09",
+  "name": "Shotgun Slug",
+  "type": "ammo",
+  "img": "systems/sr2e/assets/item_icons/ammo/shotgun-slug.webp",
+  "system": {
+    "ammoType": "slug",
+    "quantity": 10,
+    "damageModifier": 0,
+    "armorModifier": 0,
+    "cost": 15,
+    "notes": "Solid slug — the standard shotgun round. SR2E p.94.",
+    "damageType": "",
+    "armorCalc": "standard",
+    "citation": {
+      "book": "sr2",
+      "page": "94"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.3.7",
+    "createdTime": 1700000000000,
+    "modifiedTime": 1700000000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!e4b172d1c4f60f09"
+}

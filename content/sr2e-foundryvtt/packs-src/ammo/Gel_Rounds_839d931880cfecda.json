@@ -1,0 +1,40 @@
+{
+  "_id": "839d931880cfecda",
+  "name": "Gel Rounds",
+  "type": "ammo",
+  "img": "systems/sr2e/assets/item_icons/ammo/gel-rounds.webp",
+  "system": {
+    "ammoType": "gel",
+    "quantity": 10,
+    "damageModifier": -2,
+    "armorModifier": 0,
+    "cost": 30,
+    "notes": "Power −2; all damage is Stun and Impact Armor applies. Increased knockdown chance (TN = Power). SR2E p.93–94.",
+    "damageType": "stun",
+    "armorCalc": "impact",
+    "streetIndex": 1,
+    "citation": {
+      "book": "sr2",
+      "page": "93–94"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.3.7",
+    "createdTime": 1700000000000,
+    "modifiedTime": 1700000000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!839d931880cfecda"
+}

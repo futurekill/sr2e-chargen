@@ -1,0 +1,64 @@
+{
+  "_id": "7fd3c8e5a36db979",
+  "name": "Colt America L36",
+  "type": "weapon",
+  "img": "systems/sr2e/assets/item_icons/weapons/colt-america-l36.webp",
+  "system": {
+    "weaponType": "firearm",
+    "skill": "firearms",
+    "damageCode": "6L",
+    "damageType": "physical",
+    "concealability": 6,
+    "reach": 0,
+    "firingModes": {
+      "ss": false,
+      "sa": true,
+      "bf": false,
+      "fa": false
+    },
+    "ammo": {
+      "current": 11,
+      "max": 11,
+      "type": "pistol"
+    },
+    "recoilComp": 0,
+    "ranges": {
+      "short": 5,
+      "medium": 15,
+      "long": 30,
+      "extreme": 50
+    },
+    "strengthMin": 0,
+    "weight": 1,
+    "cost": 350,
+    "availability": "3/12 hrs",
+    "legality": "Legal",
+    "equipped": false,
+    "accessories": [],
+    "notes": "SR2E p.230. A slim, lightweight pistol popular with off-duty officers. 11-round clip, SA fire.",
+    "streetIndex": 0.8,
+    "citation": {
+      "book": "sr2",
+      "page": "230"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.3.7",
+    "createdTime": 1700000000000,
+    "modifiedTime": 1700000000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "folder": "98405438f908d172",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!7fd3c8e5a36db979"
+}

@@ -1,0 +1,37 @@
+{
+  "_id": "5053ab3c32d86818",
+  "name": "Jilted Fixer",
+  "type": "contact",
+  "img": "systems/sr2e/assets/contact_portraits/jilted-fixer.webp",
+  "system": {
+    "contactType": "enemy",
+    "archetype": "Fixer",
+    "loyalty": 3,
+    "influence": 5,
+    "description": "",
+    "notes": "A fixer you stiffed or embarrassed — won't dirty their own hands, but the contact network just went cold and the next job smells like a setup. SR Companion (Enemies).",
+    "citation": {
+      "book": "sc",
+      "page": "71"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.12.1",
+    "createdTime": 1700000000000,
+    "modifiedTime": 1700000000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "folder": "4b563c0ab0a84e6d",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!5053ab3c32d86818"
+}

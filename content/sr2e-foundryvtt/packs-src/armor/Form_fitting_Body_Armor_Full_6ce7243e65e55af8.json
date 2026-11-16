@@ -1,0 +1,41 @@
+{
+  "_id": "6ce7243e65e55af8",
+  "name": "Form-fitting Body Armor (Full)",
+  "type": "armor",
+  "img": "systems/sr2e/assets/item_icons/armor/form-fitting-body-armor-full.webp",
+  "system": {
+    "ballistic": 2,
+    "impact": 2,
+    "concealability": 6,
+    "weight": 0,
+    "cost": 750,
+    "availability": "5/48hrs",
+    "legality": "Legal",
+    "equipped": false,
+    "isLayered": true,
+    "notes": "SR2E p.242 gear list. A full-body undersuit of flexible armor material worn under clothing; LAYERS with other worn armor (adds its rating instead of competing for highest).",
+    "citation": {
+      "book": "sr2",
+      "page": "242"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.3.7",
+    "createdTime": 1700000000000,
+    "modifiedTime": 1700000000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!6ce7243e65e55af8"
+}

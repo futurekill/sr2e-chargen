@@ -1,0 +1,38 @@
+{
+  "_id": "e05edec616db7b9f",
+  "name": "Decrypt",
+  "type": "program",
+  "img": "systems/sr2e/assets/item_icons/programs/decrypt.webp",
+  "system": {
+    "category": "other",
+    "rating": 1,
+    "size": 2,
+    "multiplier": 2,
+    "cost": 200,
+    "loaded": false,
+    "notes": "SR2E p.176. Defeats scramble IC, restoring access to data it has encrypted.",
+    "citation": {
+      "book": "sr2",
+      "page": "176"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.8.0",
+    "createdTime": 1700000000000,
+    "modifiedTime": 1700000000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "folder": "f3d8fafd4ca82e4d",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!e05edec616db7b9f"
+}

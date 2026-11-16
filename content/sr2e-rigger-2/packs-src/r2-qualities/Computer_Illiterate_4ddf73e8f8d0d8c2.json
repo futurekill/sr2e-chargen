@@ -1,0 +1,37 @@
+{
+  "_id": "4ddf73e8f8d0d8c2",
+  "name": "Computer Illiterate",
+  "type": "quality",
+  "img": "modules/sr2e-rigger-2/assets/item_icons/quality/computer-illiterate.webp",
+  "system": {
+    "kind": "flaw",
+    "category": "skill",
+    "pointValue": -3,
+    "rule": "computer-illiterate",
+    "source": "Rigger 2 p.15",
+    "notes": "<p>Extreme difficulty with computers and other electronic devices: +1 to the target number of every test that involves a computer or electronic device in any way (riggers and deckers too; a mage reading an electronic hermetic library). The gamemaster may also require Success Tests (Target Number 2 or 3) for everyday tasks such as using an unfamiliar telecom.</p>",
+    "citation": {
+      "book": "r2",
+      "page": "15"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "folder": null,
+  "sort": 0,
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.0.1",
+    "createdTime": 1781600000000,
+    "modifiedTime": 1781600000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!4ddf73e8f8d0d8c2"
+}

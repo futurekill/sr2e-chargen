@@ -1,0 +1,69 @@
+{
+  "_id": "3c38e0942968eca3",
+  "name": "Landrover Model 2046 (Short Wheelbase)",
+  "type": "vehicle",
+  "img": "modules/sr2e-rigger-black-book/assets/vehicle_portraits/landrover-model-2046-short-wheelbase.webp",
+  "system": {
+    "vehicleType": "ground",
+    "skill": "car",
+    "handling": 3,
+    "handlingOffRoad": 3,
+    "speed": 30,
+    "acceleration": 0,
+    "body": 2,
+    "armor": 0,
+    "signature": 2,
+    "pilot": 0,
+    "sensor": 0,
+    "cargo": 25,
+    "load": 0,
+    "seating": "Twin bucket + 4 folding bench",
+    "cost": 35000,
+    "availability": "",
+    "conditionMonitor": {
+      "value": 0,
+      "max": 10
+    },
+    "autonav": 1,
+    "notes": "<p>A general-purpose 4WD in the long Landrover tradition — improved and active suspension make rough, hilly terrain easy going.</p><p><em>Max speed 90 m/CT (cruising 30 used for tests). Multifuel/50 liters; 75 km/liter; off-road speed 25/75. Rigger Black Book p.27.</em></p>",
+    "citation": {
+      "book": "rbb",
+      "page": "27"
+    }
+  },
+  "prototypeToken": {
+    "name": "Landrover Model 2046 (Short Wheelbase)",
+    "displayName": 20,
+    "actorLink": false,
+    "width": 2,
+    "height": 3,
+    "texture": {
+      "src": "modules/sr2e-rigger-black-book/assets/vehicle_portraits/landrover-model-2046-short-wheelbase.webp",
+      "fit": "contain",
+      "scaleX": 1,
+      "scaleY": 1
+    },
+    "lockRotation": false,
+    "disposition": 0,
+    "displayBars": 0
+  },
+  "effects": [],
+  "folder": null,
+  "sort": 0,
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.1.0",
+    "createdTime": 1782200000000,
+    "modifiedTime": 1782200000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!actors!3c38e0942968eca3"
+}

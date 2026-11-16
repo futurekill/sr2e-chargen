@@ -1,0 +1,36 @@
+{
+  "_id": "a82deba930b4ac7e",
+  "name": "Low Pain Tolerance",
+  "type": "quality",
+  "img": "modules/sr2e-shadowrun-companion/assets/item_icons/quality/low-pain-tolerance.webp",
+  "system": {
+    "kind": "flaw",
+    "category": "physical",
+    "pointValue": -4,
+    "source": "Shadowrun Companion",
+    "notes": "Wound modifiers affect you more severely than normal.",
+    "citation": {
+      "book": "sc",
+      "page": "26"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "folder": null,
+  "sort": 0,
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.0.1",
+    "createdTime": 1782000000000,
+    "modifiedTime": 1782000000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!a82deba930b4ac7e"
+}

@@ -1,0 +1,51 @@
+{
+  "_id": "125037392fd4e50d",
+  "name": "Automatic-Medication Refill",
+  "type": "gear",
+  "img": "modules/sr2e-cybertechnology/assets/item_icons/gear/automatic-medication-refill.webp",
+  "system": {
+    "category": "misc",
+    "rating": 1,
+    "quantity": 1,
+    "weight": 0,
+    "cost": 15000,
+    "availability": "NA",
+    "legality": "3P-CC",
+    "equipped": false,
+    "concealability": 0,
+    "streetIndex": 1,
+    "notes": "Implanted in every cybermancy operation; installation costs nothing. Medicine refills 15,000¥ each, every 10 days; if it runs out, the character dies immediately. A sponsoring corp may discount refills 1D6 × 5%, or pay for them. (The sr2e system's optional Cybermancy setting prompts the GM for each refill.) Ruling: The row's stray \"3P-CC\" (an extra column) is its legality; cost 15,000¥/refill, availability/Street Index NA as printed. (Cybertechnology, table p.96, p.80.)",
+    "citation": {
+      "book": "ct",
+      "page": "80"
+    }
+  },
+  "effects": [],
+  "flags": {
+    "sr2e": {
+      "source": {
+        "book": "Cybertechnology",
+        "code": "FASA7119",
+        "page": 96
+      },
+      "rule": "auto-medication-refill"
+    }
+  },
+  "folder": null,
+  "sort": 0,
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.109.0",
+    "createdTime": 1792500000000,
+    "modifiedTime": 1792500000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!125037392fd4e50d"
+}

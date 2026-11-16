@@ -1,0 +1,57 @@
+{
+  "_id": "jxi335p0vqjmy9ff",
+  "name": "Hand Razors",
+  "type": "cyberware",
+  "img": "systems/sr2e/assets/item_icons/cyberware/hand-razors.webp",
+  "system": {
+    "location": "bodyware",
+    "grade": "standard",
+    "essenceCost": 0.1,
+    "rating": 0,
+    "cost": 4500,
+    "availability": "3/72hrs",
+    "legality": "Restricted",
+    "installed": true,
+    "attributeMods": {
+      "body": 0,
+      "quickness": 0,
+      "strength": 0,
+      "charisma": 0,
+      "intelligence": 0,
+      "willpower": 0,
+      "reaction": 0,
+      "initiativeDice": 0
+    },
+    "ratingStats": [],
+    "notes": "SR2E p.246 (table p.261). Fixed finger blades — (Str)L damage. Essence .1, 4,500¥.",
+    "isWeapon": true,
+    "weaponType": "melee",
+    "skill": "armed combat",
+    "damageType": "physical",
+    "reach": 0,
+    "damageCode": "(Str)L",
+    "citation": {
+      "book": "sr2",
+      "page": "261"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.3.44",
+    "createdTime": 1700000000000,
+    "modifiedTime": 1700000000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "folder": "2de86a11c72f9302",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!jxi335p0vqjmy9ff"
+}

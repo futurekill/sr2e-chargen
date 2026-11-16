@@ -1,0 +1,52 @@
+{
+  "_id": "36pf3e9pl2gpu5m5",
+  "name": "Damper",
+  "type": "cyberware",
+  "img": "systems/sr2e/assets/item_icons/cyberware/damper.webp",
+  "system": {
+    "location": "headware",
+    "grade": "standard",
+    "essenceCost": 0.1,
+    "rating": 0,
+    "cost": 3500,
+    "availability": "4/48hrs",
+    "legality": "Legal",
+    "installed": true,
+    "attributeMods": {
+      "body": 0,
+      "quickness": 0,
+      "strength": 0,
+      "charisma": 0,
+      "intelligence": 0,
+      "willpower": 0,
+      "reaction": 0,
+      "initiativeDice": 0
+    },
+    "ratingStats": [],
+    "notes": "SR2E p.245 (table p.260). Cuts dangerous noise levels; protects against sonic attacks. Essence .1, 3,500¥.",
+    "streetIndex": "1.25",
+    "citation": {
+      "book": "sr2",
+      "page": "260"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.3.44",
+    "createdTime": 1700000000000,
+    "modifiedTime": 1700000000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "folder": "b631d1d307bc4634",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!36pf3e9pl2gpu5m5"
+}

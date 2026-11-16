@@ -1,0 +1,40 @@
+{
+  "_id": "9c3ecd993794ca0a",
+  "name": "APDS",
+  "type": "ammo",
+  "img": "systems/sr2e/assets/item_icons/ammo/apds.webp",
+  "system": {
+    "ammoType": "apds",
+    "quantity": 10,
+    "damageModifier": 0,
+    "armorModifier": 0,
+    "cost": 70,
+    "notes": "Armor-piercing discarding sabot: halves the target's Ballistic Armor Rating. SSC p.63.",
+    "damageType": "",
+    "armorCalc": "half_ballistic",
+    "streetIndex": 4,
+    "citation": {
+      "book": "ssc",
+      "page": "63"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.3.7",
+    "createdTime": 1700000000000,
+    "modifiedTime": 1700000000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!9c3ecd993794ca0a"
+}

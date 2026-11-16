@@ -1,0 +1,65 @@
+{
+  "_id": "b8e0ad55b587827b",
+  "name": "Enfield AS-7",
+  "type": "weapon",
+  "img": "systems/sr2e/assets/item_icons/weapons/enfield-as-7.webp",
+  "system": {
+    "weaponType": "firearm",
+    "skill": "firearms",
+    "damageCode": "8S",
+    "damageType": "physical",
+    "concealability": 3,
+    "reach": 0,
+    "firingModes": {
+      "ss": false,
+      "sa": true,
+      "bf": true,
+      "fa": false
+    },
+    "ammo": {
+      "current": 10,
+      "max": 10,
+      "type": "shotgun"
+    },
+    "recoilComp": 0,
+    "ranges": {
+      "short": 10,
+      "medium": 20,
+      "long": 50,
+      "extreme": 100
+    },
+    "strengthMin": 0,
+    "weight": 4,
+    "cost": 1000,
+    "availability": "8/8 days",
+    "legality": "Forbidden",
+    "equipped": false,
+    "accessories": [],
+    "notes": "An assault shotgun — massive close-range firepower. SR2E p.254-255. Can fire shot rounds (spread cone, choke 3; SR2E p.95).",
+    "choke": 3,
+    "streetIndex": 1,
+    "citation": {
+      "book": "sr2",
+      "page": "239"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.19.3",
+    "createdTime": 1700000000000,
+    "modifiedTime": 1700000000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "folder": "5fabbe9e956b1018",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!b8e0ad55b587827b"
+}

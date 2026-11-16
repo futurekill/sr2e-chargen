@@ -1,0 +1,64 @@
+{
+  "_id": "6bc862b27d8ff016",
+  "name": "HK G12A3Z",
+  "type": "weapon",
+  "img": "systems/sr2e/assets/item_icons/weapons/hk-g12a3z.webp",
+  "system": {
+    "weaponType": "firearm",
+    "skill": "firearms",
+    "damageCode": "8M",
+    "damageType": "physical",
+    "concealability": 2,
+    "reach": 0,
+    "firingModes": {
+      "ss": false,
+      "sa": true,
+      "bf": true,
+      "fa": true
+    },
+    "ammo": {
+      "current": 32,
+      "max": 32,
+      "type": "rifle"
+    },
+    "recoilComp": 2,
+    "ranges": {
+      "short": 15,
+      "medium": 40,
+      "long": 100,
+      "extreme": 250
+    },
+    "strengthMin": 0,
+    "weight": 5.25,
+    "cost": 2200,
+    "availability": "8/4 days",
+    "legality": "Restricted",
+    "equipped": false,
+    "accessories": [],
+    "notes": "SR2E p.233. The H&K caseless rifle system. Advanced design with programmable burst mode; ammunition is proprietary.",
+    "streetIndex": 3,
+    "citation": {
+      "book": "sr2",
+      "page": "233"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.3.7",
+    "createdTime": 1700000000000,
+    "modifiedTime": 1700000000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "folder": "f3dfac8b61f358e2",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!6bc862b27d8ff016"
+}

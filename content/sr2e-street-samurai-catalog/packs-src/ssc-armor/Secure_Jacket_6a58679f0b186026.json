@@ -1,0 +1,42 @@
+{
+  "_id": "6a58679f0b186026",
+  "name": "Secure Jacket",
+  "type": "armor",
+  "img": "modules/sr2e-street-samurai-catalog/assets/item_icons/armor/secure-jacket.webp",
+  "system": {
+    "ballistic": 5,
+    "impact": 3,
+    "concealability": 9,
+    "weight": 3,
+    "cost": 850,
+    "availability": "4/36 hrs",
+    "legality": "Legal",
+    "equipped": false,
+    "isLayered": false,
+    "notes": "A heavier armored jacket that still passes as a fashion choice — the runner's everyday coat. Street Index 0.8. SSC.",
+    "streetIndex": 0.8,
+    "citation": {
+      "book": "ssc",
+      "page": "41"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "folder": null,
+  "sort": 0,
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.1.0",
+    "createdTime": 1781600000000,
+    "modifiedTime": 1781600000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!6a58679f0b186026"
+}

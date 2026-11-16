@@ -1,0 +1,65 @@
+{
+  "_id": "f74b7e73167d6dbb",
+  "name": "Defiance Super Shock",
+  "type": "weapon",
+  "img": "systems/sr2e/assets/item_icons/weapons/defiance-super-shock.webp",
+  "system": {
+    "weaponType": "firearm",
+    "skill": "firearms",
+    "damageCode": "10S",
+    "damageType": "stun",
+    "concealability": 4,
+    "reach": 0,
+    "firingModes": {
+      "ss": false,
+      "sa": true,
+      "bf": false,
+      "fa": false
+    },
+    "ammo": {
+      "current": 4,
+      "max": 4,
+      "type": "taser"
+    },
+    "recoilComp": 0,
+    "ranges": {
+      "short": 5,
+      "medium": 10,
+      "long": 12,
+      "extreme": 15
+    },
+    "strengthMin": 0,
+    "weight": 2,
+    "cost": 1000,
+    "availability": "5/24 hrs",
+    "legality": "Legal",
+    "equipped": false,
+    "accessories": [],
+    "notes": "A taser — delivers Stun; target resists with Body. SR2E p.254-255. Can fire shot rounds (spread cone, choke 3; SR2E p.95).",
+    "choke": 3,
+    "streetIndex": 1,
+    "citation": {
+      "book": "sr2",
+      "page": "239"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.19.3",
+    "createdTime": 1700000000000,
+    "modifiedTime": 1700000000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "folder": "a6839df7cd4a9019",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!f74b7e73167d6dbb"
+}

@@ -1,0 +1,36 @@
+{
+  "_id": "c23d6fa8d432a5cb",
+  "name": "Oblivious",
+  "type": "quality",
+  "img": "modules/sr2e-shadowrun-companion/assets/item_icons/quality/oblivious.webp",
+  "system": {
+    "kind": "flaw",
+    "category": "mental",
+    "pointValue": -2,
+    "source": "Shadowrun Companion",
+    "notes": "Penalty to Perception and general awareness.",
+    "citation": {
+      "book": "sc",
+      "page": "29"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "folder": null,
+  "sort": 0,
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.0.1",
+    "createdTime": 1782000000000,
+    "modifiedTime": 1782000000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!c23d6fa8d432a5cb"
+}

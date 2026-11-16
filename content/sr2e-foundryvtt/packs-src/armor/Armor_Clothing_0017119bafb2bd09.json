@@ -1,0 +1,42 @@
+{
+  "_id": "0017119bafb2bd09",
+  "name": "Armor Clothing",
+  "type": "armor",
+  "img": "systems/sr2e/assets/item_icons/armor/armor-clothing.webp",
+  "system": {
+    "ballistic": 3,
+    "impact": 0,
+    "concealability": 10,
+    "weight": 0,
+    "cost": 500,
+    "availability": "2/36 hrs",
+    "legality": "Legal",
+    "equipped": false,
+    "isLayered": false,
+    "notes": "SR2E p.242. The prime choice for an everyday stroll on the streets. Fashion-forward KevlarTM derivatives—stylish and protective.",
+    "streetIndex": 1,
+    "citation": {
+      "book": "sr2",
+      "page": "242"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.3.7",
+    "createdTime": 1700000000000,
+    "modifiedTime": 1700000000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!0017119bafb2bd09"
+}

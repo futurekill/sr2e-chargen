@@ -1,0 +1,36 @@
+{
+  "_id": "cd2f9429621f1d1e",
+  "name": "Combat Paralysis",
+  "type": "quality",
+  "img": "modules/sr2e-shadowrun-companion/assets/item_icons/quality/combat-paralysis.webp",
+  "system": {
+    "kind": "flaw",
+    "category": "mental",
+    "pointValue": -4,
+    "source": "Shadowrun Companion",
+    "notes": "You freeze when combat starts — penalty to initiative and your first action.",
+    "citation": {
+      "book": "sc",
+      "page": "28"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "folder": null,
+  "sort": 0,
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.0.1",
+    "createdTime": 1782000000000,
+    "modifiedTime": 1782000000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!cd2f9429621f1d1e"
+}

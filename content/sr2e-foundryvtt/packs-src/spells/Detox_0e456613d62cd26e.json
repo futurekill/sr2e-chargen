@@ -1,0 +1,42 @@
+{
+  "_id": "0e456613d62cd26e",
+  "name": "Detox",
+  "type": "spell",
+  "img": "systems/sr2e/assets/item_icons/spells/detox.webp",
+  "system": {
+    "category": "health",
+    "type": "mana",
+    "range": "touch",
+    "duration": "instant",
+    "force": 1,
+    "drainCode": "+0(L)",
+    "target": "",
+    "damageCode": "",
+    "isAreaEffect": false,
+    "isVoluntary": false,
+    "notes": "SR2E p.184. Removes toxins from the body.",
+    "citation": {
+      "book": "sr2",
+      "page": "184"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.3.7",
+    "createdTime": 1700000000000,
+    "modifiedTime": 1700000000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "folder": "351afa1b9f352545",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!0e456613d62cd26e"
+}

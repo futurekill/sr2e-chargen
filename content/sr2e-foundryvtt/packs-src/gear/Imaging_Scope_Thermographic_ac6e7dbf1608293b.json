@@ -1,0 +1,42 @@
+{
+  "_id": "ac6e7dbf1608293b",
+  "name": "Imaging Scope (Thermographic)",
+  "type": "gear",
+  "img": "systems/sr2e/assets/item_icons/gear/imaging-scope-thermographic.webp",
+  "system": {
+    "category": "accessories",
+    "rating": 0,
+    "quantity": 1,
+    "weight": 0.25,
+    "cost": 1500,
+    "availability": "3/36 hrs",
+    "legality": "Legal",
+    "equipped": false,
+    "concealability": 10,
+    "notes": "SR2E p.240. Top-mounted thermographic imaging: counters darkness/smoke visibility modifiers at the GM's discretion. May NOT be used with smartlink systems. −2 Concealability; 1 Complex Action to install/remove.",
+    "weaponAccessory": true,
+    "citation": {
+      "book": "sr2",
+      "page": "240"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.26.0",
+    "createdTime": 1700000000000,
+    "modifiedTime": 1700000000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "folder": "e11d3232c7db0d25",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!ac6e7dbf1608293b"
+}

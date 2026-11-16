@@ -1,0 +1,63 @@
+{
+  "_id": "6a99fddf28c79d62",
+  "name": "Mossberg CMDT",
+  "type": "weapon",
+  "img": "systems/sr2e/assets/item_icons/weapons/mossberg-cmdt.webp",
+  "system": {
+    "weaponType": "firearm",
+    "skill": "firearms",
+    "damageCode": "9S",
+    "damageType": "physical",
+    "concealability": 2,
+    "reach": 0,
+    "firingModes": {
+      "ss": false,
+      "sa": true,
+      "bf": true,
+      "fa": false
+    },
+    "ammo": {
+      "current": 8,
+      "max": 8,
+      "type": "shell"
+    },
+    "recoilComp": 0,
+    "ranges": {
+      "short": 10,
+      "medium": 20,
+      "long": 50,
+      "extreme": 100
+    },
+    "strengthMin": 0,
+    "weight": 4.25,
+    "cost": 1400,
+    "availability": "8/8 days",
+    "legality": "Legal",
+    "equipped": false,
+    "accessories": [],
+    "notes": "SR2E p.233. Compact military-spec shotgun favored by close-quarters units. Durable and hard-hitting.",
+    "citation": {
+      "book": "sr2",
+      "page": "233"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.3.7",
+    "createdTime": 1700000000000,
+    "modifiedTime": 1700000000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "folder": "5fabbe9e956b1018",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!6a99fddf28c79d62"
+}

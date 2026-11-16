@@ -1,0 +1,41 @@
+{
+  "_id": "11519515c88e8801",
+  "name": "Spell Focus",
+  "type": "focus",
+  "img": "systems/sr2e/assets/item_icons/foci/spell-focus.webp",
+  "system": {
+    "focusType": "spell",
+    "force": 1,
+    "bondingCost": 1,
+    "bonded": false,
+    "active": false,
+    "cost": 10000,
+    "notes": "SR2E p.138, p.164. Modelled as a SPECIFIC spell focus: bonding costs 1 x Force in Karma and it aids one named spell. The broader Spell CATEGORY focus bonds at 3 x Force and ships in the sr2e-grimoire module. Force 1.",
+    "costPerForce": 45000,
+    "streetIndex": 2,
+    "availability": "4/48 hrs",
+    "citation": {
+      "book": "sr2",
+      "page": "137"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.3.7",
+    "createdTime": 1700000000000,
+    "modifiedTime": 1700000000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!11519515c88e8801"
+}

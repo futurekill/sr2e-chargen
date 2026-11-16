@@ -1,0 +1,42 @@
+{
+  "_id": "3b83fc643a63ba98",
+  "name": "Form-Fitting Body Armor (Level 1)",
+  "type": "armor",
+  "img": "modules/sr2e-street-samurai-catalog/assets/item_icons/armor/form-fitting-body-armor-level-1.webp",
+  "system": {
+    "ballistic": 2,
+    "impact": 0,
+    "concealability": 99,
+    "weight": 0.75,
+    "cost": 150,
+    "availability": "3/48 hrs",
+    "legality": "Legal",
+    "equipped": false,
+    "isLayered": true,
+    "notes": "A skin-tight armor layer worn under clothing or other armor, adding protection without the bulk. Layers with other armor. Street Index 1. SSC.",
+    "streetIndex": 1,
+    "citation": {
+      "book": "ssc",
+      "page": "40"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "folder": null,
+  "sort": 0,
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.1.0",
+    "createdTime": 1781600000000,
+    "modifiedTime": 1781600000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!3b83fc643a63ba98"
+}

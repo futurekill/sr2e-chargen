@@ -1,0 +1,65 @@
+{
+  "_id": "0dfc312fcd624161",
+  "name": "Beretta 200ST",
+  "type": "weapon",
+  "img": "modules/sr2e-street-samurai-catalog/assets/item_icons/weapon/beretta-200st.webp",
+  "system": {
+    "weaponType": "firearm",
+    "skill": "firearms",
+    "damageCode": "6L",
+    "damageType": "physical",
+    "concealability": 4,
+    "reach": 0,
+    "firingModes": {
+      "ss": false,
+      "sa": true,
+      "bf": true,
+      "fa": false
+    },
+    "ammo": {
+      "current": 26,
+      "max": 26,
+      "type": "pistol"
+    },
+    "recoilComp": 0,
+    "smartgunCompatible": false,
+    "ranges": {
+      "short": 5,
+      "medium": 15,
+      "long": 30,
+      "extreme": 50
+    },
+    "strengthMin": 0,
+    "weight": 2,
+    "cost": 750,
+    "availability": "5/24 hrs",
+    "legality": "Restricted",
+    "streetIndex": 1.5,
+    "equipped": false,
+    "accessories": [],
+    "notes": "A light pistol with a hidden trick: it can squeeze off one burst per Complex Action despite its size. SSC.",
+    "citation": {
+      "book": "ssc",
+      "page": "19"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "folder": null,
+  "sort": 0,
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.1.0",
+    "createdTime": 1781600000000,
+    "modifiedTime": 1781600000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!0dfc312fcd624161"
+}

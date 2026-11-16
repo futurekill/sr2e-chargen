@@ -1,0 +1,52 @@
+{
+  "_id": "3d89febv0ted2kon",
+  "name": "Cyberear Replacement",
+  "type": "cyberware",
+  "img": "systems/sr2e/assets/item_icons/cyberware/cyberear-replacement.webp",
+  "system": {
+    "location": "headware",
+    "grade": "standard",
+    "essenceCost": 0.3,
+    "rating": 0,
+    "cost": 4000,
+    "availability": "2/24hrs",
+    "legality": "Legal",
+    "installed": true,
+    "attributeMods": {
+      "body": 0,
+      "quickness": 0,
+      "strength": 0,
+      "charisma": 0,
+      "intelligence": 0,
+      "willpower": 0,
+      "reaction": 0,
+      "initiativeDice": 0
+    },
+    "ratingStats": [],
+    "notes": "SR2E p.245 (table p.260). Full cyberear replacement. Essence .3, 4,000¥.",
+    "streetIndex": "0.75",
+    "citation": {
+      "book": "sr2",
+      "page": "260"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.3.44",
+    "createdTime": 1700000000000,
+    "modifiedTime": 1700000000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "folder": "b631d1d307bc4634",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!3d89febv0ted2kon"
+}

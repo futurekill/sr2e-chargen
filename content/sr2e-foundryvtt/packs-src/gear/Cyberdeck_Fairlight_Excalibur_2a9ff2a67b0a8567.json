@@ -1,0 +1,51 @@
+{
+  "_id": "2a9ff2a67b0a8567",
+  "name": "Cyberdeck (Fairlight Excalibur)",
+  "type": "gear",
+  "img": "systems/sr2e/assets/item_icons/gear/cyberdeck-fairlight-excalibur.webp",
+  "system": {
+    "category": "cyberdeck",
+    "rating": 0,
+    "quantity": 1,
+    "weight": 0,
+    "cost": 150000,
+    "availability": "Always",
+    "legality": "Legal",
+    "equipped": false,
+    "concealability": 10,
+    "notes": "SR2E p.262. The pinnacle of civilian deck design. MPCP 12, 500/1000/100/50 stats. Massively expensive but unmatched.",
+    "deck": {
+      "active": false,
+      "hardening": 0,
+      "response": 0,
+      "mpcp": 12,
+      "activeMemory": 500,
+      "storageMemory": 1000,
+      "ioSpeed": 100,
+      "loadSpeed": 50
+    },
+    "citation": {
+      "book": "sr2",
+      "page": "262"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.3.7",
+    "createdTime": 1700000000000,
+    "modifiedTime": 1700000000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "folder": "d0bc5190d943d28f",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!2a9ff2a67b0a8567"
+}

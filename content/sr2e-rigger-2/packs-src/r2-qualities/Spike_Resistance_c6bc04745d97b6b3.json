@@ -1,0 +1,37 @@
+{
+  "_id": "c6bc04745d97b6b3",
+  "name": "Spike Resistance",
+  "type": "quality",
+  "img": "modules/sr2e-rigger-2/assets/item_icons/quality/spike-resistance.webp",
+  "system": {
+    "kind": "edge",
+    "category": "mental",
+    "pointValue": 2,
+    "rule": "spike-resistance",
+    "source": "Rigger 2 p.15",
+    "notes": "<p>Value 2 or 4. When resisting high simsense spikes and harmful ASIST (black IC, rigger dump shock), effective Willpower +1 for every 2 points of Spike Resistance.</p>",
+    "citation": {
+      "book": "r2",
+      "page": "15"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "folder": null,
+  "sort": 0,
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.0.1",
+    "createdTime": 1781600000000,
+    "modifiedTime": 1781600000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!c6bc04745d97b6b3"
+}

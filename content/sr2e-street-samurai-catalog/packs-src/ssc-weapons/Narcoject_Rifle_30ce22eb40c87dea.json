@@ -1,0 +1,65 @@
+{
+  "_id": "30ce22eb40c87dea",
+  "name": "Narcoject Rifle",
+  "type": "weapon",
+  "img": "modules/sr2e-street-samurai-catalog/assets/item_icons/weapon/narcoject-rifle.webp",
+  "system": {
+    "weaponType": "firearm",
+    "skill": "firearms",
+    "damageCode": "Special",
+    "damageType": "physical",
+    "concealability": 4,
+    "reach": 0,
+    "firingModes": {
+      "ss": false,
+      "sa": true,
+      "bf": false,
+      "fa": false
+    },
+    "ammo": {
+      "current": 10,
+      "max": 10,
+      "type": "dart"
+    },
+    "recoilComp": 0,
+    "smartgunCompatible": false,
+    "ranges": {
+      "short": 10,
+      "medium": 20,
+      "long": 50,
+      "extreme": 100
+    },
+    "strengthMin": 0,
+    "weight": 3.25,
+    "cost": 1700,
+    "availability": "8/2 days",
+    "legality": "Restricted",
+    "streetIndex": 2,
+    "equipped": false,
+    "accessories": [],
+    "notes": "The long-range narcoject dart rifle — quiet, non-lethal at the GM's discretion, and dialed to the loaded toxin. SSC.",
+    "citation": {
+      "book": "ssc",
+      "page": "62"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "folder": null,
+  "sort": 0,
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.1.0",
+    "createdTime": 1781600000000,
+    "modifiedTime": 1781600000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!30ce22eb40c87dea"
+}

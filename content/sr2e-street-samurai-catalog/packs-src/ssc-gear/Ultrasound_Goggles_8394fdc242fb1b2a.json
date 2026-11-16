@@ -1,0 +1,47 @@
+{
+  "_id": "8394fdc242fb1b2a",
+  "name": "Ultrasound Goggles",
+  "type": "gear",
+  "img": "modules/sr2e-street-samurai-catalog/assets/item_icons/gear/ultrasound-goggles.webp",
+  "system": {
+    "category": "electronics",
+    "rating": 0,
+    "quantity": 1,
+    "weight": 0,
+    "cost": 1100,
+    "availability": "3/36 hrs",
+    "legality": "Restricted",
+    "equipped": false,
+    "concealability": 0,
+    "weaponAccessory": false,
+    "linkedWeaponId": "",
+    "combatTnMod": 0,
+    "accessoryRecoilComp": 0,
+    "requiresSmartgun": false,
+    "notes": "Goggles that 'see' by ultrasound, cutting straight through smoke and pitch dark within range. Street Index 1. SSC. Street Index 1 per the core book Sourcebook Updates table, p.280.",
+    "streetIndex": 1,
+    "citation": {
+      "book": "sr2",
+      "page": "280"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "folder": null,
+  "sort": 0,
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.1.0",
+    "createdTime": 1781600000000,
+    "modifiedTime": 1781600000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!8394fdc242fb1b2a"
+}

@@ -1,0 +1,64 @@
+{
+  "_id": "ee9947f739c2cac6",
+  "name": "Generic HMG",
+  "type": "weapon",
+  "img": "systems/sr2e/assets/item_icons/weapons/generic-hmg.webp",
+  "system": {
+    "weaponType": "heavy",
+    "skill": "gunnery",
+    "damageCode": "10S",
+    "damageType": "physical",
+    "concealability": 99,
+    "reach": 0,
+    "firingModes": {
+      "ss": false,
+      "sa": false,
+      "bf": false,
+      "fa": true
+    },
+    "ammo": {
+      "current": 40,
+      "max": 40,
+      "type": "belt"
+    },
+    "recoilComp": 0,
+    "ranges": {
+      "short": 40,
+      "medium": 150,
+      "long": 400,
+      "extreme": 800
+    },
+    "strengthMin": 0,
+    "weight": 15,
+    "cost": 4000,
+    "availability": "18/18 days",
+    "legality": "Forbidden",
+    "equipped": false,
+    "accessories": [],
+    "notes": "Heavy machine gun. SR2E p.255.",
+    "streetIndex": 2,
+    "citation": {
+      "book": "sr2",
+      "page": "255"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.19.4",
+    "createdTime": 1700000000000,
+    "modifiedTime": 1700000000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "folder": "c52e1b604829db40",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!ee9947f739c2cac6"
+}

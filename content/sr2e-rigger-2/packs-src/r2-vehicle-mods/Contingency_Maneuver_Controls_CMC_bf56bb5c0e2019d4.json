@@ -1,0 +1,96 @@
+{
+  "_id": "bf56bb5c0e2019d4",
+  "name": "Contingency Maneuver Controls (CMC)",
+  "type": "vehicle_mod",
+  "img": "icons/svg/upgrade.svg",
+  "system": {
+    "modType": "control",
+    "rating": 1,
+    "cost": 2500,
+    "designPoints": 0,
+    "dpPerLevel": 0,
+    "dpTable": [
+      35,
+      70,
+      105,
+      300,
+      375,
+      450,
+      1050,
+      1200,
+      1350
+    ],
+    "cfConsumed": 0,
+    "cfPerLevel": 0,
+    "cfTable": [],
+    "loadReduction": 25,
+    "loadPerLevel": 0,
+    "loadTable": [],
+    "dpFormula": "",
+    "cfFormula": "",
+    "loadFormula": "",
+    "designable": true,
+    "designNuyen": false,
+    "mountPoints": 0,
+    "modKey": "cmc",
+    "maxRating": "9",
+    "restrictions": [],
+    "effects": {},
+    "stack": "levels",
+    "custom": {
+      "customizable": true,
+      "formulas": {
+        "partsCost": "2500 x (min(max(R1, 0), 3) - min(max(R0, 0), 3)) + 5000 x (min(max(R1, 3), 6) - min(max(R0, 3), 6)) + 10000 x (max(R1, 6) - max(R0, 6))",
+        "baseTime": "80",
+        "tn": "10 - H",
+        "cf": "2",
+        "load": "30"
+      },
+      "market": [
+        {
+          "availability": "6/14 days",
+          "streetIndex": 2
+        }
+      ],
+      "max": {
+        "value": "9"
+      },
+      "procedure": "test",
+      "fixedHours": 0,
+      "skills": [
+        "vehicleBR"
+      ],
+      "combine": "lowest",
+      "equipment": "Vehicle facility",
+      "pageCust": "p.124",
+      "state": "",
+      "choice": {}
+    },
+    "components": {},
+    "installed": false,
+    "notes": "Redundant wiring, circuit breakers, and backup systems that let a vehicle ignore some crash damage up to the CMC Rating (deadly-level damage still applies normally). Parts cost = 2,500¥/rating (R1–3), 5,000¥/rating (R4–6); max Rating 9; Avail 6/14 days; Street Index 2; Base Time 60 hrs; load −30 kg. Rigger 2 p.124. (Design specifications p.124.)",
+    "citation": {
+      "book": "r2",
+      "page": "124"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "folder": null,
+  "sort": 0,
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.0.1",
+    "createdTime": 1781600000000,
+    "modifiedTime": 1781600000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!bf56bb5c0e2019d4"
+}

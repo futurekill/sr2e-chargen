@@ -1,0 +1,506 @@
+{
+  "id": "sr2e",
+  "title": "Shadowrun 2nd Edition",
+  "description": "A comprehensive game system for Shadowrun Second Edition (FASA 7901) built for Foundry Virtual Tabletop.",
+  "version": "0.160.0",
+  "url": "https://github.com/futurekill/sr2e-foundryvtt",
+  "manifest": "https://github.com/futurekill/sr2e-foundryvtt/releases/latest/download/system.json",
+  "bugs": "https://github.com/futurekill/sr2e-foundryvtt/issues",
+  "changelog": "https://github.com/futurekill/sr2e-foundryvtt/releases/tag/v0.9.4",
+  "authors": [
+    {
+      "name": "James Candalino",
+      "email": "jcandali@gmail.com",
+      "url": "https://github.com/futurekill",
+      "flags": {}
+    }
+  ],
+  "compatibility": {
+    "minimum": "13",
+    "verified": "14"
+  },
+  "esmodules": [
+    "module/sr2e.mjs"
+  ],
+  "styles": [
+    {
+      "src": "css/sr2e-main.css"
+    },
+    {
+      "src": "css/sr2e-companion.css"
+    }
+  ],
+  "languages": [
+    {
+      "lang": "en",
+      "name": "English",
+      "path": "lang/en.json",
+      "flags": {}
+    }
+  ],
+  "documentTypes": {
+    "Actor": {
+      "character": {
+        "htmlFields": [
+          "biography",
+          "notes"
+        ]
+      },
+      "npc": {
+        "htmlFields": [
+          "biography"
+        ]
+      },
+      "vehicle": {
+        "htmlFields": [
+          "notes"
+        ]
+      },
+      "spirit": {
+        "htmlFields": [
+          "notes"
+        ]
+      },
+      "ic": {
+        "htmlFields": [
+          "notes"
+        ]
+      },
+      "host": {
+        "htmlFields": [
+          "notes"
+        ]
+      },
+      "frame": {
+        "htmlFields": [
+          "notes"
+        ]
+      }
+    },
+    "Item": {
+      "skill": {},
+      "weapon": {},
+      "armor": {},
+      "spell": {},
+      "cyberware": {},
+      "bioware": {},
+      "gear": {},
+      "program": {},
+      "adept_power": {
+        "htmlFields": [
+          "description"
+        ]
+      },
+      "contact": {
+        "htmlFields": [
+          "description"
+        ]
+      },
+      "lifestyle": {
+        "htmlFields": [
+          "description"
+        ]
+      },
+      "ammo": {},
+      "focus": {},
+      "vehicle_mod": {},
+      "race": {
+        "htmlFields": [
+          "description"
+        ]
+      },
+      "tradition": {
+        "htmlFields": [
+          "description"
+        ]
+      },
+      "quality": {
+        "htmlFields": [
+          "notes"
+        ]
+      }
+    },
+    "RegionBehavior": {
+      "jackpoint": {},
+      "fatBacteria": {}
+    }
+  },
+  "grid": {
+    "units": "m"
+  },
+  "primaryTokenAttribute": "conditionMonitor.physical",
+  "secondaryTokenAttribute": "conditionMonitor.stun",
+  "initiative": "1d6",
+  "packs": [
+    {
+      "name": "skills",
+      "label": "SR2E Skills",
+      "path": "packs/skills",
+      "type": "Item",
+      "system": "sr2e",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER"
+      },
+      "flags": {}
+    },
+    {
+      "name": "contacts",
+      "label": "SR2E Contacts",
+      "path": "packs/contacts",
+      "type": "Item",
+      "system": "sr2e",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER"
+      },
+      "flags": {}
+    },
+    {
+      "name": "contact-npcs",
+      "label": "SR2E Contacts (NPCs)",
+      "path": "packs/contact-npcs",
+      "type": "Actor",
+      "system": "sr2e",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER"
+      },
+      "flags": {}
+    },
+    {
+      "name": "lifestyles",
+      "label": "SR2E Lifestyles",
+      "path": "packs/lifestyles",
+      "type": "Item",
+      "system": "sr2e",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER"
+      },
+      "flags": {}
+    },
+    {
+      "name": "weapons",
+      "label": "SR2E Weapons",
+      "path": "packs/weapons",
+      "type": "Item",
+      "system": "sr2e",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER"
+      },
+      "flags": {}
+    },
+    {
+      "name": "armor",
+      "label": "SR2E Armor",
+      "path": "packs/armor",
+      "type": "Item",
+      "system": "sr2e",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER"
+      },
+      "flags": {}
+    },
+    {
+      "name": "ammo",
+      "label": "SR2E Ammunition",
+      "path": "packs/ammo",
+      "type": "Item",
+      "system": "sr2e",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER"
+      },
+      "flags": {}
+    },
+    {
+      "name": "cyberware",
+      "label": "SR2E Cyberware",
+      "path": "packs/cyberware",
+      "type": "Item",
+      "system": "sr2e",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER"
+      },
+      "flags": {}
+    },
+    {
+      "name": "spells",
+      "label": "SR2E Spells",
+      "path": "packs/spells",
+      "type": "Item",
+      "system": "sr2e",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER"
+      },
+      "flags": {}
+    },
+    {
+      "name": "foci",
+      "label": "SR2E Magical Foci",
+      "path": "packs/foci",
+      "type": "Item",
+      "system": "sr2e",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER"
+      },
+      "flags": {}
+    },
+    {
+      "name": "adept-powers",
+      "label": "SR2E Adept Powers",
+      "path": "packs/adept-powers",
+      "type": "Item",
+      "system": "sr2e",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER"
+      },
+      "flags": {}
+    },
+    {
+      "name": "programs",
+      "label": "SR2E Matrix Programs",
+      "path": "packs/programs",
+      "type": "Item",
+      "system": "sr2e",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER"
+      },
+      "flags": {}
+    },
+    {
+      "name": "gear",
+      "label": "SR2E Equipment",
+      "path": "packs/gear",
+      "type": "Item",
+      "system": "sr2e",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER"
+      },
+      "flags": {}
+    },
+    {
+      "name": "roll-tables",
+      "label": "SR2E Roll Tables",
+      "path": "packs/roll-tables",
+      "type": "RollTable",
+      "system": "sr2e",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER"
+      },
+      "flags": {}
+    },
+    {
+      "name": "races",
+      "label": "SR2E Metatypes",
+      "path": "packs/races",
+      "type": "Item",
+      "system": "sr2e",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER"
+      },
+      "flags": {}
+    },
+    {
+      "name": "traditions",
+      "label": "SR2E Traditions",
+      "path": "packs/traditions",
+      "type": "Item",
+      "system": "sr2e",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER"
+      },
+      "flags": {}
+    },
+    {
+      "name": "critters",
+      "label": "SR2E Critters",
+      "path": "packs/critters",
+      "type": "Actor",
+      "system": "sr2e",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER"
+      },
+      "flags": {}
+    },
+    {
+      "name": "runners",
+      "label": "SR2E Sample Runners",
+      "path": "packs/runners",
+      "type": "Actor",
+      "system": "sr2e",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER"
+      },
+      "flags": {}
+    },
+    {
+      "name": "vehicles",
+      "label": "SR2E Vehicles & Drones",
+      "path": "packs/vehicles",
+      "type": "Actor",
+      "system": "sr2e",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER"
+      },
+      "flags": {}
+    },
+    {
+      "name": "ic",
+      "label": "SR2E Intrusion Countermeasures",
+      "path": "packs/ic",
+      "type": "Actor",
+      "system": "sr2e",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER"
+      },
+      "flags": {}
+    },
+    {
+      "name": "guides",
+      "label": "SR2E Player Guides",
+      "path": "packs/guides",
+      "type": "JournalEntry",
+      "system": "sr2e",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER"
+      },
+      "flags": {}
+    },
+    {
+      "name": "macros",
+      "label": "SR2E Macros",
+      "path": "packs/macros",
+      "type": "Macro",
+      "system": "sr2e",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER"
+      },
+      "flags": {}
+    }
+  ],
+  "packFolders": [
+    {
+      "name": "Core Rules",
+      "sorting": "m",
+      "folders": [
+        {
+          "name": "Characters",
+          "sorting": "a",
+          "packs": [
+            "races",
+            "skills",
+            "contacts",
+            "lifestyles"
+          ],
+          "color": null,
+          "folders": []
+        },
+        {
+          "name": "Combat",
+          "sorting": "a",
+          "packs": [
+            "weapons",
+            "armor",
+            "ammo"
+          ],
+          "color": null,
+          "folders": []
+        },
+        {
+          "name": "Magic",
+          "sorting": "a",
+          "packs": [
+            "traditions",
+            "spells",
+            "foci",
+            "adept-powers"
+          ],
+          "color": null,
+          "folders": []
+        },
+        {
+          "name": "Augmentations",
+          "sorting": "a",
+          "packs": [
+            "cyberware"
+          ],
+          "color": null,
+          "folders": []
+        },
+        {
+          "name": "Matrix",
+          "sorting": "a",
+          "packs": [
+            "programs"
+          ],
+          "color": null,
+          "folders": []
+        },
+        {
+          "name": "Equipment",
+          "sorting": "a",
+          "packs": [
+            "gear"
+          ],
+          "color": null,
+          "folders": []
+        },
+        {
+          "name": "Reference",
+          "sorting": "a",
+          "packs": [
+            "roll-tables",
+            "guides"
+          ],
+          "color": null,
+          "folders": []
+        },
+        {
+          "name": "Actors",
+          "sorting": "a",
+          "packs": [
+            "contact-npcs",
+            "critters",
+            "runners",
+            "vehicles",
+            "ic"
+          ],
+          "color": null,
+          "folders": []
+        }
+      ],
+      "color": null,
+      "packs": []
+    }
+  ],
+  "background": "systems/sr2e/assets/sr2e-logo.webp",
+  "media": [
+    {
+      "type": "icon",
+      "url": "systems/sr2e/assets/sr2e-logo.webp",
+      "loop": false,
+      "flags": {}
+    }
+  ],
+  "download": "https://github.com/futurekill/sr2e-foundryvtt/releases/download/v0.37.0/sr2e.zip",
+  "flags": {}
+}

@@ -1,0 +1,42 @@
+{
+  "_id": "5a23d7cfe385a3c9",
+  "name": "Synthetic Leather",
+  "type": "armor",
+  "img": "systems/sr2e/assets/item_icons/armor/synthetic-leather.webp",
+  "system": {
+    "ballistic": 0,
+    "impact": 1,
+    "concealability": 0,
+    "weight": 0,
+    "cost": 250,
+    "availability": "Always",
+    "legality": "Legal",
+    "equipped": false,
+    "isLayered": false,
+    "notes": "Synth-leather clothing — light impact protection. SR2E p.257.",
+    "streetIndex": 0.6,
+    "citation": {
+      "book": "sr2",
+      "page": "257"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.19.5",
+    "createdTime": 1700000000000,
+    "modifiedTime": 1700000000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!5a23d7cfe385a3c9"
+}

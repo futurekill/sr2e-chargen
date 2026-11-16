@@ -1,0 +1,64 @@
+{
+  "_id": "67562b7612a73104",
+  "name": "Ranger Arms SM-3",
+  "type": "weapon",
+  "img": "systems/sr2e/assets/item_icons/weapons/ranger-arms-sm-3.webp",
+  "system": {
+    "weaponType": "firearm",
+    "skill": "firearms",
+    "damageCode": "14S",
+    "damageType": "physical",
+    "concealability": 99,
+    "reach": 0,
+    "firingModes": {
+      "ss": false,
+      "sa": true,
+      "bf": false,
+      "fa": false
+    },
+    "ammo": {
+      "current": 6,
+      "max": 6,
+      "type": "rifle"
+    },
+    "recoilComp": 0,
+    "ranges": {
+      "short": 40,
+      "medium": 80,
+      "long": 200,
+      "extreme": 400
+    },
+    "strengthMin": 0,
+    "weight": 4,
+    "cost": 4000,
+    "availability": "12/7 days",
+    "legality": "Restricted",
+    "equipped": false,
+    "accessories": [],
+    "notes": "SR2E p.233. A premier sniper rifle. Integral barrel-mount gas-vent comp and top-mount scope (Rating 3). Disassembles to briefcase size. Fragile in sustained combat use.",
+    "streetIndex": 4,
+    "citation": {
+      "book": "sr2",
+      "page": "233"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.3.7",
+    "createdTime": 1700000000000,
+    "modifiedTime": 1700000000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "folder": "6d8b9811f947bd91",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!67562b7612a73104"
+}

@@ -1,0 +1,51 @@
+{
+  "_id": "p0nuuohinl6yazbw",
+  "name": "Ear Modification",
+  "type": "cyberware",
+  "img": "systems/sr2e/assets/item_icons/cyberware/ear-modification.webp",
+  "system": {
+    "location": "headware",
+    "grade": "standard",
+    "essenceCost": 0.1,
+    "rating": 0,
+    "cost": 2000,
+    "availability": "2/24hrs",
+    "legality": "Legal",
+    "installed": true,
+    "attributeMods": {
+      "body": 0,
+      "quickness": 0,
+      "strength": 0,
+      "charisma": 0,
+      "intelligence": 0,
+      "willpower": 0,
+      "reaction": 0,
+      "initiativeDice": 0
+    },
+    "ratingStats": [],
+    "notes": "SR2E p.245 (table p.260). Ear modification mount for hearing options. Essence .1, 2,000¥.",
+    "citation": {
+      "book": "sr2",
+      "page": "260"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.3.44",
+    "createdTime": 1700000000000,
+    "modifiedTime": 1700000000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "folder": "b631d1d307bc4634",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!p0nuuohinl6yazbw"
+}

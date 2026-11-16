@@ -1,0 +1,42 @@
+{
+  "_id": "efc77e6b7f2799e7",
+  "name": "Micro-Transceiver",
+  "type": "gear",
+  "img": "systems/sr2e/assets/item_icons/gear/micro-transceiver.webp",
+  "system": {
+    "category": "electronics",
+    "rating": 0,
+    "quantity": 1,
+    "weight": 0,
+    "cost": 2500,
+    "availability": "6/48 hrs",
+    "legality": "Legal",
+    "equipped": false,
+    "concealability": 10,
+    "notes": "SR2E p.244. A barely-visible transceiver hidden in clothing, jewelry, or equipment. Range limited; pairs with boom or earplug mics.",
+    "streetIndex": 2,
+    "citation": {
+      "book": "sr2",
+      "page": "244"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.3.7",
+    "createdTime": 1700000000000,
+    "modifiedTime": 1700000000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "folder": "0034429019c1b6f1",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!efc77e6b7f2799e7"
+}

@@ -1,0 +1,148 @@
+{
+  "id": "sr2e-cyberpirates",
+  "title": "Shadowrun 2E: Cyberpirates!",
+  "description": "Edges & Flaws, skills, weapons, diving gear, cyberware, critters, small craft and ship references from Cyberpirates! (FASA 7124) as compendia for the Shadowrun 2nd Edition system.",
+  "version": "0.6.0",
+  "compatibility": {
+    "minimum": "13",
+    "verified": "13"
+  },
+  "relationships": {
+    "systems": [
+      {
+        "id": "sr2e",
+        "type": "system",
+        "compatibility": {
+          "minimum": "0.156.0"
+        }
+      }
+    ]
+  },
+  "authors": [
+    {
+      "name": "James Candalino"
+    }
+  ],
+  "packs": [
+    {
+      "name": "cp-qualities",
+      "label": "Cyberpirates Edges & Flaws",
+      "path": "packs/cp-qualities",
+      "type": "Item",
+      "system": "sr2e",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER"
+      }
+    },
+    {
+      "name": "cp-skills",
+      "label": "Cyberpirates Skills",
+      "path": "packs/cp-skills",
+      "type": "Item",
+      "system": "sr2e",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER"
+      }
+    },
+    {
+      "name": "cp-weapons",
+      "label": "Cyberpirates Weapons",
+      "path": "packs/cp-weapons",
+      "type": "Item",
+      "system": "sr2e",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER"
+      }
+    },
+    {
+      "name": "cp-gear",
+      "label": "Cyberpirates Gear & Armor",
+      "path": "packs/cp-gear",
+      "type": "Item",
+      "system": "sr2e",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER"
+      }
+    },
+    {
+      "name": "cp-cyberware",
+      "label": "Cyberpirates Cyberware",
+      "path": "packs/cp-cyberware",
+      "type": "Item",
+      "system": "sr2e",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER"
+      }
+    },
+    {
+      "name": "cp-critters",
+      "label": "Cyberpirates Critters",
+      "path": "packs/cp-critters",
+      "type": "Actor",
+      "system": "sr2e",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER"
+      }
+    },
+    {
+      "name": "cp-vehicles",
+      "label": "Cyberpirates Vehicles",
+      "path": "packs/cp-vehicles",
+      "type": "Actor",
+      "system": "sr2e",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER"
+      }
+    },
+    {
+      "name": "cp-reference",
+      "label": "Cyberpirates Reference",
+      "path": "packs/cp-reference",
+      "type": "JournalEntry",
+      "system": "sr2e",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER"
+      }
+    },
+    {
+      "name": "cp-ships",
+      "label": "Cyberpirates Ships",
+      "path": "packs/cp-ships",
+      "type": "JournalEntry",
+      "system": "sr2e",
+      "ownership": {
+        "PLAYER": "OBSERVER",
+        "ASSISTANT": "OWNER"
+      }
+    }
+  ],
+  "packFolders": [
+    {
+      "name": "Cyberpirates!",
+      "sorting": "m",
+      "packs": [
+        "cp-qualities",
+        "cp-skills",
+        "cp-weapons",
+        "cp-gear",
+        "cp-cyberware",
+        "cp-critters",
+        "cp-vehicles",
+        "cp-reference",
+        "cp-ships"
+      ]
+    }
+  ],
+  "flags": {},
+  "esmodules": [
+    "scripts/register-cyberpirates.mjs"
+  ]
+}

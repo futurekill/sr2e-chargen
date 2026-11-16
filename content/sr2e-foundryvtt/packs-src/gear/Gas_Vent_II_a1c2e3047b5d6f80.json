@@ -1,0 +1,44 @@
+{
+  "_id": "a1c2e3047b5d6f80",
+  "name": "Gas Vent II",
+  "type": "gear",
+  "img": "systems/sr2e/assets/item_icons/gear/gas-vent-ii.webp",
+  "system": {
+    "category": "accessories",
+    "rating": 0,
+    "quantity": 1,
+    "weight": 0.5,
+    "cost": 450,
+    "availability": "2/24 hrs",
+    "legality": "Legal",
+    "equipped": false,
+    "concealability": 10,
+    "notes": "SR2E p.240. Barrel-mounted gas-vent recoil compensation: 2 points. −1 Concealability. Once installed it CANNOT be removed (and excludes other barrel mounts such as silencers/suppressors).",
+    "weaponAccessory": true,
+    "accessoryRecoilComp": 2,
+    "permanentAccessory": true,
+    "citation": {
+      "book": "sr2",
+      "page": "240"
+    }
+  },
+  "effects": [],
+  "flags": {},
+  "_stats": {
+    "coreVersion": "13.351",
+    "systemId": "sr2e",
+    "systemVersion": "0.26.0",
+    "createdTime": 1700000000000,
+    "modifiedTime": 1700000000000,
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "folder": "e11d3232c7db0d25",
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "_key": "!items!a1c2e3047b5d6f80"
+}

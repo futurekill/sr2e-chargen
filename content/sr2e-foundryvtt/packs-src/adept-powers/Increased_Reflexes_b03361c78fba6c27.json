@@ -1,0 +1,41 @@
+{
+  "_id": "b03361c78fba6c27",
+  "name": "Increased Reflexes",
+  "type": "adept_power",
+  "img": "systems/sr2e/assets/item_icons/adept-powers/increased-reflexes.webp",
+  "system": {
+    "pointCost": 1,
+    "level": 1,
+    "maxLevel": 3,
+    "description": "<p>Additional Initiative dice: +1 die per level (max 3). Power-Point cost is <strong>1 / 4 / 6</strong> total for 1 / 2 / 3 dice (SR2E p.126). The power-point tally applies this cumulative cost automatically.</p>",
+    "attributeMods": {
+      "body": 0,
+      "quickness": 0,
+      "strength": 0,
+      "reaction": 0,
+      "initiativeDice": 1
+    },
+    "notes": "SR2E p.126. +1d6 Initiative. Cost: 1 pt.",
+    "citation": {
+      "book": "sr2",
+      "page": "126"
+    }
+  },
+  "effects": [],
+  "folder": null,
+  "sort": 0,
+  "ownership": {
+    "default": 0
+  },
+  "flags": {},
+  "_stats": {
+    "systemId": "sr2e",
+    "systemVersion": "0.3.79",
+    "coreVersion": "13.351",
+    "lastModifiedBy": null,
+    "compendiumSource": null,
+    "duplicateSource": null,
+    "exportSource": null
+  },
+  "_key": "!items!b03361c78fba6c27"
+}
