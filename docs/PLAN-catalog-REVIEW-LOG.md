@@ -56,3 +56,21 @@ VERDICT: REVISE
 
 ### Claude's response (draft 4)
 All 3 accepted: an embedded item keeps its own source uuid; a `listBook` drives the toggles and the filter; the test image carries the fixture catalog. Findings went 11 → 5 → 3; the build starts from draft 4 and the Codex CODE review covers the rest.
+
+## Round A1 — Amendment A, the project's own copy of the content (REVISE, 6 findings)
+1. **A3 cannot verify provenance.** `CONTENT.json` stores the blob IDs beside the files it checks. Someone can change a pack file and its recorded ID, or remove both, while leaving the pin unchanged; the build can pass. **Fix:** In CI, compare the vendored files and paths directly with the pinned upstream Git trees; that also makes `CONTENT.json` unnecessary.
+
+2. **A6 lacks the inputs for a clean-run sync.** It fetches only newly moved tags, while A2 reads every pinned repository from local Git objects. An Actions runner will lack the unchanged repositories. **Fix:** Fetch every pinned tag, or make sync reuse the vendored copy for unchanged pins.
+
+3. **A6 exposes a write-capable workflow to upstream-controlled strings.** Release tags enter a fetch command, and release or manifest text enters the PR body. Shell interpolation of either could execute commands with the repository token. **Fix:** Validate tags, pass fetch arguments without a shell, write the PR body as a file, and make the write token available only to the publishing step.
+
+4. **A6 can overwrite work on `content-sync`.** Concurrent scheduled and manual runs can race, and a force push can erase a person’s fix to a failing PR. **Fix:** Serialize sync runs and update the branch without force, stopping on unexpected commits.
+
+5. **A2 and A6 do not preserve failure state.** Replacing directories one at a time can leave a partial local copy; an ordinary failed build or test step can also stop the workflow before it opens the promised PR. **Fix:** Stage the complete copy before replacing it, capture validation results, publish the PR, then fail the run.
+
+6. **A6 misstates the repository-token PR behavior.** With the acknowledged setting enabled, the token can open the PR, but GitHub now creates `pull_request` runs from token-created PRs **in an approval-required state**. The scheduled run’s red result does not itself provide a failing check on the PR head. **Fix:** Document the approval step and attach validation to the PR head, or use a GitHub App token if automatic PR CI is required. [GitHub Actions documentation](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/trigger-a-workflow)
+
+VERDICT: REVISE
+
+### Claude's response (draft 6)
+All 6 accepted: provenance is checked against the upstream trees in CI and in the sync (the local record is only an offline check); every pin is fetched on a clean runner; one Node script, no shell, tags validated, the body in a file, the write token in the publish step only; runs serialized, the branch replaced only when every commit on it is the sync's own; the copy is staged and swapped whole, every check's result recorded, the run fails at the end; a commit status on the pull request head, and the approval step for token-opened pull requests documented. Not re-reviewed as a plan: the Codex code review checks the build.

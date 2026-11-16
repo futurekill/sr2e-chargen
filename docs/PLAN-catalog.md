@@ -1,5 +1,5 @@
 # Plan: milestone 1 — the catalog
-_Draft 5 (2026-11-16): Amendment A added (the project's own copy of the content). Draft 4 was after Codex rounds 1–3 (11 + 5 + 3 findings, all accepted; the last three fixes are not re-reviewed; docs/PLAN-catalog-REVIEW-LOG.md). Roadmap: docs/ROADMAP.md (approved 2026-11-16). Requirement: docs/PLAN.md "Content catalog"
+_Draft 6 (2026-11-16): Amendment A, after Codex round A1 (6 findings, all accepted; not re-reviewed — the code review checks it) (the project's own copy of the content). Draft 4 was after Codex rounds 1–3 (11 + 5 + 3 findings, all accepted; the last three fixes are not re-reviewed; docs/PLAN-catalog-REVIEW-LOG.md). Roadmap: docs/ROADMAP.md (approved 2026-11-16). Requirement: docs/PLAN.md "Content catalog"
 (the pinned content, the source tag on book text, authenticated routes, citations)._
 
 ## Goal
@@ -98,35 +98,45 @@ catalog build, and removes CI's missing-content gap (§8).
 A1. **Layout.** `content/<dir>/` per pin, holding exactly the files the catalog reads, unchanged: the manifest
     (`system.json` or `module.json`), every file under `packs-src/`, and for the system `module/rules/books.mjs`.
     `content/<dir>/CONTENT.json` = `{ dir, id, tag, commit, files: { <path>: <git blob id> } }`.
-A2. **Sync** (`tools/sync-content.mjs`, `npm run content:sync`). Reads each repository from Git objects at the pinned
-    commit (tools/content.mjs, as before: no shell, regular files only) and REPLACES `content/<dir>/` with those
-    files and the record. `--latest` first moves each pin to the repository's newest GitHub release (`gh api
-    repos/<owner>/<repo>/releases/latest`), resolving its commit. Only the content directories and
-    `content-pins.json` are written.
-A3. **The build reads the copy, and checks it.** `tools/build-catalog.mjs` reads `content/`, not the sibling
-    repositories. For each pin it requires: the record's `dir`, `tag` and `commit` equal the pin; every listed file
-    exists, is a regular file (`lstat`: no symlink), and has the listed git blob id (`sha1("blob <size>\0" +
-    bytes)`); no file under `content/<dir>/` is unlisted. A hand edit, a missing file or a stale copy fails the
-    build, naming it. The copy can only change through the sync.
+A2. **Sync** (`tools/sync-content.mjs`, `npm run content:sync`). Reads EVERY pinned repository from Git objects at
+    its pinned commit (tools/content.mjs: no shell, regular files only), writes the complete new copy into a staging
+    directory, checks it, and only then replaces `content/` as a whole (round A1 #5: never half a copy). `--latest`
+    first moves each pin to the repository's newest GitHub release: the tag must match `^v\d+\.\d+\.\d+$` and is
+    resolved to its commit. Only `content/` and `content-pins.json` are written.
+A3. **The build reads the copy and checks it locally.** For each pin: the record's `dir`, `tag` and `commit` equal
+    the pin; every listed file exists, is a regular file (`lstat`), and has its listed git blob id; no unlisted file.
+    This catches an accidental edit, a missing file or a stale copy, offline.
+A3b. **Provenance is checked against the upstream trees** (round A1 #1: a record beside the files proves nothing
+    against a deliberate edit of both). `tools/verify-content.mjs` fetches each pinned COMMIT from its public
+    repository (`git fetch --depth 1 <url> <commit>` into a fresh directory; `git ls-remote` confirms the tag still
+    points at it) and compares the vendored paths and blob ids with that commit's tree, exactly. It runs in CI on
+    every push and in the daily sync.
 A4. **The image builds its own catalog.** The Dockerfile copies `content/` and `content-pins.json` and runs the
-    catalog build and check in its build stage. No host-built catalog, no `TEST_IMAGE` exception: CI builds the real
-    image. The invented fixture catalog stays for the unit tests only.
-A5. **CI** also runs the real catalog build on every push (a test that builds `content/` and checks the pins).
-A6. **The daily sync** (`.github/workflows/content-sync.yml`, cron once a day and on demand). With the repository's
-    own token (read-only for the public content repositories, `contents: write` and `pull-requests: write` here):
-    for each pin, look up the newest release; if any moved, fetch only that tag of that repository (`git fetch
-    --depth 1 origin refs/tags/<tag>:refs/tags/<tag>` into a fresh directory), run the sync, run the catalog build
-    and the unit tests, then push the branch `content-sync` (force) and open — or update — ONE pull request whose
-    body lists each book's old and new version and the result of the catalog build. A failed catalog build (for
-    example a new unclassified text field) still opens the pull request, marked as failing, and the workflow ends
-    red: the change is visible, and a person fixes it on that branch.
-    - Known limit: a pull request opened with the repository token does not start other workflows, so the sync
-      workflow runs the build and the tests itself and reports them in the pull request. Merging to `main` runs CI.
-    - The repository setting "Allow GitHub Actions to create and approve pull requests" must be on (it is OFF on
-      2026-11-16): the owner turns it on; the workflow says so if it can't open the pull request.
-A7. **Tests.** The sync writes exactly the commit's files and a correct record (fixture repository made by the
-    test); the build refuses a changed byte, a missing file, an extra file, a symlink, and a record that doesn't
-    match the pins; the vendored `content/` builds and matches `content-pins.json`.
+    catalog build and check in its build stage. No host-built catalog, no `TEST_IMAGE` exception. The fixture
+    catalog stays for the unit tests only.
+A5. **CI** runs the catalog build (A3) and the provenance check (A3b) on every push.
+A6. **The daily sync** (`.github/workflows/content-sync.yml`: cron once a day, and on demand).
+    - **Serialized** (round A1 #4): `concurrency: content-sync`, never cancelled in progress.
+    - **Inputs for a clean runner** (#2): every pinned repository is fetched (shallow, by tag), not only the moved ones.
+    - **No shell around upstream strings** (#3): one Node script does the lookup, the fetches (`execFile`, tags
+      validated by the pattern above) and writes the pull request body to a FILE; checkout keeps no credentials;
+      the write token reaches only the final publish step.
+    - **Failure is preserved** (#5): the sync, the catalog build, the provenance check and the unit tests each record
+      their result; the publish step always runs; the job fails at the very end if anything failed.
+    - **Never over a person's work** (#4): the branch `content-sync` is replaced only when every commit on it (beyond
+      `main`) is the sync's own (its commit trailer `Content-Sync: bot`); otherwise the run stops and says so.
+      One pull request, opened or updated.
+    - **The result is on the pull request** (#6): the publish step sets a commit status `content-sync / catalog`
+      (success or failure) on the branch head, and the body lists each book's old and new version and each check's
+      result. A pull request opened with the repository token does NOT start CI by itself: GitHub holds those runs
+      for approval — the owner approves them on the pull request (or merges, which runs CI on `main`). A GitHub App
+      token would avoid that; not needed for a one-person review.
+    - The repository setting "Allow GitHub Actions to create and approve pull requests" must be on (OFF on
+      2026-11-16): the owner turns it on; until then the workflow stops with that message.
+A7. **Tests.** The sync writes exactly the commit's files and a correct record and stages before replacing (a fixture
+    repository made by the test); the local check refuses a changed byte, a missing file, an extra file, a symlink,
+    and a record that doesn't match the pins; the provenance check refuses a file whose blob id differs from the
+    upstream tree even when the record agrees; the vendored `content/` builds.
 
 ## Key decisions & tradeoffs
 - **Git objects at a pinned commit, not the working tree**: reproducible, no network, nothing extracted to disk.
