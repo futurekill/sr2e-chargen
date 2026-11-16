@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { testContext, PW } from "./helpers.mjs";
 import * as A from "../server/auth/accounts.mjs";
 import { findSession, csrfOk, csrfFor, IDLE_MS, ABSOLUTE_MS } from "../server/auth/sessions.mjs";
-import { setMaintenance, Maintenance } from "../server/db/fence.mjs";
+import { setMaintenance, Maintenance, SessionGone } from "../server/db/fence.mjs";
 
 const refused = (code) => (err) => err instanceof A.Refused && (!code || err.code === code);
 async function withAdmin() {
@@ -20,7 +20,8 @@ test("bootstrap → setup link → the first admin, signed in", async () => {
   await assert.rejects(A.bootstrap(ctx), refused());   // an admin exists now
 });
 
-test("two racing bootstraps make only one admin", async () => {
+// (The lock ORDER of bootstrap vs redemption matters on Postgres/MySQL; that race is tested when those dialects land.)
+test("two setup links of the same generation make only one admin", async () => {
   const { ctx } = await testContext();
   const a = await A.bootstrap(ctx);
   // A second run revokes the first link; simulate the true race by reviving it (both issued under generation 0).
@@ -153,4 +154,51 @@ test("auth events are audited, without secrets", async () => {
   const rows = await ctx.db.selectFrom("audit").selectAll().execute();
   assert.deepEqual(rows.map(r => r.action), ["setup.issued", "setup.redeemed", "login.failed"]);
   assert.ok(!JSON.stringify(rows).includes(PW));
+});
+
+/** A context whose clock runs `hook` once, at the first reading after `arm()` — i.e. in the middle of an operation. */
+function interrupting(ctx) {
+  let hook = null;
+  return { ctx: { ...ctx, now: () => { const h = hook; hook = null; if (h) h(); return ctx.now(); } }, arm: (fn) => { hook = fn; } };
+}
+
+test("a password reset that lands while a login is verifying wins: the old password opens no session", async () => {
+  const { ctx } = await withAdmin();
+  const mid = interrupting(ctx);
+  let landed;
+  mid.arm(() => { landed = ctx.db.updateTable("users").set({ password_hash: "$reset-landed$" }).execute(); });
+  await assert.rejects(A.login(mid.ctx, { username: "boss", password: PW }), refused("bad-login"));
+  await landed;
+  assert.equal((await ctx.db.selectFrom("sessions").selectAll().execute()).length, 1);   // only the setup session
+});
+
+test("a disable that lands while a login is verifying wins too", async () => {
+  const { ctx } = await withAdmin();
+  const mid = interrupting(ctx);
+  mid.arm(() => { ctx.db.updateTable("users").set({ disabled_at: 5 }).execute(); });
+  await assert.rejects(A.login(mid.ctx, { username: "boss", password: PW }), refused("bad-login"));
+});
+
+test("a reset that lands during a password change is not overwritten", async () => {
+  const { ctx, admin } = await withAdmin();
+  const real = A.changePassword(ctx, { userId: admin.user.id, current: PW, next: "another fine password" });
+  // changePassword reads the user, then verifies (slow): this update is queued behind the read and lands before the write.
+  const reset = ctx.db.updateTable("users").set({ password_hash: "$reset-landed$" }).execute();
+  await assert.rejects(real, refused("bad-password"));
+  await reset;
+  assert.equal((await ctx.db.selectFrom("users").select("password_hash").executeTakeFirst()).password_hash, "$reset-landed$");
+});
+
+test("a write re-checks the acting session: revoked, disabled or demoted in the meantime, it is refused", async () => {
+  const { ctx, admin } = await withAdmin();
+  const sid = (await findSession(ctx, admin.sessionSecret)).sessionId;
+  const acting = { ...ctx, session: { id: sid, role: "admin" } };
+  assert.ok(await A.createInvite(acting));
+  await ctx.db.updateTable("users").set({ role: "user" }).execute();
+  await assert.rejects(A.createInvite(acting), (e) => e instanceof SessionGone && e.statusCode === 403);
+  await ctx.db.updateTable("users").set({ role: "admin", disabled_at: 9 }).execute();
+  await assert.rejects(A.createInvite(acting), (e) => e instanceof SessionGone && e.statusCode === 401);
+  await ctx.db.updateTable("users").set({ disabled_at: null }).execute();
+  await ctx.db.deleteFrom("sessions").execute();
+  await assert.rejects(A.createInvite(acting), SessionGone);
 });

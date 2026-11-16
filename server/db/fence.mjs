@@ -13,11 +13,24 @@ export const shareLock = (ctx, q) => (ctx.dialect === "postgres" ? q.forShare() 
 /** An exclusive row lock, the same way. */
 export const updateLock = (ctx, q) => (ctx.dialect === "sqlite" ? q : q.forUpdate());
 
-/** Run `fn(trx)` as a write transaction behind the fence. */
+export class SessionGone extends Error {
+  constructor(admin) { super(admin ? "Admins only." : "Sign in first, chummer."); this.statusCode = admin ? 403 : 401; this.code = admin ? "not-admin" : "no-session"; }
+}
+/**
+ * Run `fn(trx)` as a write transaction behind the fence. A request's context carries `ctx.session = { id, role? }`:
+ * the session (and the role the route needs) is checked AGAIN here, under a row lock, so a request that passed
+ * authentication before its session was revoked or its admin disabled can't still write (code review 1 #3).
+ */
 export function writeTx(ctx, fn) {
   return ctx.db.transaction().execute(async trx => {
     const row = await shareLock(ctx, trx.selectFrom("settings").select("value").where("key", "=", "maintenance")).executeTakeFirst();
     if (row?.value !== "off") throw new Maintenance();
+    if (ctx.session) {
+      const s = await shareLock(ctx, trx.selectFrom("sessions").innerJoin("users", "users.id", "sessions.user_id")
+        .select(["users.role", "users.disabled_at"]).where("sessions.id", "=", ctx.session.id)).executeTakeFirst();
+      if (!s || s.disabled_at != null) throw new SessionGone(false);
+      if (ctx.session.role && s.role !== ctx.session.role) throw new SessionGone(true);
+    }
     return fn(trx);
   });
 }

@@ -83,13 +83,14 @@ export async function redeem(ctx, { secret, username, password, ip = null }) {
   if (problem) throw new Refused(problem);
   const password_hash = await hashPassword(password);   // before the transaction: slow, and no lock is held
   return writeTx(ctx, async trx => {
+    // The admin set's lock FIRST, as in bootstrap — the same order everywhere, so the two can't deadlock (review 1 #6).
+    const generation = await lockAdmins(trx, ctx);
     const token = await consume(trx, ctx, secret, ["invite", "setup"]);
     if (!token) throw new Refused(BAD_LINK, 410, "bad-link");
     if (token.kind === "setup") {
       // Two racing bootstraps hold two links of the same generation: only one can advance it (round 1 #5).
-      const r = await trx.updateTable("settings").set({ value: String(token.generation + 1) })
-        .where("key", "=", "admin_gen").where("value", "=", String(token.generation)).executeTakeFirst();
-      if (changed(r) !== 1) throw new Refused(BAD_LINK, 410, "bad-link");
+      if (token.generation !== generation) throw new Refused(BAD_LINK, 410, "bad-link");
+      await trx.updateTable("settings").set({ value: String(generation + 1) }).where("key", "=", "admin_gen").execute();
     }
     const key = usernameKey(username);
     if (await trx.selectFrom("users").select("id").where("username_key", "=", key).executeTakeFirst())
@@ -151,6 +152,11 @@ export async function login(ctx, { username, password, ip = null }) {
   }
   const upgraded = rehash ? await hashPassword(password) : null;
   return writeTx(ctx, async trx => {
+    // The password was checked BEFORE this transaction: a reset, a change, a disable or a lock may have landed
+    // since. Lock the user and check again, or an old password could open a session after a reset (review 1 #1).
+    const live = await updateLock(ctx, trx.selectFrom("users").select(["password_hash", "disabled_at", "locked_until"]).where("id", "=", user.id)).executeTakeFirst();
+    if (!live || live.password_hash !== user.password_hash || live.disabled_at != null || (live.locked_until != null && Number(live.locked_until) > ctx.now()))
+      throw new Refused(BAD_LOGIN, 401, "bad-login");
     await trx.updateTable("users").set({ failed_logins: 0, locked_until: null, ...(upgraded ? { password_hash: upgraded } : {}) }).where("id", "=", user.id).execute();
     await audit(trx, ctx, "login.ok", { actor: user.id, ip });
     return { user: { id: user.id, username: user.username, role: user.role }, sessionSecret: await createSession(trx, ctx, user.id) };
@@ -166,7 +172,10 @@ export async function changePassword(ctx, { userId, current, next, ip = null }) 
   if (problem) throw new Refused(problem);
   const password_hash = await hashPassword(next);
   return writeTx(ctx, async trx => {
-    await trx.updateTable("users").set({ password_hash }).where("id", "=", userId).execute();
+    // Only if the password we verified is STILL the current one and the account is live (review 1 #2).
+    const r = await trx.updateTable("users").set({ password_hash }).where("id", "=", userId)
+      .where("password_hash", "=", user.password_hash).where("disabled_at", "is", null).executeTakeFirst();
+    if (changed(r) !== 1) throw new Refused("That's not your current password.", 403, "bad-password");
     await deleteUserSessions(trx, userId);
     await audit(trx, ctx, "password.changed", { actor: userId, ip });
   });

@@ -58,7 +58,7 @@ test("the initial migration can run again after an interruption (every step cond
 test("a database newer than this build is refused", async () => {
   const db = fresh();
   await migrate(db);
-  await db.insertInto("kysely_migration").values({ name: "999-from-the-future", timestamp: new Date().toISOString() }).execute();
+  await db.insertInto("migrations").values({ name: "999-from-the-future", at: 1 }).execute();
   await assert.rejects(migrate(db), /newer than this build/);
   await db.destroy();
 });
@@ -77,4 +77,17 @@ test("DATABASE_URL parsing", () => {
   assert.deepEqual(parseDatabaseUrl("sqlite:///data/chargen.db"), { dialect: "sqlite", path: "/data/chargen.db" });
   assert.deepEqual(parseDatabaseUrl("sqlite://:memory:"), { dialect: "sqlite", path: ":memory:" });
   assert.throws(() => parseDatabaseUrl("oracle://x"), /unsupported/);
+});
+
+test("two processes migrating a fresh database at once both succeed (one owner at a time)", async () => {
+  const { mkdtempSync } = await import("node:fs"); const { tmpdir } = await import("node:os"); const { join } = await import("node:path");
+  const { execFile } = await import("node:child_process"); const { promisify } = await import("node:util");
+  // Real processes: two connections in ONE process would block each other's event loop on SQLite's busy wait.
+  const env = { ...process.env, BASE_URL: "http://localhost:3000", DATABASE_URL: `sqlite://${join(mkdtempSync(join(tmpdir(), "chargen-mig-")), "m.db")}` };
+  const run = () => promisify(execFile)(process.execPath, ["server/cli.mjs", "db", "migrate"], { env });
+  const out = await Promise.all([run(), run(), run()]);
+  for (const o of out) assert.deepEqual(JSON.parse(o.stdout).applied, ["001-initial"]);
+  const db = openDatabase(env.DATABASE_URL);
+  assert.equal((await db.selectFrom("settings").selectAll().execute()).length, 2);
+  await db.destroy();
 });

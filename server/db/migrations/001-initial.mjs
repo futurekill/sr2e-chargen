@@ -3,8 +3,20 @@
  * interrupted on MySQL — whose DDL commits as it goes — can simply run again (round 1 #16).
  * Ids are app-generated UUIDs; timestamps are 64-bit milliseconds UTC; booleans are 0/1.
  */
+import { sql } from "kysely";
+
 const jsonColumn = (db) => (db.dialectName === "postgres" ? "jsonb" : db.dialectName === "mysql" ? "longtext" : "text");
 const ID = "varchar(36)";
+
+/** MySQL has no `CREATE INDEX IF NOT EXISTS` (review 1 #5): look first there; the others take the clause. */
+async function indexOnce(db, name, table, columns) {
+  if (db.dialectName === "mysql") {
+    const have = await sql`select 1 from information_schema.statistics where table_schema = database() and table_name = ${table} and index_name = ${name} limit 1`.execute(db);
+    if (have.rows.length) return;
+    return db.schema.createIndex(name).on(table).columns(columns).execute();
+  }
+  return db.schema.createIndex(name).ifNotExists().on(table).columns(columns).execute();
+}
 
 export async function up(db) {
   const t = (name) => db.schema.createTable(name).ifNotExists();
@@ -81,8 +93,8 @@ export async function up(db) {
     .addColumn("target", "varchar(255)")
     .addColumn("ip", "varchar(64)")
     .execute();
-  await db.schema.createIndex("documents_owner").ifNotExists().on("documents").columns(["owner_id", "updated_at"]).execute();
-  await db.schema.createIndex("sessions_user").ifNotExists().on("sessions").column("user_id").execute();
+  await indexOnce(db, "documents_owner", "documents", ["owner_id", "updated_at"]);
+  await indexOnce(db, "sessions_user", "sessions", ["user_id"]);
   // The two rows that are locks as much as values (PLAN-M3 §4): inserted once, conflict-safe.
   for (const [key, value] of [["admin_gen", "0"], ["maintenance", "off"]]) {
     const have = await db.selectFrom("settings").select("key").where("key", "=", key).executeTakeFirst();

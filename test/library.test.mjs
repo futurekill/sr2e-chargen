@@ -67,6 +67,7 @@ test("idempotency: a replay returns the first answer once; a reused key on anoth
   const other = (await razor.call("POST", D, { name: "Other" })).json().document;
   assert.equal((await razor.call("PUT", `${D}/${other.id}`, { name: "Twice", revision: 1 }, k2)).json().code, "key-reused");
   assert.equal((await razor.call("POST", D, { name: "No key" }, "not-a-uuid")).statusCode, 400);
+  assert.equal((await razor.call("POST", `${D}?x=1`, { name: "Query" })).statusCode, 400);   // a mutation takes no query
   assert.equal(Number((await ctx.db.selectFrom("users").select("doc_count").where("username", "=", "Razor").executeTakeFirst()).doc_count), 2);
 });
 
@@ -79,6 +80,9 @@ test("delete is soft and restorable; restoring a revision makes a NEW revision",
   assert.equal((await razor.call("GET", `${D}?deleted=1`)).json().documents.length, 1);
   assert.equal((await razor.call("PUT", `${D}/${doc.id}`, { name: "Zombie", revision: 3 })).statusCode, 409);   // deleted: not editable
   assert.equal((await razor.call("POST", `${D}/${doc.id}/restore`, { revision: 3 })).json().document.deletedAt, null);
+  // Every step that advanced the revision is in the history: no gaps (code review 1 #7).
+  assert.deepEqual((await razor.call("GET", `${D}/${doc.id}/revisions`)).json().revisions.map(r => [r.revision, r.note]), [[4, "restored"], [3, "deleted"], [2, null], [1, "created"]]);
+  assert.equal((await razor.call("GET", `${D}/${doc.id}/revisions/3`)).json().body.name, "Changed");
   const back = await razor.call("POST", `${D}/${doc.id}/revisions/1/restore`, { revision: 4 });
   assert.equal(back.json().document.revision, 5);
   assert.equal(back.json().document.name, "Street Sam");
@@ -116,8 +120,14 @@ test("only a strict draft is stored: unknown fields, prototype keys and oversize
   assert.equal((await razor.call("POST", D, { name: "X", schema: "sr2e-portable", documents: [] })).statusCode, 400);
   assert.equal((await razor.call("POST", D, { name: "" })).statusCode, 400);
   assert.equal((await razor.call("POST", D, { name: "X", notes: "n".repeat(100001) })).statusCode, 400);
-  const proto = await app.inject({ method: "POST", url: D, headers: { origin: ORIGIN, "content-type": "application/json" }, payload: '{"name":"X","__proto__":{"admin":true}}' });
-  assert.ok([400, 401].includes(proto.statusCode));
+  // Signed in, with a key: the probe reaches the JSON parser and the schema, not just the session check.
+  const res = await app.inject({ method: "POST", url: "/api/login", headers: { origin: ORIGIN }, payload: { username: "razor", password: PW } });
+  const cookie = res.headers["set-cookie"].split(";")[0], csrf = (await app.inject({ url: "/api/session", headers: { cookie } })).json().csrf;
+  for (const payload of ['{"name":"X","__proto__":{"admin":true}}', '{"name":"X","constructor":{"prototype":{"admin":true}}}']) {
+    const proto = await app.inject({ method: "POST", url: D, headers: { origin: ORIGIN, cookie, "x-csrf-token": csrf, "idempotency-key": randomUUID(), "content-type": "application/json" }, payload });
+    assert.equal(proto.statusCode, 400, payload);
+  }
+  assert.equal((await razor.call("GET", D)).json().documents.length, 0);
   assert.equal(({}).admin, undefined);
 });
 

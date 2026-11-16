@@ -8,6 +8,7 @@ import cookie from "@fastify/cookie";
 import helmet from "@fastify/helmet";
 import rateLimit from "@fastify/rate-limit";
 import { findSession, csrfOk, ABSOLUTE_MS } from "./auth/sessions.mjs";
+import { dummyHash } from "./auth/passwords.mjs";
 import authRoutes from "./routes/auth.mjs";
 import adminRoutes from "./routes/admin.mjs";
 import documentRoutes from "./routes/documents.mjs";
@@ -43,6 +44,8 @@ export async function buildApp({ ctx, config, logger }) {
   app.decorate("ctx", ctx);
   app.decorate("config", config);
   app.decorateRequest("session", null);
+  app.decorateRequest("ctx", null);   // the request's context: the app's, plus the acting session for writeTx to re-check
+  await dummyHash();                  // made before the first login, so an unknown handle costs the same from request one
 
   app.addHook("onRequest", async (req, reply) => {
     if (req.url.startsWith("/api/")) reply.header("cache-control", "no-store");
@@ -55,9 +58,11 @@ export async function buildApp({ ctx, config, logger }) {
     if (!session) return fail(reply, 401, "Sign in first, chummer.", "no-session");
     if (MUTATING.has(req.method) && !csrfOk(session, req.headers["x-csrf-token"])) return fail(reply, 403, "Stale page — reload and try again.", "csrf");
     req.session = session;
+    req.ctx = { ...ctx, session: { id: session.sessionId } };
   });
   app.decorate("needAdmin", async (req, reply) => {
     if (req.session?.user.role !== "admin") return fail(reply, 403, "Admins only.", "not-admin");
+    req.ctx = { ...req.ctx, session: { ...req.ctx.session, role: "admin" } };
   });
   app.decorate("setSessionCookie", (reply, secret) => reply.setCookie(config.cookieName, secret,
     { httpOnly: true, secure: config.secureCookie, sameSite: "lax", path: "/", maxAge: ABSOLUTE_MS / 1000 }));

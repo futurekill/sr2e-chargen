@@ -84,6 +84,11 @@ async function bump(trx, ctx, userId, id, revision, set, { deleted = false } = {
   if (changed(await q.executeTakeFirst()) === 1) return;
   throw (await ownedDocument(trx, userId, id)) ? STALE() : GONE();
 }
+/** Every step that advances the revision has its row in the history, a delete and a restore included (review 1 #7). */
+async function appendSame(trx, ctx, userId, id, revision, note) {
+  const doc = await ownedDocument(trx, userId, id);
+  await appendRevision(trx, ctx, { id, owner_id: userId }, revision, decodeBody(doc.body), note);
+}
 const answer = async (trx, userId, id) => ({ document: meta(await ownedDocument(trx, userId, id)) });
 
 export function createDraft(ctx, userId, input, key) {
@@ -107,12 +112,14 @@ export function updateDraft(ctx, userId, id, { revision, ...input }, key) {
 export function deleteDocument(ctx, userId, id, { revision }, key) {
   return idempotent(ctx, userId, key, fingerprint("DELETE", `/documents/${id}`, { revision }), async trx => {
     await bump(trx, ctx, userId, id, revision, { deleted_at: ctx.now() });
+    await appendSame(trx, ctx, userId, id, revision + 1, "deleted");
     return answer(trx, userId, id);
   });
 }
 export function restoreDocument(ctx, userId, id, { revision }, key) {
   return idempotent(ctx, userId, key, fingerprint("POST", `/documents/${id}/restore`, { revision }), async trx => {
     await bump(trx, ctx, userId, id, revision, { deleted_at: null }, { deleted: true });
+    await appendSame(trx, ctx, userId, id, revision + 1, "restored");
     return answer(trx, userId, id);
   });
 }
