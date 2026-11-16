@@ -10,6 +10,7 @@ import rateLimit from "@fastify/rate-limit";
 import { findSession, csrfOk, ABSOLUTE_MS } from "./auth/sessions.mjs";
 import authRoutes from "./routes/auth.mjs";
 import adminRoutes from "./routes/admin.mjs";
+import documentRoutes from "./routes/documents.mjs";
 
 export const REDACT = ["req.headers.cookie", "req.headers.authorization", 'req.headers["x-csrf-token"]', 'res.headers["set-cookie"]'];
 const MUTATING = new Set(["POST", "PUT", "PATCH", "DELETE"]);
@@ -35,6 +36,10 @@ export async function buildApp({ ctx, config, logger }) {
   });
   await app.register(rateLimit, { global: false });
 
+  // Every registered route, for the tests that walk them (authorization can't be skipped by a new route).
+  const routes = [];
+  app.addHook("onRoute", (r) => { for (const m of [].concat(r.method)) if (m !== "HEAD") routes.push({ method: m, url: r.url }); });
+  app.decorate("routeList", routes);
   app.decorate("ctx", ctx);
   app.decorate("config", config);
   app.decorateRequest("session", null);
@@ -71,5 +76,6 @@ export async function buildApp({ ctx, config, logger }) {
   app.get("/healthz", async () => ({ ok: true }));
   await app.register(authRoutes, { prefix: "/api" });
   await app.register(adminRoutes, { prefix: "/api/admin" });
+  await app.register(documentRoutes, { prefix: "/api/documents" });
   return app;
 }

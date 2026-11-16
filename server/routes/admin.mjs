@@ -6,8 +6,8 @@ const params = (name, max = 64) => ({ type: "object", required: [name], properti
 
 export default async function adminRoutes(app) {
   const { ctx, config } = app;
-  app.addHook("preHandler", app.needSession);
-  app.addHook("preHandler", app.needAdmin);
+  app.addHook("onRequest", app.needSession);   // before validation: an anonymous caller learns nothing from a 400
+  app.addHook("onRequest", app.needAdmin);
 
   app.get("/invites", async () => ({ invites: await A.listInvites(ctx) }));
   app.post("/invites", { schema: { body: { type: "object", additionalProperties: false, properties: { role: { enum: ["user", "admin"] } } } } }, async (req) => {

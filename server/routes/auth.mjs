@@ -25,18 +25,18 @@ export default async function authRoutes(app) {
     return { ok: true };
   });
 
-  app.get("/session", { preHandler: app.needSession }, async (req) => ({ user: req.session.user, csrf: req.session.csrf }));
-  app.post("/logout", { preHandler: app.needSession }, async (req, reply) => {
+  app.get("/session", { onRequest: app.needSession }, async (req) => ({ user: req.session.user, csrf: req.session.csrf }));
+  app.post("/logout", { onRequest: app.needSession }, async (req, reply) => {
     await writeTx(ctx, trx => deleteSession(trx, req.session.sessionId));
     app.clearSessionCookie(reply);
     return { ok: true };
   });
-  app.post("/logout-everywhere", { preHandler: app.needSession }, async (req, reply) => {
+  app.post("/logout-everywhere", { onRequest: app.needSession }, async (req, reply) => {
     await writeTx(ctx, trx => deleteUserSessions(trx, req.session.user.id));
     app.clearSessionCookie(reply);
     return { ok: true };
   });
-  app.post("/account/password", { config: AUTH_LIMIT, preHandler: app.needSession, schema: { body: body({ current: str(256), next: str(256) }) } }, async (req, reply) => {
+  app.post("/account/password", { config: AUTH_LIMIT, onRequest: app.needSession, schema: { body: body({ current: str(256), next: str(256) }) } }, async (req, reply) => {
     await A.changePassword(ctx, { userId: req.session.user.id, ...req.body, ip: req.ip });
     app.clearSessionCookie(reply);   // every session ended, this one too: sign in again
     return { ok: true };
