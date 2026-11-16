@@ -2,7 +2,10 @@
 A development build (M3a): fine to try on your own machine or server; not released, no backups yet.
 
 ## Start it
-1. Build the image from the repo root: `docker build -f docker/Dockerfile -t sr2e-chargen:dev .`
+1. Build the catalog, then the image, from the repo root:
+   `npm run build:catalog` then `docker build -f docker/Dockerfile -t sr2e-chargen:dev .`
+   The catalog build needs the content repositories (the Foundry system and the sourcebook modules) checked out
+   beside this one, at the versions in `content-pins.json`. The image build fails without a valid catalog.
 2. Copy `docker/compose.example.yml` to `compose.yml` and set `BASE_URL` to the address people will type
    (https, exactly). Set `TRUST_PROXY` to your reverse proxy's address or network.
 3. `docker compose up -d`
@@ -34,6 +37,13 @@ A development build (M3a): fine to try on your own machine or server; not releas
 | `maintenance on` / `off` / `status` | Stop every write (reads go on) / resume |
 
 Links are shown ONCE and stored only as hashes: if one is lost, make another.
+
+## The catalog
+- `content-pins.json` lists the content: each repository, its release tag, and the commit that tag must point at.
+- To take a new release of a book: change its tag, run `npm run pins:update`, then `npm run build:catalog`. Commit
+  the changed pins. The build stops if a new field holds text that nobody has classified
+  (`tools/string-paths.json`): decide if it is book wording or rule data, and add it there.
+- The server reads the catalog at start. A production server does not start without a valid one.
 
 ## Day to day
 - **Updating**: rebuild the image, `docker compose up -d`. Migrations run at start; an older build refuses to start

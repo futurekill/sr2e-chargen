@@ -7,10 +7,10 @@ nothing lost in either direction.
 
 Built for a small private group: invite-only accounts, one Docker container on your own server.
 
-> **Status: early development build.** The plan is approved and milestone M0 (the creation rules from the books) is
-> done. The app skeleton (M3a) runs: invite-only accounts, sessions, an admin CLI and a library of DRAFTS with
-> revision history, in one theme. It knows no rules yet and stores no real characters — those arrive with the rules
-> engine and the portable format from the Foundry system (M1, M2). Not released: no image is published.
+> **Status: early development build.** The tool is **standalone first**: you can make and manage a character for a
+> physical table without Foundry ([docs/ROADMAP.md](docs/ROADMAP.md)). Done so far: the app skeleton (accounts,
+> library, Docker, CI) and **milestone 1, the catalog** — 1,763 entries from the core book and 11 sourcebooks, each
+> with its page reference. Next: character creation. Not released: no image is published.
 
 ## Run it locally (development)
 
@@ -21,12 +21,17 @@ npm ci
 npm run build
 ```
 ```bash
+npm run build:catalog
+```
+```bash
 DATABASE_URL=sqlite://./data/dev.db BASE_URL=http://localhost:3000 node server/cli.mjs admin bootstrap
 ```
 ```bash
 DATABASE_URL=sqlite://./data/dev.db BASE_URL=http://localhost:3000 npm start
 ```
 Open the setup link the bootstrap command printed (it works once), pick a handle and password, and you're the admin.
+`npm run build:catalog` reads the content repositories (the Foundry system and the sourcebook modules, checked out
+beside this one) at the versions pinned in `content-pins.json`.
 `node server/cli.mjs` with no arguments lists the admin commands. `npm test` runs the suite. Needs Node 26.13+.
 
 ## What it will do
@@ -55,6 +60,8 @@ computed the same way in both places. Tests check that both give identical resul
 |---|---|
 | [docs/PLAN.md](docs/PLAN.md) | The approved plan: decisions, architecture, security, exports, milestones |
 | [docs/PLAN-REVIEW-LOG.md](docs/PLAN-REVIEW-LOG.md) | Every review round and how each finding was resolved |
+| [docs/ROADMAP.md](docs/ROADMAP.md) | The approved order of work: standalone first |
+| [docs/PLAN-catalog.md](docs/PLAN-catalog.md) | Milestone 1, the catalog, with its review logs |
 | [docs/PLAN-M3.md](docs/PLAN-M3.md) | The app skeleton's plan (accounts, library, container), with its review log |
 | [docs/OPERATIONS.md](docs/OPERATIONS.md) | Running it: Docker, settings, the admin CLI |
 | [docs/THREAT-MODEL.md](docs/THREAT-MODEL.md) | What is protected, from whom, and where each defence lives |
