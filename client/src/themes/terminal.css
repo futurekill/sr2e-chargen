@@ -1,0 +1,26 @@
+/*
+ * Theme: terminal — an amber phosphor tube in a dim room. A theme is ONLY this token set (docs/PLAN-M3.md §6): the
+ * layout in app.css reads the tokens and nothing else. test/theme-contrast.test.mjs checks every pair below (WCAG AA).
+ */
+:root[data-theme="terminal"] {
+  --bg: #14110d;
+  --surface: #1e1a13;
+  --line: #7d6b4a;
+  --ink: #f2c14e;
+  --muted: #bd9c5e;
+  --accent: #6fd8da;
+  --danger: #ff8a7a;
+  --ok: #a3d982;
+  --on-accent: #14110d;
+  --font-body: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, "DejaVu Sans Mono", monospace;
+  --font-head: var(--font-body);
+  --radius: 0;
+  --caps: uppercase;
+}
+/* The readable-font setting (U22) overrides EVERY theme's fonts. shortcut: system sans until a dyslexia-friendly
+   face (Atkinson Hyperlegible) is self-hosted with the theme work. */
+:root[data-font="readable"] {
+  --font-body: system-ui, -apple-system, "Segoe UI", Verdana, Arial, sans-serif;
+  --font-head: var(--font-body);
+  --caps: none;
+}

@@ -145,3 +145,22 @@ test("unknown routes are a plain 404; a server fault doesn't leak detail", async
   assert.equal(res.statusCode, 500);
   assert.ok(!res.body.includes("SECRET"));
 });
+
+test("the built client: the app shell for any page address, immutable assets, JSON 404 for the API", { skip: !(await import("node:fs")).existsSync(new URL("../dist/client/index.html", import.meta.url)) && "client not built" }, async () => {
+  const { call } = await harness();
+  for (const url of ["/", "/redeem", "/doc/123", "/anything/else"]) {
+    const res = await call("GET", url, { origin: null });
+    assert.equal(res.statusCode, 200, url);
+    assert.match(res.headers["content-type"], /text\/html/);
+    assert.equal(res.headers["cache-control"], "no-cache");
+    assert.match(res.body, /<div id="app">/);
+    assert.ok(!/<script(?![^>]*\bsrc=)/.test(res.body), "no inline script");
+    assert.ok(!/\sstyle=/.test(res.body), "no inline style");
+  }
+  const asset = /\/assets\/[^"]+\.js/.exec((await call("GET", "/", { origin: null })).body)[0];
+  const js = await call("GET", asset, { origin: null });
+  assert.equal(js.statusCode, 200);
+  assert.match(js.headers["cache-control"], /immutable/);
+  assert.equal((await call("GET", "/assets/nope.js", { origin: null })).statusCode, 404);
+  assert.equal((await call("GET", "/api/nope", { origin: null })).json().code, "not-found");
+});

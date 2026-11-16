@@ -7,6 +7,9 @@ import Fastify from "fastify";
 import cookie from "@fastify/cookie";
 import helmet from "@fastify/helmet";
 import rateLimit from "@fastify/rate-limit";
+import fastifyStatic from "@fastify/static";
+import { existsSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { findSession, csrfOk, ABSOLUTE_MS } from "./auth/sessions.mjs";
 import { dummyHash } from "./auth/passwords.mjs";
 import authRoutes from "./routes/auth.mjs";
@@ -76,7 +79,16 @@ export async function buildApp({ ctx, config, logger }) {
     const ours = typeof err.code === "string" && !err.code.startsWith("FST_");
     return fail(reply, status, ours || status === 429 ? err.message : "That request doesn't scan.", ours ? err.code : status === 429 ? "slow-down" : "invalid");
   });
-  app.setNotFoundHandler((req, reply) => fail(reply, 404, "Nothing here.", "not-found"));
+  // The built client (dist/client): hashed assets cached for good, every other GET gets the app shell (its router
+  // decides), the API keeps its JSON 404.
+  const clientDir = fileURLToPath(new URL("../dist/client/", import.meta.url));
+  const hasClient = existsSync(clientDir);
+  if (hasClient) await app.register(fastifyStatic, { root: clientDir, wildcard: false, index: false,
+    setHeaders: (reply, path) => reply.header("cache-control", path.includes("/assets/") ? "public, max-age=31536000, immutable" : "no-cache") });
+  app.setNotFoundHandler((req, reply) => {
+    if (hasClient && req.method === "GET" && !req.url.startsWith("/api/") && !req.url.startsWith("/assets/")) return reply.header("cache-control", "no-cache").sendFile("index.html");
+    return fail(reply, 404, "Nothing here.", "not-found");
+  });
 
   app.get("/healthz", async () => ({ ok: true }));
   await app.register(authRoutes, { prefix: "/api" });

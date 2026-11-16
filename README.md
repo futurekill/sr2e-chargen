@@ -7,8 +7,27 @@ nothing lost in either direction.
 
 Built for a small private group: invite-only accounts, one Docker container on your own server.
 
-> **Status: planning.** Nothing runs yet. The plan is approved (Codex review, 12 rounds) and
-> milestone M0 (the creation rules from the books) is done; M1 is next. See [Roadmap](#roadmap).
+> **Status: early development build.** The plan is approved and milestone M0 (the creation rules from the books) is
+> done. The app skeleton (M3a) runs: invite-only accounts, sessions, an admin CLI and a library of DRAFTS with
+> revision history, in one theme. It knows no rules yet and stores no real characters — those arrive with the rules
+> engine and the portable format from the Foundry system (M1, M2). Not released: no image is published.
+
+## Run it locally (development)
+
+```bash
+npm ci
+```
+```bash
+npm run build
+```
+```bash
+DATABASE_URL=sqlite://./data/dev.db BASE_URL=http://localhost:3000 node server/cli.mjs admin bootstrap
+```
+```bash
+DATABASE_URL=sqlite://./data/dev.db BASE_URL=http://localhost:3000 npm start
+```
+Open the setup link the bootstrap command printed (it works once), pick a handle and password, and you're the admin.
+`node server/cli.mjs` with no arguments lists the admin commands. `npm test` runs the suite. Needs Node 26.13+.
 
 ## What it will do
 
@@ -28,8 +47,7 @@ Built for a small private group: invite-only accounts, one Docker container on y
 ## How it fits with Foundry
 
 The Foundry system is the source of truth for the rules. Its rules code is shared with this app, so a character is
-computed the same way in both places. Tests check that both give identical results. No book content is shipped in the
-Docker image: the app reads the content modules from a folder you mount.
+computed the same way in both places. Tests check that both give identical results. The Docker image will ship fully formed, with the catalog built in from pinned content versions.
 
 ## Documents
 

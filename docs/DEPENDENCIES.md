@@ -15,4 +15,12 @@ the test runner (`node:test`), UUIDs and random tokens (`node:crypto`), `fetch`.
 | kysely | 0.29.9 | 2026-11-16 | One query layer for SQLite, Postgres and MySQL/MariaDB; migrations |
 | eslint, @eslint/js (dev) | see package.json | 2026-11-16 | Lint (`no-undef` above all) |
 
-Still to add when their code lands: `pg`, `mysql2` (the other two databases), `svelte`, `vite` (client build only).
+| svelte (dev) | 5.57.3 | 2026-11-16 | The client, compiled at build time; nothing of it runs on the server |
+| vite, @sveltejs/vite-plugin-svelte (dev) | 8.3.8, 7.3.1 | 2026-11-16 | Builds the client into `dist/client` |
+
+Still to add when their code lands: `pg`, `mysql2` (the other two databases).
+
+## Accepted audit findings
+- **deepmerge (low, GHSA-gcqx-w48m-w2h4), via @sveltejs/vite-plugin-svelte** — 2026-11-16, no fixed version exists.
+  Build-time only: the plugin merges OUR OWN Vite/Svelte config with it; no untrusted input reaches it and it is not
+  in the server or the shipped image (`npm ci --omit=dev`). Re-check on every dependency update.
