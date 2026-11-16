@@ -9,7 +9,7 @@
  *   - a commit status `content-sync / catalog` on the branch head carries the checks' result.
  * Inputs (environment): GH_TOKEN, GITHUB_REPOSITORY, OUTCOMES = JSON { sync, build, verify, test } of step outcomes.
  */
-import { readFileSync, writeFileSync, existsSync } from "node:fs";
+import { readFileSync, writeFileSync, mkdtempSync, rmSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -59,8 +59,8 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     run("git", ["commit", "-q", "-m", subject, "-m", TRAILER]);
     run("git", [...auth, "push", "-q", "--force", "origin", `HEAD:refs/heads/${BRANCH}`]);
     const head = run("git", ["rev-parse", "HEAD"]);
-    const bodyFile = join(tmpdir(), "content-sync-body.md");
-    writeFileSync(bodyFile, prBody(report, outcomes));
+    const bodyDir = mkdtempSync(join(tmpdir(), "content-sync-")), bodyFile = join(bodyDir, "body.md");   // a private directory, not a guessable name
+    writeFileSync(bodyFile, prBody(report, outcomes), { mode: 0o600 });
     const env = { ...process.env, GH_TOKEN: token };
     const open = run("gh", ["pr", "list", "--repo", repo, "--head", BRANCH, "--state", "open", "--json", "number", "--jq", ".[0].number"], { env });
     try {
@@ -72,6 +72,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     const allOk = ["sync", "build", "verify", "test"].every(k => outcomes[k] === "success");
     run("gh", ["api", "-X", "POST", `repos/${repo}/statuses/${head}`, "-f", `state=${allOk ? "success" : "failure"}`, "-f", `context=${STATUS}`,
       "-f", `description=${allOk ? "The new content builds, matches upstream, and the tests pass" : "A check failed in the sync run: see the pull request"}`], { env });
-    console.log(`Published ${BRANCH} (${head.slice(0, 12)})${existsSync(bodyFile) ? "" : ""}.`);
+    rmSync(bodyDir, { recursive: true, force: true });
+    console.log(`Published ${BRANCH} (${head.slice(0, 12)}).`);
   } catch (err) { console.error(err.message); process.exit(1); }
 }

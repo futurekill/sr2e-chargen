@@ -1,0 +1,11 @@
+# CodeQL configuration (CI). Each exclusion says why.
+name: sr2e-chargen
+queries:
+  - uses: security-extended
+query-filters:
+  # The content tools (tools/sync-content.mjs, tools/verify-content.mjs) build GitHub addresses from
+  # content-pins.json BY DESIGN: the file is this repository's own, committed and reviewed, and every repository
+  # name, tag and commit in it is checked against a strict pattern before use (tools/content.mjs checkPin).
+  # The server makes no outbound requests at all.
+  - exclude:
+      id: js/file-access-to-http
