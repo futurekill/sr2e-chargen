@@ -21,7 +21,7 @@ chargen maintenance on|off|status`;
 export async function run(argv, { env = process.env, out = console.log } = {}) {
   const [group, cmd, ...rest] = argv;
   const config = loadConfig(env);
-  const db = openDatabase(config.databaseUrl);
+  const db = await openDatabase(config.databaseUrl);
   const ctx = { db, dialect: db.dialectName, now: () => Date.now() };
   const when = (ms) => new Date(Number(ms)).toISOString();
   try {

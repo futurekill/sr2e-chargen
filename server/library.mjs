@@ -55,6 +55,7 @@ export const fingerprint = (method, path, body) => sha256(`${method}\n${path}\n$
 
 /** Move the user's counters, or refuse: the conditional UPDATE is the quota check, so concurrent writers can't both pass. */
 async function charge(trx, userId, { docs = 0, bytes = 0 }) {
+  if (!docs && !bytes) return;   // nothing moves (a revision exactly replacing a pruned one)
   let q = trx.updateTable("users").set(eb => ({ doc_count: eb("doc_count", "+", docs), bytes_used: eb("bytes_used", "+", bytes) })).where("id", "=", userId);
   if (docs > 0) q = q.where("doc_count", "<=", MAX_DOCUMENTS - docs);
   if (bytes > 0) q = q.where("bytes_used", "<=", MAX_BYTES - bytes);

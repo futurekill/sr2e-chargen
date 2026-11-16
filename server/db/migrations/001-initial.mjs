@@ -5,7 +5,8 @@
  */
 import { sql } from "kysely";
 
-const jsonColumn = (db) => (db.dialectName === "postgres" ? "jsonb" : db.dialectName === "mysql" ? "longtext" : "text");
+// MySQL TEXT stops at 64 KB: LONGTEXT there (not in Kysely's type list, so given raw).
+const jsonColumn = (db) => (db.dialectName === "postgres" ? "jsonb" : db.dialectName === "mysql" ? sql`longtext` : "text");
 const ID = "varchar(36)";
 
 /** MySQL has no `CREATE INDEX IF NOT EXISTS` (review 1 #5): look first there; the others take the clause. */

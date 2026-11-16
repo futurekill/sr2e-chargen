@@ -152,7 +152,7 @@ test("auth events are audited, without secrets", async () => {
   const { ctx } = await withAdmin();
   await A.login(ctx, { username: "boss", password: "wrong wrong wrong" }).catch(() => {});
   const rows = await ctx.db.selectFrom("audit").selectAll().execute();
-  assert.deepEqual(rows.map(r => r.action), ["setup.issued", "setup.redeemed", "login.failed"]);
+  assert.deepEqual(rows.map(r => r.action).sort(), ["login.failed", "setup.issued", "setup.redeemed"]);   // (same instant on the test clock: no order)
   assert.ok(!JSON.stringify(rows).includes(PW));
 });
 

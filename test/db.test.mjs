@@ -4,9 +4,11 @@ import { sql } from "kysely";
 import { openDatabase, migrate, migrationStatus, parseDatabaseUrl } from "../server/db/index.mjs";
 import { openSqlite } from "../server/db/node-sqlite.mjs";
 
-const fresh = () => openDatabase("sqlite://:memory:");
+import { freshUrl, sqliteOnly, SERVER } from "./helpers.mjs";
 
-test("node:sqlite adapter: reader detection, parameter binding, numbers not BigInts, iterate", () => {
+const fresh = async () => openDatabase(await freshUrl());
+
+test("node:sqlite adapter: reader detection, parameter binding, numbers not BigInts, iterate", { skip: sqliteOnly }, () => {
   const db = openSqlite(":memory:");
   assert.equal(db.prepare("create table t (a integer, b text)").reader, false);
   db.prepare("create table t (a integer, b text)").run([]);
@@ -22,7 +24,7 @@ test("node:sqlite adapter: reader detection, parameter binding, numbers not BigI
 });
 
 test("transactions commit, roll back, and survive a statement error", async () => {
-  const db = fresh();
+  const db = await fresh();
   await sql`create table t (a integer primary key)`.execute(db);
   await db.transaction().execute(trx => sql`insert into t values (1)`.execute(trx));
   await assert.rejects(db.transaction().execute(async trx => {
@@ -32,12 +34,12 @@ test("transactions commit, roll back, and survive a statement error", async () =
   const rows = (await sql`select a from t order by a`.execute(db)).rows;
   assert.deepEqual(rows.map(r => r.a), [1]);
   await db.transaction().execute(trx => sql`insert into t values (3)`.execute(trx));   // the connection is still usable
-  assert.equal((await sql`select count(*) as n from t`.execute(db)).rows[0].n, 2);
+  assert.equal(Number((await sql`select count(*) as n from t`.execute(db)).rows[0].n), 2);
   await db.destroy();
 });
 
 test("migrations: up on an empty database, idempotent, the two lock rows present", async () => {
-  const db = fresh();
+  const db = await fresh();
   assert.deepEqual((await migrationStatus(db)).pending, ["001-initial"]);
   const after = await migrate(db);
   assert.deepEqual(after, { applied: ["001-initial"], pending: [], newer: [] });
@@ -48,7 +50,7 @@ test("migrations: up on an empty database, idempotent, the two lock rows present
 });
 
 test("the initial migration can run again after an interruption (every step conditional)", async () => {
-  const db = fresh();
+  const db = await fresh();
   const { up } = await import("../server/db/migrations/001-initial.mjs");
   await up(db); await up(db);
   assert.equal((await db.selectFrom("settings").selectAll().execute()).length, 2);
@@ -56,7 +58,7 @@ test("the initial migration can run again after an interruption (every step cond
 });
 
 test("a database newer than this build is refused", async () => {
-  const db = fresh();
+  const db = await fresh();
   await migrate(db);
   await db.insertInto("migrations").values({ name: "999-from-the-future", at: 1 }).execute();
   await assert.rejects(migrate(db), /newer than this build/);
@@ -64,7 +66,7 @@ test("a database newer than this build is refused", async () => {
 });
 
 test("foreign keys are enforced and usernames are unique by their key", async () => {
-  const db = fresh();
+  const db = await fresh();
   await migrate(db);
   const user = { id: "u1", username: "Razor", username_key: "razor", password_hash: "x", role: "user", created_at: 1 };
   await db.insertInto("users").values(user).execute();
@@ -74,20 +76,22 @@ test("foreign keys are enforced and usernames are unique by their key", async ()
 });
 
 test("DATABASE_URL parsing", () => {
+  assert.equal(parseDatabaseUrl("postgres://u:p@h/db").dialect, "postgres");
+  assert.deepEqual(parseDatabaseUrl("mariadb://u:p@h/db"), { dialect: "mysql", url: "mysql://u:p@h/db" });
+  assert.ok(SERVER === null || typeof SERVER === "string");
   assert.deepEqual(parseDatabaseUrl("sqlite:///data/chargen.db"), { dialect: "sqlite", path: "/data/chargen.db" });
   assert.deepEqual(parseDatabaseUrl("sqlite://:memory:"), { dialect: "sqlite", path: ":memory:" });
   assert.throws(() => parseDatabaseUrl("oracle://x"), /unsupported/);
 });
 
 test("two processes migrating a fresh database at once both succeed (one owner at a time)", async () => {
-  const { mkdtempSync } = await import("node:fs"); const { tmpdir } = await import("node:os"); const { join } = await import("node:path");
   const { execFile } = await import("node:child_process"); const { promisify } = await import("node:util");
   // Real processes: two connections in ONE process would block each other's event loop on SQLite's busy wait.
-  const env = { ...process.env, BASE_URL: "http://localhost:3000", DATABASE_URL: `sqlite://${join(mkdtempSync(join(tmpdir(), "chargen-mig-")), "m.db")}` };
+  const env = { ...process.env, BASE_URL: "http://localhost:3000", DATABASE_URL: await freshUrl({ file: true }) };
   const run = () => promisify(execFile)(process.execPath, ["server/cli.mjs", "db", "migrate"], { env });
   const out = await Promise.all([run(), run(), run()]);
   for (const o of out) assert.deepEqual(JSON.parse(o.stdout).applied, ["001-initial"]);
-  const db = openDatabase(env.DATABASE_URL);
+  const db = await openDatabase(env.DATABASE_URL);
   assert.equal((await db.selectFrom("settings").selectAll().execute()).length, 2);
   await db.destroy();
 });

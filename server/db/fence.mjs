@@ -21,19 +21,31 @@ export class SessionGone extends Error {
  * the session (and the role the route needs) is checked AGAIN here, under a row lock, so a request that passed
  * authentication before its session was revoked or its admin disabled can't still write (code review 1 #3).
  */
-export function writeTx(ctx, fn) {
-  return ctx.db.transaction().execute(async trx => {
-    const row = await shareLock(ctx, trx.selectFrom("settings").select("value").where("key", "=", "maintenance")).executeTakeFirst();
-    if (row?.value !== "off") throw new Maintenance();
-    if (ctx.session) {
-      const s = await shareLock(ctx, trx.selectFrom("sessions").innerJoin("users", "users.id", "sessions.user_id")
-        .select(["users.role", "users.disabled_at"]).where("sessions.id", "=", ctx.session.id)).executeTakeFirst();
-      if (!s || s.disabled_at != null) throw new SessionGone(false);
-      if (ctx.session.role && s.role !== ctx.session.role) throw new SessionGone(true);
+export async function writeTx(ctx, fn) {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      return await ctx.db.transaction().execute(async trx => {
+        const row = await shareLock(ctx, trx.selectFrom("settings").select("value").where("key", "=", "maintenance")).executeTakeFirst();
+        if (row?.value !== "off") throw new Maintenance();
+        if (ctx.session) {
+          const s = await shareLock(ctx, trx.selectFrom("sessions").innerJoin("users", "users.id", "sessions.user_id")
+            .select(["users.role", "users.disabled_at"]).where("sessions.id", "=", ctx.session.id)).executeTakeFirst();
+          if (!s || s.disabled_at != null) throw new SessionGone(false);
+          if (ctx.session.role && s.role !== ctx.session.role) throw new SessionGone(true);
+        }
+        return fn(trx);
+      });
+    } catch (err) {
+      // The database chose this transaction as a deadlock victim (or couldn't serialise it) and rolled it back
+      // whole: running it again is what the database asks for. Everything in `fn` is database work, so it can.
+      if (!retryable(err) || attempt >= 4) throw err;
+      await new Promise(r => setTimeout(r, 15 * attempt + Math.random() * 25));
     }
-    return fn(trx);
-  });
+  }
 }
+/** MySQL/MariaDB deadlock (1213) and lock wait timeout (1205); Postgres deadlock (40P01) and serialization failure (40001). */
+const retryable = (err) => err?.errno === 1213 || err?.errno === 1205 || err?.code === "40P01" || err?.code === "40001";
+
 /** The ONE write outside the fence (round 4 #1): the flag's own transition, under its row's exclusive lock. */
 export async function setMaintenance(ctx, on) {
   await ctx.db.updateTable("settings").set({ value: on ? "on" : "off" }).where("key", "=", "maintenance").execute();
