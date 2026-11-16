@@ -1,4 +1,4 @@
-# Roadmap (revised 2026-11-16) — PROPOSED, not yet approved
+# Roadmap (revised 2026-11-16) — approved by the user 2026-11-16 ("we can always make changes later")
 
 This roadmap replaces the milestone order in docs/PLAN.md. The user decided on 2026-11-16 that the tool is
 **standalone first**: you can create and manage a character for a physical table without Foundry. Foundry is an
