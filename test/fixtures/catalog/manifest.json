@@ -1,0 +1,56 @@
+{
+  "pins": [
+    {
+      "id": "sr2e",
+      "version": "9.9.9",
+      "tag": "v9.9.9",
+      "commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    },
+    {
+      "id": "sr2e-street-samurai-catalog",
+      "version": "1.0.0",
+      "tag": "v1.0.0",
+      "commit": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    }
+  ],
+  "books": [
+    {
+      "key": "sr2",
+      "abbr": "SR2",
+      "title": "Shadowrun, Second Edition",
+      "module": "sr2e",
+      "count": 6
+    },
+    {
+      "key": "ssc",
+      "abbr": "SSC",
+      "title": "Street Samurai Catalog",
+      "module": "sr2e-street-samurai-catalog",
+      "count": 2
+    }
+  ],
+  "types": [
+    {
+      "type": "character",
+      "count": 1
+    },
+    {
+      "type": "contact",
+      "count": 1
+    },
+    {
+      "type": "gear",
+      "count": 2
+    },
+    {
+      "type": "vehicle",
+      "count": 1
+    },
+    {
+      "type": "weapon",
+      "count": 3
+    }
+  ],
+  "entries": 8,
+  "sha256": "7db3c3dd040bfcac4015a7b7d0ebdf2f1e8fe391d0253555e0daad025f7ff4cb"
+}

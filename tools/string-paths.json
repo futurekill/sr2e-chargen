@@ -1,0 +1,26 @@
+{
+  "$comment": "Every path in a catalog document's `system` that holds a string, classified (docs/PLAN-catalog.md §4, U12). `text` = the book's wording: moved to the entry's `text`, tagged with its book, so a reduced-content mode can remove it. `data` = codes, keys, formulas and names the rules read. `[]` = any array element, `*` = any key. A string at a path that is in neither list FAILS the build. Audited against the pinned content on 2026-11-16.",
+  "text": [
+    "system.notes", "system.description", "system.biography",
+    "system.otherFeatures", "system.seating", "system.entryPoints"
+  ],
+  "data": [
+    "system.citation.book", "system.citation.page", "system.source",
+    "system.category", "system.subcategory", "system.kind", "system.rule", "system.type", "system.modType", "system.modKey",
+    "system.weaponType", "system.damageType", "system.damageCode", "system.ammoType", "system.ammo.type", "system.ammo.armorCalc",
+    "system.ammo.guided.kind", "system.guided.kind", "system.armorCalc", "system.blastType", "system.skill", "system.improvedSkill",
+    "system.linkedAttribute", "system.languageFamily", "system.grantedSkillCategory", "system.focusType",
+    "system.availability", "system.legality", "system.streetIndex", "system.grade", "system.location", "system.stack",
+    "system.bodySystem", "system.side", "system.limbType", "system.limbOptionKind", "system.maxRating",
+    "system.ratingStats[].availability", "system.ratingStats[].streetIndex", "system.ratingStats[].legality",
+    "system.drainCode", "system.range", "system.duration", "system.target",
+    "system.race", "system.raceKey", "system.species", "system.specialAbilities[]", "system.tradition", "system.magicType",
+    "system.magic.type", "system.magic.tradition", "system.magic.skill", "system.magic.totem",
+    "system.lifestyle", "system.level", "system.archetype", "system.contactType", "system.chargen.priorities.*",
+    "system.vehicleType", "system.fuelType", "system.fuelUnit", "system.economyUnit", "system.economyIdle", "system.ltProfile",
+    "system.setupTime", "system.design.category", "system.design.traits[]", "system.restrictions[]", "system.learningPool.scope",
+    "system.dpFormula", "system.cfFormula", "system.loadFormula", "system.effects.*",
+    "system.custom.state", "system.custom.procedure", "system.custom.pageCust", "system.custom.combine", "system.custom.equipment",
+    "system.custom.skills[]", "system.custom.formulas.*", "system.custom.max.*", "system.custom.market[].*"
+  ]
+}

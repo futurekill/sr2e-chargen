@@ -67,7 +67,8 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with: { persist-credentials: false }
       # Built, started and probed; never pushed (M3b adds the scan, SBOM, signature and the private registry push).
-      - run: docker build -f docker/Dockerfile -t sr2e-chargen:ci .
+      # A labelled TEST image with the fixture catalog: CI has no access to the content repositories yet.
+      - run: docker build -f docker/Dockerfile --build-arg TEST_IMAGE=1 -t sr2e-chargen:ci .
       - name: Run it hardened and wait for healthy
         run: |
           docker run -d --name cg --read-only --cap-drop ALL --security-opt no-new-privileges:true --tmpfs /tmp \

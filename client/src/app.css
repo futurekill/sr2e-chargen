@@ -48,3 +48,15 @@ select { width: auto; }
 details { margin: 1.5rem 0 0; }
 summary { cursor: pointer; color: var(--accent); width: fit-content; }
 details[open] > summary { margin-bottom: .6rem; }
+.filters { display: flex; flex-wrap: wrap; gap: .75rem 1rem; align-items: end; margin: 0 0 1rem; }
+fieldset.books { border: 1px solid var(--line); margin: 0 0 1.25rem; padding: .6rem .85rem .75rem; display: flex; flex-wrap: wrap; gap: .35rem 1.25rem; }
+fieldset.books legend { color: var(--muted); padding: 0 .35rem; font-size: .9rem; }
+button.plain { background: none; border: 0; padding: 0; color: var(--accent); text-align: left; font-weight: 700; text-decoration: underline; text-underline-offset: .2em; }
+li.entry .cite { color: var(--ink); border: 1px solid var(--line); padding: 0 .4rem; font-size: .85rem; white-space: nowrap; }
+li.entry .cite abbr { text-decoration: none; }
+li.entry .detail { flex-basis: 100%; background: var(--surface); border: 1px solid var(--line); padding: .75rem .85rem; margin-top: .35rem; }
+.booktext { white-space: pre-line; }
+dl { display: grid; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); gap: .15rem 1.25rem; margin: 0; }
+dl > div { display: flex; gap: .5rem; justify-content: space-between; border-bottom: 1px dotted var(--line); }
+dt { color: var(--muted); }
+dd { margin: 0; text-align: right; overflow-wrap: anywhere; }

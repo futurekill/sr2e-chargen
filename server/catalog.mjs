@@ -1,0 +1,50 @@
+/**
+ * The catalog at run time (docs/PLAN-catalog.md §6): read once at start, checked, kept in memory. It is build output
+ * (tools/build-catalog.mjs), the same for everyone and read-only. The routes are in routes/catalog.mjs.
+ */
+import { readFileSync, existsSync } from "node:fs";
+import { createHash } from "node:crypto";
+import { join } from "node:path";
+
+export class CatalogError extends Error {}
+
+const SUMMARY = ["id", "name", "type", "kind", "book", "listBook", "package", "citation", "cost", "category"];
+const summary = (e) => Object.fromEntries(SUMMARY.map(k => [k, e[k]]));
+
+/**
+ * Load `dir/catalog.json` and `dir/manifest.json`. Throws CatalogError when it is absent, damaged (the manifest's
+ * checksum), empty, or misshapen. `pins` (optional) must equal the manifest's pins exactly: a stale catalog is refused.
+ */
+export function loadCatalog(dir, { pins = null } = {}) {
+  const file = join(dir, "catalog.json"), manifestFile = join(dir, "manifest.json");
+  if (!existsSync(file) || !existsSync(manifestFile)) throw new CatalogError(`no catalog in ${dir} (run: npm run build:catalog)`);
+  const body = readFileSync(file);
+  let manifest, catalog;
+  try { manifest = JSON.parse(readFileSync(manifestFile, "utf8")); catalog = JSON.parse(body.toString("utf8")); }
+  catch (err) { throw new CatalogError(`the catalog is not valid JSON (${err.message})`); }
+  if (createHash("sha256").update(body).digest("hex") !== manifest.sha256) throw new CatalogError("the catalog doesn't match its manifest's checksum");
+  if (!Array.isArray(catalog.entries) || !catalog.entries.length) throw new CatalogError("the catalog is empty");
+  if (!Array.isArray(catalog.books) || !Array.isArray(catalog.pins)) throw new CatalogError("the catalog has no books or pins");
+  const byId = new Map();
+  for (const e of catalog.entries) {
+    if (typeof e?.id !== "string" || typeof e.name !== "string" || typeof e.type !== "string" || typeof e.listBook !== "string" || !e.system || !e.text)
+      throw new CatalogError(`a catalog entry is misshapen (${e?.id ?? "no id"})`);
+    if (byId.has(e.id)) throw new CatalogError(`duplicate catalog id ${e.id}`);
+    byId.set(e.id, e);
+  }
+  if (pins) {
+    const want = JSON.stringify(pins.map(p => [p.dir, p.tag, p.commit])), have = JSON.stringify(catalog.pins.map((p, i) => [pins[i]?.dir, p.tag, p.commit]));
+    if (pins.length !== catalog.pins.length || want !== have) throw new CatalogError("the catalog was built from other pins than content-pins.json (run: npm run build:catalog)");
+  }
+  // Search index: name and category, lower-cased once. Sorted by name for stable pages.
+  const sorted = [...catalog.entries].sort((a, b) => a.name.localeCompare(b.name, "en") || (a.id < b.id ? -1 : 1));
+  const index = sorted.map(e => ({ e, hay: `${e.name}\n${(e.category ?? []).join("\n")}`.toLowerCase() }));
+  return { manifest, byId, index, size: catalog.entries.length };
+}
+
+/** A page of summaries. `books` / `types`: arrays (empty = all); `q`: a plain substring, case-insensitive. */
+export function searchCatalog(catalog, { books = [], types = [], q = "", offset = 0, limit = 50 } = {}) {
+  const needle = String(q).trim().toLowerCase(), bookSet = new Set(books), typeSet = new Set(types);
+  const hits = catalog.index.filter(({ e, hay }) => (!bookSet.size || bookSet.has(e.listBook)) && (!typeSet.size || typeSet.has(e.type)) && (!needle || hay.includes(needle)));
+  return { total: hits.length, offset, entries: hits.slice(offset, offset + Math.min(100, Math.max(1, limit))).map(({ e }) => summary(e)) };
+}

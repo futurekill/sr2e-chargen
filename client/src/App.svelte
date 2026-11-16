@@ -7,6 +7,7 @@
   import Document from "./pages/Document.svelte";
   import Account from "./pages/Account.svelte";
   import Admin from "./pages/Admin.svelte";
+  import Catalog from "./pages/Catalog.svelte";
 
   let user = $state(null), ready = $state(false), down = $state("");
   const open = ["/redeem", "/reset"];   // pages for people who aren't signed in yet
@@ -29,6 +30,7 @@
     {#if user}
       <nav aria-label="Main">
         <a href="/" aria-current={route.path === "/" ? "page" : undefined}>Library</a>
+        <a href="/catalog" aria-current={route.path === "/catalog" ? "page" : undefined}>Catalog</a>
         <a href="/account" aria-current={route.path === "/account" ? "page" : undefined}>Account</a>
         {#if user.role === "admin"}<a href="/admin" aria-current={route.path === "/admin" ? "page" : undefined}>Admin</a>{/if}
         <button class="quiet" onclick={signOut}>Jack out</button>
@@ -48,6 +50,8 @@
       <SignIn onDone={async () => { await refresh(); }} />
     {:else if docId}
       {#key docId}<Document id={docId} />{/key}
+    {:else if route.path === "/catalog"}
+      <Catalog />
     {:else if route.path === "/account"}
       <Account {user} onSignedOut={() => { forgetSession(); user = null; go("/"); }} />
     {:else if route.path === "/admin" && user.role === "admin"}

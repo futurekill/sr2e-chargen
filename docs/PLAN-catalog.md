@@ -66,9 +66,9 @@ type, and see where each one comes from (`SR2 p.231`). Milestone 2 (character cr
      (all 270 embedded Rigger 2 vehicle items have one) or none (round 3 #1) — since some rules classify an item by its source uuid (the core Cyberarm has no
      rule flag). `effects` keep their `name` and `changes`.
    - Dropped: the rest of `_stats`, `ownership`, `sort`, flags of other packages, `prototypeToken`.
-5. **Output** (#2). `dist/catalog/catalog.json` = `{ pins: [{ id, version, tag, commit }], books: [{ key, abbr,
+5. **Output** (#2). `catalog/catalog.json` = `{ pins: [{ id, version, tag, commit }], books: [{ key, abbr,
    title, module, count }], entries: [...] }`, entries sorted by id, keys in a fixed order, NO timestamp: the same
-   pins give a byte-identical file. `dist/catalog/manifest.json` = the same without `entries`, plus the file's
+   pins give a byte-identical file. `catalog/manifest.json` = the same without `entries`, plus the file's
    SHA-256.
 6. **Serve** (`server/catalog.mjs`, routes under `/api/catalog`, all behind the session like every route):
    - loaded once at start, validated (shape, unique ids, the manifest's checksum), kept in memory.
@@ -81,7 +81,7 @@ type, and see where each one comes from (`SR2 p.231`). Milestone 2 (character cr
 7. **Client.** A Catalog page: search box, book toggles (ALL at the top; the core book listed first), type filter,
    a result list with the citation badge (abbreviation; the full title on hover and for screen readers), a detail
    view with the stats and the text. Paged with "load more".
-8. **Image** (#1, round 2 #1). The Dockerfile COPIES `dist/catalog` (built on the host first: `npm run
+8. **Image** (#1, round 2 #1). The Dockerfile COPIES `catalog/` (a tracked directory whose contents are build output, not committed) (built on the host first: `npm run
    build:catalog`; the `.dockerignore` lets it through) and runs `tools/check-catalog.mjs` in the build: the image
    build FAILS when the catalog is absent, empty, fails its checksum, or its pins are not exactly those of the
    current `content-pins.json` (a stale catalog). The one exception is the build argument `TEST_IMAGE=1`, which

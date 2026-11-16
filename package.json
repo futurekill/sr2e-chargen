@@ -13,11 +13,14 @@
   "scripts": {
     "start": "node server/main.mjs",
     "build": "vite build",
+    "build:catalog": "node tools/build-catalog.mjs",
+    "pins:update": "node tools/build-catalog.mjs --pins",
+    "check:catalog": "node tools/check-catalog.mjs catalog",
     "test": "node --test test/",
     "test:postgres": "TEST_DATABASE_URL=postgres://postgres:test@127.0.0.1:55432/postgres node --test --test-force-exit --test-concurrency=1 test/",
     "test:mysql": "TEST_DATABASE_URL=mysql://root:test@127.0.0.1:53306/mysql node --test --test-force-exit --test-concurrency=1 test/",
     "test:mariadb": "TEST_DATABASE_URL=mysql://root:test@127.0.0.1:53307/mysql node --test --test-force-exit --test-concurrency=1 test/",
-    "lint": "eslint server test"
+    "lint": "eslint server test tools"
   },
   "license": "UNLICENSED",
   "dependencies": {

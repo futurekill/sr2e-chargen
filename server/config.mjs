@@ -16,6 +16,8 @@ export function loadConfig(env = process.env) {
     port: Number(env.PORT) || 3000,
     host: env.HOST ?? "0.0.0.0",
     trustProxy: env.TRUST_PROXY ? env.TRUST_PROXY.split(",").map(s => s.trim()) : false,
-    logLevel: env.LOG_LEVEL ?? "info"
+    logLevel: env.LOG_LEVEL ?? "info",
+    // The built catalog (tools/build-catalog.mjs). A production server refuses to start without a valid one.
+    catalogDir: env.CATALOG_DIR ?? new URL("../catalog/", import.meta.url).pathname
   };
 }
