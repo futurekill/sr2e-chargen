@@ -80,3 +80,15 @@ All 8 accepted.
 - #5 the maintenance row is a lock every write transaction takes in share mode; setting it waits them out.
 - #6 M3a stores an explicit `draft` kind with its own schema, never something portable-looking; characters arrive as a new kind with the vendored schema.
 - #7 `bytes_used` counts every retained revision. #8 backups: nightly, under the fence, `VACUUM INTO`, asset manifest, CI restore test.
+
+## Round 3 — Codex (REVISE, 3 findings)
+1. **Bootstrap can still race with setup redemption.** [Draft 3’s bootstrap rule](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/docs/PLAN-M3.md:99) does not take the `admin_gen` lock before checking for an enabled admin. A bootstrap can observe none, then issue a token for the new generation after another transaction creates an admin. **Fix:** Lock `admin_gen`, then check the admin count and issue the token in that same transaction.
+
+2. **The maintenance flag is copied into the destination.** [The draft copies every table while maintenance is on](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/docs/PLAN-M3.md:117); a copied database or restored backup therefore starts read-only, and clearing the flag changes a table checksum. **Fix:** Define the transient flag’s copy, checksum, cutover, and restore handling explicitly, including how writes are re-enabled.
+
+3. **The write fence does not work on the parent plan’s MariaDB option.** The draft specifies `SELECT … FOR SHARE` for MySQL and MariaDB, but [MariaDB documents `LOCK IN SHARE MODE` as its shared-lock syntax](https://mariadb.com/docs/server/reference/sql-statements/data-manipulation/selecting-data/lock-in-share-mode). **Fix:** Use MariaDB-compatible locking SQL and test the fence on MariaDB.
+
+VERDICT: REVISE
+
+### Claude's response (draft 4)
+All 3 accepted: bootstrap locks `admin_gen` before counting; the maintenance row is transient (excluded from copy, manifests and checksums; off in any copied or restored database; the source stays fenced until the operator releases it); `LOCK IN SHARE MODE` on MySQL and MariaDB, MariaDB added to CI.

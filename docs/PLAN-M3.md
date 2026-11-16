@@ -1,5 +1,5 @@
 # Plan: M3 — the creator skeleton
-_Draft 3 (2026-11-16), after Codex rounds 1–2 (20 + 8 findings, all accepted; docs/PLAN-M3-REVIEW-LOG.md). Implements milestone **M3** of docs/PLAN.md (approved at round 12): that plan is the
+_Draft 4 (2026-11-16), after Codex rounds 1–3 (20 + 8 + 3 findings, all accepted; docs/PLAN-M3-REVIEW-LOG.md). Implements milestone **M3** of docs/PLAN.md (approved at round 12): that plan is the
 requirement (Architecture, Security & currency, Content catalog); this one is HOW and in what order._
 
 **Started out of order, by the user's ruling (2026-11-16):** docs/PLAN.md gates M3 on the M2 derive gate. The skeleton
@@ -97,7 +97,9 @@ its origin is the only accepted `Origin`), `TRUST_PROXY` (the proxy's address/CI
   server, a proxy log or a `Referer`; the page reads it, clears the fragment (`history.replaceState`) and submits it
   in the JSON body.
 - **First admin and recovery** (round 1 #5, #6): `settings.admin_gen` is a counter. `bootstrap` is allowed only while
-  no ENABLED admin exists; it revokes earlier unused setup tokens and issues one carrying the current generation.
+  no ENABLED admin exists: in ONE transaction it locks the `admin_gen` row (`FOR UPDATE`; round 3 #1), THEN counts
+  the enabled admins, revokes earlier unused setup tokens and issues one carrying the generation it read under the
+  lock — so it can't issue a token for a generation that a concurrent redemption has just produced.
   Redeeming a setup token does, in its transaction, `UPDATE settings SET value = value + 1 WHERE key = 'admin_gen' AND
   value = <tokens.generation of the redeemed row>` (round 2 #1: the generation is a column on the token) — exactly one row, or the redemption fails — so two links from two racing
   `bootstrap` runs can create only ONE admin. Disabling (or demoting) the LAST enabled admin is refused, in the web
@@ -115,11 +117,17 @@ its origin is the only accepted `Origin`), `TRUST_PROXY` (the proxy's address/CI
   after 5 consecutive failures the account locks for 1 minute, doubling to a 1-hour cap, reset on success. The lockout
   answer is the same generic failure.
 - **The write fence** (round 1 #19, round 2 #5): `settings.maintenance` is a ROW LOCK, not just a value. EVERY write
-  transaction (routes and CLI) begins with a locking read of that row (`SELECT … FOR SHARE` on Postgres and MySQL;
-  on SQLite the transaction is `BEGIN IMMEDIATE`, which already serialises writers) and refuses while it is set.
+  transaction (routes and CLI) begins with a locking read of that row (`SELECT … FOR SHARE` on Postgres; `LOCK IN SHARE MODE` on
+  MySQL AND MariaDB — MariaDB has no `FOR SHARE`, and MySQL still accepts the older form (round 3 #3), one helper
+  `shareLock()` per dialect; on SQLite the transaction is `BEGIN IMMEDIATE`, which already serialises writers) and refuses while it is set.
   Setting it is an `UPDATE` of the same row: it waits for every transaction holding the share lock to finish, and
   every later writer waits for it and then reads "on" — so once the update commits, no write is in flight and none
-  can start. M3b's `db copy` and the backup snapshot use it. Write paths use LOCKING reads only before their first
+  can start. M3b's `db copy` and the backup snapshot use it.
+  **The flag is transient state, never data** (round 3 #2): the `maintenance` row is excluded from `db copy`, from
+  backup manifests and from every checksum; a copied or restored database always has it OFF (the copy/restore
+  writes it so), and the SOURCE stays fenced until the operator ends it explicitly (`chargen maintenance off`, or
+  `db copy --release` after a failed comparison) — the cutover is: copy, compare, point `DATABASE_URL` at the new
+  database, start. A snapshot taken by `VACUUM INTO` carries the row as "on"; `backup restore`/`verify` clear it. Write paths use LOCKING reads only before their first
   write (a plain read would pin a MySQL repeatable-read snapshot and hide later commits; round 2 #3).
 - **Admin-set changes are serialised** (round 2 #2): disable, enable, demote and promote take `settings.admin_gen`
   `FOR UPDATE` first (SQLite: `BEGIN IMMEDIATE`), THEN count the enabled admins, then write — two admins disabling
@@ -196,7 +204,7 @@ document body); body limit 2.5 MB on document routes, 16 KB elsewhere. Errors ne
 - `docker/compose.example.yml`: the app, a named volume for `/data`, `read_only: true`, `cap_drop: [ALL]`,
   `security_opt: [no-new-privileges:true]`, bound to localhost for the user's reverse proxy.
 - CI (Actions pinned to commit SHAs, least-privilege `permissions`): lint, the server suite against SQLite, Postgres
-  and MySQL service containers, client build, `npm audit` + OSV-Scanner, CodeQL, a Docker build. Image scan (Trivy,
+  MySQL AND MariaDB service containers (round 3 #3: the fence and the migration lock are tested on both), client build, `npm audit` + OSV-Scanner, CodeQL, a Docker build. Image scan (Trivy,
   fail on High/Critical), SBOM, cosign and the GHCR push are M3b. The image is never pushed public by default.
 - **Backups (M3b) fit the read-only image** (round 1 #18): the app image has no shell and no dump tools, so backups
   are a SEPARATE compose service from a small tool image with its own `BACKUP_DIR` mount (a different volume or host
