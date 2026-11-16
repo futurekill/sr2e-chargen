@@ -1,0 +1,20 @@
+# sr2e-chargen behind YOUR reverse proxy (TLS ends there). Copy, set BASE_URL, then:
+#   docker compose up -d
+#   docker compose exec chargen /nodejs/bin/node server/cli.mjs admin bootstrap     (prints the first admin's link)
+services:
+  chargen:
+    image: sr2e-chargen:dev          # built locally: docker build -f docker/Dockerfile -t sr2e-chargen:dev .
+    restart: unless-stopped
+    environment:
+      BASE_URL: https://hoichummer.example        # the public address, exactly as people type it
+      TRUST_PROXY: 172.16.0.0/12                   # your proxy's address or network; leave unset to trust none
+    ports:
+      - "127.0.0.1:3000:3000"                      # localhost only: the proxy is the one way in
+    volumes:
+      - chargen-data:/data                         # the only writable path
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    tmpfs: ["/tmp"]
+volumes:
+  chargen-data:

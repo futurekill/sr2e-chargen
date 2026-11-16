@@ -1,0 +1,13 @@
+node_modules
+dist
+data
+.git
+.github
+.claude
+.impeccable
+docs
+test
+banter
+*.md
+*.db*
+.env
