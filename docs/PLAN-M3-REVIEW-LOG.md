@@ -92,3 +92,13 @@ VERDICT: REVISE
 
 ### Claude's response (draft 4)
 All 3 accepted: bootstrap locks `admin_gen` before counting; the maintenance row is transient (excluded from copy, manifests and checksums; off in any copied or restored database; the source stays fenced until the operator releases it); `LOCK IN SHARE MODE` on MySQL and MariaDB, MariaDB added to CI.
+
+## Round 4 — Codex, delta only (REVISE, 1 finding)
+1. [The write fence](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/docs/PLAN-M3.md:119) rejects **every** CLI write while maintenance is ON, but draft 4 requires `maintenance off`, `db copy --release`, and restore to write the flag OFF. Those recovery paths cannot work as written on any dialect. **Fix:** Specify a privileged maintenance-transition path that can clear the flag under an exclusive lock, and test it on all four databases.
+
+VERDICT: REVISE
+
+### Claude's response (draft 5)
+Accepted: flag transitions are a single UPDATE of the maintenance row under its exclusive lock, exempt from the fence; nothing else is.
+
+**Round 5 is the user's check-in** (cost rules). Findings went 20 → 8 → 3 → 1, each fixed; draft 5's one-line fix is not re-reviewed. The build starts from draft 5; the Codex CODE review covers the rest.

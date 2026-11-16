@@ -1,5 +1,5 @@
 # Plan: M3 — the creator skeleton
-_Draft 4 (2026-11-16), after Codex rounds 1–3 (20 + 8 + 3 findings, all accepted; docs/PLAN-M3-REVIEW-LOG.md). Implements milestone **M3** of docs/PLAN.md (approved at round 12): that plan is the
+_Draft 5 (2026-11-16), after Codex rounds 1–4 (20 + 8 + 3 + 1 findings, all accepted; docs/PLAN-M3-REVIEW-LOG.md). Implements milestone **M3** of docs/PLAN.md (approved at round 12): that plan is the
 requirement (Architecture, Security & currency, Content catalog); this one is HOW and in what order._
 
 **Started out of order, by the user's ruling (2026-11-16):** docs/PLAN.md gates M3 on the M2 derive gate. The skeleton
@@ -127,7 +127,11 @@ its origin is the only accepted `Origin`), `TRUST_PROXY` (the proxy's address/CI
   backup manifests and from every checksum; a copied or restored database always has it OFF (the copy/restore
   writes it so), and the SOURCE stays fenced until the operator ends it explicitly (`chargen maintenance off`, or
   `db copy --release` after a failed comparison) — the cutover is: copy, compare, point `DATABASE_URL` at the new
-  database, start. A snapshot taken by `VACUUM INTO` carries the row as "on"; `backup restore`/`verify` clear it. Write paths use LOCKING reads only before their first
+  database, start. A snapshot taken by `VACUUM INTO` carries the row as "on"; `backup restore`/`verify` clear it.
+  **Transitions are the one write outside the fence** (round 4 #1): turning the flag on or off (`chargen maintenance
+  on|off`, `db copy`'s set and `--release`, restore's clear) is a single `UPDATE` of the maintenance row itself,
+  taken under that row's EXCLUSIVE lock and exempt from the "refuse while set" check — nothing else is. Tested on
+  all four databases: off → on waits out a writer; on → off works while set; no other write gets through while on. Write paths use LOCKING reads only before their first
   write (a plain read would pin a MySQL repeatable-read snapshot and hide later commits; round 2 #3).
 - **Admin-set changes are serialised** (round 2 #2): disable, enable, demote and promote take `settings.admin_gen`
   `FOR UPDATE` first (SQLite: `BEGIN IMMEDIATE`), THEN count the enabled admins, then write — two admins disabling
