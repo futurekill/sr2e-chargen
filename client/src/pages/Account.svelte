@@ -1,5 +1,5 @@
 <script>
-  import { post, put, applyFont } from "../lib/api.js";
+  import { get, post, put, applyFont } from "../lib/api.js";
   let { user, onSignedOut } = $props();
   let current = $state(""), next = $state(""), again = $state(""), error = $state(""), busy = $state(false);
   let readable = $state(document.documentElement.dataset.font === "readable");
@@ -9,7 +9,11 @@
   async function setFont() {
     saving = true; error = "";
     try { const p = await put("/api/account/prefs", { readableFont: readable }); readable = p.readableFont; applyFont(readable); }
-    catch (err) { readable = !readable; error = err.message; }
+    catch (err) {
+      error = err.message;
+      // The answer may be lost after the save landed: show what the server holds (r2 #4).
+      try { readable = (await get("/api/account/prefs")).readableFont; applyFont(readable); } catch { readable = !readable; }
+    }
     saving = false;
   }
   async function change(ev) {

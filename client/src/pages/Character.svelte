@@ -106,8 +106,8 @@
   // The printable sheet: paper and font remembered in this browser (a convenience; the server holds no preference yet).
   const pref = (k, d) => { try { return localStorage.getItem(k) ?? d; } catch { return d; } };
   // The font: "" = the account's preference (the server applies it); a choice here overrides it for this browser.
-  let paper = $state(pref("sheet.paper", "letter")), sheetFont = $state(pref("sheet.font", ""));
-  $effect(() => { try { localStorage.setItem("sheet.paper", paper); localStorage.setItem("sheet.font", sheetFont); } catch { /* private mode */ } });
+  let paper = $state(pref("sheet.paper", "letter")), sheetFont = $state(pref("sheet.fontChoice", ""));   // a new key: the old one stored a default, not a choice (r2 #1)
+  $effect(() => { try { localStorage.setItem("sheet.paper", paper); localStorage.setItem("sheet.fontChoice", sheetFont); } catch { /* private mode */ } });
   const sheetHref = $derived(`/api/documents/${server.document.id}/sheet.pdf?paper=${paper}${sheetFont ? `&font=${sheetFont}` : ""}`);
   let nameInput = $state(start.body.name);
   let notesInput = $state(start.body.notes);

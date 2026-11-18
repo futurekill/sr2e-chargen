@@ -90,7 +90,7 @@ import { statBlock } from "../server/sheet/markdown.mjs";
 test("the Markdown stat block: every string, escaped, tables with the right columns", () => {
   for (const [name, body] of FIXTURES) {
     const model = sheetModel(body), md = statBlock(model);
-    const unescaped = squash(md.replace(/\\(.)/g, "$1").replace(/`+ ?| ?`+/g, "").replace(/¦/g, "|"));
+    const unescaped = squash(md.replace(/\\(.)/g, "$1").replace(/`+ ?| ?`+/g, ""));
     for (const s of strings(model)) assert.ok(unescaped.includes(squash(s)), `${name}: "${s.slice(0, 50)}" missing from the stat block`);
     for (const line of md.split("\n").filter(l => l.startsWith("| "))) {
       const cells = line.replace(/\\\|/g, "").split("|").length - 2;
@@ -102,6 +102,7 @@ test("the Markdown stat block: every string, escaped, tables with the right colu
   const head = md.split("\n")[0];
   assert.ok(head.startsWith("# \\| \\*Razor\\* \\[x\\](` http://e) ` \\<b\\>\\#1"), head);
   assert.doesNotMatch(md, /(?<!\\)\]\(http/, "no live link (the bracket is escaped)");
-  const bare = statBlock(sheetModel({ ...newCharacter("x"), notes: "see https://evil.example and www.evil.example or mail me@evil.example ok" }));
+  const bare = statBlock(sheetModel({ ...newCharacter("x"), notes: "see https://evil.example and www.evil.example or mail me@evil.example ok https://x.test/a|b" }));
+  assert.match(bare, /` https:\/\/x\.test\/a\\\|b `/, "a pipe in a URL is kept, escaped for the table");
   for (const u of ["https://evil.example", "www.evil.example", "me@evil.example"]) assert.match(bare, new RegExp("` " + u.replace(/[.]/g, "\\.") + " `"), `${u} is in a code span`);
 });
