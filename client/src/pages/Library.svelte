@@ -1,7 +1,7 @@
 <script>
   import { get, mutate } from "../lib/api.js";
   import { go } from "../lib/router.svelte.js";
-  let docs = $state(null), trash = $state([]), error = $state(""), name = $state(""), busy = $state(false);
+  let docs = $state(null), trash = $state([]), error = $state(""), name = $state(""), kind = $state("character"), busy = $state(false);
   const when = (ms) => new Date(ms).toLocaleString();
 
   /** Every page of a listing (a library holds up to 200; the API hands out 100 at a time). */
@@ -20,10 +20,10 @@
   async function create(ev) {
     ev.preventDefault();
     busy = true;
-    try { const { document } = await mutate("POST", "/api/documents", { name: name.trim() }); go(`/doc/${document.id}`); }
+    try { const { document } = await mutate("POST", kind === "character" ? "/api/documents/characters" : "/api/documents", { name: name.trim() }); go(`/doc/${document.id}`); }
     catch (err) {
       // No answer doesn't mean it didn't happen. Pressing Start again with the same name is safe: it replays.
-      if (err.code === "network") error = "The line dropped. Press Start again — if it already went through, you'll get that draft, not a second one.";
+      if (err.code === "network") error = "The line dropped. Press Start again — if it already went through, you'll get that one, not a second.";
       else error = err.message;
     }
     busy = false;
@@ -36,18 +36,19 @@
 </script>
 
 <h1>Your library</h1>
-<p class="muted">Drafts only for now: characters arrive when the rules engine does.</p>
+<p class="muted">Characters are built step by step with the core book's Priority system. Drafts are free-text notes.</p>
 {#if error}<p class="notice bad" role="alert">{error}</p>{/if}
 
 <form class="row" onsubmit={create}>
-  <label class="grow"><span>New draft</span><input bind:value={name} maxlength="200" placeholder="Street name" required></label>
+  <label class="grow"><span>Name</span><input bind:value={name} maxlength={kind === "character" ? 120 : 200} placeholder="Street name" required></label>
+  <label><span>Kind</span><select bind:value={kind}><option value="character">Character</option><option value="draft">Draft</option></select></label>
   <button disabled={busy || !name.trim()}>Start</button>
 </form>
 
 {#if docs === null}
   <p class="muted prompt">Loading…</p>
 {:else if docs.length === 0}
-  <p class="muted">Nothing on file yet. Name a draft above to start one.</p>
+  <p class="muted">Nothing on file yet. Name a character above to start one.</p>
 {:else}
   <ul class="list">
     {#each docs as d (d.id)}
