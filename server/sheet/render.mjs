@@ -10,7 +10,9 @@ import { existsSync, readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
 
-export class SheetError extends Error {}
+export class SheetError extends Error {
+  constructor(message, overflow = null) { super(message); this.overflow = overflow; }
+}
 
 const require = createRequire(import.meta.url);
 const pkgDir = (name) => dirname(require.resolve(`${name}/package.json`));
@@ -282,6 +284,20 @@ export async function renderSheet(model, { paper = "letter", font = "standard", 
     ["Gear", model.gear, [0.55, 0.12, 0.13, 0.2]]
   ].filter(([, rows]) => rows.length);
   let fy = act.y;   // the rest continues below, on page 1 while it fits
+  if (model.card) {
+    // The table card is ONE page: what doesn't fit is reported by section, never moved to a new page or cut.
+    const overflow = [];
+    const sectionOf = (t) => t.replace(/ \(continued\)$/, "");
+    for (const [title, rows, cols] of flow) {
+      if (!rows.length) continue;
+      if (fy + 40 > BOTTOM) { overflow.push({ section: sectionOf(title), rows: rows.length }); continue; }
+      const out = table(title, rows, cols, L, fy, CW, BOTTOM);
+      fy = out.y;
+      if (out.rest.length) overflow.push({ section: sectionOf(title), rows: out.rest.length });
+    }
+    if (overflow.length) throw new SheetError(`The card is too full: ${overflow.map(o => `${o.rows} ${o.section.toLowerCase()}`).join(", ")} don't fit. Untick something.`, overflow);
+    flow.length = 0;
+  }
   for (let [title, rows, cols] of flow) {
     while (rows.length) {
       if (fy == null || fy + 60 > BOTTOM) { newPage(); fy = MARGIN; }

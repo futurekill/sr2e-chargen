@@ -6,7 +6,7 @@
    */
   import { untrack, onDestroy } from "svelte";
   import { get, mutate } from "../lib/api.js";
-  import { applyOp, validate, CATEGORIES, CATEGORY_NAMES, LETTERS, METATYPES, MAGIC_TYPES, MAGIC_NAMES, TRADITIONS, ATTRIBUTES, ATTR_NAMES, CUSTOM_SKILL_CATEGORIES, totemNames } from "../../../shared/creation.mjs";
+  import { applyOp, validate, cardIds, CARD_TYPES, CATEGORIES, CATEGORY_NAMES, LETTERS, METATYPES, MAGIC_TYPES, MAGIC_NAMES, TRADITIONS, ATTRIBUTES, ATTR_NAMES, CUSTOM_SKILL_CATEGORIES, totemNames } from "../../../shared/creation.mjs";
   import { TABLES } from "../../../shared/rules.mjs";
   import { BUYABLE, choiceSpec, project, price, essenceOf, isCybereye } from "../../../shared/purchase.mjs";
   let { doc: initial, onDeleted } = $props();
@@ -20,7 +20,7 @@
   const sys = $derived(body.actor.system), pr = $derived(sys.chargen.priorities), opts = $derived(body.creation.options);
   const finished = $derived(!!body.creation.finished);
   const TOTEMS = Object.entries(totemNames()).sort((a, b) => a[1].localeCompare(b[1]));
-  const STEPS = [["concept", "Concept"], ["priorities", "Priorities"], ["metatype", "Metatype"], ["magic", "Magic"], ["attributes", "Attributes"], ["skills", "Skills"], ["resources", "Resources"]];
+  const STEPS = [["concept", "Concept"], ["priorities", "Priorities"], ["metatype", "Metatype"], ["magic", "Magic"], ["attributes", "Attributes"], ["skills", "Skills"], ["resources", "Resources"], ["card", "Table card"]];
   const SKILL_CATEGORY = { active: "Active", knowledge: "Knowledge", language: "Language", build_repair: "Build/Repair", special: "Special" };
   /** The full catalog entries this page fetched (the reducer copies an entry's data into the character). */
   const entries = new Map();
@@ -109,6 +109,22 @@
   let sheetStyle = $state(pref("sheet.style", "classic")), paper = $state(pref("sheet.paper", "letter")), sheetFont = $state(pref("sheet.fontChoice", ""));   // a new key: the old one stored a default, not a choice (r2 #1)
   $effect(() => { try { localStorage.setItem("sheet.paper", paper); localStorage.setItem("sheet.style", sheetStyle); localStorage.setItem("sheet.fontChoice", sheetFont); } catch { /* private mode */ } });
   const sheetHref = $derived(`/api/documents/${server.document.id}/sheet.pdf?style=${sheetStyle}&paper=${paper}${sheetFont ? `&font=${sheetFont}` : ""}`);
+  // The table card (docs/PLAN-sheet.md slice 4): the chosen rows, and the server's fit answer after each change.
+  const CARD_SECTION = { attacks: "Attacks", skills: "Active skills", cyberware: "Cyberware", powers: "Adept powers", spells: "Spells" };
+  const onCard = $derived(new Set(cardIds(body)));
+  const cardRows = $derived(Object.entries(CARD_SECTION).map(([k, title]) => [title, body.actor.items.filter(i => CARD_TYPES[i.type] === k && (i.type !== "skill" || i.system.category === "active"))]).filter(([, list]) => list.length));
+  let fit = $state(null), fitTimer, fitSeq = 0;
+  const cardQuery = $derived(`style=${sheetStyle}&paper=${paper}${sheetFont ? `&font=${sheetFont}` : ""}`);
+  $effect(() => {
+    void body.creation.card; void body.actor.items.length; const q = cardQuery; const rev = server.document.revision;
+    clearTimeout(fitTimer);
+    const mine = ++fitSeq;
+    fitTimer = setTimeout(async () => {
+      if (sending) return;   // the answer is checked again when the save lands (the revision changes)
+      try { const r = await get(`/api/documents/${server.document.id}/card/fit?${q}`); if (!gone && mine === fitSeq) fit = { ...r, rev }; }
+      catch (err) { if (!gone && mine === fitSeq) fit = { fits: false, overflow: [], message: err.message, rev }; }
+    }, 700);
+  });
   let nameInput = $state(start.body.name);
   let notesInput = $state(start.body.notes);
 </script>
@@ -335,6 +351,26 @@
       {/if}
     </section>
 
+    <section id="step-card">
+      <h2>Table card</h2>
+      <p class="muted">One page for the table: attributes, pools, monitors, and the rows you tick below. Everything stays on the full sheet.</p>
+      {#each cardRows as [title, list] (title)}
+        <fieldset class="books"><legend>{title}</legend>
+          {#each list as item (item._id)}
+            <label class="row inline"><input type="checkbox" class="check" checked={onCard.has(item._id)} onchange={(ev) => change({ op: "setCard", itemId: item._id, on: ev.currentTarget.checked })}><span>{item.name}</span></label>
+          {/each}
+        </fieldset>
+      {:else}
+        <p class="muted">Nothing to choose yet: weapons, active skills, cyberware, powers and spells appear here.</p>
+      {/each}
+      <p class="row" role="status">
+        {#if !fit}<span class="muted">Checking the fit…</span>
+        {:else if fit.fits}<span class="good-text">Fits on one page.</span>
+        {:else}<span class="bad">{fit.message || "It doesn't fit."}</span>{/if}
+        <a class="button quiet" class:disabled={!fit?.fits} aria-disabled={!fit?.fits} href={fit?.fits ? `/api/documents/${server.document.id}/card.pdf?${cardQuery}` : undefined} target="_blank" rel="noopener">Print card</a>
+      </p>
+    </section>
+
     <p class="row later"><button type="button" class="danger" onclick={onDeleted}>Delete character</button></p>
   </div>
 
@@ -384,6 +420,8 @@
   .table-rows { margin-bottom: .5rem; font-size: .9rem; }
   .later { margin-top: 2.5rem; }
   .print { margin: 0 0 .75rem; }
+  .good-text { color: var(--ok); }
+  a.disabled { opacity: .55; pointer-events: none; }
   .print label.inline { margin: 0; }
   .adders { margin: 0 0 .9rem; align-items: end; }
   table.skills input:not([type="number"]) { width: 9rem; padding: .3rem .45rem; }

@@ -74,8 +74,17 @@ export const OPS = Object.freeze({
   removeSkill: { itemId: "string" },
   addItem: { catalogId: "string" },
   setItem: { itemId: "string", choices: "choices" },
-  removeItem: { itemId: "string" }
+  removeItem: { itemId: "string" },
+  setCard: { itemId: "string", on: "boolean" }
 });
+/** The table card's sections (docs/PLAN-sheet.md slice 4): what it can show, all of it by default. */
+export const CARD_TYPES = { weapon: "attacks", skill: "skills", cyberware: "cyberware", adept_power: "powers", spell: "spells" };
+/** The item ids on the table card: the stored choice, or every item of the card's types (active skills only). */
+export function cardIds(body) {
+  const eligible = body.actor.items.filter(i => i.type in CARD_TYPES && (i.type !== "skill" || i.system.category === "active")).map(i => i._id);
+  const chosen = body.creation.card;
+  return Array.isArray(chosen) ? eligible.filter(id => chosen.includes(id)) : eligible;
+}
 const OPTIONS = ["moreMetahumans"];
 
 /**
@@ -85,7 +94,7 @@ const OPTIONS = ["moreMetahumans"];
  */
 export function applyOp(body, op, lookup = () => null) {
   if (!op || typeof op !== "object" || typeof op.op !== "string" || !Object.hasOwn(OPS, op.op)) throw new Refusal("Unknown operation.");
-  if (body.creation.finished && op.op !== "setNotes") throw new Refusal("This character is finished: creation can't change it.");
+  if (body.creation.finished && op.op !== "setNotes" && op.op !== "setCard") throw new Refusal("This character is finished: creation can't change it.");
   const b = structuredClone(body), sys = b.actor.system;
   fillLegacyRecords(b);   // before the operation looks records up (r1 #2)
   switch (op.op) {
@@ -153,9 +162,12 @@ export function applyOp(body, op, lookup = () => null) {
       rec.choices = { allocated: op.allocated, concentration: conc, specialization: spec, freeLanguage: op.freeLanguage };
       break;
     }
-    case "removeSkill":
-      delete b.creation.items[ownId(b, op.itemId, r => r.type === "skill", "skill")];
+    case "removeSkill": {
+      const id = ownId(b, op.itemId, r => r.type === "skill", "skill");
+      delete b.creation.items[id];
+      b.actor.items = b.actor.items.filter(i => i._id !== id);   // gone from the character too (unrecorded items are kept by the rebuild)
       break;
+    }
     case "addItem": {
       const e = lookup(op.catalogId);
       if (!e) throw new Refusal("That isn't in the catalog.");
@@ -181,10 +193,21 @@ export function applyOp(body, op, lookup = () => null) {
       rec.choices = checked.choices;
       break;
     }
+    case "setCard": {
+      if (typeof op.on !== "boolean") throw new Refusal("On or off.");
+      const id = typeof op.itemId === "string" && /^[A-Za-z0-9]{16}$/.test(op.itemId) ? b.actor.items.find(i => i._id === op.itemId && i.type in CARD_TYPES)?._id : undefined;
+      if (!id) throw new Refusal("That can't go on the table card.");
+      const now = new Set(cardIds(b));
+      if (op.on) now.add(id); else now.delete(id);
+      b.creation.card = [...now];
+      break;
+    }
     case "removeItem": {
       const id = ownId(b, op.itemId, r => r.type !== "skill", "item");
-      delete b.creation.items[id];
-      for (const [k, r] of Object.entries(b.creation.items)) if (r.choices?.in === id) delete b.creation.items[k];   // its accessories go with an eye
+      const gone = new Set([id]);
+      for (const [k, r] of Object.entries(b.creation.items)) if (r.choices?.in === id) gone.add(k);   // its accessories go with an eye
+      for (const k of gone) delete b.creation.items[k];
+      b.actor.items = b.actor.items.filter(i => !gone.has(i._id));
       break;
     }
   }
@@ -257,7 +280,10 @@ function rebuildItems(b) {
     out.push({ _id: id, name: r.name, type: r.type, img: r.img, system, flags, effects: [], _stats: { compendiumSource: r.source } });
   }
   for (const item of out) if (item.type === "cyberware" && (item.system.capacity ?? 0) > 0) item.system.modules = rows.get(item._id) ?? [];
-  b.actor.items = out;
+  // Items the app has no record of (a character made elsewhere, e.g. a Foundry pregen) are kept exactly as they are:
+  // the rebuild never drops data it didn't make.
+  const foreign = b.actor.items.filter(i => !Object.hasOwn(recs, i._id));
+  b.actor.items = [...foreign, ...out];
 }
 
 /* ── Validation: the rules panel ─────────────────────────────────────────────────────────────────────────────── */

@@ -22,13 +22,13 @@ function renderOnce(body, opts) {
     const timer = setTimeout(() => { outcome = { err: fail("The sheet took too long to draw.", 503, "sheet-timeout") }; child.kill("SIGKILL"); }, LIMITS.timeoutMs);
     child.stderr.resume();
     child.once("message", (m) => {
-      outcome ??= m?.pdf ? { pdf: Buffer.from(m.pdf) }
+      outcome ??= m?.pdf ? { pdf: Buffer.from(m.pdf) } : typeof m?.fits === "boolean" ? { fit: { fits: m.fits, overflow: m.overflow ?? [], message: m.message ?? "" } }
         : { err: m?.error ? fail(m.error, m.user ? 422 : 500, m.user ? "sheet-unprintable" : "sheet-failed") : fail("The sheet couldn't be drawn.", 500, "sheet-failed") };
     });
     child.once("error", () => { outcome ??= { err: fail("The sheet couldn't be drawn.", 500, "sheet-failed") }; });
     // Settle only once the process is gone and its streams closed ("close" also fires when it never spawned).
     child.once("close", () => { clearTimeout(timer); resolve(outcome ?? { err: fail("The sheet couldn't be drawn.", 500, "sheet-failed") }); });
-    child.send({ body, paper: opts.paper, font: opts.font, style: opts.style });
+    child.send({ body, paper: opts.paper, font: opts.font, style: opts.style, card: opts.card ?? null, fitOnly: !!opts.fitOnly });
   });
 }
 
@@ -43,5 +43,5 @@ export async function renderSheetPdf(body, opts) {
   running = job.finally(() => { queued--; });
   const result = await job;
   if (result.err) throw result.err;
-  return result.pdf;
+  return opts.fitOnly ? result.fit : result.pdf;
 }

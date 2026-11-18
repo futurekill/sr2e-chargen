@@ -247,3 +247,10 @@ test("custom skills: Knowledge, Language, Build/Repair by name; removal; duplica
   assert.throws(() => applyOp(b, { op: "removeSkill", itemId: "nope" }), Refusal);
   assert.throws(() => applyOp(b, { op: "removeSkill", itemId: "__proto__" }), Refusal);
 });
+
+test("an item the app has no record of (a character made in Foundry) survives every operation", () => {
+  const b = newCharacter("Import");
+  b.actor.items.push({ _id: "abcdefABCDEF0123", name: "Foundry Thing", type: "gear", system: { cost: 5 }, flags: {}, effects: [] });
+  const after = applyOp(applyOp(b, { op: "setName", name: "Still Here" }), { op: "addCustomSkill", category: "knowledge", name: "Seattle" });
+  assert.ok(after.actor.items.some(i => i._id === "abcdefABCDEF0123" && i.system.cost === 5));
+});

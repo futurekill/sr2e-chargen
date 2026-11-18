@@ -45,5 +45,7 @@ bonding (p.46, p.137), refusals.
 9. Sheet: "Print sheet" on a character opens a PDF; try A4 and the readable font; print one page on paper and mark a
    condition box with a pencil. Download the Markdown stat block and open it in a Markdown viewer. On Account, turn
    on the readable font: the site changes at once, a second device shows it after sign-in, and "Print sheet" uses it. Look at `npm run sheet:snapshots`-style renders after any layout change.
-10. Phone width (375 px): no page-wide sideways scroll; the rules check is below the steps.
-11. History: each change is a revision named after its operation.
+10. Table card: untick a row — "Fits on one page" stays; add many cyberware rows — it says what is over and Print
+    card is off; Print card opens a one-page PDF in each style.
+11. Phone width (375 px): no page-wide sideways scroll; the rules check is below the steps.
+12. History: each change is a revision named after its operation.

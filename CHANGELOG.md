@@ -5,7 +5,13 @@ notes come from it.
 
 ## Unreleased
 
+### Fixed
+- An item the app didn't create (a character made in Foundry) is no longer dropped when the character changes.
+
 ### Added
+- **One-page table card**: tick which attacks, active skills, cyberware, adept powers and spells go on it; the page
+  tells you at once whether it fits ("Fits on one page", or what is over), and "Print card" works only when it fits.
+  The choice is saved with the character and can still change after creation.
 - **Fohawk sheet style**, with an **ink-saver** version: the Pink Fohawk look — a black header band with the
   priorities, black angled section bars, a big attribute row (magenta and bold when augmented, with the natural
   rating under it), a stat strip, skills beside the condition monitor (wound levels marked) and attacks. The

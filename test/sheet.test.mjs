@@ -143,3 +143,27 @@ test("the Markdown stat block: every string, escaped, tables with the right colu
   assert.ok(bare.includes("` https://x.test/a `\\|b"), "a pipe ends the code span and is escaped for the table");
   for (const u of ["https://evil.example", "www.evil.example", "me@evil.example"]) assert.match(bare, new RegExp("` " + u.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + " `"), `${u} is in a code span`);
 });
+
+import { applyOp, cardIds } from "../shared/creation.mjs";
+import { cardModel } from "../server/sheet/model.mjs";
+test("the table card: everything by default, a choice per item, one page or refused with what didn't fit", async () => {
+  const razor = asBody(structuredClone(pregens.find(p => /Razor/.test(p.name))));
+  const ids = cardIds(razor);
+  assert.ok(ids.length >= 9, "attacks, active skills and cyberware by default");
+  const fire = razor.actor.items.find(i => i.name === "Firearms")._id;
+  const off = applyOp(razor, { op: "setCard", itemId: fire, on: false });
+  assert.ok(!cardIds(off).includes(fire));
+  assert.ok(cardIds(applyOp(off, { op: "setCard", itemId: fire, on: true })).includes(fire));
+  assert.throws(() => applyOp(razor, { op: "setCard", itemId: razor.actor.items.find(i => i.type === "armor")._id, on: true }), /table card/);
+  const done = structuredClone(razor); done.creation.finished = { at: 1 };
+  assert.ok(applyOp(done, { op: "setCard", itemId: fire, on: false }), "a finished character can still choose its card");
+  for (const style of STYLES) for (const paper of Object.keys(PAPER)) {
+    const { pages, runs, size: [W, H], margin } = await renderSheet(cardModel(razor, ids), { style, paper });
+    assert.equal(pages, 1, `${style}/${paper}: one page`);
+    for (const r of runs) assert.ok(r.y + r.h <= H - margin + 0.5 && r.x + r.w <= W - margin + 0.5, `${style}/${paper}: "${r.text}" leaves the page`);
+  }
+  // Too many rows: refused, naming the sections and counts that didn't fit.
+  const crowd = structuredClone(razor);
+  for (let i = 0; i < 80; i++) crowd.actor.items.push({ _id: `cw${String(i).padStart(14, "0")}`, name: `Wired Thing ${i}`, type: "cyberware", system: { installed: true, essenceCost: 0, attributeMods: {} } });
+  await assert.rejects(renderSheet(cardModel(crowd, cardIds(crowd)), { style: "fohawk" }), (e) => e instanceof SheetError && e.overflow?.some(o => o.section === "Cyberware" && o.rows > 0) && /Untick/.test(e.message));
+});

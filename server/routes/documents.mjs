@@ -1,6 +1,6 @@
 /** The library's routes (docs/PLAN-M3.md §5). Every one goes through the session and `ownedDocument`. */
 import * as L from "../library.mjs";
-import { OPS } from "../../shared/creation.mjs";
+import { OPS, cardIds } from "../../shared/creation.mjs";
 import { renderSheetPdf } from "../sheet/index.mjs";
 import { sheetModel } from "../sheet/model.mjs";
 import { statBlock } from "../sheet/markdown.mjs";
@@ -49,6 +49,27 @@ export default async function documentRoutes(app) {
     const font = req.query.font ?? (req.session.user.prefs?.readableFont ? "readable" : "standard");   // the user's preference by default
     const pdf = await renderSheetPdf(body, { paper: req.query.paper ?? "letter", font, style: req.query.style ?? "classic" });
     reply.header("content-disposition", `inline; filename="sheet-${document.id}.pdf"`).header("cache-control", "no-store").type("application/pdf");
+    return pdf;
+  });
+  // The one-page table card (docs/PLAN-sheet.md slice 4): the chosen rows; refused when they don't fit.
+  const sheetQuery = { type: "object", additionalProperties: false, properties: { paper: { enum: ["letter", "a4"] }, font: { enum: ["standard", "readable"] }, style: { enum: ["classic", "fohawk", "fohawk-ink"] } } };
+  const cardOpts = (req, body, fitOnly) => ({ paper: req.query.paper ?? "letter", style: req.query.style ?? "classic", card: cardIds(body), fitOnly,
+    font: req.query.font ?? (req.session.user.prefs?.readableFont ? "readable" : "standard") });
+  const characterOf = async (req, reply) => {
+    const { document, body } = await L.getDocument(req.ctx, me(req), req.params.id);
+    if (document.kind !== "character") { reply.code(409).send({ error: "Only a character has a table card.", code: "wrong-kind" }); return null; }
+    return { document, body };
+  };
+  const SHEET_LIMIT = { rateLimit: { max: 20, timeWindow: "1 minute", keyGenerator: (req) => `sheet:${me(req)}` } };
+  app.get("/:id/card/fit", { config: SHEET_LIMIT, schema: { params: idParams, querystring: sheetQuery } }, async (req, reply) => {
+    const c = await characterOf(req, reply);
+    return c ? renderSheetPdf(c.body, cardOpts(req, c.body, true)) : reply;
+  });
+  app.get("/:id/card.pdf", { config: SHEET_LIMIT, schema: { params: idParams, querystring: sheetQuery } }, async (req, reply) => {
+    const c = await characterOf(req, reply);
+    if (!c) return reply;
+    const pdf = await renderSheetPdf(c.body, cardOpts(req, c.body, false));
+    reply.header("content-disposition", `inline; filename="card-${c.document.id}.pdf"`).header("cache-control", "no-store").type("application/pdf");
     return pdf;
   });
   app.get("/:id/statblock.md", { schema: { params: idParams } }, async (req, reply) => {

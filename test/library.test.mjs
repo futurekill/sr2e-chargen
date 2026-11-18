@@ -240,3 +240,12 @@ test("the printable sheet: a character's PDF, rendered in a separate process; dr
   const draft = await make(razor);
   assert.equal((await razor.call("GET", `${D}/${draft.id}/sheet.pdf`)).json().code, "wrong-kind");
 });
+
+test("table card routes: fit answer, PDF when it fits, refusal when it doesn't", async () => {
+  const { razor } = await harness();
+  const id = (await razor.call("POST", `${D}/characters`, { name: "Card Test" })).json().document.id;
+  const fit = (await razor.call("GET", `${D}/${id}/card/fit?style=fohawk`)).json();
+  assert.deepEqual(fit.fits, true);
+  const pdf = await razor.call("GET", `${D}/${id}/card.pdf?style=fohawk-ink&paper=a4`);
+  assert.equal(pdf.statusCode, 200); assert.equal(pdf.rawPayload.subarray(0, 5).toString(), "%PDF-");
+});

@@ -151,3 +151,21 @@ the priority letters), a big attribute row (accent + bold when augmented, "nat X
 Initiative, the pools that apply, Karma Pool, Essence, Magic, Armor), Skills | Condition monitor (wound levels
 L/M/S/D marked, p.112) + Attacks, then the shared flow. The ink-saver outlines every band. Magenta never carries
 meaning alone (accent text is also bold). No portrait yet (needs uploads). The fit test runs every style.
+
+## Slice 4 (2026-11-18): the one-page table card
+Under the approved rule (PLAN.md "Exports": the table card, with an explicit content budget). One page, never more:
+- **Content**: header, attributes (the style's attribute block), Reaction/Initiative/pools/armor/Karma Pool,
+  condition monitors, and the CHOSEN attacks, active skills, cyberware, adept powers and spells. No gear list, other
+  skills or notes (they stay on the full sheet).
+- **The choice is part of the character**: operation `setCard { itemId, on }` (allowed on a finished character too —
+  it is a print choice, not creation). `creation.card` is null (= everything in those five sections) until the first
+  change, then the list of chosen item ids; ids of removed items are ignored.
+- **Fit, not cut**: the card uses the sheet engine with no continuation pages. If the chosen rows don't fit, the
+  render fails with the sections and row counts that didn't fit; `GET /api/documents/:id/card/fit?style&paper&font`
+  answers `{ fits, overflow: [{ section, rows }] }` (rendered in the same child process, the real measurement), and
+  `GET /api/documents/:id/card.pdf` refuses (422) an overfull card.
+- **Client**: a "Table card" section on the Character page: a checkbox per row in those five sections, the fit answer
+  after each change ("Fits on one page" / "Over: N attacks, M skills … — untick something"), "Print card" enabled only
+  when it fits.
+- Tests: the reducer op; a card that fits renders one page inside the safe area; an overfull card is refused with the
+  right overflow; the fit route.
