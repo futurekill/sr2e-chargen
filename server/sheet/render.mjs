@@ -110,20 +110,35 @@ export async function renderSheet(model, { paper = "letter", font = "standard" }
     return 18;
   };
   /** A table section: rows of cells in columns (fractions of w); rows wrap; rows past maxY go to `rest`. */
-  const table = (title, rows, cols, x, y, w, maxY) => {
+  const table = (title, rowsIn, cols, x, y, w, maxY) => {
+    let rows = rowsIn;
     let cy = y + bar(title, x, y, w);
     const rest = [];
+    let placed = 0;
     for (let r = 0; r < rows.length; r++) {
       const cells = rows[r];
       const heights = cells.map((c, i) => (c ? wrap(String(c), i === 0 ? BODY : 9, w * cols[i] - 4, i === 0 ? 400 : 400).length * (i === 0 ? BODY : 9) * LINE : 0));
       const h = Math.max(BODY * LINE, ...heights) + 2;
-      if (cy + h > maxY) { rest.push(...rows.slice(r)); break; }
+      if (cy + h > maxY) {
+        // A row taller than the whole space left on a fresh page is split by lines; the rest continues (r1 #3).
+        if (r === 0 && cy + 3 * BODY * LINE <= maxY) {
+          const fit = Math.max(1, Math.floor((maxY - cy - 2) / (BODY * LINE)));
+          const cut = cells.map((c, i) => { const ln = c ? wrap(String(c), i === 0 ? BODY : 9, w * cols[i] - 4, 400) : []; return [ln.slice(0, fit).join("\n"), ln.slice(fit).join("\n")]; });
+          if (cut.some(([, more]) => more)) {
+            rows = [cut.map(([now]) => now), cut.map(([, more]) => more), ...rows.slice(1)];
+            r = -1;   // place the first part as an ordinary row
+            continue;
+          }
+        }
+        rest.push(...rows.slice(r)); break;
+      }
       let cx = x;
       cells.forEach((c, i) => { block(String(c ?? ""), cx, cy, w * cols[i] - 4, { size: i === 0 ? BODY : 9, floor: FLOOR, box: { x: cx, y: cy, w: w * cols[i] - 4, h } }); cx += w * cols[i]; });
       doc.save().lineWidth(0.3).moveTo(x, cy + h - 1).lineTo(x + w, cy + h - 1).stroke("#888").restore();
       cy += h;
+      placed++;
     }
-    return { y: cy + 8, rest };
+    return { y: cy + 8, rest, placed };
   };
 
   // ── Page 1: the at-the-table sections, in fixed places ──────────────────────────────────────────────────────
@@ -170,7 +185,7 @@ export async function renderSheet(model, { paper = "letter", font = "standard" }
     while (rows.length) {
       if (fy == null || fy + 60 > BOTTOM) { newPage(); fy = MARGIN; }
       const out = table(title, rows, cols, L, fy, CW, BOTTOM);
-      if (out.rest.length === rows.length) { newPage(); fy = MARGIN; const again = table(title, rows, cols, L, fy, CW, BOTTOM); if (again.rest.length === rows.length) throw new SheetError(`${title}: a row is taller than a page.`); rows = again.rest; fy = again.y; }
+      if (!out.placed) { newPage(); fy = MARGIN; const again = table(title, rows, cols, L, fy, CW, BOTTOM); if (!again.placed) throw new SheetError(`${title}: a row is taller than a page.`); rows = again.rest; fy = again.y; }
       else { rows = out.rest; fy = out.y; }
       title = title.endsWith("(continued)") ? title : `${title} (continued)`;
     }
@@ -194,7 +209,7 @@ export async function renderSheet(model, { paper = "letter", font = "standard" }
   for (let p = 1; p <= pages; p++) {
     doc.switchToPage(p - 1);
     page = p;
-    draw(`${model.title} — page ${p} of ${pages}`, L, H - MARGIN - 9, LABEL, 400, { x: L, y: H - MARGIN - 9, w: CW, h: 12 }, "footer");
+    draw(`Page ${p} of ${pages}`, L, H - MARGIN - 9, LABEL, 400, { x: L, y: H - MARGIN - 9, w: CW, h: 12 }, "footer");   // the title is in the header, in full
   }
   doc.end();
   await done;

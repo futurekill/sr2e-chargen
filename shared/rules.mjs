@@ -6,7 +6,7 @@
 import { SR2E } from "../content/sr2e-foundryvtt/module/config.mjs";
 import LABELS from "../content/sr2e-foundryvtt/lang/en.json" with { type: "json" };
 
-export { chargenSpend, skillTiersFromAllocation, validateSkillAllocation, chargenItemCost, ratedRow, reactionBase, wornArmorTotals, heavyArmorPoolPenalty, astralCombatPool, startingKarmaPool, strengthMinWeaponStats } from "../content/sr2e-foundryvtt/module/rules/sr2e-rules.mjs";
+export { chargenSpend, skillTiersFromAllocation, validateSkillAllocation, chargenItemCost, ratedRow, reactionBase, wornArmorTotals, heavyArmorPoolPenalty, astralCombatPool, startingKarmaPool, strengthMinWeaponStats, naturalAttribute } from "../content/sr2e-foundryvtt/module/rules/sr2e-rules.mjs";
 export { wareCtx, containerEssence, eyeAccessoryKind, rowsListValue } from "../content/sr2e-foundryvtt/module/rules/ware-rules.mjs";
 
 /** The system's tables the app reads. */

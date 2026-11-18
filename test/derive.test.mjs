@@ -28,3 +28,11 @@ for (const want of fixture.actors) {
     assert.deepEqual(got.weapons.map(w => [w.name, w.damageCode]), want.weapons, where("weapons"));
   });
 }
+
+test("creation holds an attribute at the racial maximum, as Foundry does (code review r1 #4)", () => {
+  const actor = { name: "x", type: "character", items: [], system: { race: "human", magic: { type: "none" }, chargen: { inProgress: true },
+    body: { base: 12 }, quickness: { base: 3 }, strength: { base: 3 }, charisma: { base: 3 }, intelligence: { base: 3 }, willpower: { base: 3 } } };
+  assert.equal(derive({ actor }).attributes.body, 6);
+  actor.system.chargen.inProgress = false;
+  assert.equal(derive({ actor }).attributes.body, 12, "after creation the maximum is the advancement rule's, not this clamp");
+});

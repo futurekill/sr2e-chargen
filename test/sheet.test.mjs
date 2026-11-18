@@ -22,7 +22,15 @@ function stress() {
   for (let i = 0; i < 60; i++) a.items.push({ _id: `zy${String(i).padStart(14, "0")}`, name: `Knowledge: The Complete Underworld History of Seattle Volume ${i}`, type: "skill", system: { category: "knowledge", rating: 3, concentration: { name: "", rating: 0 }, specialization: { name: "", rating: 0 } } });
   return asBody(a, ("A paragraph of notes that goes on. " + long + " ").repeat(120));
 }
-const FIXTURES = [["new character", { ...newCharacter("Blank Slate") }], ...pregens.map(p => [p.name, asBody(p, "Notes.")]), ["stress", stress()]];
+/** One cyberware row with hundreds of module names: taller than a page (code review r1 #3). */
+function hugeRow() {
+  const a = structuredClone(pregens.find(p => /Razor/.test(p.name)));
+  a.name = "W".repeat(200);   // a 200-character name: the header wraps, the footer doesn't repeat it (r1 #1)
+  a.items.push({ _id: "zx00000000000001", name: "Cybereyes", type: "cyberware", system: { installed: true, essenceCost: 0.2, capacity: 0.5, attributeMods: {},
+    modules: Array.from({ length: 300 }, (_, i) => ({ name: `Accessory number ${i}`, essenceCost: 0 })) } });
+  return asBody(a, "x".repeat(30000));   // long notes print in full (r1 #2)
+}
+const FIXTURES = [["huge row", hugeRow()], ["new character", { ...newCharacter("Blank Slate") }], ...pregens.map(p => [p.name, asBody(p, "Notes.")]), ["stress", stress()]];
 const squash = (s) => String(s).replace(/\s+/g, "");
 /** Every string the model holds (what must appear on the sheet). */
 const strings = (m) => [m.title, ...m.header.flat(), ...m.attributes.flat(), ...m.pools.flat(), m.armor, ...m.attacks.flat(), ...m.skills.map(r => r.slice(0, 3)).flat(),
@@ -34,7 +42,17 @@ for (const [name, body] of FIXTURES) for (const paper of Object.keys(PAPER)) for
     const { pdf, runs, size: [W, H], margin } = await renderSheet(model, { paper, font });
     // 1. Every model string is placed (in order-insensitive, whitespace-free form: wrapping may split a string).
     const placed = squash(runs.filter(r => r.kind === "text").map(r => r.text).join(""));
-    for (const s of strings(model)) assert.ok(placed.includes(squash(s)), `${name}: "${s.slice(0, 60)}" was not placed`);
+    // A row split across pages interleaves its other cells, so a string may be placed in pieces: then its characters
+    // must appear in order within a short window (every character placed, none dropped).
+    const inPieces = (want) => {
+      for (let start = placed.indexOf(want[0]); start >= 0; start = placed.indexOf(want[0], start + 1)) {
+        let i = 0, j = start;
+        while (i < want.length && j < placed.length && j - start <= want.length * 3 + 400) { if (placed[j] === want[i]) i++; j++; }
+        if (i === want.length) return true;
+      }
+      return false;
+    };
+    for (const s of strings(model)) { const w = squash(s); assert.ok(placed.includes(w) || inPieces(w), `${name}: "${s.slice(0, 60)}" was not placed`); }
     // 2. Inside the safe area, not under the floor, inside its own box.
     for (const r of runs) {
       assert.ok(r.x >= margin - 0.5 && r.x + r.w <= W - margin + 0.5 && r.y >= margin - 0.5 && r.y + r.h <= H - margin + 0.5, `${name}: "${r.text}" leaves the page's safe area`);

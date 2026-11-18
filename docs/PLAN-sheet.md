@@ -121,3 +121,11 @@ The Fohawk style and ink-saver; the table card; the Markdown stat block; the por
   Atkinson Hyperlegible Next (body and labels, wider spacing). Both SIL OFL, licences verified when added. The SITE
   gains the same "readable font" setting in this slice (stored per user on the server, also used as the sheet
   default).
+
+## As built (code review round 1)
+- **Labels** use Source Sans 3 Bold, not a condensed face: no Source Sans 3 Condensed is published as an npm package,
+  and bold at the same family reads clearly at 9 pt (r1 #8, plan changed).
+- **The site-wide readable-font setting** (stored per user on the server) moves to the next sheet slice with the user
+  settings it needs; this slice remembers the sheet's paper and font in the browser (r1 #9, deferred).
+- The footer is "Page n of m" only; the title is printed in full in the header (r1 #1). Notes and names print in full
+  (no length cut, r1 #2); a row taller than a page splits by lines across pages (r1 #3).

@@ -5,7 +5,7 @@
  * character at creation can hold is composed here (no in-play state, no sourcebook ware); each step names the
  * CharacterData method it matches.
  */
-import { TABLES, reactionBase, wornArmorTotals, heavyArmorPoolPenalty, astralCombatPool, startingKarmaPool, strengthMinWeaponStats } from "./rules.mjs";
+import { TABLES, reactionBase, wornArmorTotals, heavyArmorPoolPenalty, astralCombatPool, startingKarmaPool, strengthMinWeaponStats, naturalAttribute } from "./rules.mjs";
 import { essenceOf } from "./purchase.mjs";
 
 export const ATTRS = ["body", "quickness", "strength", "charisma", "intelligence", "willpower"];
@@ -31,10 +31,12 @@ export function derive({ actor, options = {} }) {
     for (const [k, v] of Object.entries(p.system.attributeMods ?? {})) if (k in mods) mods[k] += num(v) * lvl;
   }
 
-  // _calculateAttributeValues: base + racial + mods.
+  // _calculateAttributeValues: the natural rating (base + racial, held at the racial maximum while creation is in
+  // progress, as Foundry does) + mods.
   const attributes = {}, natural = {};
+  const maxes = sys.chargen?.inProgress === false ? {} : (TABLES.racialMaximums[race] ?? {});
   for (const a of ATTRS) {
-    natural[a] = num(sys[a]?.base) + num(racial[a]);
+    natural[a] = naturalAttribute(num(sys[a]?.base), num(racial[a]), 0, maxes[a] ?? null);
     attributes[a] = Math.max(0, natural[a] + mods[a]);
   }
 

@@ -7,7 +7,7 @@ import { validate, totemNames, CATEGORY_NAMES, ATTR_NAMES, MAGIC_NAMES } from ".
 import { essenceOf } from "../../shared/purchase.mjs";
 
 /** Plain, printable text: no control characters, no bidi overrides/isolates, single spaces. */
-export function plain(v, max = 4000) {
+export function plain(v, max = Infinity) {
   // eslint-disable-next-line no-control-regex -- removing control characters is the point
   return String(v ?? "").replace(/[\u0000-\u0008\u000b-\u001f\u007f-\u009f‪-‮⁦-⁩‎‏]/g, "")
     .replace(/[ \t]+/g, " ").trim().slice(0, max);
@@ -29,7 +29,7 @@ export function sheetModel(body) {
   const of = (t) => items.filter(i => i.type === t);
 
   return {
-    title: plain(body.name, 120),
+    title: plain(body.name),
     draft: !body.creation?.finished,
     header: [
       ["Metatype", cap(sys.race ?? "human")],
@@ -49,19 +49,19 @@ export function sheetModel(body) {
       .filter(([k, v]) => v > 0 || k === "Combat").map(([k, v]) => [k, String(v)]),
     armor: `${d.armor.ballistic} / ${d.armor.impact}`,
     monitors: { physical: d.monitors.physical, stun: d.monitors.stun, overflow: d.monitors.overflow },
-    attacks: d.weapons.map(w => [plain(w.name, 120), plain(w.damageCode, 20), cap(String(w.skill).replace(/_/g, " "))]),
+    attacks: d.weapons.map(w => [plain(w.name), plain(w.damageCode, 20), cap(String(w.skill).replace(/_/g, " "))]),
     skills: of("skill").map(i => {
       const s = i.system, sub = [s.concentration?.name && `${s.concentration.name} ${s.concentration.rating}`, s.specialization?.name && `${s.specialization.name} ${s.specialization.rating}`].filter(Boolean);
-      return [plain(i.name, 120), String(s.rating), plain(sub.join(" · "), 200), s.category === "active" ? "active" : s.category];
+      return [plain(i.name), String(s.rating), plain(sub.join(" · ")), s.category === "active" ? "active" : s.category];
     }),
-    cyberware: of("cyberware").map(i => [plain(i.name, 120) + (i.system.modules?.length ? ` (${i.system.modules.map(m => plain(m.name, 80)).join(", ")})` : ""),
+    cyberware: of("cyberware").map(i => [plain(i.name) + (i.system.modules?.length ? ` (${i.system.modules.map(m => plain(m.name)).join(", ")})` : ""),
       i.system.rating ? `R${i.system.rating}` : "", `Ess ${num(essenceOf(i, items))}`, cite(i.system)]),
-    gear: [...of("weapon"), ...of("armor"), ...of("gear"), ...of("ammo")].map(i => [plain(i.name, 120),
+    gear: [...of("weapon"), ...of("armor"), ...of("gear"), ...of("ammo")].map(i => [plain(i.name),
       i.type === "ammo" ? `${i.system.quantity} rds` : i.system.quantity > 1 ? `×${i.system.quantity}` : i.system.rating ? `R${i.system.rating}` : "",
       i.type === "armor" ? `${i.system.ballistic}/${i.system.impact}` : "", cite(i.system)]),
-    spells: of("spell").map(i => [plain(i.name, 120), `F${i.system.force}`, plain(`${cap(i.system.category ?? "")} · ${i.system.drainCode ?? ""}`, 80), cite(i.system)]),
-    foci: of("focus").map(i => [plain(i.name, 120), `F${i.system.force}`, i.system.boundSpellId ? plain(items.find(x => x._id === i.system.boundSpellId)?.name ?? "", 80) : "", cite(i.system)]),
-    powers: of("adept_power").map(i => [plain(i.name, 120), `L${i.system.level}`, "", cite(i.system)]),
-    notes: plain(body.notes, 20000)
+    spells: of("spell").map(i => [plain(i.name), `F${i.system.force}`, plain(`${cap(i.system.category ?? "")} · ${i.system.drainCode ?? ""}`, 80), cite(i.system)]),
+    foci: of("focus").map(i => [plain(i.name), `F${i.system.force}`, i.system.boundSpellId ? plain(items.find(x => x._id === i.system.boundSpellId)?.name ?? "", 80) : "", cite(i.system)]),
+    powers: of("adept_power").map(i => [plain(i.name), `L${i.system.level}`, "", cite(i.system)]),
+    notes: plain(body.notes)
   };
 }
