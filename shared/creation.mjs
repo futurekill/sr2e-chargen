@@ -24,6 +24,8 @@ export const CORE_TOTEMS = Object.keys(TABLES.totems).filter(k => k !== "mouse")
 /** Skills a player names (p.66: any skill of the Skills chapter): Knowledge, Language and Build/Repair skills. */
 export const CUSTOM_SKILL_CATEGORIES = ["knowledge", "language", "build_repair"];
 export const FREE_LANGUAGES = ["", "native", "dialect"];
+/** The core magical skills (p.45): only from the catalog, where they carry `isMagical` (review M2b #4). */
+const MAGICAL_SKILLS = ["sorcery", "conjuring"];
 export const MAX_ITEMS = 500;
 const CORE = "sr2";
 const cite = (page) => ({ book: CORE, page: String(page) });
@@ -130,6 +132,7 @@ export function applyOp(body, op, lookup = () => null) {
       if (!CUSTOM_SKILL_CATEGORIES.includes(op.category)) throw new Refusal("Name a Knowledge, Language or Build/Repair skill.", 66);
       const name = shortText(op.name, "A skill's name");
       if (!name) throw new Refusal("A skill needs a name.");
+      if (MAGICAL_SKILLS.includes(name.toLowerCase())) throw new Refusal(`${name} is a magical Active skill: add it from the core list.`, 45);
       addItem(b, { name, img: null, catalogId: null, source: null,
         snapshot: { category: op.category, linkedAttribute: "intelligence", rating: 0, concentration: { name: "", rating: 0 }, specialization: { name: "", rating: 0 }, isMagical: false, notes: "" },
         choices: { allocated: 1, concentration: "", specialization: "", freeLanguage: "" } });
@@ -142,6 +145,7 @@ export function applyOp(body, op, lookup = () => null) {
       if (op.freeLanguage && rec.snapshot.category !== "language") throw new Refusal("Only a language can be free.", 74);
       const spec = shortText(op.specialization, "A specialization"), conc = shortText(op.concentration, "A concentration");
       if (spec && !conc) throw new Refusal("A specialization sits under a concentration: name the concentration too.", 70);
+      if (op.freeLanguage && (conc || spec)) throw new Refusal("A free language has no concentration or specialization: buy the language to narrow it.", 74);
       rec.choices = { allocated: op.allocated, concentration: conc, specialization: spec, freeLanguage: op.freeLanguage };
       break;
     }
@@ -268,8 +272,10 @@ export function validate(body) {
     if (s.freeLanguage === "native") natives++;
     if (s.freeLanguage === "dialect") dialects++;
     if (s.freeLanguage) continue;
+    // The cap is on the general Skill Rating AFTER p.70's reduction: only a concentration or specialization goes
+    // above 6 (p.45; docs/RULINGS.md R1).
     if (c.allocated < 1) add("skills", "error", `${nm}: a starting skill is at least 1.`, 45);
-    else if (c.allocated > 6) add("skills", "error", `${nm}: no starting skill above 6 (a concentration or specialization may go higher).`, 45);
+    else if (s.rating > 6) add("skills", "error", `${nm} is ${s.rating}: no starting skill above 6 (only a concentration or specialization may go higher).`, 45);
     const ok = validateSkillAllocation(c.allocated, !!c.concentration, !!c.specialization);
     if (c.allocated >= 1 && !ok.ok) add("skills", "error", `${nm}: ${ok.reason}`, 70);
     if (s.isMagical && mtype === "none") add("skills", "error", `${nm} needs a Magic Rating.`, 45);

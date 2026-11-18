@@ -4,7 +4,7 @@
    * reducer (a fast screen), then sent to the server, whose answer replaces the local copy. Changes go out one at a
    * time, in order, each on top of the revision the previous answer gave.
    */
-  import { untrack } from "svelte";
+  import { untrack, onDestroy } from "svelte";
   import { get, mutate } from "../lib/api.js";
   import { applyOp, validate, CATEGORIES, CATEGORY_NAMES, LETTERS, METATYPES, MAGIC_TYPES, MAGIC_NAMES, TRADITIONS, ATTRIBUTES, ATTR_NAMES, CUSTOM_SKILL_CATEGORIES, totemNames } from "../../../shared/creation.mjs";
   import { TABLES } from "../../../shared/rules.mjs";
@@ -37,8 +37,8 @@
     if (!id) return;
     pickSkill = "";
     try { if (!entries.has(id)) entries.set(id, await get(`/api/catalog/entries/${encodeURIComponent(id)}`)); }
-    catch (err) { error = err.message; return; }
-    change({ op: "addSkill", catalogId: id });
+    catch (err) { if (!gone) error = err.message; return; }
+    if (!gone) change({ op: "addSkill", catalogId: id });   // not after the page closed (review M2b #5)
   }
   const nuyen = (n) => `${n.toLocaleString("en-US")}¥`;
   const sign = (n) => (n > 0 ? `+${n}` : n < 0 ? `−${-n}` : "");
@@ -48,7 +48,8 @@
    * the changes still waiting are DROPPED (code review M2a #5): each was made on top of the failed one, so sending it
    * against what the server really holds could save something the player never saw.
    */
-  let epoch = 0, recovering = $state(false);
+  let epoch = 0, recovering = $state(false), gone = false;
+  onDestroy(() => { gone = true; });
   function change(op) {
     if (recovering) return;   // nothing new on top of a copy that's about to be replaced (review r2)
     try { body = applyOp(body, op, lookup); } catch (err) { error = err.message; return; }
@@ -218,7 +219,7 @@
                     </select>
                   {/if}
                   {#if !c.freeLanguage}
-                    <input type="number" min="1" max="6" step="1" value={c.allocated} aria-label={`${item.name} points`} disabled={finished}
+                    <input type="number" min="1" max={c.specialization ? 8 : c.concentration ? 7 : 6} step="1" value={c.allocated} aria-label={`${item.name} points`} disabled={finished}
                       onchange={(ev) => { const n = numberFrom(ev); if (Number.isInteger(n) && n >= 0 && n <= 12) skillChange(item, { allocated: n }); else ev.currentTarget.value = c.allocated; }}>
                   {/if}
                 </td>

@@ -200,7 +200,7 @@ test("skills: 1–6 at creation, Skill Points = the priority's (p.45), Sorcery n
   b = applyOp(b, setSkill(b, "Firearms", { allocated: 7 }));
   b = applyOp(b, setSkill(b, "Sorcery", { allocated: 6 }));
   const t = texts(b, "skills").join("\n");
-  assert.match(t, /Firearms: no starting skill above 6/);
+  assert.match(t, /Firearms is 7: no starting skill above 6/);
   assert.match(t, /Sorcery needs a Magic Rating\. \[p\.45\]/);
   assert.equal(validate(b).budgets.skills.spent, 13);
   b = applyOp(b, setSkill(b, "Firearms", { allocated: 6 }));
@@ -208,6 +208,11 @@ test("skills: 1–6 at creation, Skill Points = the priority's (p.45), Sorcery n
   b = applyOp(applyOp(b, { op: "setPriority", category: "magic", letter: "A" }), { op: "setMagic", type: "full_magician" });
   assert.doesNotMatch(texts(b, "skills").join(), /Magic Rating/);
   assert.throws(() => applyOp(b, setSkill(b, "Firearms", { allocated: 13 })), Refusal);
+  // The cap is on the general rating after p.70's reduction (docs/RULINGS.md R1).
+  const conc7 = applyOp(b, setSkill(b, "Firearms", { allocated: 7, concentration: "Pistols" }));
+  assert.deepEqual([skill(conc7, "Firearms").system.rating, skill(conc7, "Firearms").system.concentration.rating], [6, 8]);
+  assert.doesNotMatch(texts(conc7, "skills").join(), /above 6/);
+  assert.match(texts(applyOp(b, setSkill(b, "Firearms", { allocated: 8, concentration: "Pistols" })), "skills").join(), /Firearms is 7/);
 });
 
 test("languages: the native language is free at Intelligence + 2; a Street dialect at ½ Intelligence (p.74)", () => {
@@ -223,6 +228,7 @@ test("languages: the native language is free at Intelligence + 2; a Street diale
   assert.match(texts(two, "skills").join(), /Only one native language is free/);
   const rich = structuredClone(b); rich.actor.system.lifestyle = "high";
   assert.match(texts(rich, "skills").join(), /dialect comes with a Street lifestyle/);
+  assert.throws(() => applyOp(b, setSkill(b, "English", { freeLanguage: "native", concentration: "Seattle slang" })), /free language/, "no free tiers (review M2b #1)");
   const gun = runL([{ op: "addSkill", catalogId: "sr2e.skills.fire" }]);
   assert.throws(() => applyOp(gun, setSkill(gun, "Firearms", { freeLanguage: "native" })), /Only a language/);
 });
@@ -235,6 +241,7 @@ test("custom skills: Knowledge, Language, Build/Repair by name; removal; duplica
   assert.throws(() => applyOp(b, { op: "addCustomSkill", category: "active", name: "Hacking" }), Refusal, "active skills come from the catalog");
   assert.throws(() => applyOp(b, { op: "addCustomSkill", category: "knowledge", name: "x".repeat(61) }), Refusal);
   assert.throws(() => applyOp(b, { op: "addCustomSkill", category: "knowledge", name: "   " }), Refusal);
+  assert.throws(() => applyOp(b, { op: "addCustomSkill", category: "knowledge", name: "sorcery" }), /core list/, "review M2b #4");
   b = applyOp(b, { op: "removeSkill", itemId: b.actor.items[1]._id });
   assert.equal(b.actor.items.length, 1); assert.equal(Object.keys(b.creation.items).length, 1);
   assert.throws(() => applyOp(b, { op: "removeSkill", itemId: "nope" }), Refusal);

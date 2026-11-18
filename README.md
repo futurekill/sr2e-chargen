@@ -72,6 +72,7 @@ computed the same way in both places. Tests check that both give identical resul
 | [docs/THREAT-MODEL.md](docs/THREAT-MODEL.md) | What is protected, from whom, and where each defence lives |
 | [docs/DEPENDENCIES.md](docs/DEPENDENCIES.md) | Every dependency and why it is there |
 | [docs/RULES-CHARGEN.md](docs/RULES-CHARGEN.md) | The creation rules captured from the books, with page references (M0) |
+| [docs/RULINGS.md](docs/RULINGS.md) | Where the books are unclear: the reading the app follows, and why |
 | [docs/GRAPHICS.md](docs/GRAPHICS.md) | The graphics plan for the site and the sheets |
 
 ## Roadmap
