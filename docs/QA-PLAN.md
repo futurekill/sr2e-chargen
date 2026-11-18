@@ -41,7 +41,7 @@ bonding (p.46, p.137), refusals.
 8. Resources: search "cybereyes", add it and Low-Light Vision, set Low-Light "In: Cybereyes" — Essence 5.8, the eyes'
    price includes the accessory. Add a Jammer, Rating 3, Qty 2 — 6,000¥. Add Regular Ammo, 3 boxes — 60¥. A magician:
    add Mana Bolt (Force 6) and a Power Focus (Force 2) — Force Points 16; a Spell Focus asks for its spell. Add a Katana and a
-   Weapon Focus: it asks for its weapon; pick the Katana, Force 3 — 470,000¥ and 12 Force Points (Large: 15). Remove
+   Weapon Focus: it asks for its weapon; pick the Katana, Force 3 — 470,000¥ and 15 Force Points (the Katana is Conceal 3: large); bonded to a Knife (Conceal 8: small) it is 12. Remove
    the Katana — the focus asks again. Try a Personal Computer — refused with the reason.
 9. Sheet: "Print sheet" on a character opens a PDF; try A4 and the readable font; print one page on paper and mark a
    condition box with a pencil. Download the Markdown stat block and open it in a Markdown viewer. On Account, turn

@@ -130,22 +130,24 @@ test("armor bought at creation is worn, so the sheet's armor totals include it",
   assert.deepEqual(derive({ actor: b.actor }).armor, { ballistic: 5, impact: 3 });
 });
 
-test("a weapon focus bonds to one melee weapon of this character: priced by its Reach (p.263), bonded 4 or 5 × Force (p.137)", () => {
-  let b = start([...prio({ magic: "A", resources: "A" }), { op: "setMagic", type: "full_magician" }, ...buy("Weapon Focus", "Katana", "Ares Predator", "Pole Arm")]);
+test("a weapon focus bonds to one melee weapon of this character: priced by its Reach (p.263), bonded 4 × Force if small (Conceal > 5), else 5 × (p.137, R5)", () => {
+  let b = start([...prio({ magic: "A", resources: "A" }), { op: "setMagic", type: "full_magician" }, ...buy("Weapon Focus", "Katana", "Ares Predator", "Pole Arm", "Knife")]);
   assert.match(texts(b), /todo: Weapon Focus: choose the melee weapon it's bonded to\. \[p\.137\]/);
   assert.equal(item(b, "Weapon Focus").system.cost, 100000 + 90000, "unbonded: priced at Reach 0, its lowest");
   assert.throws(() => set(b, "Weapon Focus", { weapon: idOf(b, "Ares Predator") }), /melee weapons/, "a firearm can't be a focus (p.147)");
-  assert.throws(() => set(b, "Weapon Focus", { size: "huge" }), /one of small, large/);
-  b = set(b, "Weapon Focus", { weapon: idOf(b, "Katana"), force: 3 });
+  assert.throws(() => set(b, "Weapon Focus", { size: "small" }), /no choice "size"/, "the weapon decides the size");
+  b = set(b, "Weapon Focus", { weapon: idOf(b, "Knife"), force: 3 });
+  assert.deepEqual([item(b, "Weapon Focus").system.cost, item(b, "Weapon Focus").system.bondingCost], [100000 + 3 * 90000, 12], "Knife: Conceal 8, small");
+  b = set(b, "Weapon Focus", { weapon: idOf(b, "Katana") });
   const f = item(b, "Weapon Focus").system;
-  assert.deepEqual([f.cost, f.bondingCost, f.bondedWeaponId, f.bonded], [(1 + 1) * 100000 + 3 * 90000, 12, idOf(b, "Katana"), true]);
-  assert.equal(validate(b).budgets.forcePoints.spent, 12);
-  b = set(b, "Weapon Focus", { weapon: idOf(b, "Pole Arm"), size: "large" });
+  assert.deepEqual([f.cost, f.bondingCost, f.bondedWeaponId, f.bonded], [(1 + 1) * 100000 + 3 * 90000, 15, idOf(b, "Katana"), true], "Katana: Conceal 3, large");
+  assert.equal(validate(b).budgets.forcePoints.spent, 15);
+  b = set(b, "Weapon Focus", { weapon: idOf(b, "Pole Arm") });
   assert.deepEqual([item(b, "Weapon Focus").system.cost, item(b, "Weapon Focus").system.bondingCost], [3 * 100000 + 3 * 90000, 15]);
   b = applyOp(b, { op: "addItem", catalogId: core("Weapon Focus") }, lookup);
   const second = Object.keys(b.creation.items).sort().at(-1);
   assert.throws(() => applyOp(b, { op: "setItem", itemId: second, choices: { weapon: idOf(b, "Pole Arm") } }, lookup), /already a focus/);
-  assert.equal(validate(b).budgets.resources.spent, 3 * 100000 + 3 * 90000 + 100000 + 90000 + 1000 + 450 + 500, "two foci (one at Reach 0), Katana, Predator, Pole Arm");
+  assert.equal(validate(b).budgets.resources.spent, 3 * 100000 + 3 * 90000 + 100000 + 90000 + 1000 + 450 + 500 + 30, "two foci (one at Reach 0), Katana, Predator, Pole Arm, Knife");
   b = set(b, "Katana", { quantity: 2 });
   assert.throws(() => applyOp(b, { op: "setItem", itemId: second, choices: { weapon: idOf(b, "Katana") } }, lookup), /quantity 1/);
   b = set(b, "Pole Arm", { quantity: 2 });

@@ -110,7 +110,7 @@ gains Nuyen, Essence, Magic, Force Points and power points rows.
   skill area with its Combat Skill cap; Improved Physical Senses per sense) and fix it in the system; M2c-2 uses it.
 - **S12. Weapon foci** price off the bonded weapon's Reach (`weaponFocusCost`; the price table is p.263) and need a
   weapon to bond to. **Built 2026-11-18** (app side only, no system change): choices `weapon` (a melee weapon of this
-  character, quantity 1, one focus each) and `size` (small 4 × / large 5 × Force, RULINGS R5); removing the weapon
+  character, quantity 1, one focus each); the size comes from the weapon (Concealability above 5 is small, 4 × Force; else large, 5 ×; RULINGS R5); removing the weapon
   unbonds the focus; docs/CODE-REVIEW-LOG-weapon-focus.md.
 
 ### 6. Tests

@@ -8,7 +8,7 @@
   import { get, mutate, upload } from "../lib/api.js";
   import { applyOp, validate, cardIds, cardEligible, CARD_TYPES, CATEGORIES, CATEGORY_NAMES, LETTERS, METATYPES, MAGIC_TYPES, MAGIC_NAMES, TRADITIONS, ATTRIBUTES, ATTR_NAMES, CUSTOM_SKILL_CATEGORIES, totemNames } from "../../../shared/creation.mjs";
   import { TABLES } from "../../../shared/rules.mjs";
-  import { BUYABLE, choiceSpec, project, price, essenceOf, isCybereye } from "../../../shared/purchase.mjs";
+  import { BUYABLE, choiceSpec, project, price, essenceOf, isCybereye, smallWeapon } from "../../../shared/purchase.mjs";
   let { doc: initial, onDeleted } = $props();
 
   // Plain objects, not reactive proxies: the reducer clones them (structuredClone can't clone a proxy).
@@ -35,7 +35,7 @@
   }
   // Resources (docs/PLAN-M2c.md).
   const TYPE_NAME = { weapon: "Weapon", armor: "Armor", gear: "Gear", ammo: "Ammunition", cyberware: "Cyberware", spell: "Spell", focus: "Focus" };
-  const CHOICE_NAME = { quantity: "Qty", bundles: "Boxes", rating: "Rating", force: "Force", strengthMinimum: "Str Min", in: "In", spell: "Spell", skill: "Skill", weapon: "Weapon", size: "Size" };
+  const CHOICE_NAME = { quantity: "Qty", bundles: "Boxes", rating: "Rating", force: "Force", strengthMinimum: "Str Min", in: "In", spell: "Spell", skill: "Skill", weapon: "Weapon" };
   let shopQ = $state(""), shopType = $state(""), shop = $state([]), shopBusy = $state(false);
   let shopTimer, shopSeq = 0;
   function searchShop() {
@@ -390,7 +390,7 @@
                       {:else if k === "spell"}
                         <select value={x.r.choices.spell} disabled={finished} onchange={(ev) => setChoice(x.id, "spell", ev.currentTarget.value)}><option value="">Choose…</option>{#each spells as sp2 (sp2.id)}<option value={sp2.id}>{sp2.r.name}</option>{/each}</select>
                       {:else if k === "weapon"}
-                        <select value={x.r.choices.weapon} disabled={finished} onchange={(ev) => setChoice(x.id, "weapon", ev.currentTarget.value)}><option value="">Choose…</option>{#each melee as w (w.id)}<option value={w.id}>{w.r.name} (Reach {w.r.snapshot.reach ?? 0})</option>{/each}</select>
+                        <select value={x.r.choices.weapon} disabled={finished} onchange={(ev) => setChoice(x.id, "weapon", ev.currentTarget.value)}><option value="">Choose…</option>{#each melee as w (w.id)}<option value={w.id}>{w.r.name} (Reach {w.r.snapshot.reach ?? 0}, {smallWeapon(w.r.snapshot) ? "small" : "large"})</option>{/each}</select>
                       {:else}
                         <input value={x.r.choices[k]} maxlength="60" disabled={finished} onchange={(ev) => setChoice(x.id, k, ev.currentTarget.value)}>
                       {/if}

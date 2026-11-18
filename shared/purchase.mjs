@@ -29,8 +29,7 @@ export function choiceSpec(rec) {
     case "cyberware": return { ...(rows.length > 1 ? { rating: oneOf(rows) } : {}), ...(isEyeAccessory(rec) ? { in: text() } : {}) };
     case "spell": return { force: int(1, 6) };   // "no starting spell can have a Force greater than 6" (p.46)
     case "focus": return { ...(s.focusType === "spell_lock" ? {} : { force: int(1, 6) }), ...(s.focusType === "spell" ? { spell: text() } : {}),
-      // The book prices the bond by the weapon's size but never defines it: the player says which (RULINGS R5, p.137).
-      ...(s.focusType === "weapon" ? { weapon: text(), size: oneOf(["small", "large"]) } : {}) };
+      ...(s.focusType === "weapon" ? { weapon: text() } : {}) };
     default: return {};
   }
 }
@@ -86,6 +85,10 @@ export function bondingCost(focusType, force) {
   return { spell: f, spirit: 2 * f, power: 5 * f, spell_lock: 1 }[focusType] ?? f;
 }
 
+/** A small weapon for the focus bond (p.137 never defines it; RULINGS R5, the GM): Concealability above 5. 99 is the
+ * data's "cannot be concealed". */
+export const smallWeapon = (w) => { const c = Number(w?.concealability) || 0; return c > 5 && c < 99; };
+
 /** The item's `system` (and flags) from its snapshot and choices; `recs` are the character's records (a weapon focus
  * reads its weapon's Reach). */
 export function project(rec, c, recs = {}) {
@@ -111,8 +114,9 @@ export function project(rec, c, recs = {}) {
     if (s.focusType === "spell") { s.spellSubtype = "specific"; s.boundSpellId = c.spell ?? ""; }
     if (s.focusType === "weapon") {   // p.137 bond, p.263 price; unbonded it is priced at Reach 0, its lowest
       s.bondedWeaponId = c.weapon ?? "";
-      s.bondingCost = (c.size === "large" ? 5 : 4) * s.force;
-      s.cost = weaponFocusCost(Number(recs[c.weapon]?.snapshot?.reach) || 0, s.force);
+      const w = recs[c.weapon]?.snapshot;
+      s.bondingCost = (w && !smallWeapon(w) ? 5 : 4) * s.force;
+      s.cost = weaponFocusCost(Number(w?.reach) || 0, s.force);
     }
   }
   return { system: s, flags };
