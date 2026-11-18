@@ -4,6 +4,13 @@
   "tag": "v0.160.0",
   "commit": "59b33a077441e6d0afa086f094f5130524febffa",
   "files": {
+    "assets/pregen_portraits/glitch.webp": "d755a662065cf7ef209e114aab076e44ab813440",
+    "assets/pregen_portraits/hexen.webp": "8bb0b8aad3f732fe85a2f700fe9b77c914e6475d",
+    "assets/pregen_portraits/patch.webp": "979fd4324723e4924aa0e5c79aa5db234cbd10bc",
+    "assets/pregen_portraits/razor.webp": "c833396e091341956a52643d8c0fdff7ec034f3d",
+    "assets/pregen_portraits/silk.webp": "9f83b6be644b75579b509122dd994c0322f93ea8",
+    "assets/pregen_portraits/tiger.webp": "10891674af5a2c72cc7e4494ee3b391d9c887498",
+    "assets/pregen_portraits/whisper.webp": "6b1b231d3e24c6ba89ebd261440b86bde2db4838",
     "lang/en.json": "c050bbe5076f48c5b0c32a8322eb6164ba2511b2",
     "module/config.mjs": "5a3baa699d7c2d8df1557e227fb3e6a8468c9c86",
     "module/rules/books.mjs": "a2f41e8dcf70828dbf9532c649a5fea933609f34",

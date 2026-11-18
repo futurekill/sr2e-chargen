@@ -17,7 +17,9 @@ export const REPO = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
 export const COMMIT = /^[0-9a-f]{40}$/;
 export const RECORD = "CONTENT.json";
 /** What the catalog reads from each repository. The book table only matters in the system's (the first pin). */
-export const WANTED = ["system.json", "module.json", "packs-src", "module/rules/books.mjs", "module/config.mjs", "module/rules", "lang/en.json"];
+export const WANTED = ["system.json", "module.json", "packs-src", "module/rules/books.mjs", "module/config.mjs", "module/rules", "lang/en.json", "assets/pregen_portraits"];
+/** The premade portraits players can pick (docs/PLAN-portrait.md, stock portraits): the system's pregen art, WebP only. */
+export const STOCK_PORTRAITS = /^assets\/pregen_portraits\/[a-z0-9-]{1,40}\.webp$/;
 /**
  * The system code the app RUNS (docs/PLAN-M2.md §1): these entry modules and every module they import, nothing else.
  * Plus the English labels the tables name by key. Only the system (the repository with system.json) provides them.
@@ -98,7 +100,7 @@ export function selectPaths(paths, read) {
     queue.push(...importsOf(p, src));
   }
   if (!listed.has(LABELS)) throw new Error(`the system has no ${LABELS}`);
-  return [...keep, ...[...seen].filter(p => !keep.includes(p)), LABELS];
+  return [...keep, ...[...seen].filter(p => !keep.includes(p)), LABELS, ...paths.filter(p => STOCK_PORTRAITS.test(p))];
 }
 
 const git = (dir, args, input) => execFileSync("git", ["-C", dir, ...args], { input, maxBuffer: 512 * 1024 * 1024, stdio: ["pipe", "pipe", "pipe"] });

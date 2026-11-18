@@ -1,5 +1,6 @@
 /** The catalog's routes (docs/PLAN-catalog.md §6): signed-in users only, like everything else. Read-only. */
 import { searchCatalog } from "../catalog.mjs";
+import { stockPortraits, stockPortrait } from "../portrait/stock.mjs";
 
 const KEY = "^[A-Za-z0-9_]{1,40}$";
 const list = { anyOf: [{ type: "string", pattern: KEY }, { type: "array", maxItems: 40, items: { type: "string", pattern: KEY } }] };
@@ -9,6 +10,14 @@ export default async function catalogRoutes(app) {
   app.addHook("onRequest", app.needSession);
   const none = (reply) => reply.code(503).send({ error: "The catalog isn't loaded on this node.", code: "no-catalog" });
 
+  // Premade portraits (the system's pregen art): the list and each image, for any signed-in user.
+  app.get("/portraits", async () => ({ portraits: stockPortraits() }));
+  app.get("/portraits/:id", { schema: { params: { type: "object", required: ["id"], properties: { id: { type: "string", pattern: "^[a-z0-9-]{1,40}$" } } } } }, async (req, reply) => {
+    const webp = stockPortrait(req.params.id);
+    if (!webp) return reply.code(404).send({ error: "No such portrait.", code: "not-found" });
+    reply.header("cache-control", "private, max-age=86400").header("x-content-type-options", "nosniff").type("image/webp");
+    return webp;
+  });
   app.get("/", async (_req, reply) => (app.catalog ? { ...app.catalog.manifest } : none(reply)));
   app.get("/entries", { schema: { querystring: { type: "object", additionalProperties: false, properties: {
     book: list, type: list, q: { type: "string", maxLength: 64 },

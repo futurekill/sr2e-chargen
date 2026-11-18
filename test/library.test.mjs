@@ -97,7 +97,8 @@ test("someone else's document is a 404 on EVERY document route (admins included)
   for (const r of routes) {
     const url = r.url.replace(":id", doc.id).replace(":n", "1") + (r.url.endsWith("/portrait") ? "?revision=1" : "");
     const body = r.method === "GET" ? undefined : r.method === "PUT" ? { name: "Mine now", revision: 1 }
-      : r.url.endsWith("/ops") ? { revision: 1, ops: [{ op: "setName", name: "Mine now" }] } : { revision: 1 };
+      : r.url.endsWith("/ops") ? { revision: 1, ops: [{ op: "setName", name: "Mine now" }] }
+      : r.url.endsWith("/portrait/stock") ? { revision: 1, stock: "tiger" } : { revision: 1 };
     const res = await boss.call(r.method, url, body);
     assert.equal(res.statusCode, 404, `${r.method} ${r.url}`);
     assert.equal(res.json().code, "not-found");
@@ -316,4 +317,27 @@ test("an image AT the pixel cap decodes in the child within a bounded memory", a
   assert.ok(jpg.length < 8 * 1024 * 1024, `fixture ${jpg.length} bytes`);
   const r = await processPortraitJob(jpg, "image/jpeg");
   assert.ok(r.maxRSS < 512 * 1024, `peak resident memory ${Math.round(r.maxRSS / 1024)} MB`);
+});
+
+test("premade portraits: listed for any signed-in user, chosen per character, nothing stored or charged", async () => {
+  const { razor, ctx } = await harness();
+  const list = (await razor.call("GET", "/api/catalog/portraits")).json().portraits;
+  assert.deepEqual(list.map(p => p.id), ["glitch", "hexen", "patch", "razor", "silk", "tiger", "whisper"]);
+  const img = await razor.call("GET", "/api/catalog/portraits/tiger");
+  assert.equal(img.statusCode, 200); assert.equal(img.headers["content-type"], "image/webp");
+  assert.equal((await razor.call("GET", "/api/catalog/portraits/..%2Fsystem")).statusCode, 400, "only an id, never a path");
+  assert.equal((await razor.call("GET", "/api/catalog/portraits/nobody")).statusCode, 404);
+  const id = (await razor.call("POST", `${D}/characters`, { name: "Tiger Fan" })).json().document.id;
+  const bytes = async () => Number((await ctx.db.selectFrom("users").select("bytes_used").where("username", "=", "Razor").executeTakeFirst()).bytes_used);
+  const before = await bytes();
+  const set = await razor.call("POST", `${D}/${id}/portrait/stock`, { revision: 1, stock: "tiger" });
+  assert.equal(set.statusCode, 200, set.body);
+  assert.deepEqual(set.json().body.creation.portrait, { stock: "tiger" });
+  const got = await razor.call("GET", `${D}/${id}/portrait`);
+  assert.equal(got.statusCode, 200); assert.deepEqual(got.rawPayload, img.rawPayload);
+  assert.equal(Number((await ctx.db.selectFrom("assets").select(eb => eb.fn.countAll().as("n")).executeTakeFirst()).n), 0, "nothing stored");
+  assert.ok(await bytes() - before < 4096, "only the new revision's few bytes");
+  assert.equal((await razor.call("POST", `${D}/${id}/portrait/stock`, { revision: 2, stock: "nobody" })).json().code, "portrait-stock");
+  const sheet = await razor.call("GET", `${D}/${id}/sheet.pdf?style=fohawk`);
+  assert.equal(sheet.statusCode, 200); assert.match(sheet.rawPayload.toString("latin1"), /DCTDecode/, "printed on the sheet");
 });

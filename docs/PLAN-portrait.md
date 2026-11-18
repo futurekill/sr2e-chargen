@@ -114,3 +114,11 @@ pinned, and the Docker build verified.
   lowered by the sum read under the same transaction only when the document row was deleted.
 - **Copy and restore tests** (r2 #3): cross-database copy and backup/restore don't exist yet (milestone 6). Their
   plans must include the assets table (bytes and `sha256` compared); noted in docs/ROADMAP.md item 6.
+
+## Premade portraits (2026-11-18, the user's request)
+The system's pregen portraits (`assets/pregen_portraits/*.webp`) join the project's content copy (the sync copies
+them from the SYSTEM pin, same provenance check; tools/content.mjs `STOCK_PORTRAITS`). `GET /api/catalog/portraits`
+lists them, `GET /api/catalog/portraits/:id` serves one (signed-in users; the id must be one listed at start — never
+a path); `POST /api/documents/:id/portrait/stock { revision, stock }` sets `creation.portrait = { stock }` in one
+conditional write (nothing stored, no quota). `getPortrait` returns the premade file for such a character, so the
+page and the sheets show it like an upload. The Docker image ships the folder.

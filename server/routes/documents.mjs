@@ -101,6 +101,9 @@ export default async function documentRoutes(app) {
       return L.setPortrait(req.ctx, me(req), req.params.id, { revision, mime, uploadSha }, key(req), processed);
     });
   });
+  app.post("/:id/portrait/stock", { schema: { params: idParams, headers: keyHeader, querystring: noQuery,
+    body: { type: "object", additionalProperties: false, required: ["revision", "stock"], properties: { revision: { type: "integer", minimum: 1 }, stock: { type: "string", pattern: "^[a-z0-9-]{1,40}$" } } } } },
+  (req) => L.setStockPortrait(req.ctx, me(req), req.params.id, req.body, key(req)));
   app.delete("/:id/portrait", { schema: { params: idParams, headers: keyHeader, querystring: revisionQuery } },
     (req) => L.removePortrait(req.ctx, me(req), req.params.id, { revision: Number(req.query.revision) }, key(req)));
   app.get("/:id/portrait", { schema: { params: idParams, querystring: { type: "object", additionalProperties: false, properties: { revision: { type: "string", pattern: "^[1-9][0-9]{0,8}$" } } } } },

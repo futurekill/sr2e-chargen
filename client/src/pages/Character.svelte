@@ -128,7 +128,15 @@
   });
   const cardReady = $derived(!!fit?.fits && !sending && fit.rev === server.document.revision && fit.q === cardQuery);
   // Portrait (docs/PLAN-portrait.md): uploaded raw, re-encoded on the server; shown from the owner-only route.
-  const hasPortrait = $derived(!!body.creation?.portrait?.assetId);
+  const hasPortrait = $derived(!!(body.creation?.portrait?.assetId || body.creation?.portrait?.stock));
+  let stock = $state([]), showStock = $state(false);
+  get("/api/catalog/portraits").then(r => { if (!gone) stock = r.portraits; }).catch(() => { /* no gallery: uploads still work */ });
+  async function pickStock(id) {
+    picBusy = true; error = "";
+    try { await queue; server = await mutate("POST", `/api/documents/${server.document.id}/portrait/stock`, { revision: server.document.revision, stock: id }); body = server.body; showStock = false; }
+    catch (err) { error = err.message; }
+    picBusy = false;
+  }
   let picBusy = $state(false);
   async function pickPortrait(ev) {
     const file = ev.currentTarget.files?.[0];
@@ -174,9 +182,18 @@
         {#if !finished}
           <label class="button quiet" aria-disabled={picBusy}>{picBusy ? "Working…" : hasPortrait ? "Change portrait" : "Upload portrait"}
             <input type="file" accept="image/jpeg,image/png,image/webp" class="sr-only" disabled={picBusy || sending > 0} onchange={pickPortrait}></label>
+          {#if stock.length}<button type="button" class="quiet" aria-expanded={showStock} disabled={picBusy || sending > 0} onclick={() => (showStock = !showStock)}>Choose a premade one</button>{/if}
           {#if hasPortrait}<button type="button" class="quiet" disabled={picBusy || sending > 0} onclick={removePortrait}>Remove</button>{/if}
         {/if}
       </div>
+      {#if showStock && !finished}
+        <ul class="stock" aria-label="Premade portraits">
+          {#each stock as p (p.id)}
+            <li><button type="button" class="plain pick" class:chosen={body.creation?.portrait?.stock === p.id} aria-pressed={body.creation?.portrait?.stock === p.id} disabled={picBusy || sending > 0} onclick={() => pickStock(p.id)}>
+              <img src={`/api/catalog/portraits/${p.id}`} alt="" width="88" height="88" loading="lazy"><span>{p.name}</span></button></li>
+          {/each}
+        </ul>
+      {/if}
       <form class="stack wide" onsubmit={(ev) => { ev.preventDefault(); if (nameInput.trim() && nameInput.trim() !== body.name) change({ op: "setName", name: nameInput }); }}>
         <div class="row">
           <label class="grow"><span>Street name</span><input bind:value={nameInput} maxlength="120" required disabled={finished}></label>
@@ -453,6 +470,11 @@
   .portrait { margin: 0 0 1rem; align-items: center; }
   .portrait img, .nopic { width: 120px; height: 120px; object-fit: cover; border: 1px solid var(--line); }
   .nopic { display: grid; place-items: center; font-size: .85rem; }
+  ul.stock { list-style: none; margin: 0 0 1rem; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: .6rem; }
+  .pick { display: grid; gap: .25rem; justify-items: center; text-decoration: none; font-weight: 400; color: var(--ink); }
+  .pick img { width: 88px; height: 88px; object-fit: cover; border: 2px solid var(--line); }
+  .pick.chosen img { border-color: var(--accent); }
+  .pick.chosen span { font-weight: 700; }
   .good-text { color: var(--ok); }
   a.disabled { opacity: .55; pointer-events: none; }
   .print label.inline { margin: 0; }

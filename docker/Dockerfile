@@ -32,6 +32,7 @@ COPY --from=build /app/dist ./dist
 COPY --from=build /app/catalog ./catalog
 COPY --from=build /app/content/sr2e-foundryvtt/module ./content/sr2e-foundryvtt/module
 COPY --from=build /app/content/sr2e-foundryvtt/lang ./content/sr2e-foundryvtt/lang
+COPY --from=build /app/content/sr2e-foundryvtt/assets/pregen_portraits ./content/sr2e-foundryvtt/assets/pregen_portraits
 COPY package.json ./
 COPY shared ./shared
 COPY server ./server

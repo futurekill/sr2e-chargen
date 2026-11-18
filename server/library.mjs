@@ -10,6 +10,7 @@ import { writeTx, changed } from "./db/fence.mjs";
 import { Refused } from "./auth/accounts.mjs";
 import { sha256 } from "./auth/tokens.mjs";
 import { newCharacter, applyOp, Refusal } from "../shared/creation.mjs";
+import { isStock, stockPortrait } from "./portrait/stock.mjs";
 
 export const MAX_DOCUMENTS = 200, MAX_BYTES = 500 * 1024 * 1024, MAX_REVISIONS = 50, MAX_BODY_BYTES = 2 * 1024 * 1024;
 export const PURGE_AFTER_MS = 30 * 86400e3, KEY_TTL_MS = 86400e3;
@@ -256,6 +257,19 @@ export function setPortrait(ctx, userId, id, { revision, mime, uploadSha }, key,
     return { ...(await answer(trx, userId, id)), body };
   });
 }
+/** Point the character at a premade portrait (no upload, nothing stored, no quota): one new revision. */
+export function setStockPortrait(ctx, userId, id, { revision, stock }, key) {
+  return idempotent(ctx, userId, key, fingerprint("POST", `/documents/${id}/portrait/stock`, { revision, stock }), async trx => {
+    if (!isStock(stock)) throw new Refused("No such premade portrait.", 422, "portrait-stock");
+    const doc = await current(trx, userId, id, revision, "character");
+    const body = decodeBody(doc.body);
+    body.creation.portrait = { stock };
+    const text = encode(body);
+    await bump(trx, ctx, userId, id, revision, { body: text, bytes: Buffer.byteLength(text) });
+    await appendRevision(trx, ctx, { id, owner_id: userId }, revision + 1, body, `portrait: ${stock}`);
+    return { ...(await answer(trx, userId, id)), body };
+  });
+}
 export function removePortrait(ctx, userId, id, { revision }, key) {
   return idempotent(ctx, userId, key, fingerprint("DELETE", `/documents/${id}/portrait`, { revision }), async trx => {
     const doc = await current(trx, userId, id, revision, "character");
@@ -277,6 +291,8 @@ export async function getPortrait(ctx, userId, id, revision = null) {
     if (!r) throw new Refused("No such revision.", 404, "not-found");
     body = decodeBody(r.body);
   }
+  const stock = body?.creation?.portrait?.stock;
+  if (typeof stock === "string") return stockPortrait(stock);
   const assetId = body?.creation?.portrait?.assetId;
   if (typeof assetId !== "string") return null;
   const row = await ctx.db.selectFrom("assets").select("data").where("id", "=", assetId).where("document_id", "=", id).where("owner_id", "=", userId).executeTakeFirst();
