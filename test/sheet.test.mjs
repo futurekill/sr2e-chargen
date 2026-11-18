@@ -155,8 +155,14 @@ test("the table card: everything by default, a choice per item, one page or refu
   assert.ok(!cardIds(off).includes(fire));
   assert.ok(cardIds(applyOp(off, { op: "setCard", itemId: fire, on: true })).includes(fire));
   assert.throws(() => applyOp(razor, { op: "setCard", itemId: razor.actor.items.find(i => i.type === "armor")._id, on: true }), /table card/);
+  const know = razor.actor.items.find(i => i.type === "skill" && i.system.category !== "active");
+  if (know) assert.throws(() => applyOp(razor, { op: "setCard", itemId: know._id, on: true }), /table card/, "a knowledge skill can't go on the card");
+  const odd = structuredClone(razor); odd.actor.items.push({ _id: "zzzzzzzzzzzzzzzz", name: "x", type: "constructor", system: {} });
+  assert.throws(() => applyOp(odd, { op: "setCard", itemId: "zzzzzzzzzzzzzzzz", on: true }), /table card/, "no inherited type names");
   const done = structuredClone(razor); done.creation.finished = { at: 1 };
-  assert.ok(applyOp(done, { op: "setCard", itemId: fire, on: false }), "a finished character can still choose its card");
+  const skill = done.actor.items.find(i => i._id === fire); skill.system.rating = 9;   // as Karma might have raised it
+  const chosen = applyOp(done, { op: "setCard", itemId: fire, on: false });
+  assert.equal(chosen.actor.items.find(i => i._id === fire).system.rating, 9, "a print choice changes nothing else on a finished character");
   for (const style of STYLES) for (const paper of Object.keys(PAPER)) {
     const { pages, runs, size: [W, H], margin } = await renderSheet(cardModel(razor, ids), { style, paper });
     assert.equal(pages, 1, `${style}/${paper}: one page`);
@@ -166,4 +172,9 @@ test("the table card: everything by default, a choice per item, one page or refu
   const crowd = structuredClone(razor);
   for (let i = 0; i < 80; i++) crowd.actor.items.push({ _id: `cw${String(i).padStart(14, "0")}`, name: `Wired Thing ${i}`, type: "cyberware", system: { installed: true, essenceCost: 0, attributeMods: {} } });
   await assert.rejects(renderSheet(cardModel(crowd, cardIds(crowd)), { style: "fohawk" }), (e) => e instanceof SheetError && e.overflow?.some(o => o.section === "Cyberware" && o.rows > 0) && /Untick/.test(e.message));
+});
+
+test("a header too long for page 1 is refused, never cut (card r1 #2)", async () => {
+  const body = newCharacter("x"); body.name = body.actor.name = "Long ".repeat(800);
+  for (const style of STYLES) await assert.rejects(renderSheet(cardModel(body, []), { style }), (e) => e instanceof SheetError);
 });

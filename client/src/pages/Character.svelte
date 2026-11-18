@@ -119,12 +119,14 @@
     void body.creation.card; void body.actor.items.length; const q = cardQuery; const rev = server.document.revision;
     clearTimeout(fitTimer);
     const mine = ++fitSeq;
+    fit = null;   // an answer for another card is never shown (card r1 #5)
     fitTimer = setTimeout(async () => {
       if (sending) return;   // the answer is checked again when the save lands (the revision changes)
-      try { const r = await get(`/api/documents/${server.document.id}/card/fit?${q}`); if (!gone && mine === fitSeq) fit = { ...r, rev }; }
-      catch (err) { if (!gone && mine === fitSeq) fit = { fits: false, overflow: [], message: err.message, rev }; }
+      try { const r = await get(`/api/documents/${server.document.id}/card/fit?${q}`); if (!gone && mine === fitSeq) fit = { ...r, rev, q }; }
+      catch (err) { if (!gone && mine === fitSeq) fit = { fits: false, overflow: [], message: err.message, rev, q }; }
     }, 700);
   });
+  const cardReady = $derived(!!fit?.fits && !sending && fit.rev === server.document.revision && fit.q === cardQuery);
   let nameInput = $state(start.body.name);
   let notesInput = $state(start.body.notes);
 </script>
@@ -367,7 +369,7 @@
         {#if !fit}<span class="muted">Checking the fit…</span>
         {:else if fit.fits}<span class="good-text">Fits on one page.</span>
         {:else}<span class="bad">{fit.message || "It doesn't fit."}</span>{/if}
-        <a class="button quiet" class:disabled={!fit?.fits} aria-disabled={!fit?.fits} href={fit?.fits ? `/api/documents/${server.document.id}/card.pdf?${cardQuery}` : undefined} target="_blank" rel="noopener">Print card</a>
+        <a class="button quiet" class:disabled={!cardReady} aria-disabled={!cardReady} href={cardReady ? `/api/documents/${server.document.id}/card.pdf?${cardQuery}` : undefined} target="_blank" rel="noopener">Print card</a>
       </p>
     </section>
 

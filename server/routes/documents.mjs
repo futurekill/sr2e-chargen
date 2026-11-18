@@ -61,9 +61,19 @@ export default async function documentRoutes(app) {
     return { document, body };
   };
   const SHEET_LIMIT = { rateLimit: { max: 20, timeWindow: "1 minute", keyGenerator: (req) => `sheet:${me(req)}` } };
-  app.get("/:id/card/fit", { config: SHEET_LIMIT, schema: { params: idParams, querystring: sheetQuery } }, async (req, reply) => {
+  // Fit answers are cached by document revision and print options, so re-checking an unchanged card costs nothing
+  // (card r1 #6); a separate, larger per-user limit than printing.
+  const fitCache = new Map();
+  app.get("/:id/card/fit", { config: { rateLimit: { max: 60, timeWindow: "1 minute", keyGenerator: (req) => `fit:${me(req)}` } }, schema: { params: idParams, querystring: sheetQuery } }, async (req, reply) => {
     const c = await characterOf(req, reply);
-    return c ? renderSheetPdf(c.body, cardOpts(req, c.body, true)) : reply;
+    if (!c) return reply;
+    const opts = cardOpts(req, c.body, true);
+    const key = `${me(req)}:${c.document.id}:${c.document.revision}:${opts.style}:${opts.paper}:${opts.font}`;
+    if (fitCache.has(key)) return fitCache.get(key);
+    const fit = await renderSheetPdf(c.body, opts);
+    fitCache.set(key, fit);
+    if (fitCache.size > 500) fitCache.delete(fitCache.keys().next().value);
+    return fit;
   });
   app.get("/:id/card.pdf", { config: SHEET_LIMIT, schema: { params: idParams, querystring: sheetQuery } }, async (req, reply) => {
     const c = await characterOf(req, reply);

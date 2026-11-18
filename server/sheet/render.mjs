@@ -283,6 +283,9 @@ export async function renderSheet(model, { paper = "letter", font = "standard", 
     ["Foci", model.foci, [0.4, 0.1, 0.3, 0.2]],
     ["Gear", model.gear, [0.55, 0.12, 0.13, 0.2]]
   ].filter(([, rows]) => rows.length);
+  // Page 1's fixed part must lie inside the page (an absurd imported name, say): refuse, never cut (card r1 #2).
+  if (runs.some(r => r.page === 1 && r.y + r.h > BOTTOM + 0.5) || shapes.some(b => b.page === 1 && b.y + b.h > BOTTOM + 0.5))
+    throw new SheetError("This character's header is too long to print. Shorten the name or notes.", [{ section: "Header", rows: 0 }]);
   let fy = act.y;   // the rest continues below, on page 1 while it fits
   if (model.card) {
     // The table card is ONE page: what doesn't fit is reported by section, never moved to a new page or cut.

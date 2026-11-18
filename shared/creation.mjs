@@ -80,8 +80,10 @@ export const OPS = Object.freeze({
 /** The table card's sections (docs/PLAN-sheet.md slice 4): what it can show, all of it by default. */
 export const CARD_TYPES = { weapon: "attacks", skill: "skills", cyberware: "cyberware", adept_power: "powers", spell: "spells" };
 /** The item ids on the table card: the stored choice, or every item of the card's types (active skills only). */
+/** What can go on the card: an item of the card's types; a skill only when it is an Active skill (card r1 #3). */
+export const cardEligible = (i) => typeof i?.type === "string" && Object.hasOwn(CARD_TYPES, i.type) && (i.type !== "skill" || i.system?.category === "active");
 export function cardIds(body) {
-  const eligible = body.actor.items.filter(i => i.type in CARD_TYPES && (i.type !== "skill" || i.system.category === "active")).map(i => i._id);
+  const eligible = body.actor.items.filter(cardEligible).map(i => i._id);
   const chosen = body.creation.card;
   return Array.isArray(chosen) ? eligible.filter(id => chosen.includes(id)) : eligible;
 }
@@ -96,6 +98,16 @@ export function applyOp(body, op, lookup = () => null) {
   if (!op || typeof op !== "object" || typeof op.op !== "string" || !Object.hasOwn(OPS, op.op)) throw new Refusal("Unknown operation.");
   if (body.creation.finished && op.op !== "setNotes" && op.op !== "setCard") throw new Refusal("This character is finished: creation can't change it.");
   const b = structuredClone(body), sys = b.actor.system;
+  if (op.op === "setCard") {
+    // A print choice only: it touches nothing else, so a finished character's data is never rebuilt by it (card r1 #1).
+    if (typeof op.on !== "boolean") throw new Refusal("On or off.");
+    const item = typeof op.itemId === "string" && /^[A-Za-z0-9]{16}$/.test(op.itemId) ? b.actor.items.find(i => i._id === op.itemId) : undefined;
+    if (!item || !cardEligible(item)) throw new Refusal("That can't go on the table card.");
+    const now = new Set(cardIds(b));
+    if (op.on) now.add(item._id); else now.delete(item._id);
+    b.creation.card = [...now];
+    return b;
+  }
   fillLegacyRecords(b);   // before the operation looks records up (r1 #2)
   switch (op.op) {
     case "setName": b.name = b.actor.name = cleanName(op.name); break;
@@ -193,15 +205,6 @@ export function applyOp(body, op, lookup = () => null) {
       rec.choices = checked.choices;
       break;
     }
-    case "setCard": {
-      if (typeof op.on !== "boolean") throw new Refusal("On or off.");
-      const id = typeof op.itemId === "string" && /^[A-Za-z0-9]{16}$/.test(op.itemId) ? b.actor.items.find(i => i._id === op.itemId && i.type in CARD_TYPES)?._id : undefined;
-      if (!id) throw new Refusal("That can't go on the table card.");
-      const now = new Set(cardIds(b));
-      if (op.on) now.add(id); else now.delete(id);
-      b.creation.card = [...now];
-      break;
-    }
     case "removeItem": {
       const id = ownId(b, op.itemId, r => r.type !== "skill", "item");
       const gone = new Set([id]);
@@ -231,7 +234,10 @@ const itemId = (n) => `cg${n.toString(36).padStart(14, "0")}`;
  */
 function addRecord(b, rec) {
   if (Object.keys(b.creation.items).length >= MAX_ITEMS) throw new Refusal(`A character holds at most ${MAX_ITEMS} items.`);
-  const n = b.creation.nextItem ?? 1;
+  // Never an id an existing item already has (a Foundry item could carry one of ours by chance, card r1 #4).
+  const taken = new Set(b.actor.items.map(i => i._id));
+  let n = b.creation.nextItem ?? 1;
+  while (Object.hasOwn(b.creation.items, itemId(n)) || taken.has(itemId(n))) n++;
   b.creation.nextItem = n + 1;
   b.creation.items[itemId(n)] = { ...rec, snapshot: structuredClone(rec.snapshot), flags: structuredClone(rec.flags ?? {}) };
 }

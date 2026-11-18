@@ -254,3 +254,11 @@ test("an item the app has no record of (a character made in Foundry) survives ev
   const after = applyOp(applyOp(b, { op: "setName", name: "Still Here" }), { op: "addCustomSkill", category: "knowledge", name: "Seattle" });
   assert.ok(after.actor.items.some(i => i._id === "abcdefABCDEF0123" && i.system.cost === 5));
 });
+
+test("a new record never takes an id an imported item already has (card r1 #4)", () => {
+  const b = newCharacter("Import");
+  b.actor.items.push({ _id: "cg00000000000001", name: "Imported Pistol", type: "weapon", system: {}, flags: {}, effects: [] });
+  const after = applyOp(b, { op: "addCustomSkill", category: "knowledge", name: "Seattle" });
+  assert.ok(after.actor.items.some(i => i.name === "Imported Pistol"));
+  assert.ok(after.actor.items.some(i => i.name === "Seattle" && i._id !== "cg00000000000001"));
+});
