@@ -1,6 +1,6 @@
 # Plan: character portraits (upload, store, show, print)
-_Draft 2 (2026-11-18), after Codex plan round 1 (11 findings, all accepted; docs/PLAN-portrait-REVIEW-LOG.md). The
-"Draft 2" section at the end wins over the text above it. Under the approved rules in docs/PLAN.md "Security" (portrait upload: size/type caps, a
+_Draft 3 (2026-11-18), after Codex plan rounds 1–2 (11 + 3 findings; docs/PLAN-portrait-REVIEW-LOG.md). The "Draft 2"
+and "Draft 3" sections at the end win over the text above them; round 2's fixes are checked by the code review. Under the approved rules in docs/PLAN.md "Security" (portrait upload: size/type caps, a
 decoded-pixel limit, re-encoded by sharp to WebP with metadata stripped, in the bounded killable subprocess queue,
 never SVG, served only to the owner) and "Backups" (the database AND the uploaded assets, as one set)._
 
@@ -99,3 +99,18 @@ pinned, and the Docker build verified.
 - **Container** (r1 #10): sharp pinned; the lockfile must list `@img/sharp-linux-x64` and `@img/sharp-libvips-linux-x64`
   (a CI check); the Docker job runs a real conversion inside the FINAL image (`docker run … node -e` a 1-pixel PNG →
   WebP). Only linux-x64 is supported for now (stated in OPERATIONS.md).
+
+## Draft 3 — changes after round 2 (these win)
+- **Memory, measured** (r2 #1): Node gives a child process no OS memory limit, and the shell-less image has no
+  `prlimit`/`ulimit`; a per-process OS limit is not available. The bound is therefore the pixel cap itself: our
+  header check AND sharp's `limitInputPixels` (which re-checks the dimensions sharp actually decodes) both hold an
+  image to 16,777,216 pixels, so libvips's working set is bounded (`sharp.cache(false)`, `concurrency(1)`,
+  `sequentialRead`). A test decodes an image AT the cap (4096 × 4096, noise, so it can't compress away) in the child
+  and asserts its peak resident memory (`process.resourceUsage().maxRSS`) stays under 512 MB; the compose example's
+  container `mem_limit` (1 GB) is the outer bound. Recorded as a decision, open to revisit if a per-process limit
+  becomes available.
+- **Purge order** (r2 #2): the conditional document delete runs FIRST (`WHERE id AND deleted_at <= cutoff`); the
+  revisions and assets go by the foreign keys' cascade (both declared `on delete cascade`), and the byte counter is
+  lowered by the sum read under the same transaction only when the document row was deleted.
+- **Copy and restore tests** (r2 #3): cross-database copy and backup/restore don't exist yet (milestone 6). Their
+  plans must include the assets table (bytes and `sha256` compared); noted in docs/ROADMAP.md item 6.

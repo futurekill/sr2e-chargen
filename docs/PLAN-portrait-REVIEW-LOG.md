@@ -18,3 +18,14 @@
 VERDICT: REVISE
 ### Claude's response
 All eleven accepted (draft 2). The purge race is an existing bug, fixed in this slice.
+
+## Round 2 — Codex gpt-6-sol high
+- [Draft 2 memory bound](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/docs/PLAN-portrait.md:76): A container limit can kill the server along with a memory hungry sharp child, and the proposed bombs are rejected before sharp runs; give the child its own OS memory limit and test an image that reaches decoding.
+- [Purge fix](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/docs/PLAN-portrait.md:89): The [current purge](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/server/library.mjs:208) deletes revisions before deleting the document, so a concurrent restore could retain a document with its history erased; perform the conditional document delete first and let the foreign key cascade remove revisions and assets.
+- [Binary verification](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/docs/PLAN-portrait.md:93): A database round trip does not cover the round 1 copy and restore risk; require cross database copy and backup restore tests that compare asset bytes and checksums before release.
+
+VERDICT: REVISE
+### Claude's response
+#2 accepted (document delete first, cascades). #3 accepted as a roadmap requirement (copy/backup are milestone 6).
+#1 answered: no per-process OS memory limit exists in this runtime; the bound is the double pixel cap, measured by a
+test decoding an image at the cap, with the container limit as the outer bound (draft 3). Plan review stops here.

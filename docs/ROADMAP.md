@@ -39,7 +39,8 @@ Each milestone gives something you can use. Each has a short plan, a Codex revie
 3. **Printable sheet.** PDF in the Classic style, sized for paper, with the fit rules (no text cut off).
 4. **Manage a character.** Karma and advancement, nuyen, purchases, damage, ammo, history.
 5. **Sourcebooks.** Book toggles, alternate creation methods, book metatypes, Edges and Flaws.
-6. **Release.** Backups, image scan, signature. Then invite the group.
+6. **Release.** Backups, image scan, signature. Then invite the group. Backups and any cross-database copy include
+   the `assets` table (portraits): restore tests compare each asset's bytes and `sha256` (docs/PLAN-portrait.md).
 7. **Foundry connector (optional).** Export a character from the app and import it into Foundry as a new actor.
    Export a settled character from Foundry to the app. No in-play state.
 8. **Later:** Vehicle Workshop, more themes and sheet styles, NPC builder, social login.
