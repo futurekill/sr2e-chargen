@@ -12,7 +12,8 @@ Built for a small private group: invite-only accounts, one Docker container on y
 > library, Docker, CI), **milestone 1, the catalog** — 1,763 entries from the core book and 11 sourcebooks, each
 > with its page reference — and the first parts of **milestone 2, character creation**: priorities, metatype, magic,
 > attributes (M2a), skills (M2b) and resources (M2c), with a rules check that cites the page, and **a printable PDF
-> sheet** (milestone 3, Classic style) whose numbers match Foundry's. Next: adept powers, contacts, lifestyle and
+> sheet** in three styles with a one-page table card and a Markdown stat block (milestone 3), whose numbers match
+> Foundry's. Next: adept powers, contacts, lifestyle and
 > finishing (after the next Foundry system release). Not released: no image is published.
 
 ## Run it locally (development)
@@ -86,7 +87,7 @@ The approved order is in [docs/ROADMAP.md](docs/ROADMAP.md) (standalone first, r
 | — | App skeleton: Docker, accounts, library, one theme | done |
 | 1 | Catalog: browse and search every item, with page references | done |
 | 2 | Create a character, core book ([docs/PLAN-M2.md](docs/PLAN-M2.md), [docs/PLAN-M2c.md](docs/PLAN-M2c.md)) | M2a–M2c done; adept powers, then M2d |
-| 3 | Printable sheet ([docs/PLAN-sheet.md](docs/PLAN-sheet.md)) | Classic style done; Fohawk, table card, Markdown later |
+| 3 | Printable sheet ([docs/PLAN-sheet.md](docs/PLAN-sheet.md)) | Classic, Fohawk and ink-saver styles, Markdown stat block, table card done; portrait later (needs uploads) |
 | 4 | Manage a character: Karma, nuyen, purchases, damage, history | |
 | 5 | Sourcebooks, alternate methods, Edges and Flaws | |
 | 6 | Release | |
