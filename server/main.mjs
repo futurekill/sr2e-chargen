@@ -7,7 +7,7 @@ import { purgeSessions } from "./auth/sessions.mjs";
 import { purge } from "./library.mjs";
 import { loadCatalog, CatalogError } from "./catalog.mjs";
 import { existsSync } from "node:fs";
-import { sqlitePath, stagingOf, nightly, backupDirProblem } from "./backup/index.mjs";
+import { sqlitePath, stagingOf, nightly, backupDirProblem, HEARTBEAT_MS } from "./backup/index.mjs";
 
 const config = loadConfig();
 const dbFile = sqlitePath(config.databaseUrl);
@@ -35,8 +35,15 @@ const backup = async () => {
   catch (err) { app.log.error({ err }, "backup failed"); }
   finally { backingUp = false; }
 };
-const sweep = () => purgeSessions(ctx).then(() => purge(ctx)).then(backup).catch(err => app.log.warn({ err }, "sweep skipped"));
+const sweep = () => purgeSessions(ctx).then(() => purge(ctx)).catch(err => app.log.warn({ err }, "sweep skipped"));
+// The heartbeat an offline restore checks (settings `server.alive`); cleared on a clean stop.
+const beat = (value) => ctx.db.updateTable("settings").set({ value }).where("key", "=", "server.alive").execute().catch(() => {});
+await ctx.db.insertInto("settings").values({ key: "server.alive", value: "" }).execute().catch(() => {});
+await beat(String(Date.now()));
+setInterval(() => beat(String(Date.now())), HEARTBEAT_MS).unref();
 await sweep();
-setInterval(sweep, 3600e3).unref();
-for (const sig of ["SIGINT", "SIGTERM"]) process.on(sig, async () => { await app.close(); await ctx.db.destroy(); process.exit(0); });
+for (const sig of ["SIGINT", "SIGTERM"]) process.on(sig, async () => { await beat(""); await app.close(); await ctx.db.destroy(); process.exit(0); });
 await app.listen({ port: config.port, host: config.host });
+// Backups after the server is listening: a long first backup never delays start (r1 #9).
+setInterval(() => sweep().then(backup), 3600e3).unref();
+setTimeout(() => backup(), 60e3).unref();

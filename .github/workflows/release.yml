@@ -38,7 +38,7 @@ jobs:
       packages: write        # the private GHCR package
       id-token: write        # cosign keyless signing
     env:
-      IMAGE: ghcr.io/${{ github.repository }}
+      IMAGE: ghcr.io/futurekill/sr2e-chargen   # lower case, as GHCR requires
       TAG: ${{ github.ref_name }}
       GH_TOKEN: ${{ github.token }}
     steps:
@@ -63,22 +63,26 @@ jobs:
           output: sbom.spdx.json
           scan-type: image
           skip-setup-trivy: true
-      - name: The package must stay private (checked before pushing)
+      - name: The package must not be public (checked before pushing)
+        # Anonymous pull access is what "public" means: an anonymous token that can list the tags proves it (r1 #2).
         run: |
-          owner="${GITHUB_REPOSITORY%%/*}"; name="${GITHUB_REPOSITORY##*/}"
-          vis=$(gh api "/users/$owner/packages/container/$name" -q .visibility 2>/dev/null || echo "none")
-          echo "package visibility before push: $vis"
-          if [ "$vis" != "none" ] && [ "$vis" != "private" ]; then echo "::error::the package is $vis, not private: not pushing"; exit 1; fi
+          repo="${GITHUB_REPOSITORY,,}"
+          tok=$(curl -fsS "https://ghcr.io/token?scope=repository:${repo}:pull" | jq -r '.token // empty' || true)
+          code=$(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: Bearer ${tok}" "https://ghcr.io/v2/${repo}/tags/list")
+          echo "anonymous tag listing: HTTP $code"
+          [ "$code" != "200" ] || { echo "::error::the package is readable without signing in (public): not pushing"; exit 1; }
       - name: Push
         run: |
           echo "$GH_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
           docker push "$IMAGE:$TAG"
           echo "DIGEST=$(docker inspect --format '{{index .RepoDigests 0}}' "$IMAGE:$TAG" | cut -d@ -f2)" >> "$GITHUB_ENV"
-      - name: Still private after the push
+      - name: Still not public after the push
         run: |
-          owner="${GITHUB_REPOSITORY%%/*}"; name="${GITHUB_REPOSITORY##*/}"
-          vis=$(gh api "/users/$owner/packages/container/$name" -q .visibility)
-          [ "$vis" = "private" ] || { echo "::error::the package is $vis: make it private in GitHub now"; exit 1; }
+          repo="${GITHUB_REPOSITORY,,}"
+          tok=$(curl -fsS "https://ghcr.io/token?scope=repository:${repo}:pull" | jq -r '.token // empty' || true)
+          code=$(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: Bearer ${tok}" "https://ghcr.io/v2/${repo}/manifests/${TAG}" -H 'Accept: application/vnd.oci.image.index.v1+json, application/vnd.docker.distribution.manifest.v2+json')
+          echo "anonymous manifest fetch: HTTP $code"
+          [ "$code" != "200" ] || { echo "::error::the image is public: make the package private in GitHub NOW"; exit 1; }
       - uses: sigstore/cosign-installer@756fe2d284c7292c4e9b62c8a28f1e5629c59532 # v4.1.3
       - name: Sign, attest the SBOM, verify both against the digest and this workflow's identity
         run: |
@@ -88,14 +92,16 @@ jobs:
           cosign sign --yes "$ref"
           cosign attest --yes --type spdxjson --predicate sbom.spdx.json "$ref"
           cosign verify --certificate-identity "$id" --certificate-oidc-issuer "$issuer" "$ref" > /dev/null
+          jq -S . sbom.spdx.json | sha256sum | cut -d' ' -f1 > uploaded.sha
+          # Every verified SPDX attestation on the digest (a re-run can add more): one must be the uploaded SBOM.
           cosign verify-attestation --type spdxjson --certificate-identity "$id" --certificate-oidc-issuer "$issuer" "$ref" \
-            | head -1 | jq -r .payload | base64 -d | jq -S .predicate > attested.json
-          jq -S . sbom.spdx.json > uploaded.json
-          cmp attested.json uploaded.json || { echo "::error::the attested SBOM is not the uploaded one"; exit 1; }
+            | while read -r line; do echo "$line" | jq -r .payload | base64 -d | jq -S .predicate | sha256sum | cut -d' ' -f1; done > attested.sha
+          grep -qxF "$(cat uploaded.sha)" attested.sha || { echo "::error::no verified attestation carries the uploaded SBOM"; exit 1; }
       - name: GitHub release (notes from the CHANGELOG section)
         run: |
           v="${TAG#v}"
-          awk -v v="$v" '$0 ~ "^## " v "( |$)" {on=1; next} on && /^## / {exit} on {print}' CHANGELOG.md > notes.md
+          # The heading's version compared literally (no regex from the tag, r1 #12).
+          awk -v v="$v" '$1 == "##" && $2 == v {on=1; next} on && $1 == "##" {exit} on {print}' CHANGELOG.md > notes.md
           [ -s notes.md ] || { echo "::error::CHANGELOG.md has no section for $v"; exit 1; }
           echo "" >> notes.md; echo "Image: \`$IMAGE@$DIGEST\` (private; verify with cosign, docs/OPERATIONS.md)" >> notes.md
           gh release create "$TAG" sbom.spdx.json --verify-tag --title "$TAG" --notes-file notes.md

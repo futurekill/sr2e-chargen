@@ -20,13 +20,15 @@ RUN npm run build
 COPY tools ./tools
 COPY server ./server
 RUN node tools/build-catalog.mjs catalog && node tools/check-catalog.mjs catalog
-RUN npm ci --omit=dev && mkdir /data
+RUN npm ci --omit=dev && mkdir /data /backups
 
 # --- run: distroless (no shell, no package manager), non-root, only /data writable ---
 FROM gcr.io/distroless/nodejs26-debian13:nonroot@sha256:1d736cf8b5716c07a245301f92717143215d248fd55771ee1936ef4b3302e531
 ENV NODE_ENV=production DATABASE_URL=sqlite:///data/chargen.db PORT=3000 HOST=0.0.0.0
 WORKDIR /app
 COPY --from=build --chown=nonroot:nonroot /data /data
+# The backup volume's mount point, owned by the app user so a fresh named volume is writable (r1 #1).
+COPY --from=build --chown=nonroot:nonroot /backups /backups
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/catalog ./catalog
@@ -38,6 +40,8 @@ COPY shared ./shared
 COPY server ./server
 USER nonroot
 VOLUME ["/data"]
+# Links the GHCR package to this (private) repository.
+LABEL org.opencontainers.image.source="https://github.com/futurekill/sr2e-chargen"
 EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 CMD ["/nodejs/bin/node", "server/healthcheck.mjs"]
 # The admin CLI is the same image:  docker compose exec chargen /nodejs/bin/node server/cli.mjs admin bootstrap

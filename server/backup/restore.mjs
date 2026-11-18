@@ -7,15 +7,24 @@ import { DatabaseSync } from "node:sqlite";
 import { copyFileSync, rmSync, renameSync, existsSync, openSync, fsyncSync, closeSync, chmodSync } from "node:fs";
 import { dirname } from "node:path";
 import { SANITIZE } from "./checks.mjs";
-import { backupJob, stagingOf } from "./index.mjs";
+import { backupJob, stagingOf, HEARTBEAT_STALE_MS } from "./index.mjs";
 
 const syncPath = (p) => { const fd = openSync(p, "r"); try { fsyncSync(fd); } finally { closeSync(fd); } };
+/** Is a server running on this database? It writes a heartbeat every 30 s and clears it when it stops (r1 #3). */
+export function serverAlive(dbFile, now = Date.now()) {
+  if (!existsSync(dbFile)) return false;
+  const db = new DatabaseSync(dbFile, { readOnly: true, timeout: 5000 });
+  try { const v = Number(db.prepare("SELECT value FROM settings WHERE key = 'server.alive'").get()?.value) || 0; return now - v < HEARTBEAT_STALE_MS; }
+  catch { return false; }
+  finally { db.close(); }
+}
 export async function restoreSqlite(backupFile, dbFile) {
   if (!existsSync(backupFile)) return { ok: false, problems: [`no such backup: ${backupFile}`] };
+  if (serverAlive(dbFile)) return { ok: false, problems: ["the server is running on this database: stop it first (docker compose stop chargen)"] };
   const staging = stagingOf(dbFile);
-  copyFileSync(backupFile, staging);
-  chmodSync(staging, 0o600);
   try {
+    copyFileSync(backupFile, staging);   // inside the cleanup: a failed copy leaves no staging file (r1 #4)
+    chmodSync(staging, 0o600);
     const db = new DatabaseSync(staging);
     try { for (const q of SANITIZE) db.exec(q); } finally { db.close(); }
   } catch (err) {

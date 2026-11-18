@@ -4,7 +4,7 @@
  */
 import { fork } from "node:child_process";
 import { fileURLToPath } from "node:url";
-import { readdirSync, rmSync, mkdirSync } from "node:fs";
+import { readdirSync, rmSync, mkdirSync, statSync } from "node:fs";
 import { join, resolve, relative, isAbsolute } from "node:path";
 import { randomUUID } from "node:crypto";
 import { parseDatabaseUrl } from "../db/index.mjs";
@@ -45,9 +45,14 @@ export async function createBackup({ databaseUrl, dir }) {
   return backupJob({ action: "create", db, dir: resolve(dir) });
 }
 /** Keep the newest `keep` complete backups; partial files older than a day are cleaned too. */
-export function prune(dir, keep) {
-  const done = readdirSync(dir).filter(f => /^chargen-\d{8}T\d{6}Z-[0-9a-f]{6}\.db$/.test(f)).sort();
+export function prune(dir, keep, now = Date.now()) {
+  const all = readdirSync(dir);
+  const done = all.filter(f => /^chargen-\d{8}T\d{6}Z-[0-9a-f]{6}\.db$/.test(f)).sort();
   for (const f of done.slice(0, Math.max(0, done.length - keep))) rmSync(join(dir, f), { force: true });
+  // Partials of a killed job: removed once a day old (a running job's partial is always newer, r1 #5).
+  for (const f of all.filter(f => /^\.chargen-.*\.partial$/.test(f))) {
+    try { if (now - statSync(join(dir, f)).mtimeMs > DAY_MS) rmSync(join(dir, f), { force: true }); } catch { /* gone meanwhile */ }
+  }
   return done.length > keep ? done.length - keep : 0;
 }
 
@@ -67,6 +72,8 @@ export async function nightly(ctx, { databaseUrl, dir, keep = 7, log = () => {} 
   const r = await ctx.db.updateTable("settings").set({ value: `${owner}:${now + LEASE_MS}` }).where("key", "=", "backup.lease").where("value", "=", lease).executeTakeFirst();
   if (Number(r.numUpdatedRows ?? 0) !== 1) return { ran: false, reason: "another process took the lease" };
   try {
+    // Another process may have finished a backup between our first read and the lease (r1 #8).
+    if (now - (Number(await get("backup.last_ok")) || 0) < DAY_MS) return { ran: false, reason: "not due" };
     const out = await createBackup({ databaseUrl, dir });
     if (!out.ok) { log(`backup failed: ${out.problems.join("; ")}`); return { ran: true, ok: false, problems: out.problems }; }
     await ctx.db.updateTable("settings").set({ value: String(now) }).where("key", "=", "backup.last_ok").execute();
@@ -79,3 +86,6 @@ export async function nightly(ctx, { databaseUrl, dir, keep = 7, log = () => {} 
 
 /** The staging file a SQLite restore writes beside the database; while it exists the server refuses to start. */
 export const stagingOf = (dbFile) => `${dbFile}.restore-staging`;
+
+/** A running server's heartbeat (settings `server.alive` = ms), so an offline-only command can refuse (r1 #3). */
+export const HEARTBEAT_MS = 30e3, HEARTBEAT_STALE_MS = 90e3;

@@ -42,9 +42,23 @@ test("a backup: VACUUM INTO in a child, verified, mode 0600, named, beside nothi
   assert.equal(r.assets, 1);
   assert.equal(statSync(r.file).mode & 0o777, 0o600);
   assert.deepEqual(readdirSync(s.backups).filter(f => f.endsWith(".partial")), []);
-  // Writers are not blocked while a backup runs (a separate connection; SQLite's snapshot).
-  const [b2] = await Promise.all([createBackup({ databaseUrl: s.url, dir: s.backups }), L.createCharacter(s.ctx, s.userId, { name: "Concurrent" }, randomUUID())]);
-  assert.equal(b2.ok, true);
+  // Writers are not blocked while a backup runs: make the database big enough that the copy takes a while, start it,
+  // write while it runs, and check the write finished well before the backup (r1 #13); the copy verifies (one state).
+  const raw = new DatabaseSync(s.file);
+  raw.exec("BEGIN");
+  const ins = raw.prepare("INSERT INTO audit (id, at, action) VALUES (?, ?, ?)");
+  for (let i = 0; i < 150000; i++) ins.run(randomUUID(), i, "x".repeat(40));
+  raw.exec("COMMIT"); raw.close();
+  let backupDone = 0;
+  const running = createBackup({ databaseUrl: s.url, dir: s.backups }).then(r => { backupDone = Date.now(); return r; });
+  await new Promise(r => setTimeout(r, 150));
+  const t0 = Date.now();
+  await L.createCharacter(s.ctx, s.userId, { name: "Concurrent" }, randomUUID());
+  const wrote = Date.now();
+  const b2 = await running;
+  assert.equal(b2.ok, true, JSON.stringify(b2));
+  assert.ok(wrote - t0 < 1000, `the write took ${wrote - t0} ms`);
+  assert.ok(wrote <= backupDone, "the write finished while the backup was still running");
   assert.equal(backupDirProblem(join(s.data, "b"), s.file) !== null, true, "a backup inside the data directory is refused");
   assert.equal((await createBackup({ databaseUrl: s.url, dir: join(s.data, "b") })).ok, false);
 });
@@ -55,6 +69,9 @@ test("verify catches a changed asset byte, a wrong counter and a schema mismatch
   const bad = (sqlText) => { const db = new DatabaseSync(file); db.exec(sqlText); db.close(); };
   bad("UPDATE assets SET data = X'00' || data");
   assert.match((await backupJob({ action: "verify", file })).problems.join(), /checksum/);
+  const { file: f3 } = await createBackup({ databaseUrl: s.url, dir: s.backups });
+  const db3 = new DatabaseSync(f3); db3.exec("PRAGMA foreign_keys = OFF; DELETE FROM users;"); db3.close();
+  assert.match((await backupJob({ action: "verify", file: f3 })).problems.join(), /foreign keys/, "orphans are caught (r1 #6)");
   const { file: f2 } = await createBackup({ databaseUrl: s.url, dir: s.backups });
   const db2 = new DatabaseSync(f2); db2.exec("UPDATE users SET bytes_used = bytes_used + 1; DELETE FROM migrations WHERE name = '003-assets'"); db2.close();
   const p = (await backupJob({ action: "verify", file: f2 })).problems.join("\n");
@@ -65,6 +82,10 @@ test("restore: offline, sanitized (no sessions, no unused links), verified, swap
   const s = await seeded();
   const { file } = await createBackup({ databaseUrl: s.url, dir: s.backups });
   await L.createCharacter(s.ctx, s.userId, { name: "After the backup" }, randomUUID());
+  // A running server (a fresh heartbeat) refuses the restore (r1 #3).
+  await s.ctx.db.insertInto("settings").values({ key: "server.alive", value: String(Date.now()) }).execute();
+  assert.match((await restoreSqlite(file, s.file)).problems.join(), /server is running/);
+  await s.ctx.db.updateTable("settings").set({ value: "" }).where("key", "=", "server.alive").execute();
   await s.ctx.db.destroy();
   const r = await restoreSqlite(file, s.file);
   assert.equal(r.ok, true, JSON.stringify(r));
@@ -76,6 +97,7 @@ test("restore: offline, sanitized (no sessions, no unused links), verified, swap
   assert.equal(existsSync(`${s.file}.restore-staging`), false);
   const junk = join(s.backups, "junk.db"); writeFileSync(junk, "not a database");
   assert.equal((await restoreSqlite(junk, s.file)).ok, false);
+  assert.equal(existsSync(`${s.file}.restore-staging`), false, "no staging file left (r1 #4)");
   const after = new DatabaseSync(s.file, { readOnly: true });
   assert.equal(after.prepare("SELECT COUNT(*) AS c FROM documents").get().c, 1, "a failed restore left the database as it was");
   after.close();

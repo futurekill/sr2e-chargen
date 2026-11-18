@@ -13,12 +13,18 @@ export async function checkBackup(all, { sqlite = false } = {}) {
   if (sqlite) {
     const ic = (await all("PRAGMA integrity_check")).map(r => Object.values(r)[0]);
     if (ic.join() !== "ok") problems.push(`integrity check: ${ic.slice(0, 3).join("; ")}`);
+    // integrity_check doesn't look at foreign keys (r1 #6).
+    const fk = await all("PRAGMA foreign_key_check");
+    if (fk.length) problems.push(`foreign keys: ${fk.length} row(s) point at nothing (e.g. ${fk[0].table})`);
   }
   const applied = (await all("SELECT name FROM migrations ORDER BY name")).map(r => r.name);
   const known = Object.keys(MIGRATIONS).sort();
   if (applied.join() !== known.join()) problems.push(`schema: the backup has migrations [${applied.join(", ")}], this build [${known.join(", ")}]`);
-  for (const a of await all("SELECT id, data, sha256, bytes FROM assets ORDER BY id")) {
-    const b = asBuffer(a.data);
+  // One portrait in memory at a time (r1 #7): list, then read each by its id (a checked UUID).
+  for (const a of await all("SELECT id, sha256, bytes FROM assets ORDER BY id")) {
+    if (!/^[0-9a-f-]{36}$/i.test(a.id)) { problems.push(`asset ${a.id}: not an id`); continue; }
+    const row = (await all(`SELECT data FROM assets WHERE id = '${a.id}'`))[0];
+    const b = asBuffer(row.data);
     if (createHash("sha256").update(b).digest("hex") !== a.sha256 || b.length !== n(a.bytes)) problems.push(`asset ${a.id}: its bytes don't match its checksum`);
   }
   // Counters recomputed from what the user owns (documents count while deleted until purged; bytes = revisions + assets).
@@ -35,4 +41,6 @@ export async function checkBackup(all, { sqlite = false } = {}) {
   return { ok: problems.length === 0, problems, users: users.length, assets: assetCount };
 }
 /** After a restore: nobody stays signed in, and no unused one-time link from the copy works (they may have been spent since). */
-export const SANITIZE = ["DELETE FROM sessions", "DELETE FROM tokens WHERE used_at IS NULL"];
+export const SANITIZE = ["DELETE FROM sessions", "DELETE FROM tokens WHERE used_at IS NULL",
+  // The copy's heartbeat and backup lease are from backup time: not this database's state.
+  "UPDATE settings SET value = '' WHERE key IN ('server.alive', 'backup.lease')"];

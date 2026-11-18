@@ -22,17 +22,22 @@ process.once("message", async (msg) => {
     if (msg.action !== "create") throw new Error("unknown backup action");
     const stamp = new Date().toISOString().replace(/[-:]/g, "").replace(/\.\d+Z$/, "Z");
     const name = `chargen-${stamp}-${randomBytes(3).toString("hex")}.db`, partial = join(msg.dir, `.${name}.partial`), final = join(msg.dir, name);
-    const src = new DatabaseSync(msg.db, { readOnly: true, timeout: 5000 });
-    try { src.exec(`VACUUM INTO '${partial.replace(/'/g, "''")}'`); }   // SQLite's own consistent snapshot
-    catch (err) { rmSync(partial, { force: true }); throw err; }
-    finally { src.close(); }
-    chmodSync(partial, 0o600);
-    syncFile(partial);
-    const check = await verifyFile(partial);
-    if (!check.ok) { rmSync(partial, { force: true }); return reply({ ok: false, problems: check.problems }); }
-    renameSync(partial, final);
-    syncFile(msg.dir);
-    reply({ ok: true, file: final, name: basename(final), ...check });
+    let published = false;
+    try {
+      const src = new DatabaseSync(msg.db, { readOnly: true, timeout: 5000 });
+      try { src.exec(`VACUUM INTO '${partial.replace(/'/g, "''")}'`); }   // SQLite's own consistent snapshot
+      finally { src.close(); }
+      chmodSync(partial, 0o600);
+      syncFile(partial);
+      const check = await verifyFile(partial);
+      if (!check.ok) return reply({ ok: false, problems: check.problems });
+      renameSync(partial, final);
+      published = true;
+      syncFile(msg.dir);
+      reply({ ok: true, file: final, name: basename(final), ...check });
+    } finally {
+      if (!published) rmSync(partial, { force: true });   // any failure: no partial left behind (r1 #5)
+    }
   } catch (err) {
     reply({ ok: false, problems: [String(err?.message ?? err)] });
   }
