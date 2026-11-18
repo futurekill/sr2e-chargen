@@ -3,9 +3,10 @@
  * is escaped so it can't become markup, a link or a table cell break; nothing is cut.
  */
 // URLs, www. names and e-mail addresses go in code spans: renderers don't link inside code (no autolinks, r1 #3).
-const LINKY = /(?:\b(?:https?|ftp|mailto|file|data|javascript):\S+|\bwww\.\S+|[^\s@|]+@[^\s@|]+\.[^\s@|]+)/gi;
+// A pipe ends the match: it stays outside the code span, escaped for the table like any other text.
+const LINKY = /(?:\b(?:https?|ftp|mailto|file|data|javascript):[^\s|]+|\bwww\.[^\s|]+|[^\s@|]+@[^\s@|]+\.[^\s@|]+)/gi;
 const escText = (t) => t.replace(/([\\`*_[\]<>|#~!])/g, "\\$1");
-const code = (t) => { const fence = "`".repeat(Math.max(...[0, ...(t.match(/`+/g) ?? []).map(r => r.length)]) + 1); return `${fence} ${t.replace(/\|/g, "\\|")} ${fence}`; };   // GFM tables read \| as a pipe, in code spans too
+const code = (t) => { const fence = "`".repeat(Math.max(...[0, ...(t.match(/`+/g) ?? []).map(r => r.length)]) + 1); return `${fence} ${t} ${fence}`; };
 const esc = (v) => {
   const s = String(v ?? "").replace(/\r?\n/g, " ");
   let out = "", last = 0;

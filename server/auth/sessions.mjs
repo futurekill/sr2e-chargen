@@ -21,8 +21,8 @@ export async function createSession(trx, ctx, userId) {
 /** A user's preferences, with defaults; anything unknown or damaged in the column reads as the default. */
 export const PREF_DEFAULTS = Object.freeze({ readableFont: false });
 export function readPrefs(raw) {
-  let p = {};
-  try { p = typeof raw === "string" ? JSON.parse(raw) : (raw ?? {}); } catch { p = {}; }
+  let p;
+  try { p = typeof raw === "string" ? JSON.parse(raw) : raw; } catch { p = null; }
   return { readableFont: p?.readableFont === true };
 }
 

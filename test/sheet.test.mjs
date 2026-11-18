@@ -103,6 +103,6 @@ test("the Markdown stat block: every string, escaped, tables with the right colu
   assert.ok(head.startsWith("# \\| \\*Razor\\* \\[x\\](` http://e) ` \\<b\\>\\#1"), head);
   assert.doesNotMatch(md, /(?<!\\)\]\(http/, "no live link (the bracket is escaped)");
   const bare = statBlock(sheetModel({ ...newCharacter("x"), notes: "see https://evil.example and www.evil.example or mail me@evil.example ok https://x.test/a|b" }));
-  assert.match(bare, /` https:\/\/x\.test\/a\\\|b `/, "a pipe in a URL is kept, escaped for the table");
-  for (const u of ["https://evil.example", "www.evil.example", "me@evil.example"]) assert.match(bare, new RegExp("` " + u.replace(/[.]/g, "\\.") + " `"), `${u} is in a code span`);
+  assert.ok(bare.includes("` https://x.test/a `\\|b"), "a pipe ends the code span and is escaped for the table");
+  for (const u of ["https://evil.example", "www.evil.example", "me@evil.example"]) assert.match(bare, new RegExp("` " + u.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + " `"), `${u} is in a code span`);
 });
