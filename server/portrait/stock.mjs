@@ -8,11 +8,10 @@ import { join } from "node:path";
 
 export const STOCK_DIR = fileURLToPath(new URL("../../content/sr2e-foundryvtt/assets/pregen_portraits/", import.meta.url));
 const ID = /^[a-z0-9-]{1,40}$/;
-const title = (id) => id.split("-").map(w => w[0].toUpperCase() + w.slice(1)).join(" ");
 let list = null;
-/** The premade portraits: [{ id, name }], sorted by name. */
+/** The premade portraits: [{ id }] (no names shown: just a gallery). */
 export function stockPortraits() {
-  if (!list) list = existsSync(STOCK_DIR) ? readdirSync(STOCK_DIR).filter(f => f.endsWith(".webp")).map(f => f.slice(0, -5)).filter(id => ID.test(id)).sort().map(id => ({ id, name: title(id) })) : [];
+  if (!list) list = existsSync(STOCK_DIR) ? readdirSync(STOCK_DIR).filter(f => f.endsWith(".webp")).map(f => f.slice(0, -5)).filter(id => ID.test(id)).sort().map(id => ({ id })) : [];
   return list;
 }
 export const isStock = (id) => typeof id === "string" && stockPortraits().some(p => p.id === id);

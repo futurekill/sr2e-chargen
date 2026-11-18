@@ -195,9 +195,9 @@
       </div>
       {#if showStock && !finished}
         <ul class="stock" aria-label="Premade portraits">
-          {#each stock as p (p.id)}
-            <li><button type="button" class="plain pick" class:chosen={body.creation?.portrait?.stock === p.id} aria-pressed={body.creation?.portrait?.stock === p.id} disabled={picBusy || sending > 0} onclick={() => pickStock(p.id)}>
-              <img src={`/api/catalog/portraits/${p.id}`} alt="" width="88" height="88" loading="lazy"><span>{p.name}</span></button></li>
+          {#each stock as p, i (p.id)}
+            <li><button type="button" class="plain pick" class:chosen={body.creation?.portrait?.stock === p.id} aria-pressed={body.creation?.portrait?.stock === p.id} aria-label={`Premade portrait ${i + 1}`} disabled={picBusy || sending > 0} onclick={() => pickStock(p.id)}>
+              <img src={`/api/catalog/portraits/${p.id}`} alt="" width="88" height="88" loading="lazy"></button></li>
           {/each}
         </ul>
       {/if}
@@ -481,7 +481,7 @@
   .pick { display: grid; gap: .25rem; justify-items: center; text-decoration: none; font-weight: 400; color: var(--ink); }
   .pick img { width: 88px; height: 88px; object-fit: cover; border: 2px solid var(--line); }
   .pick.chosen img { border-color: var(--accent); }
-  .pick.chosen span { font-weight: 700; }
+  .pick.chosen img { outline: 2px solid var(--accent); outline-offset: 2px; }
   .good-text { color: var(--ok); }
   a.disabled { opacity: .55; pointer-events: none; }
   .print label.inline { margin: 0; }

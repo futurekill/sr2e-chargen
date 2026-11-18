@@ -14,8 +14,8 @@ notes come from it.
   all metadata (location, camera data) before it is stored, shown only to you, and printed in the sheet's header (all
   three styles). Up to the last five portraits of a character are kept, so restoring an older revision brings its
   portrait back.
-- **Premade portraits**: or pick one of the seven sample runners' portraits from the Foundry system (Glitch, Hexen,
-  Patch, Razor, Silk, Tiger, Whisper). Nothing is uploaded or stored for these.
+- **Premade portraits**: or pick one from a gallery (the Foundry system's sample-runner portraits). Nothing is
+  uploaded or stored for these.
 - **One-page table card**: tick which attacks, active skills, cyberware, adept powers and spells go on it; the page
   tells you at once whether it fits ("Fits on one page", or what is over), and "Print card" works only when it fits.
   The choice is saved with the character and can still change after creation.
