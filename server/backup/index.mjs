@@ -87,5 +87,5 @@ export async function nightly(ctx, { databaseUrl, dir, keep = 7, log = () => {} 
 /** The staging file a SQLite restore writes beside the database; while it exists the server refuses to start. */
 export const stagingOf = (dbFile) => `${dbFile}.restore-staging`;
 
-/** A running server's heartbeat (settings `server.alive` = ms), so an offline-only command can refuse (r1 #3). */
+/** A running server's heartbeat (settings `server.alive.<id>` = ms, one row per server), so an offline-only command can refuse (r1 #3). */
 export const HEARTBEAT_MS = 30e3, HEARTBEAT_STALE_MS = 90e3;

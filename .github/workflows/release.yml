@@ -70,7 +70,9 @@ jobs:
           tok=$(curl -fsS "https://ghcr.io/token?scope=repository:${repo}:pull" | jq -r '.token // empty' || true)
           code=$(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: Bearer ${tok}" "https://ghcr.io/v2/${repo}/tags/list")
           echo "anonymous tag listing: HTTP $code"
-          [ "$code" != "200" ] || { echo "::error::the package is readable without signing in (public): not pushing"; exit 1; }
+          # Only an anonymous DENIAL proves "not public"; a timeout (000) or any other answer fails the release (r2 #1).
+          case "$code" in 401|403|404) ;; 200) echo "::error::the package is readable without signing in (public): not pushing"; exit 1 ;;
+            *) echo "::error::could not check the package's visibility (HTTP $code): not pushing"; exit 1 ;; esac
       - name: Push
         run: |
           echo "$GH_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
@@ -82,7 +84,8 @@ jobs:
           tok=$(curl -fsS "https://ghcr.io/token?scope=repository:${repo}:pull" | jq -r '.token // empty' || true)
           code=$(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: Bearer ${tok}" "https://ghcr.io/v2/${repo}/manifests/${TAG}" -H 'Accept: application/vnd.oci.image.index.v1+json, application/vnd.docker.distribution.manifest.v2+json')
           echo "anonymous manifest fetch: HTTP $code"
-          [ "$code" != "200" ] || { echo "::error::the image is public: make the package private in GitHub NOW"; exit 1; }
+          case "$code" in 401|403|404) ;; 200) echo "::error::the image is public: make the package private in GitHub NOW"; exit 1 ;;
+            *) echo "::error::could not check the image's visibility (HTTP $code): check the package in GitHub NOW"; exit 1 ;; esac
       - uses: sigstore/cosign-installer@756fe2d284c7292c4e9b62c8a28f1e5629c59532 # v4.1.3
       - name: Sign, attest the SBOM, verify both against the digest and this workflow's identity
         run: |

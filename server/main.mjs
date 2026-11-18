@@ -7,6 +7,7 @@ import { purgeSessions } from "./auth/sessions.mjs";
 import { purge } from "./library.mjs";
 import { loadCatalog, CatalogError } from "./catalog.mjs";
 import { existsSync } from "node:fs";
+import { randomUUID } from "node:crypto";
 import { sqlitePath, stagingOf, nightly, backupDirProblem, HEARTBEAT_MS } from "./backup/index.mjs";
 
 const config = loadConfig();
@@ -36,13 +37,15 @@ const backup = async () => {
   finally { backingUp = false; }
 };
 const sweep = () => purgeSessions(ctx).then(() => purge(ctx)).catch(err => app.log.warn({ err }, "sweep skipped"));
-// The heartbeat an offline restore checks (settings `server.alive`); cleared on a clean stop.
-const beat = (value) => ctx.db.updateTable("settings").set({ value }).where("key", "=", "server.alive").execute().catch(() => {});
-await ctx.db.insertInto("settings").values({ key: "server.alive", value: "" }).execute().catch(() => {});
-await beat(String(Date.now()));
+// This process's own heartbeat (settings `server.alive.<id>`) an offline restore checks; removed on a clean stop, so
+// stopping one server never hides another (r2 #2). shortcut: a crashed server leaves a stale row; restore's sanitize
+// removes them, upgrade to a cleanup if crash loops ever pile rows up.
+const aliveKey = `server.alive.${randomUUID()}`;
+const beat = (value) => ctx.db.updateTable("settings").set({ value }).where("key", "=", aliveKey).execute().catch(() => {});
+await ctx.db.insertInto("settings").values({ key: aliveKey, value: String(Date.now()) }).execute();
 setInterval(() => beat(String(Date.now())), HEARTBEAT_MS).unref();
 await sweep();
-for (const sig of ["SIGINT", "SIGTERM"]) process.on(sig, async () => { await beat(""); await app.close(); await ctx.db.destroy(); process.exit(0); });
+for (const sig of ["SIGINT", "SIGTERM"]) process.on(sig, async () => { await ctx.db.deleteFrom("settings").where("key", "=", aliveKey).execute().catch(() => {}); await app.close(); await ctx.db.destroy(); process.exit(0); });
 await app.listen({ port: config.port, host: config.host });
 // Backups after the server is listening: a long first backup never delays start (r1 #9).
 setInterval(() => sweep().then(backup), 3600e3).unref();

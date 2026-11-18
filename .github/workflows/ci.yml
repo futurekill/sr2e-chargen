@@ -82,7 +82,7 @@ jobs:
         run: |
           docker run -d --name cg --read-only --cap-drop ALL --security-opt no-new-privileges:true --tmpfs /tmp \
             -v cg-data:/data -e BASE_URL=http://localhost:3000 -p 127.0.0.1:3000:3000 sr2e-chargen:ci
-          for i in $(seq 1 30); do
+          for _ in $(seq 1 30); do
             [ "$(docker inspect --format '{{.State.Health.Status}}' cg)" = healthy ] && exit 0
             sleep 2
           done
@@ -127,6 +127,7 @@ jobs:
         with: { upload: never, upload-database: false, output: sarif }
       - name: Fail on findings
         run: |
+          # shellcheck disable=SC2016 # a node -e script: single quotes on purpose
           node -e '
             const fs = require("fs");
             let n = 0;

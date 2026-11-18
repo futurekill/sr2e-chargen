@@ -10,11 +10,11 @@ import { SANITIZE } from "./checks.mjs";
 import { backupJob, stagingOf, HEARTBEAT_STALE_MS } from "./index.mjs";
 
 const syncPath = (p) => { const fd = openSync(p, "r"); try { fsyncSync(fd); } finally { closeSync(fd); } };
-/** Is a server running on this database? It writes a heartbeat every 30 s and clears it when it stops (r1 #3). */
+/** Is any server running on this database? Each writes its own heartbeat every 30 s and removes it on stop (r1 #3, r2 #2). */
 export function serverAlive(dbFile, now = Date.now()) {
   if (!existsSync(dbFile)) return false;
   const db = new DatabaseSync(dbFile, { readOnly: true, timeout: 5000 });
-  try { const v = Number(db.prepare("SELECT value FROM settings WHERE key = 'server.alive'").get()?.value) || 0; return now - v < HEARTBEAT_STALE_MS; }
+  try { return db.prepare("SELECT value FROM settings WHERE key LIKE 'server.alive.%'").all().some(r => now - (Number(r.value) || 0) < HEARTBEAT_STALE_MS); }
   catch { return false; }
   finally { db.close(); }
 }

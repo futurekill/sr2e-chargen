@@ -51,7 +51,8 @@ test("a backup: VACUUM INTO in a child, verified, mode 0600, named, beside nothi
   raw.exec("COMMIT"); raw.close();
   let backupDone = 0;
   const running = createBackup({ databaseUrl: s.url, dir: s.backups }).then(r => { backupDone = Date.now(); return r; });
-  await new Promise(r => setTimeout(r, 150));
+  // Write only once the copy is under way (its partial file exists), not after a guessed delay (r2 #3).
+  while (backupDone === 0 && !readdirSync(s.backups).some(f => f.endsWith(".partial"))) await new Promise(r => setTimeout(r, 2));
   const t0 = Date.now();
   await L.createCharacter(s.ctx, s.userId, { name: "Concurrent" }, randomUUID());
   const wrote = Date.now();
@@ -83,9 +84,11 @@ test("restore: offline, sanitized (no sessions, no unused links), verified, swap
   const { file } = await createBackup({ databaseUrl: s.url, dir: s.backups });
   await L.createCharacter(s.ctx, s.userId, { name: "After the backup" }, randomUUID());
   // A running server (a fresh heartbeat) refuses the restore (r1 #3).
-  await s.ctx.db.insertInto("settings").values({ key: "server.alive", value: String(Date.now()) }).execute();
+  // Two servers; one stops (its row goes), the other still blocks the restore (r2 #2).
+  await s.ctx.db.insertInto("settings").values([{ key: "server.alive.a", value: String(Date.now()) }, { key: "server.alive.b", value: String(Date.now()) }]).execute();
+  await s.ctx.db.deleteFrom("settings").where("key", "=", "server.alive.a").execute();
   assert.match((await restoreSqlite(file, s.file)).problems.join(), /server is running/);
-  await s.ctx.db.updateTable("settings").set({ value: "" }).where("key", "=", "server.alive").execute();
+  await s.ctx.db.updateTable("settings").set({ value: String(Date.now() - 120e3) }).where("key", "=", "server.alive.b").execute();   // stale: a crash
   await s.ctx.db.destroy();
   const r = await restoreSqlite(file, s.file);
   assert.equal(r.ok, true, JSON.stringify(r));
