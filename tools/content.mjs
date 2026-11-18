@@ -29,7 +29,8 @@ export const LABELS = "lang/en.json";
  * (acorn), so a string or a comment can't hide a call and every import form is seen (code review M2a #1 #2).
  */
 const BANNED_CALLS = new Set(["eval", "Function", "fetch", "require", "XMLHttpRequest", "importScripts"]);
-const BANNED_GLOBALS = new Set(["process", "document", "window", "localStorage", "sessionStorage", "navigator", "XMLHttpRequest", "WebSocket", "Deno", "Bun"]);
+// shortcut: not scope-aware (a LOCAL named like a banned global is refused too); browser aliases that are common local names (top, parent, frames) are left out. Upgrade to a scope analysis if a real module needs one.
+const BANNED_GLOBALS = new Set(["process", "document", "window", "self", "global", "localStorage", "sessionStorage", "navigator", "XMLHttpRequest", "WebSocket", "Deno", "Bun"]);
 function walk(node, visit) {
   if (!node || typeof node.type !== "string") return;
   visit(node);
@@ -41,7 +42,7 @@ export function forbiddenIn(src) {
   let ast;
   try { ast = parse(src); } catch (e) { return [`unparsable (${e.message})`]; }
   const bad = new Set(), names = new WeakSet();   // identifiers that are NAMES (`a.process`, `{ window: 1 }`, `import { process as p }`), not globals
-  const BANNED = new Set([...BANNED_CALLS, ...BANNED_GLOBALS]);
+  const BANNED = new Set([...BANNED_CALLS, ...BANNED_GLOBALS, "globalThis"]);   // globalThis.globalThis is another alias (review r3)
   walk(ast, (n) => {
     if (n.type === "MemberExpression" && !n.computed) names.add(n.property);
     if (n.type === "ImportSpecifier") names.add(n.imported);
