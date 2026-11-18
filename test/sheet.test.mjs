@@ -104,6 +104,14 @@ test("Fohawk measures its fixed rows: long values grow the row; an impossible he
   assert.equal(shapes.filter(s => s.kind === "box").length, 24);
   const huge = sheetModel(body); huge.subtitle = "X ".repeat(3000);
   await assert.rejects(renderSheet(huge, { style: "fohawk" }), (e) => e instanceof SheetError && /Classic/.test(e.message));
+  // Near the limit: either refused, or everything (text, bands, boxes) inside the safe area (r2 #1).
+  for (let n = 900; n <= 1700; n += 100) for (const paper of ["letter", "a4"]) {
+    const m = sheetModel(body); m.subtitle = "X ".repeat(n);
+    let out;
+    try { out = await renderSheet(m, { style: "fohawk", paper }); } catch (e) { assert.ok(e instanceof SheetError, e.message); continue; }
+    const [W, H] = out.size, M = out.margin;
+    for (const b of [...out.runs.map(r => ({ ...r, h: r.h })), ...out.shapes]) assert.ok(b.y + b.h <= H - M + 0.5 && b.x + b.w <= W - M + 0.5, `${n}/${paper}: something at y=${b.y + b.h} leaves the safe area`);
+  }
 });
 
 test("a character no bundled font has stops the export with a message, never a box", async () => {

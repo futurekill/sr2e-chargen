@@ -194,6 +194,12 @@ export async function renderSheet(model, { paper = "letter", font = "standard", 
     }
     return yy + block(`Physical overflow: up to ${model.monitors.overflow} boxes (Body)`, x, yy, w, { size: 8.5, floor: FLOOR }) + 8;
   };
+  /** The monitors' height in a column of width w, computed exactly as monitors() lays them out. */
+  const monitorsHeight = (w) => {
+    const per = Math.max(1, Math.floor((w + 2) / (BOX + 2))), rowH = BOX + (fohawk ? 13 : 6);
+    const rows = [model.monitors.physical, model.monitors.stun].reduce((t, n) => t + 12 + Math.ceil(n / Math.max(1, Math.min(n, per))) * rowH, 0);
+    return rows + wrap(`Physical overflow: up to ${model.monitors.overflow} boxes (Body)`, 8.5, w, 400).length * 8.5 * LINE + 8;
+  };
   let y = MARGIN;
   let attacks, act;
   if (!fohawk) {
@@ -256,7 +262,8 @@ export async function renderSheet(model, { paper = "letter", font = "standard", 
       y += rowH2 + 6;   // measured per row (r1 #3)
     }
     y += 4;
-    if (y + 60 > BOTTOM) throw new SheetError("This character's header is too long for the Fohawk style: print it in the Classic style.");   // r1 #1: never cut
+    // The fixed part must fit: the condition monitor (bar + boxes) and the Attacks bar with one row below it (r1 #1, r2 #1).
+    if (y + 21 + monitorsHeight(colW) + 21 + BODY * LINE + 2 > BOTTOM) throw new SheetError("This character's header is too long for the Fohawk style: print it in the Classic style.");
     act = table("Skills", active, [0.62, 0.12, 0.26], L, y, colW, BOTTOM, { accent: [1] });
     let ry = monitors(X2, y + bar("Condition monitor", X2, y, colW), colW);
     attacks = table("Attacks", model.attacks, [0.5, 0.25, 0.25], X2, ry, colW, BOTTOM, { accent: [1] });
