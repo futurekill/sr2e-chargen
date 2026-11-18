@@ -40,9 +40,19 @@ const parse = (src) => acorn.parse(String(src), { ecmaVersion: "latest", sourceT
 export function forbiddenIn(src) {
   let ast;
   try { ast = parse(src); } catch (e) { return [`unparsable (${e.message})`]; }
-  const bad = new Set(), names = new WeakSet();   // identifiers that are property NAMES (`a.process`, `{ window: 1 }`), not globals
+  const bad = new Set(), names = new WeakSet();   // identifiers that are NAMES (`a.process`, `{ window: 1 }`, `import { process as p }`), not globals
+  const BANNED = new Set([...BANNED_CALLS, ...BANNED_GLOBALS]);
   walk(ast, (n) => {
     if (n.type === "MemberExpression" && !n.computed) names.add(n.property);
+    if (n.type === "ImportSpecifier") names.add(n.imported);
+    if (n.type === "ExportSpecifier") { names.add(n.exported); names.add(n.local); }
+    // globalThis only as `globalThis.<allowed name>`: an alias or a computed key could reach anything (review r2).
+    if (n.type === "MemberExpression" && n.object.type === "Identifier" && n.object.name === "globalThis") {
+      names.add(n.object);
+      if (n.computed) bad.add("globalThis[…]");
+      else if (BANNED.has(n.property.name)) bad.add(`globalThis.${n.property.name}`);
+    }
+    if (n.type === "Identifier" && n.name === "globalThis" && !names.has(n)) bad.add("globalThis as a value");
     if ((n.type === "Property" || n.type === "MethodDefinition" || n.type === "PropertyDefinition") && !n.computed) names.add(n.key);
     if (n.type === "ImportExpression") bad.add("import()");
     if ((n.type === "CallExpression" || n.type === "NewExpression") && n.callee.type === "Identifier" && BANNED_CALLS.has(n.callee.name)) bad.add(`${n.callee.name}()`);
@@ -52,7 +62,6 @@ export function forbiddenIn(src) {
       while (t.type === "MemberExpression") t = t.object;
       if (t.type === "Identifier" && t.name === "globalThis") bad.add("a write to globalThis");
     }
-    if (n.type === "MemberExpression" && n.object.type === "Identifier" && n.object.name === "globalThis" && n.property.type !== "Identifier") bad.add("globalThis[…]");
   });
   return [...bad];
 }

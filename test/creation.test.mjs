@@ -32,6 +32,10 @@ test("the rules closure: only static file imports, no forbidden construct, nothi
   assert.deepEqual(forbiddenIn(`const a = "/*"; eval("1"); const b = "*/";`), ["eval()"]);
   assert.ok(forbiddenIn(`globalThis["pwned"] = true;`).length);
   assert.deepEqual(forbiddenIn("const o = { process: 1 }; o.window; class A { document() {} }"), [], "property names are not globals");
+  assert.deepEqual(forbiddenIn(`import { process as p } from "./x.mjs"; export { p as window };`), []);
+  assert.deepEqual(forbiddenIn(`globalThis.fetch("/x");`), ["globalThis.fetch"]);
+  assert.deepEqual(forbiddenIn(`const g = globalThis; g.fetch("/x");`), ["globalThis as a value"]);
+  assert.deepEqual(forbiddenIn(`const x = globalThis["fe" + "tch"];`), ["globalThis[…]"], "a computed key could reach anything: refused even on a read");
   assert.deepEqual(importsOf("module/rules/a.mjs", `import "./x.mjs"; export{foo}from"./y.mjs"; export * from "../z.mjs";`), ["module/rules/x.mjs", "module/rules/y.mjs", "module/z.mjs"]);
   const files = { "system.json": "{}", "lang/en.json": "{}", "module/config.mjs": `import "./rules/sr2e-rules.mjs";`,
     "module/rules/sr2e-rules.mjs": `export { a } from "./ware-rules.mjs";`, "module/rules/ware-rules.mjs": "export const a = 1;",
