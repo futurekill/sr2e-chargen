@@ -6,7 +6,7 @@
    */
   import { untrack, onDestroy } from "svelte";
   import { get, mutate } from "../lib/api.js";
-  import { applyOp, validate, cardIds, CARD_TYPES, CATEGORIES, CATEGORY_NAMES, LETTERS, METATYPES, MAGIC_TYPES, MAGIC_NAMES, TRADITIONS, ATTRIBUTES, ATTR_NAMES, CUSTOM_SKILL_CATEGORIES, totemNames } from "../../../shared/creation.mjs";
+  import { applyOp, validate, cardIds, cardEligible, CARD_TYPES, CATEGORIES, CATEGORY_NAMES, LETTERS, METATYPES, MAGIC_TYPES, MAGIC_NAMES, TRADITIONS, ATTRIBUTES, ATTR_NAMES, CUSTOM_SKILL_CATEGORIES, totemNames } from "../../../shared/creation.mjs";
   import { TABLES } from "../../../shared/rules.mjs";
   import { BUYABLE, choiceSpec, project, price, essenceOf, isCybereye } from "../../../shared/purchase.mjs";
   let { doc: initial, onDeleted } = $props();
@@ -112,7 +112,7 @@
   // The table card (docs/PLAN-sheet.md slice 4): the chosen rows, and the server's fit answer after each change.
   const CARD_SECTION = { attacks: "Attacks", skills: "Active skills", cyberware: "Cyberware", powers: "Adept powers", spells: "Spells" };
   const onCard = $derived(new Set(cardIds(body)));
-  const cardRows = $derived(Object.entries(CARD_SECTION).map(([k, title]) => [title, body.actor.items.filter(i => CARD_TYPES[i.type] === k && (i.type !== "skill" || i.system.category === "active"))]).filter(([, list]) => list.length));
+  const cardRows = $derived(Object.entries(CARD_SECTION).map(([k, title]) => [title, body.actor.items.filter(i => cardEligible(i) && CARD_TYPES[i.type] === k)]).filter(([, list]) => list.length));
   let fit = $state(null), fitTimer, fitSeq = 0;
   const cardQuery = $derived(`style=${sheetStyle}&paper=${paper}${sheetFont ? `&font=${sheetFont}` : ""}`);
   $effect(() => {
