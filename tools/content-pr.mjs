@@ -30,6 +30,7 @@ export function prBody({ pins, report, outcomes, runUrl }) {
     "| Repository | Was | Now |", "|---|---|---|", ...rows, "",
     "| Check (in the sync run) | Result |", "|---|---|",
     `| Sync | ${ok("sync")} |`, `| Catalog build | ${ok("build")} |`, `| Provenance (content/ = the pinned commits) | ${ok("verify")} |`, `| Unit tests | ${ok("test")} |`, "",
+    ...(report?.codeChanged?.length ? ["**RULES CODE CHANGED — the app runs these modules. Review the diff as code, not data:**", ...report.codeChanged.map(p => `- \`${p}\``), ""] : []),
     Object.values(outcomes).every(v => v === "success") ? "All checks passed in the sync run." :
       "A check FAILED. A new text field in the content usually needs a line in `tools/string-paths.json`: fix it on this branch (the next daily sync then leaves the branch alone).",
     "", "This pull request was opened with the repository token, so GitHub holds its CI runs for approval: approve them on the pull request, or merge (CI then runs on `main`).",
@@ -81,7 +82,8 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     run("git", ["config", "user.email", "41898282+github-actions[bot]@users.noreply.github.com"]);
     run("git", ["checkout", "-q", "-B", BRANCH]);
     run("git", ["add", "--", "content", "content-pins.json"]);
-    const subject = (report.changes.length ? `Content: ${report.changes.map(c => `${c.dir} ${c.to.tag}`).join(", ")}` : "Content: repair content/ to the pinned commits").slice(0, 200);
+    const code = report.codeChanged?.length ? "Content + RULES CODE" : "Content";   // code the app runs: review it as code
+    const subject = (report.changes.length ? `${code}: ${report.changes.map(c => `${c.dir} ${c.to.tag}`).join(", ")}` : `${code}: repair content/ to the pinned commits`).slice(0, 200);
     run("git", ["commit", "-q", "-m", subject, "-m", "Content-Sync: bot"]);
     // Leased against the head checked above ("" = the branch must still be absent): a push in between is kept.
     run("git", ["push", "-q", `--force-with-lease=refs/heads/${BRANCH}:${remoteHead}`, "origin", `HEAD:refs/heads/${BRANCH}`]);

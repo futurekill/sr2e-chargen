@@ -78,9 +78,15 @@ export async function sync({ pins, contentDir, repoDirOf, latest = false, fetchI
   // Stage the complete copy, check it, then swap it in whole.
   const staging = `${contentDir}.staging`, old = `${contentDir}.old`;
   rmSync(staging, { recursive: true, force: true });
+  const codeChanged = [];
   for (const pin of pins) {
     const { files, ids } = gitFiles(repoDirOf(pin), pin);
     writeCopy(join(staging, pin.dir), pin, files, ids);
+    // Code the app RUNS changed: the pull request says so, module by module (docs/PLAN-M2.md §1).
+    let before = {};
+    try { before = JSON.parse(readFileSync(join(contentDir, pin.dir, RECORD), "utf8")).files ?? {}; } catch { /* a first copy */ }
+    for (const [path, id] of ids) if (path.endsWith(".mjs") && path !== "module/rules/books.mjs" && before[path] !== id) codeChanged.push(`${pin.dir}/${path}`);
+    for (const path of Object.keys(before)) if (path.endsWith(".mjs") && !ids.has(path)) codeChanged.push(`${pin.dir}/${path} (removed)`);
   }
   for (const pin of pins) readVendored(staging, pin);
   // The swap: two renames. A stop between them leaves only content.old — complete — which recoverContent restores.
@@ -88,7 +94,7 @@ export async function sync({ pins, contentDir, repoDirOf, latest = false, fetchI
   if (existsSync(contentDir)) fs.rename(contentDir, old);
   fs.rename(staging, contentDir);
   rmSync(old, { recursive: true, force: true });
-  return { changes };
+  return { changes, codeChanged };
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {

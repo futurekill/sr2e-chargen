@@ -13,13 +13,16 @@ import { execFileSync } from "node:child_process";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { listFiles, walkFiles, blobId, checkPin, tagCommit, checkContentRoot, WANTED, RECORD } from "./content.mjs";
+import { listFiles, readBlobs, selectPaths, walkFiles, blobId, checkPin, tagCommit, checkContentRoot, WANTED, RECORD } from "./content.mjs";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
 /** Compare one pin's copy with the tree of the pinned commit in `repoDir`. Returns the differences, as text. */
 export function compareWithTree(contentDir, pin, repoDir) {
-  const tree = new Map(listFiles(repoDir, pin.commit, WANTED).map(f => [f.path, f.sha]));
+  // The expected files are chosen from the upstream tree exactly as the sync chooses them (the rules closure too).
+  const all = listFiles(repoDir, pin.commit, WANTED), sha = new Map(all.map(f => [f.path, f.sha]));
+  const blobs = readBlobs(repoDir, all.filter(f => f.path.endsWith(".mjs")).map(f => f.sha));
+  const tree = new Map(selectPaths(all.map(f => f.path), (p) => blobs.get(sha.get(p)).toString("utf8")).map(p => [p, sha.get(p)]));
   const root = join(contentDir, pin.dir), present = walkFiles(root).filter(p => p !== RECORD);
   const problems = [];
   for (const path of present) {

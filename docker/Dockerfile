@@ -8,13 +8,15 @@ FROM node:26.13.1-bookworm-slim@sha256:5df79989ed685e09f0a98019db4cebfb22fb9df1a
 WORKDIR /app
 COPY package.json package-lock.json .npmrc ./
 RUN npm ci
+# The rules the client and server both run (docs/PLAN-M2.md §1): shared/ imports the system's code from content/.
+COPY content-pins.json ./
+COPY content ./content
+COPY shared ./shared
 COPY vite.config.mjs ./
 COPY client ./client
 RUN npm run build
 # The catalog (docs/PLAN-catalog.md, Amendment A4): built HERE from the project's own copy of the content (content/),
 # which the build checks against its record and the pins; then checked again. A build without valid content fails.
-COPY content-pins.json ./
-COPY content ./content
 COPY tools ./tools
 COPY server ./server
 RUN node tools/build-catalog.mjs catalog && node tools/check-catalog.mjs catalog
@@ -28,7 +30,10 @@ COPY --from=build --chown=nonroot:nonroot /data /data
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/catalog ./catalog
+COPY --from=build /app/content/sr2e-foundryvtt/module ./content/sr2e-foundryvtt/module
+COPY --from=build /app/content/sr2e-foundryvtt/lang ./content/sr2e-foundryvtt/lang
 COPY package.json ./
+COPY shared ./shared
 COPY server ./server
 USER nonroot
 VOLUME ["/data"]

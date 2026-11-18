@@ -1,0 +1,141 @@
+/** Character creation, core Priority system (docs/PLAN-M2.md M2a; rules: docs/RULES-CHARGEN.md, core pp.43–47). */
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import { TABLES, chargenSpend, label } from "../shared/rules.mjs";
+import { newCharacter, applyOp, validate, Refusal, ATTRIBUTES } from "../shared/creation.mjs";
+import { forbiddenIn, importsOf, selectPaths } from "../tools/content.mjs";
+
+const run = (ops, body = newCharacter("Razor")) => ops.reduce((b, op) => applyOp(b, op), body);
+const prio = (p) => Object.entries(p).map(([category, letter]) => ({ op: "setPriority", category, letter }));
+const attrs = (o) => Object.entries(o).map(([attr, base]) => ({ op: "setAttribute", attr, base }));
+const texts = (b, step) => validate(b).problems.filter(p => !step || p.step === step).map(p => `${p.severity}: ${p.text} [p.${p.cite.page}]`);
+
+test("the system's rules load from the project's copy, with the core book's Master Creation Table (p.47)", () => {
+  assert.equal(typeof chargenSpend, "function");
+  const row = (l) => { const r = TABLES.priorities[l]; return [r.attributes, r.skills, r.resources, r.forcePoints]; };
+  assert.deepEqual(["A", "B", "C", "D", "E"].map(row), [[30, 40, 1e6, 50], [24, 30, 400000, 35], [20, 24, 90000, 25], [17, 20, 5000, 15], [15, 17, 500, 5]]);
+  assert.equal(TABLES.racialMaximums.troll.body, 11);
+  assert.equal(Object.keys(TABLES.totems).length, 15);
+  assert.equal(label("SR2E.Magic.Hermetic"), "Hermetic");
+  assert.equal(label("No.Such.Key"), "No.Such.Key");
+});
+
+test("the rules closure: only static file imports, no forbidden construct, nothing outside the system", () => {
+  assert.deepEqual(importsOf("module/rules/a.mjs", `import { x } from "./b.mjs";\nexport { y } from "../config.mjs";`), ["module/rules/b.mjs", "module/config.mjs"]);
+  assert.throws(() => importsOf("module/rules/a.mjs", `import x from "node:fs";`), /not a file of the system/);
+  assert.deepEqual(forbiddenIn("// fetch(url)\n/* eval(x) */ const a = 1;"), []);
+  assert.equal(forbiddenIn("const m = await import('./x.mjs');").length, 1);
+  assert.equal(forbiddenIn("globalThis.game = {};").length, 1);
+  assert.equal(forbiddenIn("if (globalThis.game === undefined) {}").length, 0);
+  const files = { "system.json": "{}", "lang/en.json": "{}", "module/config.mjs": `import "./rules/sr2e-rules.mjs";`,
+    "module/rules/sr2e-rules.mjs": `export { a } from "./ware-rules.mjs";`, "module/rules/ware-rules.mjs": "export const a = 1;",
+    "module/rules/unused.mjs": "export const b = 2;", "module/rules/books.mjs": "export const BOOKS = {};" };
+  // A bare `import "x"` is not followed by importsOf (only `… from`): the entries are listed explicitly anyway.
+  const kept = selectPaths(Object.keys(files), (p) => files[p]);
+  assert.ok(!kept.includes("module/rules/unused.mjs"), "a module nothing imports is not copied");
+  assert.ok(kept.includes("module/rules/ware-rules.mjs") && kept.includes("lang/en.json"));
+  assert.throws(() => selectPaths(Object.keys(files), (p) => (p === "module/rules/ware-rules.mjs" ? "fetch('x')" : files[p])), /must not/);
+  assert.deepEqual(selectPaths(["module.json", "packs-src/a.json", "module/rules/x.mjs"], () => ""), ["module.json", "packs-src/a.json"], "a content module gives no code");
+});
+
+test("a new character: nothing chosen, every attribute 1, on the Streets, creation in progress", () => {
+  const b = newCharacter("  Razor   Blade ");
+  assert.equal(b.name, "Razor Blade"); assert.equal(b.actor.name, "Razor Blade");
+  assert.deepEqual(ATTRIBUTES.map(a => b.actor.system[a].base), [1, 1, 1, 1, 1, 1]);
+  assert.equal(b.actor.system.lifestyle, "streets");
+  assert.equal(b.actor.system.chargen.inProgress, true);
+  assert.deepEqual(texts(b, "priorities"), ["todo: Choose a priority for Race, Magic, Attributes, Skills, Resources. [p.44]"]);
+  assert.throws(() => newCharacter("   "), Refusal);
+});
+
+test("priorities: each letter once — taking a held letter swaps the two (p.44)", () => {
+  const b = run(prio({ race: "A", magic: "B" }));
+  const c = applyOp(b, { op: "setPriority", category: "magic", letter: "A" });
+  assert.deepEqual([c.actor.system.chargen.priorities.race, c.actor.system.chargen.priorities.magic], ["B", "A"]);
+  assert.throws(() => applyOp(b, { op: "setPriority", category: "luck", letter: "A" }), Refusal);
+  assert.throws(() => applyOp(b, { op: "setPriority", category: "race", letter: "F" }), Refusal);
+  const twice = structuredClone(b); twice.actor.system.chargen.priorities.skills = "A";   // only a hand-edited body can do this
+  assert.match(texts(twice, "priorities").join(), /Priority A is used twice \(Race and Skills\)/);
+});
+
+test("metatype: a metahuman needs Race A; C or better under More Metahumans (p.44, p.46)", () => {
+  const elfB = run([...prio({ race: "B" }), { op: "setMetatype", race: "elf" }]);
+  assert.deepEqual(texts(elfB, "metatype"), ["error: An elf needs Priority A in Race. [p.44]"]);
+  const mm = applyOp(applyOp(elfB, { op: "setOption", key: "moreMetahumans", value: true }), { op: "setPriority", category: "race", letter: "C" });
+  assert.deepEqual(texts(mm, "metatype"), []);
+  assert.deepEqual(texts(applyOp(mm, { op: "setPriority", category: "race", letter: "D" }), "metatype"), ["error: An elf needs Priority C or better in Race. [p.46]"]);
+  assert.throws(() => applyOp(elfB, { op: "setMetatype", race: "shapeshifter" }), Refusal, "sourcebook metatypes are milestone 5");
+});
+
+test("magic: magician human A / metahuman B, adept human B / metahuman C; More Metahumans A/B for all (p.45–46)", () => {
+  const magic = (race, letter, type, moreMetahumans = false) => {
+    let b = run([...prio({ magic: letter, race: race === "human" ? "" : (moreMetahumans ? "C" : "A") }), { op: "setMetatype", race }, { op: "setMagic", type }]);
+    if (moreMetahumans) b = applyOp(b, { op: "setOption", key: "moreMetahumans", value: true });
+    return validate(b).problems.filter(p => p.step === "magic" && p.severity === "error").length === 0;
+  };
+  assert.equal(magic("human", "A", "full_magician"), true);
+  assert.equal(magic("human", "B", "full_magician"), false);
+  assert.equal(magic("human", "B", "physical_adept"), true);
+  assert.equal(magic("human", "C", "physical_adept"), false);
+  assert.equal(magic("ork", "B", "full_magician"), true);
+  assert.equal(magic("ork", "C", "full_magician"), false);
+  assert.equal(magic("ork", "C", "physical_adept"), true);
+  assert.equal(magic("ork", "D", "physical_adept"), false);
+  assert.equal(magic("ork", "B", "full_magician", true), false);
+  assert.equal(magic("ork", "A", "full_magician", true), true);
+  assert.equal(magic("human", "B", "physical_adept", true), true);
+  assert.equal(magic("human", "C", "physical_adept", true), false);
+});
+
+test("magic: a magician picks a tradition; a shaman a totem (p.44); only they can", () => {
+  let b = run([...prio({ magic: "A" }), { op: "setMagic", type: "full_magician" }]);
+  assert.deepEqual(texts(b, "magic"), ["todo: Choose hermetic or shamanic. [p.44]"]);
+  b = applyOp(b, { op: "setTradition", tradition: "shamanic" });
+  assert.deepEqual(texts(b, "magic"), ["todo: A shaman chooses a totem. [p.44]"]);
+  b = applyOp(b, { op: "setTotem", totem: "bear" });
+  assert.deepEqual(texts(b, "magic"), []);
+  assert.throws(() => applyOp(b, { op: "setTotem", totem: "toString" }), Refusal, "an inherited key is not a totem");
+  const herm = applyOp(b, { op: "setTradition", tradition: "hermetic" });
+  assert.equal(herm.actor.system.magic.totem, "", "a hermetic has no totem");
+  const adept = applyOp(b, { op: "setMagic", type: "physical_adept" });
+  assert.deepEqual([adept.actor.system.magic.tradition, adept.actor.system.magic.totem], ["none", ""]);
+  assert.throws(() => applyOp(adept, { op: "setTradition", tradition: "hermetic" }), Refusal);
+  const mundane = run([...prio({ magic: "A" })]);
+  assert.deepEqual(texts(mundane, "magic"), ["warning: Priority A in Magic buys magic, but this character is mundane: the priority is wasted. [p.45]"]);
+});
+
+test("attributes: ≥ 1 after racial modifiers, ≤ the racial maximum (p.43, p.45); points = the priority's (p.45)", () => {
+  const troll = run([...prio({ race: "A", attributes: "B" }), { op: "setMetatype", race: "troll" }]);
+  assert.match(texts(troll, "attributes").join("\n"), /Charisma is -1 after racial modifiers/);
+  const big = applyOp(troll, { op: "setAttribute", attr: "body", base: 7 });
+  assert.match(texts(big, "attributes").join("\n"), /Body is 12 after racial modifiers; a troll's maximum is 11\. \[p\.43\]/);
+  const over = run(attrs({ body: 6, quickness: 6, strength: 6, charisma: 6, intelligence: 6, willpower: 6 }), run(prio({ attributes: "E" })));
+  assert.match(texts(over, "attributes").join(), /36 Attribute Points spent; Priority E gives 15/);
+  assert.equal(validate(over).budgets.attributes.over, true);
+  assert.throws(() => applyOp(over, { op: "setAttribute", attr: "body", base: 0 }), Refusal);
+  assert.throws(() => applyOp(over, { op: "setAttribute", attr: "edge", base: 3 }), Refusal);
+  assert.throws(() => applyOp(over, { op: "setAttribute", attr: "body", base: 2.5 }), Refusal);
+});
+
+test("a complete M2a character has no error and no todo for its steps", () => {
+  // Human mage: Magic A, Attributes B (24), Race C… the rest arrive with M2b–M2d.
+  const b = run([...prio({ magic: "A", attributes: "B", skills: "C", resources: "D", race: "E" }),
+    { op: "setMagic", type: "full_magician" }, { op: "setTradition", tradition: "hermetic" },
+    ...attrs({ body: 3, quickness: 4, strength: 2, charisma: 4, intelligence: 5, willpower: 6 })]);
+  const v = validate(b);
+  assert.deepEqual(v.problems, []);
+  assert.equal(v.finishable, true);
+  assert.deepEqual(v.budgets.attributes, { spent: 24, total: 24, remaining: 0, over: false });
+  assert.equal(v.budgets.forcePoints.total, 15, "Force Points come with the Resources priority, magicians only (p.46)");
+});
+
+test("refusals: an unknown operation; any creation change to a finished character", () => {
+  assert.throws(() => applyOp(newCharacter("X"), { op: "setPrice", cost: 0 }), Refusal);
+  assert.throws(() => applyOp(newCharacter("X"), { op: "setOption", key: "__proto__", value: true }), Refusal);
+  const done = newCharacter("X"); done.creation.finished = { at: 1 };
+  assert.throws(() => applyOp(done, { op: "setAttribute", attr: "body", base: 2 }), /finished/);
+  assert.equal(applyOp(done, { op: "setNotes", notes: "still mine" }).notes, "still mine");
+  const before = newCharacter("X"), snapshot = structuredClone(before);
+  applyOp(before, { op: "setName", name: "Y" });
+  assert.deepEqual(before, snapshot, "the reducer never changes its input");
+});

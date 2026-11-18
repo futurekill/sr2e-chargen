@@ -2,12 +2,14 @@
  * The library (docs/PLAN-M3.md §5): documents with revisions. Authorization lives in ONE place (`ownedDocument`);
  * every mutation is idempotent (a key + a fingerprint of the request) and conditional on the revision the client read;
  * quotas are counters changed in the mutation's own transaction.
- * M3a stores one kind, an explicit DRAFT — never something that only looks like a portable character.
+ * Two kinds: a DRAFT (free text, edited whole) and a CHARACTER (docs/PLAN-M2.md: changed only by operations through
+ * the shared reducer, so the server stays the authority on what a character holds).
  */
 import { randomUUID } from "node:crypto";
 import { writeTx, changed } from "./db/fence.mjs";
 import { Refused } from "./auth/accounts.mjs";
 import { sha256 } from "./auth/tokens.mjs";
+import { newCharacter, applyOp, Refusal } from "../shared/creation.mjs";
 
 export const MAX_DOCUMENTS = 200, MAX_BYTES = 500 * 1024 * 1024, MAX_REVISIONS = 50, MAX_BODY_BYTES = 2 * 1024 * 1024;
 export const PURGE_AFTER_MS = 30 * 86400e3, KEY_TTL_MS = 86400e3;
@@ -102,8 +104,45 @@ export function createDraft(ctx, userId, input, key) {
     return answer(trx, userId, id);
   });
 }
+/** A creation step refused (impossible, not merely against the rules) is the client's error, with its reason. */
+const refusal = (e) => (e instanceof Refusal ? new Refused(e.message, 422, "refused") : e);
+/** The live document at the revision the client read, of the kind the route is for. */
+async function current(trx, userId, id, revision, kind) {
+  const doc = await ownedDocument(trx, userId, id);
+  if (!doc) throw GONE();
+  if (doc.revision !== revision || doc.deleted_at != null) throw STALE();   // a deleted document isn't editable
+  if (doc.kind !== kind) throw new Refused(kind === "draft" ? "A character changes only step by step." : "That isn't a character.", 409, "wrong-kind");
+  return doc;
+}
+
+export function createCharacter(ctx, userId, { name }, key) {
+  return idempotent(ctx, userId, key, fingerprint("POST", "/documents/characters", { name }), async trx => {
+    let body;
+    try { body = newCharacter(name); } catch (e) { throw refusal(e); }
+    const id = randomUUID(), now = ctx.now(), text = encode(body);
+    await charge(trx, userId, { docs: 1 });
+    const doc = { id, owner_id: userId, kind: "character", name: body.name, revision: 1, body: text, bytes: Buffer.byteLength(text), created_at: now, updated_at: now, deleted_at: null };
+    await trx.insertInto("documents").values(doc).execute();
+    await appendRevision(trx, ctx, doc, 1, body, "created");
+    return { ...(await answer(trx, userId, id)), body };
+  });
+}
+/** Apply creation operations, in order, as ONE new revision; any refusal refuses them all. */
+export function applyOps(ctx, userId, id, { revision, ops }, key) {
+  return idempotent(ctx, userId, key, fingerprint("POST", `/documents/${id}/ops`, { revision, ops }), async trx => {
+    const doc = await current(trx, userId, id, revision, "character");
+    let body = decodeBody(doc.body);
+    try { for (const op of ops) body = applyOp(body, op); } catch (e) { throw refusal(e); }
+    const text = encode(body);
+    await bump(trx, ctx, userId, id, revision, { name: body.name, body: text, bytes: Buffer.byteLength(text) });
+    await appendRevision(trx, ctx, { id, owner_id: userId }, revision + 1, body, ops.map(o => o.op).join(", ").slice(0, 200));
+    return { ...(await answer(trx, userId, id)), body };
+  });
+}
+
 export function updateDraft(ctx, userId, id, { revision, ...input }, key) {
   return idempotent(ctx, userId, key, fingerprint("PUT", `/documents/${id}`, { revision, ...input }), async trx => {
+    await current(trx, userId, id, revision, "draft");
     const body = draftBody(input), text = encode(body);
     await bump(trx, ctx, userId, id, revision, { name: body.name, body: text, bytes: Buffer.byteLength(text) });
     await appendRevision(trx, ctx, { id, owner_id: userId }, revision + 1, body);
@@ -127,10 +166,14 @@ export function restoreDocument(ctx, userId, id, { revision }, key) {
 /** Bring an old revision back as a NEW revision (history is never rewritten). */
 export function restoreRevision(ctx, userId, id, from, { revision }, key) {
   return idempotent(ctx, userId, key, fingerprint("POST", `/documents/${id}/revisions/${from}/restore`, { revision }), async trx => {
-    if (!(await ownedDocument(trx, userId, id))) throw GONE();
+    const doc = await ownedDocument(trx, userId, id);
+    if (!doc) throw GONE();
     const old = await trx.selectFrom("revisions").select("body").where("document_id", "=", id).where("revision", "=", from).executeTakeFirst();
     if (!old) throw new Refused("No such revision.", 404, "not-found");
     const body = decodeBody(old.body), text = encode(body);
+    // A restore never undoes a finish (docs/PLAN-M2.md §5b): changes after creation are milestone 4's.
+    if (doc.kind === "character" && (decodeBody(doc.body).creation?.finished || body.creation?.finished))
+      throw new Refused("A finished character can't go back to another revision.", 409, "finished");
     await bump(trx, ctx, userId, id, revision, { name: body.name, body: text, bytes: Buffer.byteLength(text) });
     await appendRevision(trx, ctx, { id, owner_id: userId }, revision + 1, body, `restored from revision ${from}`);
     return answer(trx, userId, id);

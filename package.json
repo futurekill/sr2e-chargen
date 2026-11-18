@@ -21,7 +21,7 @@
     "test:postgres": "TEST_DATABASE_URL=postgres://postgres:test@127.0.0.1:55432/postgres node --test --test-force-exit --test-concurrency=1 test/",
     "test:mysql": "TEST_DATABASE_URL=mysql://root:test@127.0.0.1:53306/mysql node --test --test-force-exit --test-concurrency=1 test/",
     "test:mariadb": "TEST_DATABASE_URL=mysql://root:test@127.0.0.1:53307/mysql node --test --test-force-exit --test-concurrency=1 test/",
-    "lint": "eslint server test tools"
+    "lint": "eslint server shared test tools"
   },
   "license": "UNLICENSED",
   "dependencies": {

@@ -1,0 +1,1083 @@
+/**
+ * Shadowrun 2nd Edition system configuration constants.
+ * All game-mechanical values from the SR2e core rulebook (FASA 7901).
+ */
+import { CYBERWARE_GRADES, BIOWARE_GRADES } from "./rules/sr2e-rules.mjs";
+
+export const SR2E = {};
+
+SR2E.systemId = "sr2e";
+SR2E.systemName = "Shadowrun 2nd Edition";
+
+// ---------------------------------------------------------------------------
+// ATTRIBUTES
+// ---------------------------------------------------------------------------
+SR2E.attributes = {
+  body: "SR2E.Attributes.Body",
+  quickness: "SR2E.Attributes.Quickness",
+  strength: "SR2E.Attributes.Strength",
+  charisma: "SR2E.Attributes.Charisma",
+  intelligence: "SR2E.Attributes.Intelligence",
+  willpower: "SR2E.Attributes.Willpower"
+};
+
+SR2E.specialAttributes = {
+  essence: "SR2E.Attributes.Essence",
+  magic: "SR2E.Attributes.Magic",
+  reaction: "SR2E.Attributes.Reaction"
+};
+
+// ---------------------------------------------------------------------------
+// RACES & RACIAL MODIFIERS
+// ---------------------------------------------------------------------------
+SR2E.races = {
+  human: "SR2E.Races.Human",
+  dwarf: "SR2E.Races.Dwarf",
+  elf: "SR2E.Races.Elf",
+  ork: "SR2E.Races.Ork",
+  troll: "SR2E.Races.Troll",
+  shapeshifter: "SR2E.Races.Shapeshifter"
+};
+
+SR2E.racialModifiers = {
+  human:  { body: 0, quickness: 0, strength: 0, charisma: 0, intelligence: 0, willpower: 0 },
+  dwarf:  { body: 1, quickness: -1, strength: 2, charisma: 0, intelligence: 0, willpower: 1 },
+  elf:    { body: 0, quickness: 1, strength: 0, charisma: 2, intelligence: 0, willpower: 0 },
+  ork:    { body: 3, quickness: 0, strength: 2, charisma: -1, intelligence: -1, willpower: 0 },
+  troll:  { body: 5, quickness: -1, strength: 4, charisma: -2, intelligence: -2, willpower: -1 },
+  // A shapeshifter's species modifiers depend on its FORM (Companion p.36): CharacterData adds them after the base cap.
+  shapeshifter: { body: 0, quickness: 0, strength: 0, charisma: 0, intelligence: 0, willpower: 0 }
+};
+
+SR2E.racialMaximums = {
+  human:  { body: 6, quickness: 6, strength: 6, charisma: 6, intelligence: 6, willpower: 6, essence: 6, magic: 6, reaction: 6 },
+  dwarf:  { body: 7, quickness: 5, strength: 8, charisma: 6, intelligence: 6, willpower: 7, essence: 6, magic: 6, reaction: 5 },
+  elf:    { body: 6, quickness: 7, strength: 6, charisma: 8, intelligence: 6, willpower: 6, essence: 6, magic: 6, reaction: 6 },
+  ork:    { body: 9, quickness: 6, strength: 8, charisma: 5, intelligence: 5, willpower: 6, essence: 6, magic: 6, reaction: 5 },
+  troll:  { body: 11, quickness: 5, strength: 10, charisma: 4, intelligence: 4, willpower: 5, essence: 6, magic: 6, reaction: 4 },
+  // Base Attribute Ratings may not exceed 6; the form modifiers then apply uncapped (Companion p.36).
+  shapeshifter: { body: 6, quickness: 6, strength: 6, charisma: 6, intelligence: 6, willpower: 6, essence: 6, magic: 6, reaction: 6 }
+};
+
+SR2E.racialAbilities = {
+  human:  [],
+  dwarf:  ["thermographic_vision", "disease_resistance"],
+  elf:    ["low_light_vision"],
+  ork:    ["low_light_vision"],
+  troll:  ["thermographic_vision", "dermal_armor", "reach_1"],
+  shapeshifter: []
+};
+
+// ---------------------------------------------------------------------------
+// CHARACTER CREATION PRIORITY TABLE
+// ---------------------------------------------------------------------------
+SR2E.priorities = {
+  A: { attributes: 30, skills: 40, resources: 1000000, forcePoints: 50, magic: "full_magician", race: "metahuman" },
+  B: { attributes: 24, skills: 30, resources: 400000,  forcePoints: 35, magic: "adept_or_meta_magician", race: "human" },
+  C: { attributes: 20, skills: 24, resources: 90000,   forcePoints: 25, magic: "meta_adept", race: "human" },
+  D: { attributes: 17, skills: 20, resources: 5000,    forcePoints: 15, magic: "none", race: "human" },
+  E: { attributes: 15, skills: 17, resources: 500,     forcePoints: 5,  magic: "none", race: "human" }
+};
+
+// ---------------------------------------------------------------------------
+// CONDITION MONITOR
+// ---------------------------------------------------------------------------
+SR2E.conditionLevels = {
+  L: { label: "SR2E.Condition.Light",    modifier: 1 },
+  M: { label: "SR2E.Condition.Moderate", modifier: 2 },
+  S: { label: "SR2E.Condition.Serious",  modifier: 3 },
+  D: { label: "SR2E.Condition.Deadly",   modifier: 4 }
+};
+
+// Damage staging: L -> M -> S -> D -> Overflow/Dead
+SR2E.damageStages = ["L", "M", "S", "D"];
+
+// Ranged-attack target-number modifiers by range bracket (SR2E p.91).
+SR2E.rangeTnMods = { short: 0, medium: 2, long: 4, extreme: 6 };
+
+// Each condition level = 3 boxes by default (10 boxes total for standard monitor)
+SR2E.conditionBoxesPerLevel = 3;
+
+// ---------------------------------------------------------------------------
+// DAMAGE TYPES
+// ---------------------------------------------------------------------------
+SR2E.damageTypes = {
+  physical: "SR2E.Damage.Physical",
+  stun: "SR2E.Damage.Stun"
+};
+
+// ---------------------------------------------------------------------------
+// SKILL CATEGORIES
+// ---------------------------------------------------------------------------
+SR2E.skillCategories = {
+  active:       "SR2E.Skills.Active",
+  build_repair: "SR2E.Skills.BuildRepair",
+  knowledge:    "SR2E.Skills.Knowledge",
+  language:     "SR2E.Skills.Language",
+  special:      "SR2E.Skills.Special"
+};
+
+// Untrained skill defaulting (SR2E p.69, The Skill Web): each circle traced
+// on the web adds +2 TN. Flat fallback used for any skill not in the web graph
+// below (and while the web data is being verified).
+SR2E.defaultingPenalty = 4;
+
+// THE SKILL WEB (SR2E p.68–69) — the printed route map, consumed by
+// findBestPath()/webDefaultingTN() and locked by test/skill-web.test.mjs.
+// `nodes` are attribute/skill ANCHORS (B/R skills carry `parentSkill`; `skillKey`
+// maps to the rollable activeSkills key where one exists). `links` (below) wire
+// anchors and zero-cost junctions through `circles` (black dots, +2 TN each) and
+// are the ONLY cost. Defaulting = the shortest legal route by circles; one-way
+// printed arrows (dir "aToB"/"bToA") block travel against them, and an unreached
+// skill returns null (defaulting not allowed) rather than a flat penalty. The
+// flat SR2E.defaultingPenalty above is only the fallback for skills not on the
+// web (e.g. Launch Weapons). Model the printed map — do NOT add direct
+// skill→skill links; skill→skill defaulting emerges from the shared junctions.
+SR2E.skillWeb = {
+  nodes: {
+    // Attributes
+    quickness: { label: "Quickness", type: "attribute" },
+    strength: { label: "Strength", type: "attribute" },
+    body: { label: "Body", type: "attribute" },
+    intelligence: { label: "Intelligence", type: "attribute" },
+    charisma: { label: "Charisma", type: "attribute" },
+    reaction: { label: "Reaction", type: "attribute" },
+    willpower: { label: "Willpower", type: "attribute" },
+    // Quickness skills
+    athletics: { label: "Athletics", type: "skill", skillKey: "athletics" },
+    stealth: { label: "Stealth", type: "skill", skillKey: "stealth" },
+    firearms: { label: "Firearms", type: "skill", skillKey: "firearms" },
+    firearmsBR: { label: "Firearms (B/R)", type: "skill", parentSkill: "firearms" },
+    gunnery: { label: "Gunnery", type: "skill", skillKey: "gunnery" },
+    gunneryBR: { label: "Gunnery (B/R)", type: "skill", parentSkill: "gunnery" },
+    projectile: { label: "Projectile Weapons", type: "skill", skillKey: "projectile_weapons" },
+    projectileBR: { label: "Projectile Weapons (B/R)", type: "skill", parentSkill: "projectile" },
+    throwing: { label: "Throwing Weapons", type: "skill", skillKey: "throwing_weapons" },
+    throwingBR: { label: "Throwing Weapons (B/R)", type: "skill", parentSkill: "throwing" },
+    armedCombat: { label: "Armed Combat", type: "skill", skillKey: "armed_combat" },
+    armedCombatBR: { label: "Armed Combat (B/R)", type: "skill", parentSkill: "armedCombat" },
+    unarmedCombat: { label: "Unarmed Combat", type: "skill", skillKey: "unarmed_combat" },
+    // Tech skills
+    computer: { label: "Computer", type: "skill", skillKey: "computer" },
+    computerBR: { label: "Computer (B/R)", type: "skill", parentSkill: "computer" },
+    electronics: { label: "Electronics", type: "skill", skillKey: "electronics" },
+    electronicsBR: { label: "Electronics (B/R)", type: "skill", parentSkill: "electronics" },
+    biotech: { label: "Biotech", type: "skill", skillKey: "biotech" },
+    biotechBR: { label: "Biotech (B/R)", type: "skill", parentSkill: "biotech" },
+    // Social skills
+    leadership: { label: "Leadership", type: "skill", skillKey: "leadership" },
+    interrogation: { label: "Interrogation", type: "skill", skillKey: "interrogation" },
+    negotiation: { label: "Negotiation", type: "skill", skillKey: "negotiation" },
+    etiquette: { label: "Etiquette", type: "skill", skillKey: "etiquette" },
+    // Vehicle skills. Ground Vehicles/Boats/Aircraft are SINGLE skills whose
+    // printed names include "(B/R)" — they have no separate paired B/R skill.
+    groundVehicles: { label: "Ground Vehicles (B/R)", type: "skill" },
+    hovercraft: { label: "Hovercraft", type: "skill" },
+    bike: { label: "Bike", type: "skill", skillKey: "bike" },
+    car: { label: "Car", type: "skill", skillKey: "car" },
+    boats: { label: "Boats (B/R)", type: "skill" },
+    motorboat: { label: "Motorboat", type: "skill" },
+    sailboat: { label: "Sailboat", type: "skill" },
+    aircraft: { label: "Aircraft (B/R)", type: "skill" },
+    winged: { label: "Winged Aircraft", type: "skill" },
+    rotor: { label: "Rotor Aircraft", type: "skill" },
+    vectorThrust: { label: "Vector Thrust Aircraft", type: "skill" },
+    // Knowledge / academic skills
+    demolitions: { label: "Demolitions", type: "skill", skillKey: "demolitions" },
+    physicalSciences: { label: "Physical Sciences", type: "skill" },
+    computerTheory: { label: "Computer Theory", type: "skill" },
+    cybertechnology: { label: "Cybertechnology", type: "skill" },
+    biology: { label: "Biology", type: "skill" },
+    militaryTheory: { label: "Military Theory", type: "skill" },
+    psychology: { label: "Psychology", type: "skill" },
+    sociology: { label: "Sociology", type: "skill" },
+    magicalTheory: { label: "Magical Theory", type: "skill" },
+    conjuring: { label: "Conjuring", type: "skill", skillKey: "conjuring" },
+    sorcery: { label: "Sorcery", type: "skill", skillKey: "sorcery" },
+  },
+  // Route graph (the printed Skill Web modeled as a map, NOT direct skill→skill
+  // edges). `links` connect entity anchors (keys in `nodes`) and zero-cost
+  // junctions (ids prefixed `j_`) through `circles` (black dots) — each circle
+  // crossed adds +2 TN. dir: "both" (bidirectional), "aToB", or "bToA" (printed
+  // one-way arrows block travel against them). Shortest legal path by circles is
+  // the defaulting penalty (module/rules findBestPath). GM-verified against the
+  // physical web via docs/SKILL-WEB-VERIFY.md; test/skill-web.test.mjs locks the
+  // circle counts and the acceptance cases (e.g. biology→computer = 5, arrows
+  // block armedCombat→quickness).
+  links: [
+    // ── Quickness ──────────────────────────────────────────────────────────
+    { from: "quickness", to: "j_q_as", circles: 0, dir: "both" },
+    { from: "j_q_as", to: "athletics", circles: 1, dir: "both" },
+    { from: "j_q_as", to: "stealth", circles: 2, dir: "both" },
+    { from: "quickness", to: "j_q_fg", circles: 1, dir: "both" },
+    { from: "j_q_fg", to: "firearms", circles: 1, dir: "both" },
+    { from: "j_q_fg", to: "gunnery", circles: 1, dir: "both" },
+    { from: "firearms", to: "firearmsBR", circles: 1, dir: "both" },
+    { from: "gunnery", to: "gunneryBR", circles: 1, dir: "both" },
+    { from: "quickness", to: "j_q_pt", circles: 1, dir: "both" },
+    { from: "j_q_pt", to: "projectile", circles: 1, dir: "both" },
+    { from: "j_q_pt", to: "throwing", circles: 1, dir: "both" },
+    { from: "projectile", to: "projectileBR", circles: 1, dir: "both" },
+    { from: "throwing", to: "throwingBR", circles: 1, dir: "both" },
+    // ── Armed & Unarmed Combat — SINKS (printed arrows point IN, p.69) ────────
+    // Strength 2 circles, Body 3; Quickness does not reach melee. One-way in, so
+    // there is no path back out to any attribute (armedCombat→quickness = null).
+    { from: "strength", to: "j_melee", circles: 1, dir: "aToB" },
+    { from: "body", to: "j_melee", circles: 2, dir: "aToB" },
+    { from: "j_melee", to: "armedCombat", circles: 1, dir: "both" },
+    { from: "j_melee", to: "unarmedCombat", circles: 1, dir: "both" },
+    { from: "armedCombat", to: "armedCombatBR", circles: 1, dir: "both" },
+    // ── Charisma — social ────────────────────────────────────────────────────
+    { from: "charisma", to: "j_ch", circles: 1, dir: "both" },
+    { from: "j_ch", to: "leadership", circles: 1, dir: "both" },
+    { from: "j_ch", to: "etiquette", circles: 1, dir: "both" },
+    { from: "leadership", to: "j_ch_in", circles: 1, dir: "both" },
+    { from: "j_ch_in", to: "interrogation", circles: 0, dir: "both" },
+    { from: "j_ch_in", to: "negotiation", circles: 0, dir: "both" },
+    // ── Willpower — magic & social sciences ──────────────────────────────────
+    { from: "willpower", to: "magicalTheory", circles: 3, dir: "both" },
+    { from: "magicalTheory", to: "conjuring", circles: 2, dir: "both" },
+    { from: "magicalTheory", to: "sorcery", circles: 2, dir: "both" },
+    { from: "willpower", to: "psychology", circles: 3, dir: "both" },
+    { from: "psychology", to: "sociology", circles: 1, dir: "both" },
+    { from: "sociology", to: "militaryTheory", circles: 1, dir: "both" },
+    // ── Intelligence — academic & tech ───────────────────────────────────────
+    // Intelligence's arrows are one-way INTO the academic skills, so the cluster
+    // can't shortcut back through the attribute (this is why biology→computer is
+    // 5, not a cheap ride through Intelligence). Physical Sciences & Demolitions
+    // are leaves; Cybertechnology↔Biology are adjacent (1 circle).
+    { from: "intelligence", to: "physicalSciences", circles: 3, dir: "aToB" },
+    { from: "intelligence", to: "demolitions", circles: 3, dir: "aToB" },
+    { from: "intelligence", to: "computerTheory", circles: 3, dir: "aToB" },
+    { from: "intelligence", to: "cybertechnology", circles: 3, dir: "aToB" },
+    { from: "intelligence", to: "biology", circles: 3, dir: "aToB" },
+    { from: "biology", to: "cybertechnology", circles: 1, dir: "both" },
+    { from: "cybertechnology", to: "computerTheory", circles: 3, dir: "both" },
+    { from: "computerTheory", to: "computer", circles: 1, dir: "both" },
+    { from: "computer", to: "electronics", circles: 1, dir: "both" },
+    { from: "biology", to: "biotech", circles: 2, dir: "both" },
+    { from: "computer", to: "computerBR", circles: 1, dir: "both" },
+    { from: "electronics", to: "electronicsBR", circles: 1, dir: "both" },
+    { from: "biotech", to: "biotechBR", circles: 1, dir: "both" },
+    // ── Reaction — vehicles ──────────────────────────────────────────────────
+    { from: "reaction", to: "j_r_ground", circles: 1, dir: "both" },
+    { from: "j_r_ground", to: "groundVehicles", circles: 1, dir: "both" },
+    { from: "j_r_ground", to: "hovercraft", circles: 1, dir: "both" },
+    { from: "j_r_ground", to: "bike", circles: 1, dir: "both" },
+    { from: "j_r_ground", to: "car", circles: 1, dir: "both" },
+    { from: "reaction", to: "j_r_water", circles: 1, dir: "both" },
+    { from: "j_r_water", to: "boats", circles: 1, dir: "both" },
+    { from: "j_r_water", to: "motorboat", circles: 1, dir: "both" },
+    { from: "j_r_water", to: "sailboat", circles: 1, dir: "both" },
+    { from: "reaction", to: "j_r_air", circles: 2, dir: "both" },
+    { from: "j_r_air", to: "aircraft", circles: 1, dir: "both" },
+    { from: "j_r_air", to: "winged", circles: 1, dir: "both" },
+    { from: "j_r_air", to: "rotor", circles: 1, dir: "both" },
+    { from: "j_r_air", to: "vectorThrust", circles: 1, dir: "both" },
+    // ── Cross-cluster bridges (one-way arrows) ───────────────────────────────
+    // Nested reachability Charisma ⊂ Willpower ⊂ Intelligence: Intelligence
+    // reaches the Willpower cluster (3 circles); the Willpower social sciences
+    // reach Charisma via a one-way arrow that lands as a junction (Sociology → 4
+    // circles to Charisma). Charisma cannot ride back.
+    { from: "intelligence", to: "willpower", circles: 3, dir: "aToB" },
+    { from: "sociology", to: "charisma", circles: 0, dir: "aToB" },
+  ],
+};
+
+// Active skill linked attributes
+SR2E.activeSkills = {
+  armed_combat:     { label: "SR2E.Skills.ArmedCombat",     attribute: "strength",     category: "active" },
+  athletics:        { label: "SR2E.Skills.Athletics",       attribute: "quickness",    category: "active" },
+  bike:             { label: "SR2E.Skills.Bike",            attribute: "reaction",     category: "active" },
+  biotech:          { label: "SR2E.Skills.Biotech",         attribute: "intelligence", category: "active" },
+  car:              { label: "SR2E.Skills.Car",             attribute: "reaction",     category: "active" },
+  computer:         { label: "SR2E.Skills.Computer",        attribute: "intelligence", category: "active" },
+  conjuring:        { label: "SR2E.Skills.Conjuring",       attribute: "willpower",    category: "active", magical: true },
+  demolitions:      { label: "SR2E.Skills.Demolitions",     attribute: "intelligence", category: "active" },
+  electronics:      { label: "SR2E.Skills.Electronics",     attribute: "intelligence", category: "active" },
+  etiquette:        { label: "SR2E.Skills.Etiquette",       attribute: "charisma",     category: "active" },
+  firearms:         { label: "SR2E.Skills.Firearms",        attribute: "quickness",    category: "active" },
+  gunnery:          { label: "SR2E.Skills.Gunnery",         attribute: "intelligence", category: "active" },
+  interrogation:    { label: "SR2E.Skills.Interrogation",   attribute: "charisma",     category: "active" },
+  leadership:       { label: "SR2E.Skills.Leadership",      attribute: "charisma",     category: "active" },
+  negotiation:      { label: "SR2E.Skills.Negotiation",     attribute: "charisma",     category: "active" },
+  projectile_weapons: { label: "SR2E.Skills.ProjectileWeapons", attribute: "strength" , category: "active" },
+  sorcery:          { label: "SR2E.Skills.Sorcery",         attribute: "willpower",    category: "active", magical: true },
+  stealth:          { label: "SR2E.Skills.Stealth",         attribute: "quickness",    category: "active" },
+  throwing_weapons: { label: "SR2E.Skills.ThrowingWeapons", attribute: "strength",     category: "active" },
+  unarmed_combat:   { label: "SR2E.Skills.UnarmedCombat",   attribute: "strength",     category: "active" }
+};
+
+// ---------------------------------------------------------------------------
+// MAGIC TRADITIONS
+// ---------------------------------------------------------------------------
+SR2E.magicTraditions = {
+  none: "SR2E.Magic.None",
+  hermetic: "SR2E.Magic.Hermetic",
+  shamanic: "SR2E.Magic.Shamanic"
+};
+
+SR2E.magicTypes = {
+  none: "SR2E.Magic.TypeNone",
+  full_magician: "SR2E.Magic.FullMagician",
+  physical_adept: "SR2E.Magic.PhysicalAdept",
+  shamanic_adept: "SR2E.Magic.ShamanicAdept",
+  magical_adept: "SR2E.Magic.MagicalAdept"
+};
+
+// ---------------------------------------------------------------------------
+// TOTEMS (Shamanic)
+// spellBonus:   extra Magic Pool dice when casting spells of that category
+// spellPenalty: lost Magic Pool dice when casting spells of that category
+// conjuringBonus: extra dice when conjuring spirits of that domain type
+// Special per-totem behaviours (berserk, time-of-day, etc.) are narrative/GM
+// ---------------------------------------------------------------------------
+SR2E.totems = {
+  // Bear: +2 health spells; +2 forest spirits (SR2E p.122)
+  bear:    { label: "SR2E.Totems.Bear",    environment: "forest",
+             spellBonus: { health: 2 },
+             spellPenalty: {},
+             conjuringBonus: { forest: 2 } },
+
+  // Cat: +2 illusion spells; +2 city spirits (SR2E p.122)
+  cat:     { label: "SR2E.Totems.Cat",     environment: "urban",
+             spellBonus: { illusion: 2 },
+             spellPenalty: {},
+             conjuringBonus: { city: 2 } },
+
+  // Coyote: no modifiers (SR2E p.122)
+  coyote:  { label: "SR2E.Totems.Coyote", environment: "any",
+             spellBonus: {},
+             spellPenalty: {},
+             conjuringBonus: {} },
+
+  // Dog: +2 detection spells; +2 field and hearth spirits (SR2E p.122)
+  dog:     { label: "SR2E.Totems.Dog",     environment: "urban",
+             spellBonus: { detection: 2 },
+             spellPenalty: {},
+             conjuringBonus: { field: 2, hearth: 2 } },
+
+  // Eagle: +2 detection spells; +2 wind spirits (SR2E p.122)
+  eagle:   { label: "SR2E.Totems.Eagle",   environment: "any",
+             spellBonus: { detection: 2 },
+             spellPenalty: {},
+             conjuringBonus: { wind: 2 } },
+
+  // Gator: +2 combat & detection; -1 illusion; +2 swamp/city spirits (SR2E p.123)
+  gator:   { label: "SR2E.Totems.Gator",   environment: "swamp",
+             spellBonus: { combat: 2, detection: 2 },
+             spellPenalty: { illusion: 1 },
+             conjuringBonus: { swamp: 2, city: 2 } },
+
+  // Lion: +2 combat; -1 health; +2 prairie spirits (SR2E p.123)
+  lion:    { label: "SR2E.Totems.Lion",    environment: "prairie",
+             spellBonus: { combat: 2 },
+             spellPenalty: { health: 1 },
+             conjuringBonus: { prairie: 2 } },
+
+  // Mouse: not described in core book — no mechanical modifiers
+  mouse:   { label: "SR2E.Totems.Mouse",   environment: "urban",
+             spellBonus: {},
+             spellPenalty: {},
+             conjuringBonus: {} },
+
+  // Owl: +2 any sorcery/conjuring at night; +2 TN to ALL tests in daylight
+  // Night bonus is handled as a generic +2 at cast time (GM adjudicates time-of-day)
+  owl:     { label: "SR2E.Totems.Owl",     environment: "forest",
+             spellBonus: {},
+             spellPenalty: {},
+             conjuringBonus: {} },
+
+  // Raccoon: +2 manipulation; -1 combat; +2 city spirits (SR2E p.123)
+  raccoon: { label: "SR2E.Totems.Raccoon", environment: "urban",
+             spellBonus: { manipulation: 2 },
+             spellPenalty: { combat: 1 },
+             conjuringBonus: { city: 2 } },
+
+  // Rat: +2 detection & illusion; -1 combat; +2 Spirits of Man (SR2E p.123)
+  rat:     { label: "SR2E.Totems.Rat",     environment: "urban",
+             spellBonus: { detection: 2, illusion: 2 },
+             spellPenalty: { combat: 1 },
+             conjuringBonus: { spirits_of_man: 2 } },
+
+  // Raven: +2 manipulation; -1 combat; +2 wind spirits (SR2E p.124)
+  raven:   { label: "SR2E.Totems.Raven",   environment: "any",
+             spellBonus: { manipulation: 2 },
+             spellPenalty: { combat: 1 },
+             conjuringBonus: { wind: 2 } },
+
+  // Shark: +2 combat & detection; +2 sea spirits (SR2E p.124)
+  shark:   { label: "SR2E.Totems.Shark",   environment: "ocean",
+             spellBonus: { combat: 2, detection: 2 },
+             spellPenalty: {},
+             conjuringBonus: { sea: 2 } },
+
+  // Snake: +2 health, illusion, detection; -1 combat spells DURING combat
+  // The in-combat penalty is narrative; the bonuses are always on (SR2E p.124)
+  snake:   { label: "SR2E.Totems.Snake",   environment: "any",
+             spellBonus: { health: 2, illusion: 2, detection: 2 },
+             spellPenalty: {},
+             conjuringBonus: {} },
+
+  // Wolf: +2 detection & combat; +2 forest or prairie spirits (SR2E p.124)
+  wolf:    { label: "SR2E.Totems.Wolf",    environment: "forest",
+             spellBonus: { detection: 2, combat: 2 },
+             spellPenalty: {},
+             conjuringBonus: { forest: 2, prairie: 2 } }
+};
+
+// ---------------------------------------------------------------------------
+// SPELL CATEGORIES
+// ---------------------------------------------------------------------------
+SR2E.spellCategories = {
+  combat: "SR2E.Spells.Combat",
+  detection: "SR2E.Spells.Detection",
+  health: "SR2E.Spells.Health",
+  illusion: "SR2E.Spells.Illusion",
+  manipulation: "SR2E.Spells.Manipulation"
+};
+
+SR2E.spellTypes = {
+  physical: "SR2E.Spells.Physical",
+  mana: "SR2E.Spells.Mana"
+};
+
+SR2E.spellRanges = {
+  touch: "SR2E.Spells.Touch",
+  los: "SR2E.Spells.LOS",
+  self: "SR2E.Spells.Self",
+  area: "SR2E.Spells.Area"
+};
+
+SR2E.spellDurations = {
+  instant: "SR2E.Spells.Instant",
+  sustained: "SR2E.Spells.Sustained",
+  permanent: "SR2E.Spells.Permanent"
+};
+
+SR2E.drainCodes = {
+  L: "SR2E.Drain.Light",
+  M: "SR2E.Drain.Moderate",
+  S: "SR2E.Drain.Serious",
+  D: "SR2E.Drain.Deadly"
+};
+
+// ---------------------------------------------------------------------------
+// HEALING (SR2E p.112–115)
+// ---------------------------------------------------------------------------
+
+// Box floor each wound level drops to when one level is healed.
+// (Light=1, Moderate=3, Serious=6, Deadly=10 boxes total.)
+SR2E.healLevelFloor = { Deadly: 6, Serious: 3, Moderate: 1, Light: 0, Undamaged: 0 };
+
+// Physical natural healing — Body Test target number by wound level (Wound
+// Table, p.113). Deadly always requires medical attention.
+SR2E.naturalHealTN = { Light: 2, Moderate: 4, Serious: 6 };
+
+// First Aid — Biotech Test target number by current wound level (First Aid
+// Table, p.115).
+SR2E.firstAidTN = { Light: 4, Moderate: 6, Serious: 8, Deadly: 10 };
+
+
+// ---------------------------------------------------------------------------
+// CONJURING (SR2E p.138–140)
+// ---------------------------------------------------------------------------
+
+// Nature spirit domains — a shaman may only summon a spirit in its domain.
+// The thirteen printed domains (SR2E p.235) plus `wind`, this system's older
+// umbrella for the Of-the-Sky pair. Mist and Storm are the book's actual
+// Of-the-Sky spirits and have DIFFERENT powers (only Storm has Electrical
+// Projection), so they are listed separately; `wind` is kept because shipped
+// worlds and portrait art use it.
+SR2E.spiritDomains = {
+  city:    "SR2E.Spirits.City",
+  field:   "SR2E.Spirits.Field",
+  forest:  "SR2E.Spirits.Forest",
+  hearth:  "SR2E.Spirits.Hearth",
+  lake:    "SR2E.Spirits.Lake",
+  mist:    "SR2E.Spirits.Mist",
+  mountain:"SR2E.Spirits.Mountain",
+  prairie: "SR2E.Spirits.Prairie",
+  river:   "SR2E.Spirits.River",
+  sea:     "SR2E.Spirits.Sea",
+  storm:   "SR2E.Spirits.Storm",
+  desert:  "SR2E.Spirits.Desert",
+  swamp:   "SR2E.Spirits.Swamp",
+  wind:    "SR2E.Spirits.Wind"
+};
+
+// Spirit/elemental stat profiles (SR2E Critter Statistics Table, p.234–235).
+// Attributes are NOT simply Force — each of the four elemental profiles applies
+// its own modifiers to Body, Quickness, Strength and Reaction, while Charisma,
+// Intelligence and Willpower are Force and Essence is Force ("(F)A": the A marks
+// its astral nature, not a number).
+//
+// `q` is the QUICKNESS modifier; `mult` is the separate movement multiplier. The
+// book prints them together as "(F + 3) x 4", the standard critter notation used
+// throughout that table (a Sasquatch is "3 x 4" = Quickness 3, multiplier 4) —
+// NOT Quickness multiplied by four.
+SR2E.spiritProfiles = {
+  air:   { b: -2, q: +3, mult: 4, s: -3, r: +2,
+           // "Attacks: as Powers" — an air elemental has no generic attack.
+           attack: null },
+  earth: { b: +4, q: -2, mult: 2, s: +4, r: -2,
+           attack: { mode: "melee",  level: "S", damageType: "physical", dice: "reaction", reach: 1 } },
+  fire:  { b: +1, q: +2, mult: 3, s: -2, r: +1,
+           attack: { mode: "ranged", level: "M", damageType: "physical", dice: "reaction", rangeMult: 2 } },
+  water: { b: +2, q:  0, mult: 2, s:  0, r: -1,
+           attack: { mode: "melee",  level: "S", damageType: "stun",     dice: "force" } }
+};
+
+// Which profile each summonable key uses. Elementals name their element in the
+// same `domain` field nature spirits use for their domain, so one map covers
+// both. Nature-spirit groups (p.235): Of Man = fire, Of the Land = earth,
+// Of the Sky = air, Of the Waters = water.
+//
+// NOTE ON `wind`: the book's Of-the-Sky domains are Mist and Storm; this system
+// ships `wind` as the umbrella and has portrait art under that key. All three
+// resolve to the same air profile, so the naming difference changes no stat —
+// `wind` is kept to avoid churning art, localisation and saved actors, and
+// `mist`/`storm` are mapped too in case a GM sets them by hand.
+SR2E.spiritDomainProfile = {
+  // Elementals name their element directly
+  fire: "fire", water: "water", air: "air", earth: "earth",
+  // Of Man
+  city: "fire", hearth: "fire", field: "fire",
+  // Of the Land
+  desert: "earth", forest: "earth", mountain: "earth", prairie: "earth",
+  // Of the Sky
+  wind: "air", mist: "air", storm: "air",
+  // Of the Waters
+  lake: "water", river: "water", sea: "water", swamp: "water"
+};
+
+// Spirit GROUPS for totem conjuring bonuses (docs/archive/plans/PLAN-ancestor-spirit.md): a totem may give dice
+// for a whole group — Rat: "+2 dice for conjuring all Spirits of Man" (core p.121), stored as
+// `spirits_of_man`. A domain in `spiritDomainInherits` (a module's ancestor spirit) takes the best
+// bonus among its group's member domains. See totemConjuringBonus in rules/sr2e-rules.mjs.
+SR2E.spiritDomainGroup = { city: "spirits_of_man", hearth: "spirits_of_man", field: "spirits_of_man" };
+SR2E.spiritDomainInherits = {};
+// Where a domain's portraits live when a MODULE ships them (path prefix); default the system's.
+SR2E.spiritPortraitBase = {};
+
+// Elemental types — a mage summons elementals of the four classical elements.
+// Each aids one spell category for Aid Sorcery (SR2E p.140).
+SR2E.elementalTypes = {
+  fire:  { label: "SR2E.Spirits.Fire",  aids: "combat" },
+  water: { label: "SR2E.Spirits.Water", aids: "illusion" },
+  air:   { label: "SR2E.Spirits.Air",   aids: "detection" },
+  earth: { label: "SR2E.Spirits.Earth", aids: "manipulation" }
+};
+
+// How many portrait variations ship per summonable type, keyed by element /
+// nature-spirit domain. A summoned spirit picks a random one of these
+// (assets/spirit_portraits/<key>-<1..N>.webp); a type absent here keeps the
+// default SVG. Grow these numbers as more art lands — the count IS the contract.
+SR2E.spiritPortraitVariants = {
+  // Elementals
+  fire: 3, water: 3, air: 3, earth: 3,
+  // Nature-spirit domains
+  city: 3, field: 3, forest: 3, hearth: 3, lake: 3, mountain: 3,
+  prairie: 3, river: 3, sea: 3, desert: 3, swamp: 3, wind: 3
+  // NOTE: mist and storm have no art of their own yet — they fall through to the
+  // default portrait. They share the air stat profile with `wind`, whose three
+  // images could be reused if that reads better at the table.
+};
+
+/**
+ * Conjuring Drain (SR2E p.139): drain level scales with the spirit's Force
+ * relative to the conjurer's Charisma. Stun until Force exceeds Charisma,
+ * then Physical.
+ * @param {number} force    Spirit Force Rating (also the test TN).
+ * @param {number} charisma Conjurer's Charisma.
+ * @returns {{ level: "L"|"M"|"S"|"D", type: "stun"|"physical" }}
+ */
+SR2E.conjuringDrain = (force, charisma) => {
+  if (force > 2 * charisma)  return { level: "D", type: "physical" };
+  if (force > charisma)      return { level: "S", type: "physical" };
+  // "Less than half Charisma" is Light; at or above half (up to Charisma) is
+  // Moderate. Half is strict, so Force == half Charisma is Moderate.
+  if (force >= charisma / 2) return { level: "M", type: "stun" };
+  return { level: "L", type: "stun" };
+};
+
+// Standard spirit powers offered on the spirit sheet. Most resolve narratively;
+// the system tracks service expenditure and posts a descriptive card.
+// (Full descriptions: Critters / Powers of the Awakened, SR2E p.214+.)
+SR2E.spiritPowers = {
+  accident:      "SR2E.Powers.Accident",
+  alienation:    "SR2E.Powers.Alienation",
+  binding:       "SR2E.Powers.Binding",
+  concealment:   "SR2E.Powers.Concealment",
+  confusion:     "SR2E.Powers.Confusion",
+  electricalProjection: "SR2E.Powers.ElectricalProjection",
+  engulf:        "SR2E.Powers.Engulf",
+  fear:          "SR2E.Powers.Fear",
+  flameAura:     "SR2E.Powers.FlameAura",
+  flameProjection: "SR2E.Powers.FlameProjection",
+  guard:         "SR2E.Powers.Guard",
+  manifestation: "SR2E.Powers.Manifestation",
+  movement:      "SR2E.Powers.Movement",
+  noxiousBreath: "SR2E.Powers.NoxiousBreath",
+  psychokinesis: "SR2E.Powers.Psychokinesis",
+  search:        "SR2E.Powers.Search",
+  // Services a bound spirit performs rather than innate critter powers (p.140).
+  aidSorcery:    "SR2E.Powers.AidSorcery",
+  aidStudy:      "SR2E.Powers.AidStudy",
+  spellSustaining:"SR2E.Powers.SpellSustaining"
+};
+
+// The powers each summonable type actually HAS (SR2E Critter Statistics Table,
+// p.234–235). These are not interchangeable: a Storm Spirit projects lightning
+// and a Field Spirit does not; only water-group spirits Engulf; only Fire among
+// the elementals has the flame powers. A summoned spirit is created with its
+// printed set, which the GM can still edit on the sheet.
+SR2E.spiritDomainPowers = {
+  // ── Elementals ──────────────────────────────────────────────────────────
+  air:   ["engulf", "manifestation", "movement", "noxiousBreath", "psychokinesis"],
+  earth: ["engulf", "manifestation", "movement"],
+  fire:  ["engulf", "flameAura", "flameProjection", "guard", "manifestation", "movement"],
+  water: ["engulf", "manifestation", "movement"],
+  // ── Nature spirits: Of Man ──────────────────────────────────────────────
+  city:   ["accident", "alienation", "concealment", "confusion", "fear", "guard", "search"],
+  hearth: ["accident", "alienation", "concealment", "confusion", "guard", "search"],
+  field:  ["accident", "concealment", "guard", "search"],
+  // ── Of the Land ─────────────────────────────────────────────────────────
+  desert:   ["concealment", "guard", "movement", "search"],
+  forest:   ["accident", "concealment", "confusion", "fear", "guard"],
+  mountain: ["accident", "concealment", "guard", "movement", "search"],
+  prairie:  ["accident", "alienation", "concealment", "guard", "movement", "search"],
+  // ── Of the Sky ──────────────────────────────────────────────────────────
+  mist:  ["accident", "concealment", "confusion", "guard", "movement"],
+  storm: ["concealment", "confusion", "electricalProjection", "fear"],
+  // `wind` is this system's older umbrella for the Of-the-Sky domains. The book
+  // has no Wind Spirit, so it takes the Mist set (the more general of the two);
+  // pick `mist` or `storm` explicitly to get the printed spirit.
+  wind:  ["accident", "concealment", "confusion", "guard", "movement"],
+  // ── Of the Waters ───────────────────────────────────────────────────────
+  lake:  ["accident", "engulf", "fear", "guard", "movement", "search"],
+  river: ["accident", "concealment", "engulf", "fear", "guard", "movement", "search"],
+  sea:   ["accident", "alienation", "concealment", "confusion", "engulf", "fear",
+          "guard", "movement", "search"],
+  swamp: ["accident", "binding", "concealment", "confusion", "engulf", "fear",
+          "guard", "movement", "search"]
+};
+
+// ---------------------------------------------------------------------------
+// WEAPON CATEGORIES
+// ---------------------------------------------------------------------------
+SR2E.weaponTypes = {
+  melee: "SR2E.Weapons.Melee",
+  projectile: "SR2E.Weapons.Projectile",
+  throwing: "SR2E.Weapons.Throwing",
+  firearm: "SR2E.Weapons.Firearm",
+  heavy: "SR2E.Weapons.Heavy",
+  grenade: "SR2E.Weapons.Grenade"
+};
+
+SR2E.firearmModes = {
+  SS: "SR2E.Weapons.SingleShot",
+  SA: "SR2E.Weapons.SemiAutomatic",
+  BF: "SR2E.Weapons.BurstFire",
+  FA: "SR2E.Weapons.FullAuto"
+};
+
+// ---------------------------------------------------------------------------
+// ARMOR
+// ---------------------------------------------------------------------------
+SR2E.armorTypes = {
+  ballistic: "SR2E.Armor.Ballistic",
+  impact: "SR2E.Armor.Impact"
+};
+
+// ---------------------------------------------------------------------------
+// CYBERWARE
+// ---------------------------------------------------------------------------
+// Custom cyberware grades from a Shadow Clinic (Street Samurai Catalog p.98).
+// The numbers live in module/rules/sr2e-rules.mjs — the pure module is the single
+// source of truth, shared with the purchase hooks. Config only adds UI labels.
+// (These two used to be maintained separately and silently drifted apart.)
+const gradeLabels = { standard: "SR2E.Cyberware.Standard", alpha: "SR2E.Cyberware.Alpha",
+                      beta: "SR2E.Cyberware.Beta", delta: "SR2E.Cyberware.Delta" };
+SR2E.cyberwareGrades = Object.fromEntries(
+  Object.entries(CYBERWARE_GRADES).map(([k, v]) => [k, { ...v, label: gradeLabels[k] }])
+);
+
+// Bioware grades (Shadowtech FASA7110 p.7). Cultured reduces Body Cost to 0.75×
+// and costs ×4 nuyen — the purchase system applies that multiplier on a grade
+// change; the compendium stores the book's listed (standard) price.
+const bioLabels = { standard: "SR2E.Bioware.Standard", cultured: "SR2E.Bioware.Cultured", secondhand: "SR2E.Bioware.Secondhand" };
+SR2E.biowareGrades = Object.fromEntries(
+  Object.entries(BIOWARE_GRADES).map(([k, v]) => [k, { ...v, label: bioLabels[k] }])
+);
+
+// Cyberlimb identity choices (docs/archive/plans/PLAN-cybertechnology-phase2.md); the schema's own.
+SR2E.limbTypes = { "": "SR2E.Limb.Type.Unset", arm: "SR2E.Limb.Type.Arm", leg: "SR2E.Limb.Type.Leg", hand: "SR2E.Limb.Type.Hand",
+  foot: "SR2E.Limb.Type.Foot", forearm: "SR2E.Limb.Type.Forearm", lowerLeg: "SR2E.Limb.Type.LowerLeg",
+  torso: "SR2E.Limb.Type.Torso", skull: "SR2E.Limb.Type.Skull" };
+SR2E.limbSides = { unknown: "SR2E.Limb.Side.Unknown", left: "SR2E.Limb.Side.Left", right: "SR2E.Limb.Side.Right" };
+SR2E.limbOptionKinds = { "": "SR2E.Limb.Kind.Unset", strength: "SR2E.Limb.Kind.Strength", quickness: "SR2E.Limb.Kind.Quickness",
+  body: "SR2E.Limb.Kind.Body", smartlink: "SR2E.Limb.Kind.Smartlink", device: "SR2E.Limb.Kind.Device",
+  weapon: "SR2E.Limb.Kind.Weapon", other: "SR2E.Limb.Kind.Other" };
+
+// Bioware body systems (Shadowtech) — sheet grouping + flavor, non-mechanical.
+SR2E.bodySystems = {
+  circulatory: "SR2E.Bioware.System.Circulatory",
+  dermal:      "SR2E.Bioware.System.Dermal",
+  endocrine:   "SR2E.Bioware.System.Endocrine",
+  hepatic:     "SR2E.Bioware.System.Hepatic",
+  lymphatic:   "SR2E.Bioware.System.Lymphatic",
+  neural:      "SR2E.Bioware.System.Neural",
+  renal:       "SR2E.Bioware.System.Renal",
+  respiratory: "SR2E.Bioware.System.Respiratory",
+  structural:  "SR2E.Bioware.System.Structural"
+};
+
+SR2E.cyberwareLocations = {
+  headware: "SR2E.Cyberware.Headware",
+  bodyware: "SR2E.Cyberware.Bodyware",
+  cyberlimb: "SR2E.Cyberware.Cyberlimb",
+  other: "SR2E.Cyberware.Other"
+};
+
+// ---------------------------------------------------------------------------
+// MATRIX / DECKING
+// ---------------------------------------------------------------------------
+SR2E.matrixActions = {
+  attack: "SR2E.Matrix.Attack",
+  sleaze: "SR2E.Matrix.Sleaze",
+  mask: "SR2E.Matrix.Mask",
+  sensor: "SR2E.Matrix.Sensor",
+  bod: "SR2E.Matrix.Bod",
+  evasion: "SR2E.Matrix.Evasion"
+};
+
+SR2E.icTypes = {
+  white: "SR2E.Matrix.WhiteIC",
+  gray: "SR2E.Matrix.GrayIC",
+  black: "SR2E.Matrix.BlackIC"
+};
+
+SR2E.programCategories = {
+  persona: "SR2E.Matrix.Persona",
+  combat: "SR2E.Matrix.CombatUtility",
+  defense: "SR2E.Matrix.DefenseUtility",
+  sensor: "SR2E.Matrix.SensorUtility",
+  masking: "SR2E.Matrix.MaskingUtility",
+  other: "SR2E.Matrix.OtherUtility"
+};
+
+// Security Codes (SR2E p.165): the node's color sets how many successes a
+// decker's Computer Skill Test must beat; the numeric System Rating is the TN.
+SR2E.securityCodes = {
+  blue:   { label: "SR2E.Matrix.SecBlue",   successes: 1 },
+  green:  { label: "SR2E.Matrix.SecGreen",  successes: 2 },
+  orange: { label: "SR2E.Matrix.SecOrange", successes: 3 },
+  red:    { label: "SR2E.Matrix.SecRed",    successes: 4 }
+};
+
+// System operations (SR2E p.166–168), keyed by the node type that offers them.
+// All resolve with the same Computer Skill Test vs the node's System Rating;
+// the label/node is informational for the player.
+SR2E.systemOperations = {
+  locate:       { label: "SR2E.Matrix.OpLocate",       node: "SAN/SPU" },
+  read:         { label: "SR2E.Matrix.OpRead",         node: "Datastore" },
+  transfer:     { label: "SR2E.Matrix.OpTransfer",     node: "Datastore" },
+  edit:         { label: "SR2E.Matrix.OpEdit",         node: "Datastore" },
+  erase:        { label: "SR2E.Matrix.OpErase",        node: "Datastore" },
+  control:      { label: "SR2E.Matrix.OpControl",      node: "Slave" },
+  sensorReadout:{ label: "SR2E.Matrix.OpSensorReadout",node: "Slave" },
+  cancelAlert:  { label: "SR2E.Matrix.OpCancelAlert",  node: "CPU" },
+  displayMap:   { label: "SR2E.Matrix.OpDisplayMap",   node: "CPU" },
+  lockout:      { label: "SR2E.Matrix.OpLockout",      node: "SAN" }
+};
+
+// ── Virtual Realities 2.0 Matrix (used only when matrixRuleset === "vr2") ──────
+// The five host subsystems (ACIFS, VR2.0 p.16). Every VR2.0 System Test targets
+// one of these ratings rather than the core book's single System Rating.
+// VR2.0 IC programs (p.41) and their labels; class follows the program (icClass).
+SR2E.icPrograms = { killer: "Killer", "crippler-acid": "Acid", "crippler-binder": "Binder",
+  "crippler-jammer": "Jammer", "crippler-marker": "Marker",
+  // Part 3 (docs/archive/plans/PLAN-vr2-part3.md; p.41–50).
+  "tar-baby": "Tar Baby", trace: "Trace", "data-bomb": "Data Bomb", scramble: "Scramble", worm: "Worm",
+  blaster: "Blaster", sparky: "Sparky", "ripper-acid": "Acid-rip", "ripper-bind": "Bind-rip",
+  "ripper-jam": "Jam-rip", "ripper-mark": "Mark-rip", "tar-pit": "Tar Pit",
+  "black-lethal": "Black IC (lethal)", "black-nonlethal": "Black IC (non-lethal)", "black-psychotropic": "Black IC (psychotropic)" };
+SR2E.icPsychotropic = { "": "—", cyberphobia: "Cyberphobia", judas: "Judas", maniac: "Matrix maniac", pcpic: "Positive conditioning (PCPIC)" };
+SR2E.icScramble = { "": "—", exploding: "Exploding", poison: "Poison" };
+SR2E.icWorm = { "": "—", data: "Dataworm", death: "Deathworm", tape: "Tapeworm" };
+
+// Security sheaf events (VR2.0 p.150).
+SR2E.vr2SheafEvents = { ic: "IC activates", passive: "Passive alert", active: "Active alert", shutdown: "Shutdown", other: "" };
+
+SR2E.vr2Subsystems = {
+  access:  "Access",
+  control: "Control",
+  index:   "Index",
+  files:   "Files",
+  slave:   "Slave"
+};
+
+// VR2.0 System Operations (pp.114–116). Each operation's `subsystem` is its
+// "Test" — the ACIFS rating the decker rolls against — and `utility` is the
+// program it uses. A representative core set; a GM can extend it. Transcribed
+// from the System Operations descriptions (verified against the VR2.0 PDF).
+SR2E.vr2SystemOperations = {
+  logonHost:          { label: "Logon to Host",       subsystem: "access",  utility: "Deception" },
+  logonLTG:           { label: "Logon to LTG",        subsystem: "access",  utility: "Deception" },
+  logonRTG:           { label: "Logon to RTG",        subsystem: "access",  utility: "Deception" },
+  gracefulLogoff:     { label: "Graceful Logoff",     subsystem: "access",  utility: "Deception" },
+  invalidatePasscode: { label: "Invalidate Passcode", subsystem: "control", utility: "Validate" },
+  locateAccessNode:   { label: "Locate Access Node",  subsystem: "index",   utility: "Browse" },
+  locateDecker:       { label: "Locate Decker",       subsystem: "index",   utility: "Scanner" },
+  locateFrame:        { label: "Locate Frame",        subsystem: "index",   utility: "Scanner" },
+  locateFile:         { label: "Locate File",         subsystem: "index",   utility: "Browse" },
+  locateIC:           { label: "Locate IC",           subsystem: "index",   utility: "Analyze" },
+  locatePaydata:      { label: "Locate Paydata",      subsystem: "index",   utility: "Evaluate" },
+  locateSlave:        { label: "Locate Slave",        subsystem: "index",   utility: "Analyze" },
+  editFile:           { label: "Edit File",           subsystem: "files",   utility: "Read/Write" },
+  makeComcall:        { label: "Make Comcall",        subsystem: "files",   utility: "Commlink" },
+  editSlave:          { label: "Edit Slave",          subsystem: "slave",   utility: "Spoof" },
+  monitorSlave:       { label: "Monitor Slave",       subsystem: "slave",   utility: "Spoof" },
+  // Part 3 (docs/archive/plans/PLAN-vr2-part3.md; VR2.0 p.111–117). "targeted": the subsystem is picked at the test.
+  analyzeIC:          { label: "Analyze IC",          subsystem: "control", utility: "Analyze" },
+  analyzeIcon:        { label: "Analyze Icon",        subsystem: "control", utility: "Analyze" },
+  analyzeSubsystem:   { label: "Analyze Subsystem",   subsystem: "targeted", utility: "Analyze" },
+  decryptAccess:      { label: "Decrypt Access",      subsystem: "access",  utility: "Decrypt" },
+  decryptFile:        { label: "Decrypt File",        subsystem: "files",   utility: "Decrypt" },
+  decryptSlave:       { label: "Decrypt Slave",       subsystem: "slave",   utility: "Decrypt" },
+  disinfect:          { label: "Disinfect",           subsystem: "targeted", utility: "Disinfect" },
+  redirectDatatrail:  { label: "Redirect Datatrail",  subsystem: "control", utility: "Camo" },
+  defuse:             { label: "Defuse Data Bomb",    subsystem: "targeted", utility: "Defuse" },
+  // Part 6a-0 (docs/archive/plans/PLAN-vr2-part6-frames.md; p.112, p.117).
+  decoy:              { label: "Decoy",               subsystem: "control", utility: "Mirrors" },
+  nullOp:             { label: "Null Operation",      subsystem: "control", utility: "Deception" },
+  // Part 6c (p.104): a command set's tests; the GM names the subsystem (Control when in doubt).
+  commandSet:         { label: "Command Set",         subsystem: "targeted", utility: "Deception" }
+};
+
+// Alert states (SR2E p.168). Passive adds +50% to IC ratings (applied by the
+// GM); a second passive alert escalates to active.
+SR2E.alertStates = {
+  none:    "SR2E.Matrix.AlertNone",
+  passive: "SR2E.Matrix.AlertPassive",
+  active:  "SR2E.Matrix.AlertActive"
+};
+
+// ---------------------------------------------------------------------------
+// VEHICLE STATS
+// ---------------------------------------------------------------------------
+SR2E.vehicleTypes = {
+  ground: "SR2E.Vehicles.Ground",
+  hovercraft: "SR2E.Vehicles.Hovercraft",
+  boat: "SR2E.Vehicles.Boat",
+  aircraft: "SR2E.Vehicles.Aircraft",
+  rotor: "SR2E.Vehicles.Rotor",
+  vectored_thrust: "SR2E.Vehicles.VectoredThrust",
+  drone: "SR2E.Vehicles.Drone"
+};
+
+// Default driving skill per vehicle type (core p.75 skill list; SR2 has no "Pilot" skill).
+// A vehicle's system.skill field overrides this (e.g. "bike").
+SR2E.vehicleSkillDefaults = {
+  ground: "car",
+  hovercraft: "hovercraft",
+  boat: "motorboat",
+  aircraft: "winged",
+  rotor: "rotor",
+  vectored_thrust: "vectorThrust",
+  drone: "car"
+};
+
+// Vehicle test types and their terrain TN modifiers, exactly as printed
+// (SR2E p.105–107). Note the Crash Test Table really does list Tight +2
+// below Restricted +4 — encoded as printed.
+SR2E.vehicleTestTypes = {
+  handling: "SR2E.Vehicles.TestHandling",
+  position: "SR2E.Vehicles.TestPosition",
+  crash:    "SR2E.Vehicles.TestCrash"
+};
+
+SR2E.vehicleTerrainMods = {
+  // Position Test Modifiers (p.106). The non-combat Handling Test has no terrain row: it takes the Vehicle
+  // Operation Table (p.183, rules/vehicle-play-rules.mjs).
+  position: { open: 0,  normal: 1, restricted: 2, tight: 4 },
+  // Crash Test Table (p.107)
+  crash:    { open: -1, normal: 0, restricted: 4, tight: 2 },
+  // Ramming Table (p.107): subtracted from the ram TN
+  ram:      { open: 0,  normal: -2, restricted: -3, tight: -4 },
+  // Escape Test Modifiers (p.107): added to the escape TN
+  escape:   { open: -4, normal: -2, restricted: 0, tight: 2 }
+};
+
+SR2E.vehicleTerrains = {
+  open:       "SR2E.Vehicles.TerrainOpen",
+  normal:     "SR2E.Vehicles.TerrainNormal",
+  restricted: "SR2E.Vehicles.TerrainRestricted",
+  tight:      "SR2E.Vehicles.TerrainTight"
+};
+
+// Crash Impact Table (p.107): Power = cruising speed ÷ 10 (round down);
+// Damage Level by speed bracket.
+
+// Vehicle Damage Modifiers (p.109): per damage level, the TN penalty to the
+// driver's tests, the Initiative penalty, and the speed multiplier.
+SR2E.vehicleDamageMods = {
+  Undamaged: { tn: 0, init: 0,  speed: 1    },
+  Light:     { tn: 1, init: -1, speed: 1    },
+  Moderate:  { tn: 2, init: -2, speed: 0.75 },
+  Serious:   { tn: 3, init: -3, speed: 0.5  },
+  Destroyed: { tn: 0, init: 0,  speed: 0    }
+};
+
+// ---------------------------------------------------------------------------
+// LIFESTYLES
+// ---------------------------------------------------------------------------
+SR2E.lifestyles = {
+  streets:   { label: "SR2E.Lifestyle.Streets",   monthlyCost: 0 },
+  squatter:  { label: "SR2E.Lifestyle.Squatter",  monthlyCost: 100 },
+  low:       { label: "SR2E.Lifestyle.Low",       monthlyCost: 1000 },
+  middle:    { label: "SR2E.Lifestyle.Middle",    monthlyCost: 5000 },
+  high:      { label: "SR2E.Lifestyle.High",      monthlyCost: 10000 },
+  luxury:    { label: "SR2E.Lifestyle.Luxury",    monthlyCost: 100000 }
+};
+
+// ---------------------------------------------------------------------------
+// DICE POOL TYPES
+// ---------------------------------------------------------------------------
+// The Karma Pool is not listed here because it is not a dicePools entry — it is
+// spent through the karma actions on chat cards, not allocated like Combat or
+// Magic. It DOES refresh with these, though: SR2EActor#refreshDicePools clears
+// system.karma.spent and .drawn alongside them, so the GM has one gesture
+// rather than two (SR2E p.191, "the full value... returns with the next
+// encounter"). Only the temporary buckets clear; karma.burned never does.
+SR2E.dicePools = {
+  combat: "SR2E.DicePools.Combat",
+  hacking: "SR2E.DicePools.Hacking",
+  magic: "SR2E.DicePools.Magic",
+  control: "SR2E.DicePools.Control"
+};
+
+// ---------------------------------------------------------------------------
+// MOVEMENT RATES (meters per combat turn)
+// ---------------------------------------------------------------------------
+SR2E.movementRates = {
+  walking: { multiplier: 1 },   // Quickness x 1 meters
+  running: { multiplier: 3 }    // Quickness x 3 meters
+};
+
+// ---------------------------------------------------------------------------
+// QUALITIES (Edges & Flaws) — character traits with a build-point value.
+// Edges cost points (positive value); Flaws grant points (negative value).
+// The SR2E core has no edge/flaw rules; Rigger 2 (and the SR Companion) add
+// them as an optional subsystem. Effects are descriptive (not auto-applied).
+// ---------------------------------------------------------------------------
+SR2E.qualityKinds = {
+  edge: "SR2E.Quality.Edge",
+  flaw: "SR2E.Quality.Flaw"
+};
+// Attributes an Attribute Edge (Companion p.24) may target: "any Attribute
+// except Essence, Reaction or Magic" — which is exactly SR2E.attributes, since
+// the excluded three are the Special Attributes above. Derived from it rather
+// than relisted so the two can't drift. QualityData relists these choices (data
+// models can't read CONFIG at schema-build time); config-rules.test.mjs locks
+// the two together.
+SR2E.qualityAttributes = { "": "SR2E.Quality.NoAttribute", ...SR2E.attributes };
+
+SR2E.qualityCategories = {
+  attribute: "SR2E.Quality.Attribute",
+  skill:     "SR2E.Quality.Skill",
+  physical:  "SR2E.Quality.Physical",
+  mental:    "SR2E.Quality.Mental",
+  social:    "SR2E.Quality.Social",
+  magical:   "SR2E.Quality.Magical",
+  other:     "SR2E.Quality.Other"
+};
+
+// Metamagic techniques an initiate learns (one per Grade). The Grimoire 2nd ed
+// set (book p.43-50). The sheet records which an initiate knows; the techniques
+// themselves are largely GM-adjudicated at the table.
+SR2E.metamagic = {
+  centering:  "Centering",
+  masking:    "Masking",
+  quickening: "Quickening",
+  shielding:  "Shielding",
+  anchoring:  "Anchoring",
+  dispelling: "Dispelling"
+};
+
+// ---------------------------------------------------------------------------
+// VEHICLE DESIGN (Rigger 2 "design from scratch", book p.108–146; docs/archive/plans/PLAN-vehicle-builder.md)
+// The system ships the rules (module/rules/vehicle-design.mjs) and the Workshop (module/apps/vehicle-workshop.mjs);
+// the Rigger 2 module registers the book's tables below.
+// ---------------------------------------------------------------------------
+// The old Design tab's registry is gone (the Workshop replaced it). This stand-in stays because the Rigger 2 module
+// 0.6.0 still calls it before registering the new tables; drop it once that module no longer does.
+SR2E.registerVehicleDesignData = function registerVehicleDesignData() { return null; };
+
+// The Rigger 2 design tables for the design engine (module/rules/vehicle-design.mjs; docs/archive/plans/PLAN-vehicle-builder.md),
+// keyed by each row's `key`: chassis (p.170–171), power plants (p.167–169, every column, each listing the chassis it
+// fits), the Fuel Tank Capacity Table (p.116) and the Mark-Up Factors Table (p.114). Registered by the content module.
+SR2E.vehicleDesignTables = { chassis: {}, powerPlants: {}, fuel: {}, markUp: {} };
+
+/**
+ * Register the design tables (arrays of rows, or keyed objects). Later wins per key.
+ * @param {{chassis?:object[]|object, powerPlants?:object[]|object, fuel?:object, markUp?:object}} data
+ */
+/** The Rigger 2 Vehicle List (docs/archive/plans/PLAN-vehicle-list.md): registered by the Rigger 2 module. */
+SR2E.vehicleList = { rows: {}, identity: {} };
+SR2E.registerVehicleList = function registerVehicleList({ rows = {}, identity = {} } = {}) {
+  Object.assign(SR2E.vehicleList.rows, rows);
+  Object.assign(SR2E.vehicleList.identity, identity);
+  Hooks.callAll("sr2e.vehicleList", SR2E.vehicleList);
+  return SR2E.vehicleList;
+};
+
+SR2E.registerVehicleDesignTables = function registerVehicleDesignTables({ chassis = [], powerPlants = [], fuel = {}, markUp = {} } = {}) {
+  const keyed = (rows) => Array.isArray(rows) ? Object.fromEntries(rows.map(r => [r.key, r])) : rows;
+  Object.assign(SR2E.vehicleDesignTables.chassis, keyed(chassis));
+  Object.assign(SR2E.vehicleDesignTables.powerPlants, keyed(powerPlants));
+  Object.assign(SR2E.vehicleDesignTables.fuel, fuel);
+  Object.assign(SR2E.vehicleDesignTables.markUp, markUp);
+  Hooks.callAll("sr2e.vehicleDesignTables", SR2E.vehicleDesignTables);   // module/vehicle-base.mjs waits for this
+  return SR2E.vehicleDesignTables;
+};
+
+
+/**
+ * Language → family (SR2E p.74). A specific language is a Specialization of a
+ * family, and the family is the general skill beneath it.
+ *
+ * This exists because a LinguaSoft "replicates Language Skills" (p.248), so a
+ * chip-granted language has to carry the same family structure as a learned
+ * one — and the chip is created at runtime from a gear item that knows only a
+ * NAME, with no compendium lookup available synchronously in prepareDerivedData.
+ *
+ * Only the shipped languages are listed; a GM's own language simply gets no
+ * family until they type one on the skill. `test/language-skills.test.mjs`
+ * compares this against packs-src, which catches one copy being edited
+ * without the other — it does NOT prove either copy is right, and it
+ * cannot see renamed, aliased or GM-authored languages, which are matched
+ * by lower-cased name only.
+ *
+ * Cityspeak, Sperethiel and Or'zet are deliberately absent: p.74 puts City
+ * Speak and Elvish in no formal group, and states there are no formal ork
+ * languages.
+ */
+SR2E.languageFamilies = {
+  arabic: "Semitic",
+  "aztlaner spanish": "Romance",
+  cantonese: "Sino-Tibetan",
+  english: "Germanic",
+  french: "Romance",
+  german: "Germanic",
+  italian: "Romance",
+  japanese: "Japanese",
+  korean: "Korean",
+  lakota: "Siouan",
+  mandarin: "Sino-Tibetan",
+  portuguese: "Romance",
+  russian: "Slavic",
+  salish: "Salish",
+  spanish: "Romance"
+};

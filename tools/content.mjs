@@ -16,7 +16,51 @@ export const REPO = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
 export const COMMIT = /^[0-9a-f]{40}$/;
 export const RECORD = "CONTENT.json";
 /** What the catalog reads from each repository. The book table only matters in the system's (the first pin). */
-export const WANTED = ["system.json", "module.json", "packs-src", "module/rules/books.mjs"];
+export const WANTED = ["system.json", "module.json", "packs-src", "module/rules/books.mjs", "module/config.mjs", "module/rules", "lang/en.json"];
+/**
+ * The system code the app RUNS (docs/PLAN-M2.md §1): these entry modules and every module they import, nothing else.
+ * Plus the English labels the tables name by key. Only the system (the repository with system.json) provides them.
+ */
+export const RULES_ENTRIES = ["module/config.mjs", "module/rules/sr2e-rules.mjs", "module/rules/ware-rules.mjs"];
+export const LABELS = "lang/en.json";
+/** Constructs copied code may not use: it must stay plain, side-effect-free rules (comments are ignored). */
+const FORBIDDEN = [/\bimport\s*\(/, /\beval\s*\(/, /\bnew\s+Function\b/, /\bFunction\s*\(/, /\bfetch\s*\(/, /XMLHttpRequest/, /\bprocess\./,
+  /\brequire\s*\(/, /globalThis\.[A-Za-z_$]+\s*=[^=]/, /\bdocument\./, /\bwindow\./, /\blocalStorage\b/];
+export function forbiddenIn(src) {
+  const code = String(src).replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:"'`\\])\/\/.*$/gm, "$1");
+  return FORBIDDEN.filter(re => re.test(code)).map(re => re.source);
+}
+/** The static imports of a module, resolved against its own path. */
+export function importsOf(path, src) {
+  const dir = path.split("/").slice(0, -1);
+  return [...String(src).matchAll(/(?:^|\n)\s*(?:import|export)\s[^;]*?from\s+["']([^"']+)["']/g)].map(m => {
+    if (!m[1].startsWith(".")) throw new Error(`${path} imports "${m[1]}", which is not a file of the system`);
+    const out = [...dir];
+    for (const part of m[1].split("/")) { if (part === "..") out.pop(); else if (part !== ".") out.push(part); }
+    return out.join("/");
+  });
+}
+/**
+ * Which listed files to keep: every manifest, pack file and the book table; for the system also the rules closure and
+ * the labels. `read(path)` gives a listed file's text (the closure follows imports). A forbidden construct in a kept
+ * module, or an import that leaves the listed files, fails.
+ */
+export function selectPaths(paths, read) {
+  const listed = new Set(paths), keep = paths.filter(p => p === "system.json" || p === "module.json" || p.startsWith("packs-src/") || p === "module/rules/books.mjs");
+  if (!listed.has("system.json")) return keep;
+  const seen = new Set(), queue = [...RULES_ENTRIES];
+  while (queue.length) {
+    const p = queue.shift();
+    if (seen.has(p)) continue;
+    if (!listed.has(p)) throw new Error(`the rules code needs ${p}, which the system does not have`);
+    seen.add(p);
+    const src = read(p), bad = forbiddenIn(src);
+    if (bad.length) throw new Error(`${p} uses ${bad.join(", ")}: copied rules code must not`);
+    queue.push(...importsOf(p, src));
+  }
+  if (!listed.has(LABELS)) throw new Error(`the system has no ${LABELS}`);
+  return [...keep, ...[...seen].filter(p => !keep.includes(p)), LABELS];
+}
 
 const git = (dir, args, input) => execFileSync("git", ["-C", dir, ...args], { input, maxBuffer: 512 * 1024 * 1024, stdio: ["pipe", "pipe", "pipe"] });
 /** Git's own id of a file's contents: sha1("blob <size>\0" + bytes). */
@@ -74,8 +118,9 @@ export function gitFiles(repoDir, pin) {
   const actual = tagCommit(repoDir, pin.tag);
   if (!actual) throw new Error(`${pin.dir}: no tag ${pin.tag}`);
   if (actual !== pin.commit) throw new Error(`${pin.dir}: tag ${pin.tag} points at ${actual.slice(0, 12)}, but the pin says ${pin.commit.slice(0, 12)}`);
-  const list = listFiles(repoDir, pin.commit, WANTED);
-  const blobs = readBlobs(repoDir, list.map(f => f.sha));
+  const all = listFiles(repoDir, pin.commit, WANTED);
+  const blobs = readBlobs(repoDir, all.map(f => f.sha)), sha = new Map(all.map(f => [f.path, f.sha]));
+  const list = selectPaths(all.map(f => f.path), (p) => blobs.get(sha.get(p)).toString("utf8")).map(p => ({ path: p, sha: sha.get(p) }));
   return { files: new Map(list.map(f => [f.path, blobs.get(f.sha)])), ids: new Map(list.map(f => [f.path, f.sha])) };
 }
 

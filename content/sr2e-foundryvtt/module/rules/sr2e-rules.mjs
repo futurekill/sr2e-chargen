@@ -1,0 +1,4504 @@
+/**
+ * Pure SR2E rules math — no Foundry dependencies.
+ *
+ * These helpers were extracted from the TypeDataModels and document methods so
+ * the core mechanics can be unit-tested in plain Node (see test/) and so the
+ * same constants/formulas stop being copy-pasted across call sites. Anything
+ * here must stay free of `foundry`, `game`, `CONFIG`, `Roll`, etc.
+ */
+
+/** Damage levels in ascending order (SR2E p.113). */
+export const DAMAGE_LEVELS = ["L", "M", "S", "D"];
+
+/**
+ * Net successes convert to damage-staging steps at 2 successes per step
+ * (SR2E p.110): the attacker stages damage up by net/2, and a resistance test
+ * stages it down by its successes/2. Also the drain-reduction rate.
+ * @param {number} successes
+ * @returns {number}
+ */
+export function netToSteps(successes) {
+  return Math.floor((successes ?? 0) / 2);
+}
+
+/**
+ * Astral Reaction (SR2E p.147): twice Intelligence. Astral Initiative is this
+ * value +15 with 1 Initiative die (applied at roll time).
+ * @param {number} intelligence
+ * @returns {number}
+ */
+export function astralReaction(intelligence) {
+  return 2 * intelligence;
+}
+
+/**
+ * Spell Drain target number (SR2E p.131, p.140): ⌊Force ÷ 2⌋ + the spell's
+ * drain modifier, minimum 2.
+ * @param {number} force
+ * @param {number} modifier
+ * @returns {number}
+ */
+export function drainTargetNumber(force, modifier) {
+  return Math.max(2, Math.floor(force / 2) + modifier);
+}
+
+/** Condition-monitor boxes filled by each damage level (SR2E p.113). */
+export const DAMAGE_BOXES = { L: 1, M: 3, S: 6, D: 10 };
+
+/**
+ * Boxes a damage level fills.
+ * @param {"L"|"M"|"S"|"D"} level
+ * @returns {number}
+ */
+export function damageBoxes(level) {
+  return DAMAGE_BOXES[level] ?? 0;
+}
+
+/**
+ * Stage a damage level up (+) or down (−) by a number of steps, clamped to the
+ * L…D range (SR2E p.110). Net successes / 2 stage up; armoured resistance
+ * successes stage down.
+ * @param {"L"|"M"|"S"|"D"} level
+ * @param {number} steps - positive stages up, negative stages down
+ * @returns {"L"|"M"|"S"|"D"}
+ */
+export function stageLevel(level, steps) {
+  const idx = DAMAGE_LEVELS.indexOf(level);
+  if (idx < 0) return level;
+  const next = Math.min(DAMAGE_LEVELS.length - 1, Math.max(0, idx + steps));
+  return DAMAGE_LEVELS[next];
+}
+
+/**
+ * Net-success staging for ranged, blast and damaging-manipulation damage
+ * (SR2E p.91, p.97, p.110): compare the attacker's and the target's successes.
+ * The attacker raises the base damage one level per 2 full successes OVER the
+ * target's total; the target lowers it one level per 2 full successes over the
+ * attacker's; a tie does base damage. Two independent stagings (up on the
+ * attacker's gross, down on the defender's gross) disagree whenever the
+ * rounding splits — 4 vs 3 is base damage here, not +1 −1.
+ * @param {number} baseIdx - pre-staging level index (0 L … 3 D); clamped to [0, 3]
+ * @param {number} attackerSuccesses
+ * @param {number} defenderSuccesses
+ * @returns {{idx:number, net:number}} idx < 0 = staged below Light, no damage
+ */
+export function stageByNet(baseIdx, attackerSuccesses, defenderSuccesses) {
+  const base = Math.min(3, Math.max(0, Math.trunc(baseIdx) || 0));
+  const net = (attackerSuccesses || 0) - (defenderSuccesses || 0);
+  if (net > 0) return { idx: Math.min(3, base + Math.floor(net / 2)), net };
+  if (net < 0) return { idx: base - Math.floor(-net / 2), net };
+  return { idx: base, net };
+}
+
+/**
+ * Injury Modifier for a single condition column (SR2E p.112). Thresholds:
+ * 1 box = Light (+1), 3 = Moderate (+2), 6 = Serious (+3); a full 10 (Deadly)
+ * means unconscious/down rather than an additional TN step.
+ * @param {number} boxes
+ * @returns {0|1|2|3}
+ */
+export function columnWoundPenalty(boxes) {
+  if (boxes >= 6) return 3;
+  if (boxes >= 3) return 2;
+  if (boxes >= 1) return 1;
+  return 0;
+}
+
+/**
+ * Total Injury Modifier, cumulative across the Physical and Stun monitors
+ * (SR2E p.112).
+ * @param {number} physicalBoxes
+ * @param {number} stunBoxes
+ * @returns {number}
+ */
+export function totalWoundPenalty(physicalBoxes, stunBoxes) {
+  return columnWoundPenalty(physicalBoxes) + columnWoundPenalty(stunBoxes);
+}
+
+/**
+ * Injury Modifier after cyber/bioware that suppresses it (Shadowtech).
+ *
+ * Damage Compensator (p.24): while a track's damage is AT OR BELOW the
+ * compensator's Level, that track inflicts NO target-number/Initiative penalty.
+ * Once a track EXCEEDS the Level, that track's penalty applies in full. The
+ * Physical and Mental tracks are judged separately.
+ *
+ * Pain Editor (p.26), while active: the penalties from MENTAL damage are
+ * ignored entirely (physical penalties still apply).
+ *
+ * @param {number} physicalBoxes
+ * @param {number} stunBoxes
+ * @param {{compensator?:number, ignoreStun?:boolean}} [opts]
+ * @returns {number} the effective Injury Modifier
+ */
+export function compensatedWoundPenalty(physicalBoxes, stunBoxes, opts = {}) {
+  const comp = Math.max(0, Number(opts.compensator) || 0);
+  const phys = Number(physicalBoxes) || 0;
+  const stun = Number(stunBoxes) || 0;
+  // A track at/below the compensator level contributes nothing; over it, in full.
+  const effPhys = phys > comp ? phys : 0;
+  let effStun = stun > comp ? stun : 0;
+  if (opts.ignoreStun) effStun = 0;   // active Pain Editor
+  return totalWoundPenalty(effPhys, effStun);
+}
+
+/**
+ * Wound level for a number of filled condition boxes (SR2E p.113): the same
+ * 1/3/6/10 thresholds as the Injury Modifier.
+ * @param {number} boxes
+ * @returns {"Undamaged"|"Light"|"Moderate"|"Serious"|"Deadly"}
+ */
+export function woundLevel(boxes) {
+  if (boxes >= 10) return "Deadly";
+  if (boxes >= 6)  return "Serious";
+  if (boxes >= 3)  return "Moderate";
+  if (boxes >= 1)  return "Light";
+  return "Undamaged";
+}
+
+/**
+ * Treat and Heal take their Drain Level from the subject's current Wound Level
+ * (SR2E p.155) — drain scales with how badly hurt the patient is.
+ *
+ * Deliberately reads the PHYSICAL monitor only: both spells heal physical
+ * damage, so a subject who is merely stunned presents no injury for them to
+ * work on. The book says "Wound Level" without disambiguating a character who
+ * is hurt on both monitors; physical-only is the reading that matches what the
+ * spells actually treat. The book gives no drain for an uninjured subject
+ * (there is nothing to heal), so Undamaged floors at Light.
+ *
+ * @param {number} physicalBoxes - filled boxes on the physical monitor.
+ * @returns {"L"|"M"|"S"|"D"}
+ */
+/**
+ * HEALING TABLE (SR2E p.155) — base time a curative spell must be maintained,
+ * in Combat Turns, by the subject's damage level.
+ */
+export const HEALING_BASE_TIME = Object.freeze({ L: 5, M: 10, S: 15, D: 20 });
+
+/**
+ * Base maintenance time in Combat Turns for a curative spell on a subject at
+ * this damage level (SR2E p.155). Unknown/undamaged falls back to the Light row.
+ * @param {"L"|"M"|"S"|"D"} level
+ * @returns {number} turns
+ */
+export function healingBaseTime(level) {
+  return HEALING_BASE_TIME[level] ?? HEALING_BASE_TIME.L;
+}
+
+/**
+ * Time left after spending successes on reducing it (SR2E p.155): "Divide the
+ * successes into the base time." Zero successes spent leaves the base time.
+ *
+ * Rounds UP — a fraction of a Combat Turn is still a turn the magician must keep
+ * the spell running — and never drops below 1 turn.
+ *
+ * @param {number} baseTurns
+ * @param {number} successesToTime - successes allocated to time reduction.
+ * @returns {number} turns
+ */
+export function healingTimeReduced(baseTurns, successesToTime) {
+  const base = Math.max(0, Number(baseTurns) || 0);
+  const n    = Math.max(0, Math.floor(Number(successesToTime) || 0));
+  if (n <= 0) return base;
+  return Math.max(1, Math.ceil(base / n));
+}
+
+/**
+ * Split a curative spell's successes between healing boxes and reducing the
+ * maintenance time (SR2E p.155): "The total successes can be split between the
+ * two uses (healing and time reduction), as the magician desires."
+ *
+ * Clamps the requested time allocation into [0, total] so the caller can't spend
+ * successes it does not have, and reports the remainder as boxes healed.
+ *
+ * @param {number} total - successes from the Spell Success Test.
+ * @param {number} toTime - successes the magician wants to spend on time.
+ * @returns {{boxes:number, toTime:number}}
+ */
+export function splitHealingSuccesses(total, toTime) {
+  const t = Math.max(0, Math.floor(Number(total) || 0));
+  const time = Math.min(t, Math.max(0, Math.floor(Number(toTime) || 0)));
+  return { boxes: t - time, toTime: time };
+}
+
+/**
+ * Spell Success Test target number for the curative spells (SR2E p.155): "The
+ * target number for these spells is 10 or 8 minus the subject's Essence" — 8 for
+ * Treat, 10 for Heal. A heavily chromed patient is harder to mend.
+ *
+ * Essence is fractional once cyberware is installed, and a target number must be
+ * a whole number. This floors the Essence, matching what the system already does
+ * when deriving an integer from Essence (Magic rating = ⌊Essence⌋). Because the
+ * base is an integer, that is exactly ⌈base − Essence⌉ — never easier than the
+ * printed value. The book does not spell the rounding out.
+ *
+ * Bioware interference (+½ Body Index, Shadowtech p.6) is NOT included here; it
+ * is applied separately as an extra TN on the cast test.
+ *
+ * @param {number} base - 8 (Treat) or 10 (Heal).
+ * @param {number} essence - the SUBJECT's current Essence.
+ * @returns {number} target number, floored at 2 like every other TN.
+ */
+export function healingSpellTN(base, essence) {
+  return Math.max(2, (Number(base) || 0) - Math.floor(Number(essence) || 0));
+}
+
+export function healingDrainLevel(physicalBoxes) {
+  return {
+    Undamaged: "L",
+    Light: "L",
+    Moderate: "M",
+    Serious: "S",
+    Deadly: "D"
+  }[woundLevel(physicalBoxes)];
+}
+
+/**
+ * Healing Table (SR2E p.113): per Damage Level, the base and minimum time (hours), the
+ * Body Test's TN and the minimum lifestyle. "Dead" on the printed table is the Deadly row.
+ */
+export const HEALING_TABLE = Object.freeze({
+  D: { baseH: 720, minH: 72, tn: 10, lifestyle: "Hospitalized" },
+  S: { baseH: 480, minH: 48, tn: 8, lifestyle: "High" },
+  M: { baseH: 240, minH: 24, tn: 6, lifestyle: "Middle" },
+  L: { baseH: 24, minH: 2, tn: 4, lifestyle: "Low" }
+});
+
+/**
+ * How long one stage of natural healing takes (p.113): "Divide the successes from the Body
+ * Test into the base time … the actual time can never be lower than the Minimum Time."
+ * No successes leaves the base time (nothing to divide by).
+ * @returns {number} hours
+ */
+export function naturalHealingHours(level, successes, { baseMult = 1, totalMult = 1 } = {}) {
+  const row = HEALING_TABLE[level] ?? HEALING_TABLE.L;
+  const n = Math.max(0, Math.trunc(Number(successes) || 0));
+  // A mangled limb raises the BASE time 50 % (p.114); a damaged organ doubles the whole process.
+  const base = row.baseH * baseMult;
+  return (n > 0 ? Math.max(row.minH, base / n) : base) * totalMult;
+}
+
+/** "36 hours" / "6.7 days" for a healing time in hours. */
+export function healingTimeText(hours) {
+  const r = (x) => Math.round(x * 10) / 10;
+  return hours < 48 ? `${r(hours)} hour${r(hours) === 1 ? "" : "s"}` : `${r(hours / 24)} days`;
+}
+
+/** The Doctoring Table's −0…−3 for a natural Body or Willpower (p.113): 4–6 −1, 7–9 −2, 10+ −3. */
+export const doctoringAttrMod = (v) => (v >= 10 ? -3 : v >= 7 ? -2 : v >= 4 ? -1 : 0);
+
+/**
+ * The Doctoring Table (p.113) — only when a doctor is involved: intensive care −2 (hospital
+ * only), long-term magical care −2, ONE condition (not in a hospital or clinic +2, bad +3,
+ * terrible +4), a magician patient +2 (unless the doctor treats without it, p.115), and the
+ * patient's NATURAL Body and Willpower.
+ * @returns {{total:number, parts:string[]}}
+ */
+export function doctoringMod({ intensiveCare = false, magicalCare = false, condition = "hospital", magician = false,
+                               waiveMagician = false, naturalBody = 1, naturalWillpower = 1 } = {}) {
+  const parts = [];
+  const add = (n, label) => { if (n) parts.push(`${label} ${n > 0 ? "+" : ""}${n}`); return n; };
+  let t = 0;
+  t += add(intensiveCare ? -2 : 0, "intensive care");
+  t += add(magicalCare ? -2 : 0, "long-term magical care");
+  t += add({ notHospital: 2, bad: 3, terrible: 4 }[condition] ?? 0, { notHospital: "not in a hospital", bad: "bad conditions", terrible: "terrible conditions" }[condition] ?? "");
+  t += add(magician && !waiveMagician ? 2 : 0, "magician");
+  t += add(doctoringAttrMod(naturalBody), "Body");
+  t += add(doctoringAttrMod(naturalWillpower), "Willpower");
+  return { total: t, parts };
+}
+
+/** Magic loss (p.115): roll 2D6; a result LESS than the current Magic loses 1 point permanently. */
+export const magicLost = (twoD6, magic) => Number(twoD6) < Number(magic);
+
+/**
+ * First Aid target-number modifier from the patient's Body (SR2E p.115):
+ * a tougher patient is easier to stabilise. −1 at Body 4+, −2 at 7+, −3 at 10+.
+ * @param {number} body
+ * @returns {0|-1|-2|-3}
+ */
+export function firstAidBodyMod(body) {
+  if (body >= 10) return -3;
+  if (body >= 7)  return -2;
+  if (body >= 4)  return -1;
+  return 0;
+}
+
+/**
+ * Resolve an opposed melee exchange (SR2E p.100–101): whoever rolls more
+ * successes hits; ties favour the attacker. Net = the winner's margin (drives
+ * the damage staging via netToSteps).
+ * @param {number} attackerSuccesses
+ * @param {number} defenderSuccesses
+ * @returns {{ winner: "attacker"|"defender", net: number }}
+ */
+export function meleeOutcome(attackerSuccesses, defenderSuccesses) {
+  if (defenderSuccesses > attackerSuccesses) {
+    return { winner: "defender", net: defenderSuccesses - attackerSuccesses };
+  }
+  return { winner: "attacker", net: attackerSuccesses - defenderSuccesses };
+}
+
+/**
+ * Target number for a Matrix system operation (SR2E p.166–167): the node's
+ * System Rating, +2 for every prior attempt this run, plus any untrained
+ * Skill-Web default penalty.
+ * @param {number} systemRating
+ * @param {number} priorAttempts
+ * @param {number} [defaultPenalty=0]
+ * @returns {number}
+ */
+export function systemOperationTN(systemRating, priorAttempts, defaultPenalty = 0) {
+  return systemRating + (priorAttempts * 2) + defaultPenalty;
+}
+
+/**
+ * A persona attribute derived from a loaded program is capped at the deck's
+ * MPCP rating (SR2E p.172–174).
+ * @param {number} programRating
+ * @param {number} mpcp
+ * @returns {number}
+ */
+export function personaAttribute(programRating, mpcp) {
+  return Math.min(programRating, mpcp);
+}
+
+/**
+ * Rounds fired by a weapon's firing mode (SR2E p.92–93): a burst-fire weapon
+ * fires a fixed 3-round burst; full auto fires a declared 3–10 rounds; single
+ * shot / semi-auto fire 1.
+ * @param {"ss"|"sa"|"bf"|"fa"} firingMode
+ * @param {number} [declared] - declared rounds for full auto
+ * @returns {number}
+ */
+export function burstRounds(firingMode, declared) {
+  if (firingMode === "bf") return 3;
+  if (firingMode === "fa") return Math.min(10, Math.max(3, declared ?? 3));
+  return 1;
+}
+
+/**
+ * What a burst actually fires when the clip runs short (SR2E p.92 "Short
+ * Bursts"; p.93 sends a short full-auto burst to the same rule). Every round
+ * left goes out: a 2-round burst gets +2 Power, no Damage Level step
+ * (`burstDamageBonus(2)` already gives exactly that) and +2 recoil; a lone
+ * round "resolves just as for a single-shot attack". Tracked ammo only — pass
+ * `available = Infinity` for weapons that do not count rounds.
+ * @param {"ss"|"sa"|"bf"|"fa"} firingMode
+ * @param {number} rounds    - rounds the full burst would fire (burstRounds)
+ * @param {number} available - rounds left in the weapon (> 0)
+ * @returns {{rounds:number, isBurst:boolean, short:boolean}}
+ */
+export function burstFired(firingMode, rounds, available) {
+  const isBurst = firingMode === "bf" || firingMode === "fa";
+  if (!isBurst) return { rounds, isBurst: false, short: false };
+  const fired = Math.max(1, Math.min(rounds, available));
+  return { rounds: fired, isBurst: fired > 1, short: fired < rounds };
+}
+
+/**
+ * Melee visibility (SR2E p.102): the Visibility Table (p.89) "at half their value,
+ * rounding down, except for Full Darkness" — which stays +8. Takes the ranged
+ * table's normal-vision value (0/2/4/6/8, where 8 is Full Darkness).
+ */
+export function meleeVisibilityMod(rangedValue) {
+  const v = Math.max(0, Math.floor(Number(rangedValue) || 0));
+  return v >= 8 ? 8 : Math.floor(v / 2);
+}
+
+/** Melee visibility choices, value = the melee modifier (p.102). */
+export const MELEE_VISIBILITY = Object.freeze([
+  [0, "Clear"], [1, "Partial Light / Glare / Mist (+1, half)"], [2, "Light Smoke/Fog/Rain (+2, half)"],
+  [3, "Minimal Light / Heavy Smoke (+3, half)"], [8, "Full Darkness (+8, not halved)"]
+]);
+
+/**
+ * Conjuring limits (SR2E p.139–140), judged on the conjurer's bound spirits that
+ * still owe services. A shaman "can summon only one nature spirit or have one in
+ * service to him at one time"; a mage "can bind, at any one time, a number of
+ * elementals equal to his Charisma" and must release one to conjure another.
+ * @param {"nature"|"elemental"} kind
+ * @param {Array<{spiritType:string, services:number}>} bound - existing bound spirits
+ * @param {number} charisma
+ * @returns {string|null} why the summoning is refused, or null
+ */
+export function conjuringLimit(kind, bound, charisma) {
+  const serving = (bound ?? []).filter(b => b && b.spiritType === kind && (Number(b.services) || 0) > 0);
+  if (kind === "nature" && serving.length >= 1)
+    return "A shaman can have only one nature spirit in service at a time (SR2E p.139) — its services must be used up or it must be dismissed first.";
+  if (kind === "elemental" && serving.length >= Math.max(0, Number(charisma) || 0))
+    return `A mage can bind only as many elementals as their Charisma (${charisma}) (SR2E p.140) — release one first.`;
+  return null;
+}
+
+/** Elemental conjuring materials (SR2E p.140): 1,000¥ per point of Force, used up either way. */
+export function elementalMaterialsCost(force) {
+  return 1000 * Math.max(1, Math.trunc(force) || 1);
+}
+
+/* ────────────────────────────────────────────────────────────────────────────
+ * ASTRAL COMBAT (SR2E p.147–148) — "works exactly like Melee Combat (p.100)"
+ * ──────────────────────────────────────────────────────────────────────────── */
+
+/** Astral Combat Pool (p.147): ⌊(Intelligence + Willpower + Charisma) ÷ 2⌋. */
+export function astralCombatPool({ intelligence = 0, willpower = 0, charisma = 0 } = {}) {
+  return Math.max(0, Math.floor(((+intelligence || 0) + (+willpower || 0) + (+charisma || 0)) / 2));
+}
+
+/**
+ * Who can fight in astral space and with what (p.147–148).
+ *  - "magician": a character astrally perceiving/projecting. Skill: Armed Combat
+ *    with a wielded, active weapon focus (+ its rating in dice, p.138), else
+ *    Unarmed Combat — or Sorcery in place of either. Damage (Charisma)L, or
+ *    (Charisma + ⌊Focus ÷ 2⌋)M armed. Resists with Willpower; Astral Pool.
+ *  - "spirit": all Attributes = its (current) Force; attacks/defends with Force
+ *    dice, (Force)M damage, resists with Force.
+ *  - "dual": a dual-natured being keeps the same Attributes on both planes —
+ *    its Unarmed Combat, its physical attack profile, resists with Body; its
+ *    physical Impact armor counts in astral space.
+ * @param {object} o
+ * @param {"magician"|"spirit"|"dual"} o.kind
+ * @param {object} [o.skills]  - { armed, unarmed, sorcery } ratings
+ * @param {object} [o.attrs]   - { intelligence, willpower, charisma, body }
+ * @param {number} [o.force]
+ * @param {number} [o.focusRating] - a wielded, active, bonded weapon focus (0 = none)
+ * @param {{power:number, level:string}} [o.physicalDamage] - dual beings' attack
+ * @param {number} [o.impactArmor]
+ * @returns {{options:Array<{key:string,label:string,dice:number}>, damage:{power:number,level:string},
+ *            resistDice:number, resistLabel:string, armor:number, pool:number}}
+ */
+export function astralProfile({ kind, skills = {}, attrs = {}, force = 0, focusRating = 0,
+                                physicalDamage = null, impactArmor = 0 } = {}) {
+  const n = (v) => Math.max(0, Math.trunc(+v || 0));
+  if (kind === "spirit") {
+    const f = n(force);
+    return { options: [{ key: "force", label: `Force ${f}`, dice: f }],
+             damage: { power: Math.max(1, f), level: "M" },
+             resistDice: f, resistLabel: "Force", armor: 0, pool: 0 };
+  }
+  if (kind === "dual") {
+    return { options: [{ key: "unarmed", label: "Unarmed Combat", dice: n(skills.unarmed) }],
+             damage: physicalDamage ?? { power: Math.max(1, n(attrs.strength)), level: "M" },
+             resistDice: n(attrs.body), resistLabel: "Body", armor: n(impactArmor), pool: 0 };
+  }
+  const cha = n(attrs.charisma), fr = n(focusRating);
+  const options = fr > 0
+    ? [{ key: "armed", label: `Armed Combat + focus ${fr}`, dice: n(skills.armed) + fr },
+       { key: "sorcery", label: "Sorcery", dice: n(skills.sorcery) }]
+    : [{ key: "unarmed", label: "Unarmed Combat", dice: n(skills.unarmed) },
+       { key: "sorcery", label: "Sorcery", dice: n(skills.sorcery) }];
+  options.sort((a, b) => b.dice - a.dice);
+  return { options,
+           damage: fr > 0 ? { power: Math.max(1, cha + Math.floor(fr / 2)), level: "M" }
+                          : { power: Math.max(1, cha), level: "L" },
+           resistDice: n(attrs.willpower), resistLabel: "Willpower (Astral Body)", armor: 0,
+           pool: astralCombatPool(attrs) };
+}
+
+/* ── RESTRICTED-USE SPELLS (SR2E p.133) ── */
+
+/** Force bonus for a restricted-use spell: exclusive +2, reusable fetish +1, expendable +2. */
+export function restrictedForceBonus(restriction) {
+  return { exclusive: 2, fetishReusable: 1, fetishExpendable: 2 }[restriction] ?? 0;
+}
+
+/**
+ * Actual and effective Force of a cast (p.133): the effect runs "as if its
+ * Force Rating were N points higher", Drain "at the normal Force value". A
+ * restricted spell cannot be cast above the Force it was learned at.
+ * @returns {{actual:number, effective:number, bonus:number}}
+ */
+export function spellForces({ learnedForce = 1, actualForce, restriction = "" } = {}) {
+  const bonus = restrictedForceBonus(restriction);
+  let actual = Math.max(1, Math.trunc(Number(actualForce ?? learnedForce) || 1));
+  if (bonus > 0) actual = Math.min(actual, Math.max(1, Math.trunc(Number(learnedForce) || 1)));
+  return { actual, effective: actual + bonus, bonus };
+}
+
+/**
+ * Exclusive conflict (p.133) in a set of spells the magician personally
+ * sustains: an exclusive spell cannot share concentration with any other.
+ * @param {Array<{restriction?:string}>} set
+ */
+export function exclusiveConflict(set = []) {
+  return set.length > 1 && set.some(s => s?.restriction === "exclusive");
+}
+
+/** A finite, non-negative integer, or `fallback`. */
+function nonNegInt(v, fallback = 0) {
+  const n = Number(v);
+  return Number.isFinite(n) && n >= 0 ? Math.floor(n) : fallback;
+}
+
+/**
+ * Multiple targets and walking fire in one Combat Phase (SR2E p.92–93):
+ * semi-auto and burst fire at a second target is +2; full auto is "+2 for each
+ * new target engaged during that Combat Phase" (Wedge: +0/+2/+4), and walking
+ * the fire from one target to the next wastes one round per metre unless the
+ * weapon is a smartgun.
+ *
+ * `record` is the gunner's engagement record for the phase whose key is `key`
+ * (a record under another key is stale and reads as empty):
+ *   { key, targets: [tokenUuid], lastFA: { weaponUuid, tokenUuid|null } | null }
+ *
+ * @param {object} o
+ * @param {object|null} o.record
+ * @param {string} o.key            - the current phase key
+ * @param {string|null} o.targetUuid - the aimed token, or null (none targeted)
+ * @param {string} o.mode           - ss | sa | bf | fa
+ * @param {string} o.weaponUuid
+ * @param {boolean} o.smartgun
+ * @param {number|null} o.distanceM - metres from the previous FA endpoint; null = unknown
+ * @param {number} [o.priorOverride] - explicit earlier-target count (dialog edit)
+ * @param {number} [o.walkOverride]  - explicit walking metres (dialog edit)
+ * @returns {{priorTargets:number, tnMod:number, walked:number, walks:boolean, walkUnknown:boolean}}
+ */
+export function rangedEngagement({ record, key, targetUuid, mode, weaponUuid, smartgun,
+                                   distanceM = null, priorOverride, walkOverride } = {}) {
+  const fresh = record && record.key === key ? record : null;
+  const known = Array.isArray(fresh?.targets) ? [...new Set(fresh.targets.filter(Boolean))] : [];
+  // With no target token, distinctness cannot be inferred: 0 unless entered.
+  const auto = targetUuid ? known.filter(u => u !== targetUuid).length : 0;
+  const priorTargets = priorOverride == null ? auto : nonNegInt(priorOverride, auto);
+
+  const last = fresh?.lastFA ?? null;
+  const continues = mode === "fa" && !!last && last.weaponUuid === weaponUuid;
+  // Either endpoint unknown → continuity unknown (even tokenless → tokenless).
+  const endpointUnknown = continues && (!last.tokenUuid || !targetUuid);
+  const walks = continues && !smartgun && (endpointUnknown || last.tokenUuid !== targetUuid);
+  let walked = 0, walkUnknown = false;
+  if (walks) {
+    if (walkOverride != null && Number.isFinite(Number(walkOverride))) walked = nonNegInt(Math.round(Number(walkOverride)));
+    else if (!endpointUnknown && Number.isFinite(distanceM)) walked = nonNegInt(Math.round(distanceM));
+    else walkUnknown = true;
+  }
+  return { priorTargets, tnMod: 2 * priorTargets, walked, walks, walkUnknown };
+}
+
+/**
+ * Recoil still in force: the stored counter belongs to the phase it was
+ * committed under, and reads as 0 once the phase key has moved on (p.93: recoil
+ * accumulates within a Combat Phase). Nothing zeroes it at a boundary.
+ */
+export function effectiveRecoil(recordKey, key, stored) {
+  return recordKey === key ? nonNegInt(stored) : 0;
+}
+
+/**
+ * Recoil penalty (SR2E p.93): +1 TN per uncompensated round fired this Action
+ * Phase. A burst's own rounds count toward its recoil (firearms/heavy only);
+ * recoil compensation cancels rounds one-for-one.
+ * @param {number} shotsFired - rounds already fired this phase (recoil counter)
+ * @param {number} rounds     - rounds in this attack
+ * @param {object} opts
+ * @param {boolean} opts.isBurst
+ * @param {boolean} opts.hasRecoil  - weapon type is subject to recoil
+ * @param {number}  opts.recoilComp - recoil compensation
+ * @returns {number}
+ */
+export function recoilPenalty(shotsFired, rounds, { isBurst, hasRecoil, recoilComp, heavyRecoil }) {
+  const recoilRounds = shotsFired + (isBurst && hasRecoil ? rounds : 0);
+  const net = Math.max(0, recoilRounds - (recoilComp ?? 0));
+  // Heavy weapons (medium/heavy MGs and shotguns) DOUBLE the uncompensated
+  // recoil (p.89-90: 9 rounds - 6 comp = 3, doubled to +6).
+  return heavyRecoil ? net * 2 : net;
+}
+
+/**
+ * Burst / full-auto damage bonus (SR2E p.93): +1 Power per round in the burst,
+ * +1 Damage Level per 3 full rounds.
+ * @param {number} rounds
+ * @returns {{ powerBonus: number, levelSteps: number }}
+ */
+export function burstDamageBonus(rounds, { tracer = false } = {}) {
+  // Tracer clips (Fields of Fire p.51): every third round is a tracer, which adds no Power to the burst but still
+  // counts toward its Damage Level (5M × 10 rounds = 12D, not 15D).
+  const n = Math.max(0, Math.floor(Number(rounds) || 0));
+  return { powerBonus: n - (tracer ? tracerRounds(n) : 0), levelSteps: Math.floor(n / 3) };
+}
+
+/** Tracer rounds in a burst of `rounds` from a tracer clip: every third round (Fields of Fire p.51). */
+export const tracerRounds = (rounds) => Math.floor(Math.max(0, Number(rounds) || 0) / 3);
+
+/**
+ * The tracer TN modifier (Fields of Fire p.51): a non-smartgun shooter beyond Short range gets −1 per tracer fired —
+ * −1 after the first three rounds, −2 after six (ruling: counted within the burst being fired). 0 at Short range,
+ * with a smartgun link, or for a single shot.
+ */
+export function tracerTnMod({ rounds = 0, range = "short", smartgun = false } = {}) {
+  if (smartgun || range === "short") return 0;
+  return 0 - tracerRounds(rounds);   // never -0
+}
+
+/**
+ * Memory size (Mp) of a Matrix program (SR2E p.174–177): Rating² × multiplier,
+ * rounded up. The multiplier is the program's per-type factor (Browse ×1,
+ * Attack/Evaluate/Decrypt/Scramble/Deception/Relocate/Slow ×2, Analyze/Mirrors/
+ * Medic ×3, Shield/Smoke ×4).
+ * @param {number} rating
+ * @param {number} multiplier
+ * @returns {number}
+ */
+export function programSize(rating, multiplier) {
+  return Math.ceil(rating * rating * multiplier);
+}
+
+/**
+ * Nuyen cost of a Matrix program — Program Costs and Availability, book p.259.
+ * Cost is Size × a per-Mp rate that STEPS with the rating band, and the rate
+ * differs for persona and utility programs:
+ *
+ *   band     persona    utility
+ *   1-3        100¥       100¥
+ *   4-6        500¥       200¥
+ *   7-9      1,000¥       500¥
+ *   10+      5,000¥     1,000¥
+ *
+ * Only the 1-3 band was implemented before, so every program above Rating 3
+ * priced at the cheapest rate — a Rating 6 Attack cost half what it should and
+ * a Rating 7 Bod a tenth.
+ *
+ * @param {number} rating
+ * @param {number} multiplier - the program's size multiplier
+ * @param {boolean} [isPersona] - persona programs (Bod/Evasion/Masking/Sensors)
+ *                                use the more expensive rate column
+ * @returns {number}
+ */
+export function programCost(rating, multiplier, isPersona = false) {
+  const r = Math.max(1, Math.floor(rating || 1));
+  const band = r <= 3 ? 0 : r <= 6 ? 1 : r <= 9 ? 2 : 3;
+  const RATE = isPersona ? [100, 500, 1000, 5000] : [100, 200, 500, 1000];
+  return programSize(r, multiplier) * RATE[band];
+}
+
+/** Street Index by program rating band (p.259) — the same bands as the cost. */
+export function programStreetIndex(rating) {
+  const r = Math.max(1, Math.floor(rating || 1));
+  return r <= 3 ? 1 : r <= 6 ? 1.5 : r <= 9 ? 2 : 3;
+}
+
+/**
+ * Nuyen cost of a magical focus: Force × the focus type's per-Force unit cost
+ * (Power 20,000 / Spell·Spirit·Weapon 10,000 / Spell Lock 5,000 ¥, SR2E p.249).
+ * @param {number} force
+ * @param {number} costPerForce
+ * @returns {number}
+ */
+export function focusCost(force, costPerForce) {
+  return force * costPerForce;
+}
+
+/**
+ * Whether the SR2 astral-visibility rule permits a viewer to see a token
+ * (SR2E p.145, p.148): an astral-only entity (unmanifested spirit, focus,
+ * quickened spell, a projecting/perceiving magician's astral form) is invisible
+ * to normal sight — "a magician can see it only if astrally perceiving." Seen by
+ * the GM, the token's owner, and any astrally active viewer. Two allied
+ * exceptions so the table can play: a **friendly** astral being (an allied
+ * spirit) is visible to everyone, and a spirit's **summoner** always sees their
+ * own bound spirit regardless of astral state — both rendered translucent while
+ * unmanifested. Only neutral/hostile unknowns stay hidden from mundanes.
+ * Non-astral tokens are unaffected (physical visibility is decided elsewhere).
+ * @param {{astralOnly:boolean, isGM:boolean, viewerAstralActive:boolean, ownsToken:boolean, friendly?:boolean, isSummoner?:boolean}} p
+ * @returns {boolean} whether the astral rule allows the view
+ */
+export function astralAllowsView({ astralOnly, isGM, viewerAstralActive, ownsToken, friendly, isSummoner, revealed }) {
+  if (!astralOnly) return true;
+  // `revealed`: spotted by a still-valid FAB-UV search (Corporate Security Handbook p.103).
+  return !!(isGM || ownsToken || isSummoner || friendly || viewerAstralActive || revealed);
+}
+
+/**
+ * Weapon focus price (SR2E p.126): a melee weapon enchanted as a focus costs
+ * [(Reach + 1) × 100,000¥] + Rating × 90,000¥. Reach comes from the weapon,
+ * Rating is the focus's Force.
+ * @param {number} reach   weapon reach (0 for most, higher for polearms)
+ * @param {number} rating  focus Force
+ * @returns {number} nuyen price
+ */
+export function weaponFocusCost(reach, rating) {
+  return (Math.max(0, reach) + 1) * 100000 + Math.max(0, rating) * 90000;
+}
+
+/** Base Reaction speed an IC's node Security Code grants (SR2E p.169). */
+export const IC_REACTION_BASE = { blue: 0, green: 5, orange: 7, red: 9 };
+
+/**
+ * Base of an IC's Reaction Time (SR2E p.169): the node's Security Code gives a
+ * base speed to which the IC's Rating is added; then roll 1D6. Blue nodes carry
+ * no IC, so they contribute 0.
+ * @param {"blue"|"green"|"orange"|"red"} securityCode
+ * @returns {number}
+ */
+export function icReactionBase(securityCode) {
+  return IC_REACTION_BASE[securityCode] ?? 0;
+}
+
+/**
+ * Apply an alert's modifier to an IC rating (SR2E p.168): a passive alert adds
+ * +50% to all IC ratings (rounded down); an active alert inherits that boost.
+ * @param {number} rating
+ * @param {"none"|"passive"|"active"} alert
+ * @returns {number}
+ */
+export function alertAdjustedRating(rating, alert) {
+  if (alert === "passive" || alert === "active") return Math.floor(rating * 1.5);
+  return rating;
+}
+
+/**
+ * Escalate a node/IC alert one step (SR2E p.168): no alert → passive; a second
+ * trigger (already passive, or active) → active.
+ * @param {"none"|"passive"|"active"} current
+ * @returns {"passive"|"active"}
+ */
+export function escalateAlert(current) {
+  return current === "none" ? "passive" : "active";
+}
+
+/**
+ * Essence cost of a "container" cyberware (cybereyes/cyberears) that absorbs
+ * add-on modules up to a free capacity (SR2E p.247: cybereyes accept vision
+ * enhancements up to 0.5 Essence without further loss). Only module essence
+ * beyond `capacity` adds to the base.
+ * @param {number} baseEssence - the container's own essence (e.g. 0.2 for eyes)
+ * @param {number} moduleEssenceSum - summed essence of the ACTIVE modules
+ * @param {number} capacity - free essence allowance (e.g. 0.5)
+ * @returns {number} total essence, rounded to 2 decimals
+ */
+export function containerEssence(baseEssence, moduleEssenceSum, capacity) {
+  const over = Math.max(0, (moduleEssenceSum || 0) - (capacity || 0));
+  return Math.round(((baseEssence || 0) + over) * 100) / 100;
+}
+
+// ---------------------------------------------------------------------------
+// METAMAGIC — initiate techniques (Grimoire 2nd ed., p.42–46)
+// Pure rules math; the sheet/roll flows call these so the numbers are testable.
+// ---------------------------------------------------------------------------
+
+/**
+ * Centering vs. Drain (Grimoire p.43): every 2 successes on the Centering Test
+ * count as 1 extra success on the actual Drain Resistance Test — but only if
+ * that Drain test scored at least 1 success on its own.
+ * @returns {number} bonus successes to add to the drain resistance
+ */
+export function centeringDrainBonus(centeringSuccesses, drainSuccesses) {
+  if (centeringSuccesses < 2 || drainSuccesses < 1) return 0;
+  return Math.floor(centeringSuccesses / 2);
+}
+
+/**
+ * Centering vs. Penalties (Grimoire p.44): every 2 Centering successes remove 1
+ * point of negative TN modifier (never more than the penalty present, and it
+ * can only reduce modifiers — never the base target number).
+ * @returns {number} points of penalty removed
+ */
+export function centeringPenaltyReduction(centeringSuccesses, penalty = Infinity) {
+  return Math.min(Math.floor(centeringSuccesses / 2), Math.max(0, penalty));
+}
+
+/**
+ * The Centering Test's own target number when used against penalties
+ * (Grimoire p.44): the modified magic TN reduced by the initiate grade,
+ * floored at the minimum target number of 2.
+ */
+export function centeringTestTN(modifiedTN, grade) {
+  return Math.max(2, modifiedTN - grade);
+}
+
+/**
+ * Shielding (Grimoire p.45): an initiate gains bonus spell-defense dice equal
+ * to their initiate grade, over and above any Magic Pool dice committed.
+ */
+export function shieldingBonusDice(grade) {
+  return Math.max(0, grade);
+}
+
+/**
+ * Quickening (Grimoire p.44): the Karma to lock a sustained spell permanently
+ * runs from the spell's actual Force (minimum) to twice its Force (the extra
+ * making it harder to dispel).
+ * @returns {{min:number, max:number}}
+ */
+export function quickeningKarmaRange(force) {
+  const f = Math.max(0, force);
+  return { min: f, max: 2 * f };
+}
+
+/**
+ * Initiation Karma cost (Grimoire p.42): base = 6 + the target grade, times a
+ * multiplier — self ×3, group ×2; undertaking an ordeal lowers it to ×2.5 (self)
+ * or ×1.5 (group).
+ */
+export function initiationKarmaCost(targetGrade, { group = false, ordeal = false } = {}) {
+  const base = 6 + Math.max(0, targetGrade);
+  const mult = group ? (ordeal ? 1.5 : 2) : (ordeal ? 2.5 : 3);
+  return Math.floor(base * mult);   // "Always round down" (Grimoire p.41)
+}
+
+// ---------------------------------------------------------------------------
+// BLAST / AREA EFFECT (SR2 core p.96–97, Grenade Damage Table)
+// A blast's Power falls off with distance from ground zero; each target in the
+// area resists individually using Body vs (adjusted Power − Impact armor).
+// ---------------------------------------------------------------------------
+
+/**
+ * Power lost per metre from ground zero by blast type (core p.96): offensive and
+ * concussion grenades lose 1 Power/m, defensive loses 2/m ("−1 per half-metre").
+ * Unknown types default to the standard 1/m.
+ */
+export const BLAST_FALLOFF = Object.freeze({ offensive: 1, concussion: 1, defensive: 2 });
+export function blastFalloffRate(type) {
+  return BLAST_FALLOFF[type] ?? 1;
+}
+
+/**
+ * Adjusted blast Power at a distance from ground zero (core p.96): base Power
+ * minus falloff × distance, floored at 0. A result of 0 means the target is
+ * outside the blast. (Offensive Power 10 → 7 at 3 m, 4 at 6 m.)
+ */
+export function blastPowerAtRange(basePower, distanceMeters, falloffRate = 1) {
+  return Math.max(0, basePower - falloffRate * Math.max(0, distanceMeters));
+}
+
+/**
+ * Farthest distance (metres) at which the blast still has Power ≥ 1 — used to
+ * gather affected tokens. (Offensive Power 10, falloff 1 → 9 m; defensive
+ * Power 10, falloff 2 → 4 m.)
+ */
+/**
+ * A smoke cloud's radius in metres (Fields of Fire p.85 Smoke Table): a grenade 10 m, a mortar round 15 m. Smoke has
+ * no Power, so it can't use `blastRadius` (which gave every smoke cloud a 0 m radius).
+ */
+export const smokeCloudRadius = (name = "") => (/mortar/i.test(String(name)) ? 15 : 10);
+
+export function blastRadius(basePower, falloffRate = 1) {
+  if (falloffRate <= 0) return Math.max(0, basePower);
+  return Math.max(0, Math.floor((basePower - 1) / falloffRate));
+}
+
+/**
+ * Scatter distance dice and per-success reduction by delivery method (core p.96
+ * Grenade Range Table): a standard grenade scatters 1D6 m and the thrower
+ * reduces it 2 m per success; aerodynamic grenades and grenade launchers scatter
+ * 2D6 / 3D6 m and reduce 4 m per success.
+ */
+export const SCATTER = Object.freeze({
+  standard:    { dice: 1, perSuccess: 2 },
+  aerodynamic: { dice: 2, perSuccess: 4 },
+  launcher:    { dice: 3, perSuccess: 4 }
+});
+export function scatterProfile(deliveryType) {
+  return SCATTER[deliveryType] ?? SCATTER.standard;
+}
+
+/**
+ * Final scatter distance after the attack's successes reduce the rolled scatter
+ * (core p.96): rolled metres minus successes × per-success reduction, floored at
+ * 0 (0 = the grenade lands on the target).
+ */
+/**
+ * Scatter direction (core p.97 Scatter Diagram): roll 1D6 against the direction
+ * of the throw — 1 carries on past the target, 4 bounces straight back toward the
+ * thrower, and 2/3 and 6/5 are the diagonals either side, 60° apart.
+ * @param {number} throwAngle - radians, thrower → target (canvas coordinates)
+ * @param {number} d6 - the Scatter Diagram roll
+ * @returns {number} radians
+ */
+export function scatterBearing(throwAngle, d6) {
+  const face = Math.min(6, Math.max(1, Math.trunc(d6) || 1));
+  return throwAngle + (face - 1) * (Math.PI / 3);
+}
+
+export function scatterDistance(rolledMeters, successes, perSuccess) {
+  return Math.max(0, rolledMeters - Math.max(0, successes) * perSuccess);
+}
+
+/**
+ * Thrown-weapon range brackets (core p.96–97 Grenade Range Table — all throwing
+ * weapons use it): the brackets scale with the thrower's Strength. Non-aerodynamic
+ * (grenades, throwing knives) reach Str×3 / ×5 / ×10 / ×20 metres; aerodynamic
+ * (shuriken, aero grenades) reach Str×3 / ×5 / ×20 / ×30.
+ */
+export const THROWN_RANGE_MULT = Object.freeze({
+  standard:    { short: 3, medium: 5, long: 10, extreme: 20 },
+  aerodynamic: { short: 3, medium: 5, long: 20, extreme: 30 }
+});
+/**
+ * Range bracket for a measured distance (SR2E p.88, p.96): the RAW distance is
+ * compared against the brackets — rounding first would let a point just past
+ * Short count as Short.
+ * @param {number} distance - metres, unrounded
+ * @param {{short:number, medium:number, long:number, extreme:number}} r
+ * @returns {{range: "short"|"medium"|"long"|"extreme"|null, outOfRange: boolean}}
+ */
+export function rangeBracketFor(distance, r = {}) {
+  if (!(r.short > 0) || !Number.isFinite(distance)) return { range: null, outOfRange: false };
+  if (distance <= r.short)   return { range: "short", outOfRange: false };
+  if (distance <= r.medium)  return { range: "medium", outOfRange: false };
+  if (distance <= r.long)    return { range: "long", outOfRange: false };
+  if (distance <= r.extreme) return { range: "extreme", outOfRange: false };
+  return { range: "extreme", outOfRange: true };
+}
+
+export function thrownRange(strength, aerodynamic = false) {
+  const m = aerodynamic ? THROWN_RANGE_MULT.aerodynamic : THROWN_RANGE_MULT.standard;
+  const s = Math.max(0, strength);
+  return { short: s * m.short, medium: s * m.medium, long: s * m.long, extreme: s * m.extreme };
+}
+
+/* ── MOVEMENT (SR2E p.83) — walking & running rates per Combat Phase ── */
+
+/** Running Modifier by metatype (SR2E p.83 Running Table). Default ×3 (human). */
+export const RUN_MULTIPLIER = Object.freeze({
+  human: 3, elf: 3, ork: 3, dwarf: 2, troll: 2
+});
+
+/** Running Modifier for a metatype key (case-insensitive); unknown → 3. */
+export function runMultiplierForRace(raceKey) {
+  return RUN_MULTIPLIER[String(raceKey ?? "").toLowerCase()] ?? 3;
+}
+
+/**
+ * Movement rates in metres per Combat Phase (SR2E p.83): walking = Quickness,
+ * running = Quickness × the metatype's Running Modifier. Running also imposes a
+ * +4 target modifier to tests that phase (applied elsewhere / by the GM).
+ * @param {number} quickness
+ * @param {number} [runMultiplier=3]
+ * @returns {{walk:number, run:number}}
+ */
+export function movementRates(quickness, runMultiplier = 3) {
+  const q = Math.max(0, Math.floor(quickness || 0));
+  return { walk: q, run: q * runMultiplier };
+}
+
+const MOVE_EPS = 1e-6;
+
+/**
+ * Evaluate one movement attempt within a Combat Phase (SR2 p.84). Distance is
+ * CUMULATIVE — `spent` is what the token has already travelled this phase, `move`
+ * is this attempt — so an out-and-back that nets zero still counts. `capIsWalk`
+ * is true when the character already ran in an earlier phase this Combat Turn
+ * ("may run only in one of those Combat Phases"), which caps this phase at a walk.
+ * @returns {{allowed:boolean, cap:number, newSpent:number, ran:boolean}}
+ *   `ran` = this attempt pushed cumulative distance into running range.
+ */
+export function movementPhase(spent, move, rates, capIsWalk) {
+  const cap = capIsWalk ? rates.walk : rates.run;
+  const newSpent = (spent || 0) + (move || 0);
+  return {
+    allowed: newSpent <= cap + MOVE_EPS,
+    cap,
+    newSpent,
+    ran: !capIsWalk && newSpent > rates.walk + MOVE_EPS
+  };
+}
+
+/** Ruler band for a cumulative distance: 0 walk (green), 1 run (amber), 2 over
+ *  (red). A character already walk-capped this turn skips amber — over walk is red. */
+export function movementColorBand(total, rates, capIsWalk) {
+  if (total <= rates.walk + MOVE_EPS) return 0;
+  if (!capIsWalk && total <= rates.run + MOVE_EPS) return 1;
+  return 2;
+}
+
+/* ────────────────────────────────────────────────────────────────────────────
+ * Spirit / elemental attributes (SR2E Critter Statistics Table, p.234–235)
+ * ──────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * Derive a spirit's attributes from its Force and stat profile.
+ *
+ * A spirit's attributes are NOT all equal to its Force: each of the four
+ * elemental profiles modifies Body, Quickness, Strength and Reaction, while
+ * Charisma, Intelligence, Willpower and Essence are Force. Nature spirits reuse
+ * the same four profiles by domain group (p.235).
+ *
+ * FLOOR OF 1 — the book prints these as formulas and never addresses what a low
+ * Force does to them: a Force-1 air elemental computes Body −1 and Strength −2, a
+ * Force-1 earth computes Reaction −1, a Force-1 water computes Reaction 0. A
+ * zero-or-less attribute would break dice pools, initiative and the movement
+ * limiter, so everything floors at 1. That floor is this system's, not the book's.
+ *
+ * @param {object} profile - one of CONFIG.SR2E.spiritProfiles.
+ * @param {number} force
+ * @returns {{body:number, quickness:number, strength:number, charisma:number,
+ *            intelligence:number, willpower:number, reaction:number,
+ *            essence:number, moveMult:number}}
+ */
+export function spiritAttributes(profile, force) {
+  const f = Math.max(1, Math.floor(Number(force) || 1));
+  const p = profile ?? {};
+  const at = (mod) => Math.max(1, f + (mod ?? 0));
+  return {
+    body:         at(p.b),
+    quickness:    at(p.q),
+    strength:     at(p.s),
+    charisma:     f,
+    intelligence: f,
+    willpower:    f,
+    reaction:     at(p.r),
+    essence:      f,
+    moveMult:     p.mult ?? 3
+  };
+}
+
+/**
+ * A totem's conjuring dice for a spirit domain (docs/archive/plans/PLAN-ancestor-spirit.md):
+ *  1. its entry for the domain (explicit always wins);
+ *  2. else its entry for the domain's GROUP — Rat's "+2 for all Spirits of Man" (core p.121);
+ *  3. else, for a domain that inherits (the ancestor spirit, Cyberpirates p.152: "all totem bonuses
+ *     for conjuring Spirits of Man apply"), the HIGHEST bonus among the group's member domains —
+ *     never a sum (Dog's field 2 + hearth 2 is +2);
+ *  4. else 0.
+ * @param {object} totem  a CONFIG.SR2E.totems entry
+ * @param {string} domain
+ * @param {{groupOf?: Record<string,string>, inherits?: Record<string,boolean>}} maps
+ */
+export function totemConjuringBonus(totem, domain, { groupOf = {}, inherits = {} } = {}) {
+  const b = totem?.conjuringBonus ?? {};
+  if (b[domain] != null) return b[domain];
+  const group = groupOf[domain];
+  if (!group) return 0;
+  if (b[group] != null) return b[group];
+  if (!inherits[domain]) return 0;
+  const members = Object.entries(groupOf).filter(([d, g]) => g === group && d !== domain && b[d] != null).map(([d]) => b[d]);
+  return members.length ? Math.max(...members) : 0;
+}
+
+/**
+ * What a spirit's manifest attack rolls and deals, from its profile's attack descriptor — the ONE
+ * source for both rollSpiritAttack and the sheet's tooltip. `dice`: "force" | "reaction";
+ * `power`: "force" (default) | "strength" (the ancestor spirit's (Strength)M Stun).
+ * @param {{effectiveForce?:number, force?:number, reaction?:{value:number}, strength?:{value:number}, attackProfile?:object}} sys
+ * @returns {null|{dice:number, diceFrom:string, power:number, powerFrom:string, level:string, stun:boolean, mode:string, reach:number, range:number}}
+ */
+export function spiritAttackSummary(sys) {
+  const atk = sys?.attackProfile;
+  if (!atk) return null;
+  const force = sys.effectiveForce ?? sys.force ?? 1;
+  const diceFrom = atk.dice === "reaction" ? "reaction" : "force";
+  const powerFrom = atk.power === "strength" ? "strength" : "force";
+  return {
+    dice: diceFrom === "reaction" ? (sys.reaction?.value ?? force) : force, diceFrom,
+    power: powerFrom === "strength" ? (sys.strength?.value ?? force) : force, powerFrom,
+    level: atk.level, stun: atk.damageType === "stun", mode: atk.mode,
+    reach: atk.reach ?? 0, range: atk.mode === "ranged" ? force * (atk.rangeMult ?? 2) : 0
+  };
+}
+
+/* ── INITIATIVE PASSES (SR2E p.78–79) — pure decision helpers for SR2ECombat ── */
+
+/** Initiative left after taking an action: −10, floored at 0 (you simply stop
+ * acting at ≤0; never show negatives). */
+export function spendInitiative(total) {
+  return Math.max(0, (total ?? 0) - 10);
+}
+
+/** The next Combat Phase: index of the first combatant with a positive total
+ * that isn't defeated, or `null` if nobody can act (clear the turn pointer).
+ * `combatants` must already be in descending-initiative order (Foundry's sort). */
+export function nextEligibleTurnIndex(combatants) {
+  const i = combatants.findIndex(c => (c.initiative ?? 0) > 0 && !c.isDefeated && !c.heldOut);
+  return i === -1 ? null : i;
+}
+
+/** IDs of the combatants that re-roll on a new Combat Turn — the living only.
+ * The defeated stay out (null initiative) so a re-rolled corpse can't jump to
+ * the top of the tracker. */
+export function livingCombatantIds(combatants) {
+  return combatants.filter(c => !c.isDefeated && !c.heldOut).map(c => c.id);
+}
+
+/**
+ * Skill Memory Table (SR2E p.248) — a skillsoft's Memory cost (Mp) by skill
+ * rating 1–10. General covers Active and Knowledge skills; Language covers
+ * LinguaSofts. (Concentration/Specialization soft variants aren't modelled.)
+ */
+export const SKILL_MEMORY = Object.freeze({
+  general:  [10, 20, 30, 200, 250, 300, 700, 800, 900, 2000],
+  language: [3, 6, 9, 24, 30, 36, 70, 80, 90, 300]
+});
+
+/**
+ * Per-Mp nuyen rate by skillsoft type (Skillsoft Costs, SR2E p.248).
+ *
+ * `data` is NOT in the core table — core says DataSoft "Varies with value of
+ * data" and prints no rate, which left every DataSoft costing 0. Fields of Fire
+ * is the only book that pins one: Mp x 100Y on its consolidated gear list. It's
+ * a FLOOR for generic data, not a valuation of paydata — so a DataSoft with an
+ * authored cost keeps it (see skillsoftCost).
+ */
+export const SKILLSOFT_MP_COST = Object.freeze({ active: 100, knowledge: 150, language: 50, data: 100 });
+
+/**
+ * Memory (Mp) a skillsoft of the given type + rating consumes (SR2E p.248).
+ * LinguaSofts use the Language row; Active/Know skills use General. 0 outside 1–10.
+ * @param {string} category - "active" | "knowledge" | "language"
+ * @param {number} rating
+ */
+export function skillsoftMemory(category, rating) {
+  const r = Math.round(rating || 0);
+  if (r < 1 || r > 10) return 0;
+  const row = category === "language" ? SKILL_MEMORY.language : SKILL_MEMORY.general;
+  return row[r - 1];
+}
+
+/**
+ * Total-Ratings capacity of an installed skillwire system — the budget for the
+ * summed ratings of all running ActiveSofts. A **Skillwire Plus** system carries
+ * twice the Classic capacity (Total Ratings = Level × 2, Shadowtech p.47); a
+ * Classic system handles up to its Level. 0 if `name` isn't a skillwire item.
+ * Plus is driven by the explicit `isPlus` flag; the name ("…plus…") is only a
+ * fallback for legacy/hand-named items.
+ * @param {string} name   the cyberware item's name
+ * @param {number} rating the item's Rating / Level
+ * @param {boolean} [isPlus] the system.skillwirePlus flag
+ * @returns {number} total accessible ActiveSoft rating budget
+ */
+export function skillwireCapacity(name = "", rating = 0, isPlus = false) {
+  const r = Math.max(0, Math.round(Number(rating) || 0));
+  const n = String(name).toLowerCase();
+  if (!n.includes("skillwire")) return 0;
+  return (isPlus || n.includes("plus")) ? r * 2 : r;
+}
+
+/**
+ * Nuyen cost of a skillsoft = its Memory (Mp) × the per-type rate (SR2E p.248).
+ * 0 for DataSofts / unknown types (cost "varies with the value of the data").
+ * @param {string} category - "active" | "knowledge" | "language"
+ * @param {number} rating
+ */
+export function skillsoftCost(category, rating, authoredCost = 0) {
+  // A DataSoft's worth is the data, not the megapulses — core explicitly leaves
+  // it open ("Varies with value of data"). So an authored price wins for data,
+  // and FoF's Mp x 100Y is only the fallback. Skill-bearing softs always derive:
+  // their price IS a function of rating.
+  if (category === "data" && authoredCost > 0) return authoredCost;
+  const rate = SKILLSOFT_MP_COST[category];
+  return rate ? skillsoftMemory(category, rating) * rate : 0;
+}
+
+/**
+ * Shotgun shot-round spread (SR2E p.95, per the Shotgun Spread diagram). The
+ * choke (2–10) sets how fast the shot cone widens: every `choke` metres the
+ * shot travels, it spreads one more metre to each side AND loses 1 Power while
+ * the attacker's TN drops 1 (wider = easier to hit, but weaker). So at distance
+ * d with choke C: steps = ⌊d/C⌋ → −steps Power, −steps TN, reaching steps+1
+ * metres to each side of the centre line. (Choke 3: 0–3 m no penalty/1 m spread;
+ * 3–6 m −1/−1, 2 m; 6–9 m −2/−2, 3 m.)
+ * @param {number} choke           - 2–10
+ * @param {number} distanceMeters
+ * @returns {{steps:number, powerPenalty:number, tnModifier:number, halfWidthM:number}}
+ */
+export function shotgunSpread(choke, distanceMeters) {
+  const c = Math.min(10, Math.max(2, Math.round(choke || 2)));
+  const steps = Math.max(0, Math.floor(Math.max(0, distanceMeters) / c));
+  return { steps, powerPenalty: steps, tnModifier: -steps || 0, halfWidthM: steps + 1 };
+}
+
+/* ────────────────────────────────────────────────────────────────────────────
+ * Firearm accessories (SR2E p.240–241) and their combat effects (p.88–90)
+ * ──────────────────────────────────────────────────────────────────────────── */
+
+/** Range brackets in order, for scope shifting (Weapon Range Table, p.88). */
+export const RANGE_BRACKETS = ["short", "medium", "long", "extreme"];
+
+/**
+ * Image Modification Systems (SR2E p.88): a magnifying scope shortens the
+ * weapon's range category by its rating — "Long range would change to short
+ * range" for a Rating 2 scope. Short range is the floor.
+ *
+ * @param {string} bracket - Actual range bracket ("short".."extreme").
+ * @param {number} shift   - Scope magnification rating (levels to shift left).
+ * @returns {string} The effective range bracket.
+ */
+export function shiftRangeBracket(bracket, shift) {
+  const i = RANGE_BRACKETS.indexOf(bracket);
+  if (i < 0 || !(shift > 0)) return bracket;
+  return RANGE_BRACKETS[Math.max(0, i - Math.floor(shift))];
+}
+
+/**
+ * Aggregate the mechanical effects of the accessories attached to one weapon.
+ *
+ * Recoil compensation is cumulative across accessories and with the weapon's
+ * own compensation (p.90; the p.92–93 example stacks a Rating 3 gas vent with
+ * a shock pad for 4 points). Bipods/tripods only brace the weapon when set up
+ * (p.240–241), so their compensation is gated on `deployed`.
+ *
+ * The laser sight's −1 is returned separately (`laserMod`): it only works out
+ * to 50 metres and never combines with a smartlink bonus (p.90, p.240) — the
+ * caller applies those gates.
+ *
+ * @param {Array<{system: object}>} accessories - Gear items linked to the weapon.
+ * @param {{deployed?: boolean}} [opts]
+ * @returns {{recoilComp:number, tnMod:number, laserMod:number, gyroRating:number,
+ *            rangeShift:number, grantsSmartgun:boolean, needsDeployment:string[]}}
+ */
+export function accessorySummary(accessories, { deployed = false } = {}) {
+  const out = { recoilComp: 0, tnMod: 0, laserMod: 0, gyroRating: 0,
+                rangeShift: 0, grantsSmartgun: false, needsDeployment: [] };
+  for (const a of accessories) {
+    const s = a.system ?? a;
+    if (s.requiresDeployment) {
+      out.needsDeployment.push(a.name ?? "accessory");
+      if (deployed) out.recoilComp += s.accessoryRecoilComp ?? 0;
+    } else {
+      out.recoilComp += s.accessoryRecoilComp ?? 0;
+    }
+    if (s.laserSight) out.laserMod += s.combatTnMod ?? 0;
+    else              out.tnMod    += s.combatTnMod ?? 0;
+    out.gyroRating = Math.max(out.gyroRating, s.gyroRating ?? 0);
+    out.rangeShift = Math.max(out.rangeShift, s.rangeShift ?? 0);
+    if (s.grantsSmartgun) out.grantsSmartgun = true;
+  }
+  return out;
+}
+
+import { VEHICLE_WEB_NODES, vehicleSkillMatches } from "./vehicle-r2-rules.mjs";
+import { limbOptionPrice } from "./limb-stats.mjs";
+import { MUSCLE, muscleFactor } from "./ware-rules.mjs";
+import { programSizes } from "./vr2-options.mjs";
+// limbOptionCost lives in limb-stats.mjs (with the Cybertechnology limb pricing).
+export { limbOptionCost } from "./limb-stats.mjs";
+
+/**
+ * Gyro-stabilization (SR2E p.90): "The total recoil and movement modifiers
+ * are reduced by −1 for every point of gyro-stabilization the system
+ * provides." Cumulative with recoil compensation (which is applied first via
+ * recoilPenalty); it never reduces non-recoil, non-movement modifiers.
+ *
+ * @param {number} rating        - Gyro mount rating (5 standard / 6 deluxe).
+ * @param {number} recoilPenalty - Net recoil TN penalty after recoil comp.
+ * @param {number} movementMod   - Attacker movement TN modifier (walk/run).
+ * @returns {number} Points of penalty removed (subtract from the TN).
+ */
+export function gyroReduction(rating, recoilPenalty, movementMod) {
+  if (!(rating > 0)) return 0;
+  return Math.min(rating, Math.max(0, recoilPenalty) + Math.max(0, movementMod));
+}
+
+/* ────────────────────────────────────────────────────────────────────────────
+ * Worn armor (SR2E p.242) and heavy-armor Combat Pool reduction (p.84)
+ * ──────────────────────────────────────────────────────────────────────────── */
+
+/** Layered armor detection: explicit flag, or the two book exceptions —
+ * helmets "add [their] rating to other exterior armor" (p.242) and
+ * form-fitting body armor layers under other armor (SSC). */
+function isLayeredArmor(item) {
+  return !!item.system?.isLayered || /helmet|form.?fit/i.test(item.name ?? "");
+}
+
+/**
+ * Total worn armor (SR2E p.242): "No matter how many pieces of armor are
+ * worn, only the highest rating counts for Damage Resistance Tests."
+ * Layered pieces (helmets, form-fitting body armor) ADD to that highest
+ * rating instead. Ballistic and impact are evaluated independently.
+ *
+ * @param {Array<{name?:string, system:{ballistic?:number, impact?:number,
+ *                isLayered?:boolean, equipped?:boolean}}>} items
+ *        Equipped armor items (pre-filtered by the caller).
+ * @returns {{ballistic:number, impact:number}}
+ */
+export function wornArmorTotals(items) {
+  let bBest = 0, iBest = 0, bAdd = 0, iAdd = 0;
+  for (const a of items) {
+    const s = a.system ?? a;
+    if (isLayeredArmor(a)) {
+      bAdd += s.ballistic || 0;
+      iAdd += s.impact || 0;
+    } else {
+      bBest = Math.max(bBest, s.ballistic || 0);
+      iBest = Math.max(iBest, s.impact || 0);
+    }
+  }
+  return { ballistic: bBest + bAdd, impact: iBest + iAdd };
+}
+
+/**
+ * Heavy-armor Combat Pool reduction (SR2E p.84): partial or full heavy armor
+ * reduces the Combat Pool by 1 die for every point of Ballistic Armor Rating
+ * over the wearer's Quickness.
+ *
+ * @param {number} quickness - Wearer's Quickness rating.
+ * @param {Array<{system:{ballistic?:number, heavyArmor?:boolean}}>} items
+ *        Equipped armor items (pre-filtered by the caller).
+ * @returns {number} Dice removed from the Combat Pool (≥ 0).
+ */
+export function heavyArmorPoolPenalty(quickness, items) {
+  let penalty = 0;
+  for (const a of items) {
+    const s = a.system ?? a;
+    // Flag, with a name fallback so pre-0.26 world copies still count
+    if (!s.heavyArmor && !/heavy armor|military armor/i.test(a.name ?? "")) continue;
+    penalty += Math.max(0, (s.ballistic || 0) - Math.max(0, quickness));
+  }
+  return penalty;
+}
+
+/**
+ * Concentration/Specialization ratings from the FINAL general skill rating
+ * (SR2E p.55, p.70). Allocating 5 points with a Specialization yields
+ * general 3 / concentration 5 / specialization 7 — so concentration rolls
+ * general + 2 and specialization general + 4.
+ *
+ * @param {number} general - The skill's final (already reduced) general rating.
+ * @returns {{concentration:number, specialization:number}}
+ */
+export function skillSubRatings(general) {
+  const g = Math.max(0, general || 0);
+  return { concentration: g + 2, specialization: g + 4 };
+}
+
+/**
+ * Language skills are an exception (SR2E p.74): "each specific language is a
+ * Specialization of a family of languages". So the skill you write on the sheet
+ * is the SPECIALIZATION, and the family is the general skill under it —
+ * "a skill rating of 4 less than the Language Rating itself. Any modified
+ * rating less than 1 is treated as a 1."
+ *
+ * TWO separate increases apply, per the GM's ruling (futurekill, 2026-07-31):
+ *
+ *   +2  ALWAYS — a language IS a Specialization (p.74), and "use of a
+ *       Specialized skill adds +2 to the original general skill rating" (p.70).
+ *       This applies to a LinguaSoft too: p.248 says a chip "replicates Language
+ *       Skills", and a Language Skill is specialized by definition.
+ *   +2  MORE at character generation — p.74's "the Specialization Ratings
+ *       automatically increase by +2", read as an ADDITIONAL bonus on top of the
+ *       structural one, representing a native speaker's fluency and cultural
+ *       insight rather than a language picked up later.
+ *
+ * The family is then 4 below whatever the language ends up at, floored at 1.
+ *
+ *   Spanish 1, chip or learned later  → Spanish 3, family 1
+ *   Spanish 1 at chargen              → Spanish 5, family 1
+ *   Spanish 5 at chargen              → Spanish 9, family 5
+ *
+ * This is a RULING on an ambiguous passage, not a transcription. The argument
+ * against is that p.70 says specializing REDUCES the general by 2, and under a
+ * single-+2 reading the family lands at rating−2 (matching p.70) rather than at
+ * the rating itself. The GM weighed that and chose the two-bonus reading; the
+ * reasoning for both sides is in docs/archive/plans/PLAN-language-skills.md.
+ *
+ * @param {number} rating - The rating as bought/entered.
+ * @param {boolean} [chargen] - Taken at character generation (the extra +2).
+ * @returns {{language:number, family:number}}
+ */
+/**
+ * The dice a skill rolls by default. Every skill rolls its rating, except a
+ * language, which rolls the derived spoken rating (SR2E p.74 — see
+ * `languageSkillRatings`). One helper so the roll and the prompt that seeds the
+ * Karma cap can't disagree about the number.
+ * @param {object} system - A skill item's system data (prepared).
+ * @returns {number}
+ */
+export function skillRollRating(system) {
+  if (!system) return 0;
+  if (system.category === "language" && system.languageRating > 0) return system.languageRating;
+  return system.rating ?? 0;
+}
+
+export function languageSkillRatings(rating, chargen = true) {
+  const r = Math.max(0, rating || 0);
+  // An untrained language (rating 0) stays 0 so the defaulting path still fires;
+  // the +2 is for a language you actually took.
+  if (r <= 0) return { language: 0, family: 0 };
+  // +2 for being a specialization at all, +2 again for a native speaker.
+  const language = r + 2 + (chargen ? 2 : 0);
+  return { language, family: Math.max(1, language - 4) };
+}
+
+/**
+ * Street price of an item: base cost × Street Index, rounded to the nearest
+ * nuyen (SR2E p.238: legal-channel prices are list; the street marks gear up
+ * or down by its Street Index). SI ≤ 0 / missing means "no street market
+ * data" and is treated as list price.
+ *
+ * @param {number} cost - Base (list) cost in nuyen.
+ * @param {number|string} streetIndex - Street Index multiplier.
+ * @returns {number}
+ */
+export function streetPrice(cost, streetIndex) {
+  const si = parseFloat(streetIndex);
+  const c = Math.max(0, cost || 0);
+  return (si > 0) ? Math.round(c * si) : c;
+}
+
+/* ────────────────────────────────────────────────────────────────────────────
+ * Knockdown / stopping power (SR2E p.91)
+ * ──────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * Knockdown Body-Test target number (SR2E p.91): one-half the attack's Power,
+ * rounded down. Gel rounds instead use the FULL Power (they knock down more
+ * readily). Minimum 2.
+ * @param {number} power
+ * @param {boolean} [gel=false]
+ * @returns {number}
+ */
+export function knockdownTN(power, gel = false) {
+  const p = Math.max(0, power || 0);
+  return Math.max(2, gel ? p : Math.floor(p / 2));
+}
+
+/**
+ * Knockdown Threshold (SR2E p.91, p.103): half the damage done, i.e. Light 1 /
+ * Moderate 2 / Serious 3. The character must OVERCOME it — "a character who has
+ * taken a Moderate wound must generate more than 2 successes". Deadly always
+ * knocks down (Infinity — unreachable).
+ * @param {"L"|"M"|"S"|"D"} level
+ * @returns {number}
+ */
+export function knockdownThreshold(level) {
+  const boxes = kdBoxes(level);
+  return boxes >= 10 ? Infinity : Math.max(1, Math.ceil(boxes / 2));
+}
+
+/**
+ * Knockdown works on the damage actually DEALT: a level letter (L/M/S/D = 1/3/6/10
+ * boxes) or a landed box count, e.g. what's left after Kamikaze absorbs some
+ * (Shadowtech p.99). "Half the damage" is ⌈boxes ÷ 2⌉, which is exactly the
+ * book's 1/2/3 for Light/Moderate/Serious; only a full 10 boxes is Deadly.
+ */
+const kdBoxes = (x) => typeof x === "number" ? x : ({ L: 1, M: 3, S: 6, D: 10 }[x] ?? 1);
+
+/**
+ * Resolve a knockdown Body Test (SR2E p.91). A Deadly wound always drops the
+ * target; otherwise: successes > threshold = no effect, 0 successes = prone,
+ * anything between (1..threshold) = a 1-metre stagger (still standing).
+ * @param {"L"|"M"|"S"|"D"} level - the damage level actually dealt
+ * @param {number} successes - Body Test successes
+ * @returns {"none"|"stagger"|"prone"}
+ */
+export function knockdownOutcome(level, successes) {
+  if (kdBoxes(level) >= 10) return "prone";
+  const s = Math.max(0, successes || 0);
+  if (s === 0) return "prone";
+  if (s > knockdownThreshold(level)) return "none";
+  return "stagger";
+}
+
+/**
+ * Reaction base (SR2E p.60): ⌊(Quickness + Intelligence) / 2⌋. Quickness gained
+ * from Muscle Replacement / Muscle Augmentation is EXCLUDED — "this change does
+ * not affect Reaction" (p.249) — though it still counts for Combat Pool and
+ * skill tests.
+ * @param {number} quickness - augmented Quickness value
+ * @param {number} intelligence - augmented Intelligence value
+ * @param {number} [exemptQuickness=0] - Quickness from muscle aug that must not feed Reaction
+ * @returns {number}
+ */
+export function reactionBase(quickness, intelligence, exemptQuickness = 0) {
+  return Math.floor((Math.max(0, quickness - exemptQuickness) + intelligence) / 2);
+}
+
+/** Item types whose nuyen cost counts against the chargen Resources budget. */
+export const CHARGEN_RESOURCE_TYPES = ["weapon", "armor", "gear", "ammo", "cyberware", "bioware", "focus", "lifestyle"];
+
+/**
+ * An attribute's natural, unaugmented rating: what the character has before any
+ * cyber/bio/adept/Active-Effect modifier.
+ *
+ * The two Companion Attribute Edges (p.24) both land here rather than in the
+ * modifier total, because the book bounds them the way it bounds the natural
+ * rating and a modifier would escape the clamp:
+ *  - **Bonus Attribute Point** (`edgeBonus`) raises the RATING, and "cannot
+ *    raise the Attribute Ratings of characters beyond the racial maximums."
+ *  - **Exceptional Attribute** (`maxBonus`) raises that attribute's racial
+ *    MAXIMUM by 1 and explicitly does NOT raise the rating with it.
+ *
+ * Pass `racialMax = null` for an attribute with no published maximum, which
+ * leaves the rating unclamped.
+ *
+ * @param {number} base - the rating bought at character creation
+ * @param {number} [racial=0] - the metatype's modifier
+ * @param {number} [edgeBonus=0] - Bonus Attribute Points applied to this attribute
+ * @param {number|null} [racialMax=null] - the metatype's maximum, or null for none
+ * @param {number} [maxBonus=0] - Exceptional Attribute's raise to that maximum
+ * @returns {number}
+ */
+export function naturalAttribute(base, racial = 0, edgeBonus = 0, racialMax = null, maxBonus = 0) {
+  const natural = (Number(base) || 0) + (Number(racial) || 0) + (Number(edgeBonus) || 0);
+  if (racialMax === null || racialMax === undefined) return natural;
+  return Math.min(natural, (Number(racialMax) || 0) + (Number(maxBonus) || 0));
+}
+
+/**
+ * Whether two ammo items are the same pile and may be merged.
+ *
+ * Shape equality is ALWAYS required — a shared compendium source never
+ * overrides it, because the drop path is `fromUuid().toObject()` + create and
+ * nothing guarantees `compendiumSource` is populated (packs-src has it null).
+ * Two *conflicting* sources block the merge; a missing source on either side
+ * falls back to shape alone.
+ *
+ * `cost` is part of the shape: for ammo it means "price of this whole bundle",
+ * so a 10-round box at 15¥ and a 50-round belt at 100¥ are NOT the same pile
+ * even if they fire identically.
+ *
+ * @param {object} a - plain ammo data: {src, name, ammoType, damageModifier, armorModifier, damageType, armorCalc, streetIndex, cost}
+ * @param {object} b
+ * @returns {boolean}
+ */
+export function ammoStacks(a, b) {
+  if (!a || !b) return false;
+  const SHAPE = ["name", "ammoType", "damageModifier", "armorModifier",
+                 "damageType", "armorCalc", "streetIndex", "cost"];
+  const sameShape = SHAPE.every((k) => (a[k] ?? null) === (b[k] ?? null));
+  if (!sameShape) return false;
+  // Both sides carry a source: they must agree. Otherwise shape alone decides.
+  if (a.src && b.src) return a.src === b.src;
+  return true;
+}
+
+/**
+ * Whether an update re-opening character creation must be refused.
+ *
+ * "Creation in progress" is one-way for players: they may finish creation, but
+ * only a GM may reopen it. The flag is not cosmetic — while it's set, purchases
+ * are auto-charged at LIST price with no Street Index markup, so re-opening
+ * creation restores book prices mid-campaign and is a GM call.
+ *
+ * Only the off -> on transition is blocked; turning it off, a GM doing anything,
+ * and updates that leave the flag alone (`next === undefined`) all pass.
+ *
+ * Pure so it can be tested without Foundry — the veto itself lives in the
+ * preUpdateActor hook, and Quench can't cover it because Quench runs as a GM.
+ *
+ * @param {boolean} isGM
+ * @param {boolean} current - the flag's stored value
+ * @param {boolean|undefined} next - the flag's incoming value, if the update sets it
+ * @returns {boolean} true if the update should be vetoed
+ */
+export function blocksChargenReopen(isGM, current, next) {
+  if (isGM) return false;
+  return next === true && current === false;
+}
+
+/**
+ * System-owned fields that were added to item schemas AFTER content shipped, and
+ * whose absence on an embedded copy is silently invisible (the feature just does
+ * nothing). Foundry never updates a compendium item already on a character, so a
+ * copy dragged before the field existed keeps the schema default forever. The
+ * repair tool re-stamps ONLY these, and only from a resolved compendium source.
+ *
+ * Each entry is [itemType, fieldPath, schemaDefault]. Keep this list in step with
+ * the schemas in item-data.mjs when a new mechanical field lands on old content.
+ */
+// NUMBER fields only, where the schema default 0 unambiguously means "this
+// feature is absent" on an item whose identity makes the bonus mandatory (a lace
+// with no unarmed Power, Enhanced Articulation with no die — both nonsensical).
+// A boolean like isTacticalComputer is deliberately EXCLUDED: default `false` is
+// indistinguishable from a GM who turned it off, so repairing it could re-enable
+// something disabled on purpose (Codex).
+export const REPAIRABLE_IMPLANT_FIELDS = Object.freeze([
+  ["cyberware", "unarmedPowerBonus", 0],  // 0.38.0 — bone lacing (Shadowtech p.42)
+  ["bioware",   "activeSkillDice", 0]      // 0.38.0 — Enhanced Articulation (Shadowtech p.34)
+]);
+
+/**
+ * Decide the repaired value for one field of a stale embedded implant, or null
+ * to leave it alone.
+ *
+ * The rule: re-stamp ONLY when the embedded copy still holds the schema default
+ * AND the source has a different, real value to restore. The default is a *proxy*
+ * for "predates the field", not a proof — a GM who deliberately set the default
+ * is indistinguishable — so this is confined to number fields where the default
+ * (0) is nonsensical for the item that carries it (a bone lace worth 0 unarmed
+ * Power), and it always runs dry-run first for the GM to review. It will not
+ * touch a field the GM has moved off the default.
+ *
+ * A source value equal to the default carries no information, so it's skipped:
+ * plenty of cyberware legitimately has `unarmedPowerBonus: 0`.
+ *
+ * @param {*} embedded - the field's value on the character's copy
+ * @param {*} source - the field's value in the current compendium item
+ * @param {*} schemaDefault - the field's schema initial
+ * @returns {*|null} the value to write, or null for "leave it"
+ */
+export function repairedFieldValue(embedded, source, schemaDefault) {
+  if (embedded !== schemaDefault) return null;          // GM has a value here — hands off
+  if (source === schemaDefault || source === undefined || source === null) return null;
+  if (source === embedded) return null;                 // nothing would change
+  return source;
+}
+
+/** "Players can take no more than 5 bonus Attribute Points." (Companion p.24) */
+export const MAX_BONUS_ATTRIBUTE_POINTS = 5;
+
+/**
+ * The two limits the Companion places on the Attribute Edges (p.24), checked
+ * against a character's quality items.
+ *
+ * Both are unqualified: "Players can take no more than 5 bonus Attribute
+ * Points," and "Player characters can take Exceptional Attribute only once per
+ * Attribute." The book's one GM override — "Unless authorized by the
+ * gamemaster" — attaches solely to *exceeding racial maximums*, so it does not
+ * license going past either of these. They're still only reported, never
+ * blocked: the whole chargen panel is informational (see the sheet), and a GM
+ * who wants to break a rule shouldn't have to fight the sheet to do it.
+ *
+ * Only Edges with an `attribute` set are counted — one without a target does
+ * nothing mechanically, so charging it against the cap would be a false alarm.
+ *
+ * @param {{attribute?:string, attributeBonus?:number, maximumBonus?:number}[]} [qualities]
+ * @returns {{bonusTotal:number, bonusOverCap:boolean, exceptionalRepeats:string[]}}
+ */
+export function attributeEdgeViolations(qualities = []) {
+  const applied = qualities.filter((q) => q?.attribute);
+  const bonusTotal = applied.reduce((s, q) => s + (Number(q.attributeBonus) || 0), 0);
+  const maxByAttr = {};
+  for (const q of applied) {
+    const raise = Number(q.maximumBonus) || 0;
+    if (raise) maxByAttr[q.attribute] = (maxByAttr[q.attribute] ?? 0) + raise;
+  }
+  return {
+    bonusTotal,
+    bonusOverCap: bonusTotal > MAX_BONUS_ATTRIBUTE_POINTS,
+    exceptionalRepeats: Object.keys(maxByAttr).filter((a) => maxByAttr[a] > 1).sort()
+  };
+}
+
+/** Starting money (SR2E p.47): unspent Resource nuyen at 10:1, plus 3D6 × 1,000¥. */
+export function startingMoney(unspentResources, roll3d6) {
+  return Math.floor(Math.max(0, Number(unspentResources) || 0) / 10) + Math.max(0, Number(roll3d6) || 0) * 1000;
+}
+
+/**
+ * Chargen resource cost of a single owned item.
+ *
+ * Normal gear is `itemBaseCost × quantity`. **Ammo is the exception:** its `cost`
+ * is the price of the whole bundle (a 15¥ box of 10), so multiplying by quantity
+ * (the round count) 10×-counts it. Ammo is priced by its recorded acquisition
+ * value — what it cost when bought — falling back to one bundle's `itemBaseCost`
+ * for legacy ammo with no recorded basis.
+ *
+ * @param {object} i - projected item: {type, cost, rating, grade, ratingStats,
+ *                     quantity, acquiredListValue?}
+ * @param {object} [ctx] - itemBaseCost context (vr2 etc.)
+ * @returns {number}
+ */
+export function chargenItemCost(i, ctx = {}) {
+  // Ammo and drug packs (a six-dose inhaler) are priced per package, not per unit.
+  if (i?.type === "ammo" || i?.drug) {
+    return (typeof i.acquiredListValue === "number") ? i.acquiredListValue : itemBaseCost(i, ctx);
+  }
+  // A projection may carry its own ware context (single eye, muscle discount).
+  const c = i?.wareRule ? { ...ctx, wareRule: i.wareRule, fullCyberlimbs: i.fullCyberlimbs } : ctx;
+  // Eye accessories bought into a cybereye count at their list price, after the eye's own.
+  return itemBaseCost(i, c) * (i?.quantity ?? 1) + (Number(i?.moduleListValue) || 0);
+}
+
+/**
+ * Sell-back refund for a depleting item (ammo): proportional to how much is left,
+ * capped at what was paid.
+ *
+ * Fixes the free-ammo exploit — buy a box, fire/reload it empty, sell the box
+ * back for its full price. Refund = paid × currentQuantity / acquiredQuantity, so
+ * an emptied box refunds 0 and a half-used one refunds half. The `min(paid, …)`
+ * cap stops a GM quantity-inflation from refunding more than was ever paid, and
+ * `acquiredQuantity === 0` (missing basis) refunds 0 rather than dividing by zero.
+ *
+ * @param {{paid?:number, acquiredQuantity?:number, currentQuantity?:number}} o
+ * @returns {number}
+ */
+export function proportionalRefund({ paid = 0, acquiredQuantity = 0, currentQuantity = 0 } = {}) {
+  const aq = Number(acquiredQuantity) || 0;
+  if (aq <= 0) return 0;
+  const cq = Math.max(0, Number(currentQuantity) || 0);
+  const p = Math.max(0, Number(paid) || 0);
+  return Math.min(p, Math.floor(p * cq / aq));
+}
+
+/**
+ * Character-creation point spend per category, versus the allotment granted by
+ * the chosen priorities (SR2E p.44–45). Pure counting — the caller pulls plain
+ * data off the actor so this stays testable.
+ *
+ * - Attributes: sum of the six Physical/Mental **base** ratings. Reaction,
+ *   Essence and Magic are Special Attributes (not bought), so they're excluded.
+ *   Bonus Attribute Points (Companion p.24) are bought with Edge, not with the
+ *   attribute budget; they live outside `base` (see naturalAttribute) and so are
+ *   excluded here for free.
+ * - Skills: every skill costs Skill Points — "any skills from the Skills chapter"
+ *   (SR2E p.46; GitHub #19), Special skills with GM approval. Only the languages
+ *   p.46 gives for free are not charged: the native language and a Street
+ *   lifestyle's local dialect (`freeLanguage`).
+ * - Resources: sum of gear cost via chargenItemCost (list price, no Street Index;
+ *   ammo priced by bundle, not ×rounds).
+ * - Force Points (magicians only): sum of spell Force + focus Bonding cost.
+ *
+ * @param {object} data
+ * @param {{base:number}[]} [data.attributes] - the six physical/mental attributes
+ * @param {{category:string, rating:number}[]} [data.skills]
+ * @param {{type:string, cost:number, rating?:number, grade?:string, ratingStats?:Array,
+ *          quantity?:number, force?:number, bondingCost?:number}[]} [data.items]
+ * @param {{attributes?:number, skills?:number, resources?:number, forcePoints?:number}} [allot]
+ * @returns {{attributes:object, skills:object, resources:object, forcePoints:object}}
+ *          each row is {spent, total, remaining, over}
+ */
+export function chargenSpend({ attributes = [], skills = [], items = [] } = {}, allot = {}) {
+  const attrSpent = attributes.reduce((s, a) => s + (a.base ?? 0), 0);
+  // The ALLOCATION, not the reduced general (SR2E p.70). Summing `rating`
+  // refunded 1 skill point for every concentration and 2 for every
+  // specialization, repeatable on every skill.
+  const skillSpent = skills
+    .filter((k) => !(k.category === "language" && k.freeLanguage))
+    .reduce((s, k) => s + skillChargenSpend(k), 0);
+  // Price each item through chargenItemCost: itemBaseCost × quantity for normal
+  // gear, but ammo's `cost` is the price of the WHOLE bundle, so multiplying by
+  // quantity (rounds) 10×-counted it.
+  const resSpent = items
+    .filter((i) => CHARGEN_RESOURCE_TYPES.includes(i.type))
+    .reduce((s, i) => s + chargenItemCost(i), 0);
+  const forceSpent = items.reduce((s, i) => {
+    if (i.type === "spell") return s + (i.force ?? 0);
+    if (i.type === "focus") return s + (i.bondingCost ?? 0);
+    return s;
+  }, 0);
+  const row = (spent, total) => ({ spent, total, remaining: total - spent, over: spent > total });
+  return {
+    attributes:  row(attrSpent, allot.attributes ?? 0),
+    skills:      row(skillSpent, allot.skills ?? 0),
+    resources:   row(resSpent, allot.resources ?? 0),
+    forcePoints: row(forceSpent, allot.forcePoints ?? 0)
+  };
+}
+
+/**
+ * Power-point cost of a single physical-adept power (SR2E p.124–126). Most
+ * powers are linear (pointCost × level), but two are not:
+ *  - **Increased Reflexes**: 1 / 4 / 6 total for 1 / 2 / 3 Initiative dice (p.126).
+ *  - **Increased Reaction**: tiered by how the bonus compares to the racial
+ *    Reaction maximum — 0.5/+1 up to ½ max, 1/+1 up to max, 2/+1 up to 1.5×max.
+ * Identified by name so the compendium data can stay simple.
+ *
+ * @param {{name?:string, pointCost?:number, level?:number}} power
+ * @param {number} [racialReactionMax=6] - the adept's racial Reaction maximum
+ * @returns {number} power points spent on this power
+ */
+export function adeptPowerCost(power, racialReactionMax = 6) {
+  const level = Math.max(1, power.level ?? 1);
+  const name = power.name ?? "";
+  if (/increased reflexes/i.test(name)) {
+    return [1, 4, 6][Math.min(level, 3) - 1] ?? 6;
+  }
+  if (/increased reaction/i.test(name)) {
+    const half = Math.floor(racialReactionMax / 2);
+    let cost = 0;
+    for (let i = 1; i <= level; i++) {
+      if (i <= half) cost += 0.5;
+      else if (i <= racialReactionMax) cost += 1;
+      else cost += 2;
+    }
+    return cost;
+  }
+  return (power.pointCost ?? 0) * level;
+}
+
+// ───────────────────────────────────────────────────────────────────────────
+// VIRTUAL REALITIES 2.0 — Matrix 2.0 primitives (FASA7904)
+//
+// Pure rules for the optional VR2.0 Matrix ruleset. These are inert until the
+// `matrixRuleset` world setting is "vr2"; the core-book Matrix is unchanged.
+// All values verified against the VR2.0 PDF / docs/AUDIT-VR2.md (page cites).
+// ───────────────────────────────────────────────────────────────────────────
+
+/** Cybercombat Target Numbers Table (VR2.0 p.123): TN by host Security Code
+ *  and the target icon's status. */
+export const CYBERCOMBAT_TN = {
+  blue:   { intruding: 6, legitimate: 3 },
+  green:  { intruding: 5, legitimate: 4 },
+  orange: { intruding: 4, legitimate: 5 },
+  red:    { intruding: 3, legitimate: 6 }
+};
+
+/**
+ * Cybercombat attack target number (VR2.0 p.123). Depends only on the host's
+ * Security Code and whether the target icon is intruding or legitimate — not on
+ * the target's Bod or the node's numeric rating.
+ * @param {"blue"|"green"|"orange"|"red"} securityCode
+ * @param {"intruding"|"legitimate"} [iconStatus="intruding"]
+ * @returns {number}
+ */
+export function cybercombatTN(securityCode, iconStatus = "intruding") {
+  return CYBERCOMBAT_TN[securityCode]?.[iconStatus] ?? 4;
+}
+
+/**
+ * IC attack Damage Level, fixed by the host's Security Code before staging
+ * (VR2.0 IC Damage Table, p.124): Blue/Green = Moderate, Orange/Red = Serious.
+ * @param {"blue"|"green"|"orange"|"red"} securityCode
+ * @returns {"M"|"S"}
+ */
+export function icDamageLevel(securityCode) {
+  return (securityCode === "orange" || securityCode === "red") ? "S" : "M";
+}
+
+/**
+ * Dump-shock Stun Damage Code (VR2.0 p.124). Power = the host's Security Value,
+ * Damage Level from the Dump Shock Damage Levels table (Blue L / Green M /
+ * Orange S / Red D). A cool deck and ICCM each cut Power by 2 and the Level by
+ * one step (they stack); tortoise users are immune. Returns null when there is
+ * no effective damage (immune or fully mitigated).
+ * @param {"blue"|"green"|"orange"|"red"} securityCode
+ * @param {number} securityValue - host Security Value (the damage Power)
+ * @param {{coolDeck?:boolean, iccm?:boolean, tortoise?:boolean}} [opts]
+ * @returns {{power:number, level:"L"|"M"|"S"|"D", type:"stun"}|null}
+ */
+export function dumpShockDamage(securityCode, securityValue, opts = {}) {
+  if (opts.tortoise) return null;                       // immune (p.124)
+  const baseIdx = { blue: 0, green: 1, orange: 2, red: 3 }[securityCode];
+  if (baseIdx == null) return null;
+  let power = securityValue;
+  let levelIdx = baseIdx;
+  if (opts.coolDeck) { power -= 2; levelIdx -= 1; }
+  if (opts.iccm)     { power -= 2; levelIdx -= 1; }
+  if (power <= 0 || levelIdx < 0) return null;          // fully mitigated
+  return { power, level: DAMAGE_LEVELS[Math.min(levelIdx, 3)], type: "stun" };
+}
+
+/**
+ * Detection Factor (VR2.0 p.17–18): the average (round up) of the decker's
+ * Masking rating and the rating of a running Sleaze-type utility. Gates
+ * proactive System Tests against the decker.
+ * @param {number} masking
+ * @param {number} [sleazeRating=0] - rating of a running Sleaze utility (0 if none)
+ * @returns {number}
+ */
+export function detectionFactor(masking, sleazeRating = 0) {
+  return Math.ceil((masking + sleazeRating) / 2);
+}
+
+/**
+ * Program price multiplier tier (VR2.0 Program Prices Table, p.107): the flat
+ * ×100 of the core book becomes a rating-banded multiplier.
+ * @param {number} rating
+ * @returns {100|200|500|1000}
+ */
+export function matrixProgramMultiplierVR2(rating) {
+  if (rating >= 10) return 1000;
+  if (rating >= 7)  return 500;
+  if (rating >= 4)  return 200;
+  return 100;
+}
+
+/**
+ * VR2.0 program price (p.107): size (Rating² × sizeMultiplier) × the banded
+ * price multiplier for the rating.
+ * @param {number} rating
+ * @param {number} sizeMultiplier - the program's per-type size factor
+ * @returns {number}
+ */
+export function programCostVR2(rating, sizeMultiplier) {
+  return programSize(rating, sizeMultiplier) * matrixProgramMultiplierVR2(rating);
+}
+
+/**
+ * VR2.0 program Street Index (p.107): 1 / 1.5 / 2 / 3 by rating band.
+ * @param {number} rating
+ * @returns {1|1.5|2|3}
+ */
+export function programStreetIndexVR2(rating) {
+  if (rating >= 10) return 3;
+  if (rating >= 7)  return 2;
+  if (rating >= 4)  return 1.5;
+  return 1;
+}
+
+/** VR2.0 Condition Monitor Table (p.124): boxes an icon fills per Damage Level.
+ *  Note this differs from the meat-body track (L1/M3/S6/D10). */
+export const MATRIX_CONDITION_BOXES = { L: 1, M: 2, S: 3, D: 6 };
+
+/**
+ * Boxes a Matrix icon's Condition Monitor fills for a Damage Level (VR2.0 p.124).
+ * @param {"L"|"M"|"S"|"D"} level
+ * @returns {number}
+ */
+export function matrixConditionBoxes(level) {
+  return MATRIX_CONDITION_BOXES[level] ?? 0;
+}
+
+/**
+ * Resolve a VR2.0 cybercombat hit (p.123–124). The attack has a base Damage
+ * Level; the attacker's successes stage it UP (1 level per 2, clamped at
+ * Deadly), then the target's Damage Resistance successes stage it DOWN (1 per
+ * 2). Returns the final level and the Condition-Monitor boxes it fills, or
+ * {level:null, boxes:0} when fully resisted (staged below Light). The Power /
+ * armor-utility reduction is handled at roll time (it sets the resist TN); this
+ * pure helper only stages the level.
+ * @param {"L"|"M"|"S"|"D"} baseLevel
+ * @param {number} attackerSuccesses
+ * @param {number} resistSuccesses
+ * @returns {{level:("L"|"M"|"S"|"D"|null), boxes:number}}
+ */
+export function matrixCombatOutcome(baseLevel, attackerSuccesses, resistSuccesses) {
+  const staged = stageLevel(baseLevel, netToSteps(attackerSuccesses));  // up, clamps at D
+  const idx = DAMAGE_LEVELS.indexOf(staged) - netToSteps(resistSuccesses);
+  if (idx < 0) return { level: null, boxes: 0 };
+  const level = DAMAGE_LEVELS[idx];
+  return { level, boxes: matrixConditionBoxes(level) };
+}
+
+/** VR2.0 flat Condition Monitor size — every icon has 10 boxes (p.123). */
+export const MATRIX_MONITOR_MAX = 10;
+
+/** Simsense-overload Willpower-test TN by the icon's Damage Level (VR2.0 p.124,
+ *  Overload Damage Target Numbers). Deadly auto-crashes (no test) → null. */
+export const SIMSENSE_OVERLOAD_TN = { L: 2, M: 3, S: 5 };
+
+/**
+ * Willpower-test TN a decker resists simsense overload at, from white/gray IC
+ * (VR2.0 p.124). Returns null for Deadly (the icon auto-crashes and the decker
+ * is dumped instead of testing). Hot-DNI +2 and ICCM −2 are applied at roll
+ * time.
+ * @param {"L"|"M"|"S"|"D"} level
+ * @returns {number|null}
+ */
+export function simsenseOverloadTN(level) {
+  return SIMSENSE_OVERLOAD_TN[level] ?? null;
+}
+
+/** IC initiative dice by host Security Code (VR2.0 p.120): Blue 1 … Red 4 D6, + IC Rating. */
+export function icInitiativeDice(securityCode) {
+  return { blue: 1, green: 2, orange: 3, red: 4 }[securityCode] ?? 1;
+}
+
+/**
+ * Outcome of an opposed VR2.0 System Test (p.19): the decker succeeds with MORE
+ * successes than the host; win or lose, the host's successes go on the tally.
+ * @returns {{success:boolean, tally:number}}
+ */
+export function systemTestVerdict(deckerSuccesses, hostSuccesses) {
+  const d = Number(deckerSuccesses) || 0, h = Number(hostSuccesses) || 0;
+  return { success: d > h, tally: h };
+}
+
+/** Size multiplier of an attack utility by its Damage Level (VR2.0 p.98): L2 / M3 / S4 / D5; null for none. */
+export function attackMultiplier(level) {
+  return { L: 2, M: 3, S: 4, D: 5 }[level] ?? null;
+}
+
+/** Persona programs may total no more than MPCP × 3 (VR2.0 p.84). How far over, or 0. */
+export function personaBudgetOver(bems, mpcp) {
+  return Math.max(0, (Number(bems) || 0) - 3 * (Number(mpcp) || 0));
+}
+
+// ── VR2.0 part 2 (docs/archive/plans/PLAN-vr2-part2.md) ──────────────────────────────────────
+
+/** An IC program's class (VR2.0 p.40–43): killer and cripplers are white; otherwise the authored type. */
+export function icClass(program, icType = "white") {
+  const p = String(program ?? "");
+  if (p.startsWith("black-")) return "black";
+  if (p === "blaster" || p === "sparky" || p === "tar-pit" || p.startsWith("ripper-")) return "gray";
+  if (p) return "white";   // killer, cripplers, tar baby, trace, data bomb, scramble, worm (p.41–45)
+  return icType || "white";
+}
+
+/** The attribute a crippler attacks (p.41). */
+export const CRIPPLER_ATTRIBUTE = { "crippler-acid": "bod", "crippler-binder": "evasion",
+  "crippler-jammer": "sensor", "crippler-marker": "masking",
+  // Rippers attack the same way, then damage the persona chip (p.43; VR2.0 part 3).
+  "ripper-acid": "bod", "ripper-bind": "evasion", "ripper-jam": "sensor", "ripper-mark": "masking" };
+
+/**
+ * Combat maneuver TNs (p.122): the maneuverer rolls Evasion vs the opponent's Sensor less
+ * its own Cloak; the opponent rolls Sensor vs the maneuverer's Evasion less its Lock-On.
+ */
+export function maneuverTNs({ evasion, sensor, cloak = 0, lockOn = 0 }) {
+  return { maneuverer: Math.max(2, (sensor || 0) - (cloak || 0)), opponent: Math.max(2, (evasion || 0) - (lockOn || 0)) };
+}
+
+/**
+ * Who a combat maneuver benefits (p.122). Evade and parry need the maneuverer to win
+ * (more successes, at least one); a position attack goes to whichever side wins.
+ * @returns {{beneficiary: "maneuverer"|"opponent", net: number}|null}
+ */
+export function maneuverOutcome(kind, mS, oS) {
+  const m = Number(mS) || 0, o = Number(oS) || 0;
+  if (m > 0 && m > o) return { beneficiary: "maneuverer", net: m - o };
+  if (kind === "position" && o > m) return { beneficiary: "opponent", net: o - m };
+  return null;
+}
+
+/** An improvised attack's Damage Level by build successes (p.123): 1 L, 2 M, 3 S, 4+ D. */
+export function improvisedLevel(successes) {
+  const n = Number(successes) || 0;
+  return n <= 0 ? null : ["L", "M", "S", "D"][Math.min(n, 4) - 1];
+}
+
+/** Medic utility TN (p.100) by filled boxes (user ruling: 1 L, 2 M, 3+ S); null at 0. */
+export function medicTN(boxes) {
+  const n = Number(boxes) || 0;
+  return n <= 0 ? null : n === 1 ? 4 : n === 2 ? 5 : 6;
+}
+
+/** The sheaf rows a tally change crosses (p.150): old < step ≤ new, in step order. */
+export function sheafCrossed(rows, oldTally, newTally) {
+  return (rows ?? []).filter(r => r.step > oldTally && r.step <= newTally).sort((a, b) => a.step - b.step);
+}
+
+/** Attribute points an attack actually takes (p.41, p.98): never below its floor. */
+export function attributeLoss(value, points, floor = 0) {
+  const v = Number(value) || 0, p = Math.max(0, Number(points) || 0);
+  return v > floor ? v - Math.max(floor, v - p) : 0;
+}
+
+// ───────────────────────────────────────────────────────────────────────────
+// SKILL WEB defaulting (SR2E p.68–69)
+//
+// The web is a DIRECTED graph. Two ways to default, each adding +2 per circle
+// crossed along the cheapest legal (arrow-respecting) path:
+//   • related skill — trace from the desired skill → a skill the character has
+//   • attribute     — trace from an attribute → the desired skill
+// Some skills "simply do not connect" (p.69) → no default possible (null).
+// The graph DATA lives in CONFIG.SR2E.skillWeb; this algorithm is pure so it can
+// be unit-tested with a fixture and with the real web.
+// ───────────────────────────────────────────────────────────────────────────
+
+/** Attribute node keys that can seed an attribute-default (SR2E p.69). */
+export const WEB_ATTRIBUTES = ["body", "quickness", "strength", "charisma", "intelligence", "willpower", "reaction"];
+
+/** Directed adjacency over the route graph's `links`. Circle counts are the
+ *  edge weights; junctions (ids not in `nodes`) are just zero-labelled waypoints.
+ *  dir: "both" (default), "aToB" (from→to only), "bToA" (to→from only). */
+function webAdjacency(web) {
+  const adj = new Map();
+  const add = (a, b, w) => { if (!adj.has(a)) adj.set(a, []); adj.get(a).push({ node: b, w }); };
+  for (const l of web?.links ?? []) {
+    const w = l.circles ?? 0;
+    if (l.dir !== "bToA") add(l.from, l.to, w);
+    if (l.dir !== "aToB") add(l.to, l.from, w);
+  }
+  return adj;
+}
+
+/**
+ * Shortest legal Skill Web route from one entity anchor to another, by number
+ * of black circles crossed (SR2E p.68–69). Circles are the cost; junctions and
+ * arrow landings are free; one-way arrows block travel against them. Returns
+ * null when no legal route exists (defaulting is not allowed — do NOT assign a
+ * penalty). Mirrors the reference `findBestPath` contract.
+ *
+ * @param {{links: {from:string,to:string,circles?:number,dir?:string}[]}} web
+ * @param {string} fromId  starting entity id (attribute or skill)
+ * @param {string} toId    destination entity id
+ * @returns {{from:string,to:string,circles:number,targetNumberModifier:number,path:string[]}|null}
+ */
+export function findBestPath(web, fromId, toId) {
+  if (fromId === toId) return { from: fromId, to: toId, circles: 0, targetNumberModifier: 0, path: [fromId] };
+  const adj = webAdjacency(web);
+  const dist = new Map([[fromId, 0]]);
+  const prev = new Map();
+  const seen = new Set();
+  while (true) {
+    let u = null, best = Infinity;
+    for (const [n, d] of dist) if (!seen.has(n) && d < best) { best = d; u = n; }
+    if (u == null || u === toId) break;
+    seen.add(u);
+    for (const { node: v, w } of adj.get(u) ?? []) {
+      const nd = best + w;
+      if (nd < (dist.get(v) ?? Infinity)) { dist.set(v, nd); prev.set(v, u); }
+    }
+  }
+  if (!dist.has(toId)) return null;
+  const path = [toId];
+  for (let c = toId; c !== fromId; ) { c = prev.get(c); path.unshift(c); }
+  const circles = dist.get(toId);
+  return { from: fromId, to: toId, circles, targetNumberModifier: circles * 2, path };
+}
+
+/**
+ * Minimum Skill Web defaulting TN penalty for rolling `target` untrained
+ * (SR2E p.68–69). Considers attribute defaulting (attribute → target) and
+ * related-skill defaulting (target → an owned skill), returning the cheaper.
+ * Ties favour the related skill (you roll its rating — usually more dice).
+ * Returns null when the skill cannot be reached from any attribute or owned
+ * skill (an unconnected skill — defaulting is not allowed).
+ *
+ * @param {object} web  the route graph (CONFIG.SR2E.skillWeb)
+ * @param {string} target  desired skill entity id
+ * @param {string[]} [owned]  skill entity ids the character has at rating > 0
+ * @param {object} [opts]  perCircle(source, kind) → TN per circle (default 2; a rigger's VCR halves vehicle
+ *   defaulting, Rigger 2 p.12). The cheapest PENALTY wins; with the default it's the fewest circles.
+ * @returns {{penalty:number, source:string, kind:"skill"|"attribute"}|null}
+ */
+export function webDefaultingTN(web, target, owned = [], { perCircle = () => 2 } = {}) {
+  let best = null;
+  // Selection order (SR2E p.68–69 + house policy): fewest circles wins; on an
+  // equal-circle tie a related skill beats an attribute (RAW intent), and among
+  // skills the highest-rated one wins (more dice at the same TN). `rating` only
+  // participates in the skill-vs-skill tie-break.
+  const consider = (circles, source, kind, rating = 0) => {
+    if (circles == null) return;
+    const penalty = circles * perCircle(source, kind);
+    if (best == null
+        || penalty < best.penalty
+        || (penalty === best.penalty && kind === "skill" && best.kind === "attribute")
+        || (penalty === best.penalty && kind === "skill" && best.kind === "skill" && rating > best.rating)) {
+      best = { circles, penalty, source, kind, rating };
+    }
+  };
+
+  // Attributes first, so the skill-over-attribute tie-break can replace them.
+  for (const a of WEB_ATTRIBUTES) {
+    const p = findBestPath(web, a, target);
+    if (p) consider(p.circles, a, "attribute");
+  }
+
+  // Owned skills: accept {node, rating} or a bare node string (rating 0). Dedup
+  // by node keeping the MAX rating, so a later lower-rated item on the same node
+  // can't clobber a higher one before the tie-break sees it.
+  const byNode = new Map();
+  for (const o of owned) {
+    const node = typeof o === "string" ? o : o?.node;
+    if (!node) continue;
+    const rating = typeof o === "string" ? 0 : (Number(o?.rating) || 0);
+    byNode.set(node, Math.max(byNode.get(node) ?? 0, rating));
+  }
+  for (const [node, rating] of byNode) {
+    if (node === target) continue;
+    const p = findBestPath(web, target, node);
+    if (p) consider(p.circles, node, "skill", rating);
+  }
+
+  return best ? { penalty: best.penalty, source: best.source, kind: best.kind } : null;
+}
+
+/**
+ * Resolve a skill NAME to its Skill Web node key by exact (case-insensitive)
+ * label match. The "(B/R)" suffix is significant — "Throwing Weapons (B/R)" must
+ * map to the throwingBR node, NOT collapse onto its parent "Throwing Weapons"
+ * (which would make a B/R check default to the attribute instead of the parent
+ * skill, SR2E p.68–69).
+ * @param {object} web CONFIG.SR2E.skillWeb
+ * @param {string} name skill label
+ * @returns {string|null} node key
+ */
+export function webNodeForLabel(web, name) {
+  const norm = (s) => (s ?? "").toLowerCase().trim();
+  const t = norm(name);
+  return Object.keys(web?.nodes ?? {}).find((k) => norm(web.nodes[k].label) === t)
+    // A vehicle skill by any of its book names ("Winged Plane" is the "Winged Aircraft" node; c-post r1 #2).
+    ?? Object.keys(web?.nodes ?? {}).find((k) => VEHICLE_WEB_NODES.has(k) && vehicleSkillMatches(name, k)) ?? null;
+}
+
+// --- Bioware / Body Index (Shadowtech FASA7110, p.5–7) ------------------------
+
+/** Cultured bioware is implanted at 0.75× its listed Body Cost (Shadowtech p.7). */
+export const BIOWARE_CULTURED_MULTIPLIER = 0.75;
+
+/**
+ * A bioware item's effective Body Cost after its grade. Cultured reduces the
+ * cost by 25%; standard is unchanged. Non-finite/negative costs normalise to 0
+ * so bad imported content can't poison Body Index / Essence totals. Unrounded —
+ * callers round only the final sum / display (one canonical representation).
+ * Neural bioware is ALWAYS cultured, with that already figured into its listed
+ * Body Cost and price (Shadowtech p.7), so its grade never applies again.
+ * @param {number} bodyCost listed (pre-grade) Body Cost
+ * @param {string} grade "standard" | "cultured"
+ * @param {string} [bodySystem]
+ * @returns {number}
+ */
+export function effectiveBodyCost(bodyCost, grade, bodySystem = "") {
+  const bc = Number(bodyCost);
+  if (!Number.isFinite(bc) || bc < 0) return 0;
+  return grade === "cultured" && bodySystem !== "neural" ? bc * BIOWARE_CULTURED_MULTIPLIER : bc;
+}
+
+/**
+ * Body Index = Σ effective Body Cost of INSTALLED bioware (Shadowtech p.6).
+ * Returned UNROUNDED (the locked decision: the mechanical total stays raw so
+ * overstress thresholds and Essence can't shift; the sheet rounds for display
+ * only). The model's collector sums identically, so model == helper.
+ * @param {Array<{installed:boolean, bodyCost:number, grade:string}>} rows
+ * @returns {number}
+ */
+export function bodyIndexTotal(rows) {
+  let total = 0;
+  for (const r of rows ?? []) {
+    if (!r?.installed) continue;
+    total += effectiveBodyCost(r.bodyCost, r.grade, r.bodySystem);
+  }
+  return total;
+}
+
+/**
+ * Essence lost to bioware. Shadowtech p.6: bioware "costs most characters no
+ * Essence Points" — only the magically active (magicians/adepts) pay Essence,
+ * equal to the Body Cost. Mundanes pay Body Index only.
+ * @param {Array<{installed:boolean, bodyCost:number, grade:string}>} rows
+ * @param {boolean} isAwakened
+ * @returns {number}
+ */
+export function biowareEssence(rows, isAwakened) {
+  return isAwakened ? bodyIndexTotal(rows) : 0;
+}
+
+// --- Matrixware: the cranial cyberdeck / "C2" (Shadowtech p.54–59) ------------
+
+/** Exceeding the MPCP cap costs +4 TN to ALL actions (Shadowtech p.54). */
+export const MPCP_OVERLOAD_TN = 4;
+
+/**
+ * Maximum MPCP rating a cranial deck may carry: 1.5 × Intelligence, rounded UP
+ * (Shadowtech p.54). Installing higher is legal but inflicts MPCP_OVERLOAD_TN
+ * on every roll.
+ * @param {number} intelligence
+ * @returns {number}
+ */
+export function mpcpMaxRating(intelligence) {
+  return Math.ceil(1.5 * (Number(intelligence) || 0));
+}
+
+/** Persona module cap: 75% of MPCP, round down (Shadowtech p.55). */
+export function personaModuleMax(mpcp) {
+  return Math.floor(0.75 * (Number(mpcp) || 0));
+}
+
+/** Hardening cap: one-half MPCP, round down (Shadowtech p.56). */
+export function hardeningMax(mpcp) {
+  return Math.floor((Number(mpcp) || 0) / 2);
+}
+
+/** Response cap: MPCP / 4, round down (Shadowtech p.59). */
+export function responseMax(mpcp) {
+  return Math.floor((Number(mpcp) || 0) / 4);
+}
+
+/**
+ * Total Essence a cranial cyberdeck costs, summed from its installed components
+ * (Shadowtech p.54–59): MPCP = (Rating/10) + 0.1; Persona Module = 0.30;
+ * Hardening = 0.3; Transfer (I/O) = 0.1; Response = 0.2. Components rated 0 are
+ * simply not installed. Headware memory is a separate implant and is NOT counted
+ * here (the C2's own active memory, MPCP × 50 Mp, is dedicated and included).
+ * @param {{mpcp:number, hardening:number, ioSpeed:number, response:number}} deck
+ * @returns {number} Essence, rounded to 2 dp
+ */
+export function cranialDeckEssence(deck = {}) {
+  const mpcp = Math.max(0, Number(deck.mpcp) || 0);
+  if (mpcp <= 0) return 0;                     // no MPCP = no deck
+  let e = (mpcp / 10) + 0.1;                   // MPCP
+  e += 0.30;                                   // persona module (essential to C2 ops)
+  if ((Number(deck.hardening) || 0) > 0) e += 0.3;
+  if ((Number(deck.ioSpeed) || 0) > 0)   e += 0.1;   // Transfer
+  if ((Number(deck.response) || 0) > 0)  e += 0.2;
+  return Math.round(e * 100) / 100;
+}
+
+// --- Purchase pricing: rating + grade (Street Samurai Catalog / Shadowtech) ----
+
+/**
+ * Custom cyberware grades — Street Samurai Catalog (Revised) p.98.
+ *
+ * In SR2 "alphaware" is not a generic quality tier: it is *custom cyberware*
+ * from a Shadow Clinic, and Alpha/Beta are the only grades the book offers
+ * ("The Shadow Clinics to which the characters are most likely to have access
+ * offer basic levels of Custom Cyberware: Alpha and Beta"). The core rulebook
+ * has no grade rules at all. Cybertechnology (FASA7119, SR2) p.44 later adds
+ * DELTA, custom-made at a delta clinic, and says its newer material takes
+ * precedence (p.42).
+ *
+ *          Essence Reduction   Cost Multiple   Damage Resist
+ *   Alpha  -20% (×.8)          ×3              5/6
+ *   Beta   -40% (×.6)          ×7              4/5
+ *   Delta  -50% (×.5)          ×10             3/4   (Cybertechnology p.44)
+ *
+ * damageResist is the 5-die target against Serious/Deadly damage, one success
+ * ignores it (read by the optional cyberware damage, cyberdamage-rules.mjs).
+ *
+ * Second-hand is a CONDITION, not a grade: it "comes in standard, alpha, and beta
+ * grades" (Cybertechnology p.42) — see cyberSecondhand.
+ *
+ * NOTE: Shadowtech p.40 — "None of the cyberware presented in the book is
+ * currently available in either alpha or beta grades."
+ */
+export const CYBERWARE_GRADES = {
+  standard: { essenceMultiplier: 1.0, costMultiplier: 1 },
+  alpha:    { essenceMultiplier: 0.8, costMultiplier: 3, damageResist: [5, 6] },
+  beta:     { essenceMultiplier: 0.6, costMultiplier: 7, damageResist: [4, 5] },
+  delta:    { essenceMultiplier: 0.5, costMultiplier: 10, damageResist: [3, 4] }
+};
+
+/** Bioware grades — Shadowtech p.7. Cultured is ×0.75 Body Cost and ×4 nuyen. */
+export const BIOWARE_GRADES = {
+  standard: { bodyCostMultiplier: 1.0,                        costMultiplier: 1 },
+  cultured: { bodyCostMultiplier: BIOWARE_CULTURED_MULTIPLIER, costMultiplier: 4 },
+  // Shadowtech p.12: "selling for 40 percent to 60 percent less than original parts",
+  // "the same Body Costs as the new". The price is per item (secondhandDiscount).
+  secondhand: { bodyCostMultiplier: 1.0, secondhand: true }
+};
+
+/** Secondhand bioware's price multiplier: 40–60% off (Shadowtech p.12), default 50. */
+export function secondhandPriceMultiplier(discount) {
+  const d = Number(discount);
+  return 1 - (Number.isFinite(d) ? Math.min(60, Math.max(40, d)) : 50) / 100;
+}
+
+/**
+ * Second-hand cyberware (SSC p.100): "costs 50 percent less ... Installation and
+ * Essence Cost are the same". Never delta, which is always custom-made (Cybertechnology
+ * p.42), so a stray flag on a delta item is ignored.
+ */
+export const cyberSecondhand = (sys) => sys?.type === "cyberware" && !!sys.secondhand && sys.grade !== "delta";
+export const SECONDHAND_CYBER_MULTIPLIER = 0.5;
+
+/**
+ * A second-hand part that failed its test (SSC p.100) has stopped working; its Essence still
+ * counts. Cyberlimbs and limb options are excluded: a dead limb follows the cyberware-damage
+ * precedent ("The limb shuts down completely", Cybertechnology p.49), a GM reminder — the book
+ * prints no stats for one.
+ */
+export const secondhandDead = (item) => item?.type === "cyberware" && !!item.system?.secondhandFailed
+  && !["limb", "option"].includes(item.system.limbIdentity?.role);
+
+/**
+ * Karma Pool cost to reroll a test's failures. Normally 1, escalating by 1 per repeat
+ * (SR2E p.191); a test may carry its own per-die price instead (second-hand cyberware's
+ * Resistance Test: "2 points of Karma per die re-rolled", SSC p.100), which never escalates.
+ */
+export const karmaRerollCost = (state, failures) =>
+  state?.rerollCostPerDie > 0 ? state.rerollCostPerDie * failures : (state?.rerolls ?? 0) + 1;
+
+/** Smallest Essence a grade reduction may leave (SSC p.98). */
+export const CYBERWARE_GRADE_ESSENCE_FLOOR = 0.05;
+
+/**
+ * Cost multiplier for an item's quality grade — the single source of truth,
+ * read by both the purchase hooks and CONFIG.SR2E.
+ *
+ * Neural bioware is always cultured with its price already figured in
+ * (Shadowtech p.7), so it is ×1 whatever its grade says.
+ * @param {string} type item type
+ * @param {string} grade item grade
+ * @param {string} [bodySystem] bioware body system
+ * @returns {number}
+ */
+export function gradeCostMultiplier(type, grade, bodySystem = "", secondhandDiscount = 50) {
+  if (type === "cyberware") return CYBERWARE_GRADES[grade]?.costMultiplier ?? 1;
+  if (type === "bioware" && bodySystem === "neural") return 1;
+  if (type === "bioware" && grade === "secondhand") return secondhandPriceMultiplier(secondhandDiscount);
+  if (type === "bioware")   return BIOWARE_GRADES[grade]?.costMultiplier ?? 1;
+  return 1;
+}
+
+/**
+ * Essence cost of a piece of cyberware at a given grade (SSC p.98): "Reduce the
+ * amount of Base Essence Cost by the percentage listed... Round all numbers up.
+ * Essence Cost may never be reduced below .05 in this manner."
+ *
+ * The book doesn't state a precision for "round up"; hundredths is implied by
+ * the .05 floor, and matches how the system stores Essence. The epsilon keeps
+ * binary floats (0.8 × 0.3 = 0.24000000000000002) from rounding up a whole cent.
+ *
+ * The floor applies only to a grade REDUCTION — a standard item authored below
+ * .05 keeps its printed value.
+ * @param {number} baseEssence
+ * @param {string} grade
+ * @returns {number}
+ */
+export function gradeEssenceCost(baseEssence, grade) {
+  const base = Math.max(0, Number(baseEssence) || 0);
+  const mult = CYBERWARE_GRADES[grade]?.essenceMultiplier ?? 1;
+  // No reduction → the authored value stands, untouched (don't re-round it: an
+  // item authored to finer precision than hundredths keeps what it was given).
+  if (mult === 1) return base;
+  // Free ware stays free — nothing has been "reduced below .05" from zero.
+  if (base === 0) return 0;
+  const cost = Math.ceil((base * mult * 100) - 1e-9) / 100;
+  return Math.max(CYBERWARE_GRADE_ESSENCE_FLOOR, cost);
+}
+
+/**
+ * The ratingStats row that governs a given rating: exact match, else nearest.
+ * Extracted so cost and Street Index can never disagree about WHICH row applies.
+ * @param {Array<{rating:number}>} ratingStats
+ * @param {number} rating
+ * @returns {object|null} the row, or null when there is no table
+ */
+export function ratedRow(ratingStats, rating) {
+  if (!ratingStats?.length) return null;
+  const rows = [...ratingStats].sort((a, b) => a.rating - b.rating);
+  return rows.find(r => r.rating === rating)
+    ?? rows.reduce((b, r) => Math.abs(r.rating - rating) < Math.abs(b.rating - rating) ? r : b, rows[0]);
+}
+
+/**
+ * The base cost of a rated item at a given rating: the governing ratingStats row's
+ * cost, or the flat cost when there's no table.
+ *
+ * NOTE the deliberate asymmetry: a row that EXISTS but has no `cost` yields 0, NOT
+ * the flat cost. That is the long-standing behaviour and partial/malformed tables
+ * depend on it — `?? flatCost` here would silently re-price them.
+ * @param {Array<{rating:number, cost:number}>} ratingStats
+ * @param {number} rating
+ * @param {number} flatCost
+ * @returns {number}
+ */
+export function ratedCost(ratingStats, rating, flatCost) {
+  const row = ratedRow(ratingStats, rating);
+  return row ? (row.cost ?? 0) : (flatCost ?? 0);
+}
+
+/**
+ * The Street Index governing a given rating — the row's, else the flat one.
+ *
+ * NOT `||`: a numeric 0 is a PRESENT index (free on the street), not an absent one.
+ * Only "", null and undefined mean "this row doesn't specify one".
+ * @param {Array<{rating:number, streetIndex:*}>} ratingStats
+ * @param {number} rating
+ * @param {*} flatSI
+ * @returns {*}
+ */
+export function ratedStreetIndex(ratingStats, rating, flatSI) {
+  const row = ratedRow(ratingStats, rating);
+  const si = row ? row.streetIndex : flatSI;
+  return (si === "" || si === null || si === undefined) ? flatSI : si;
+}
+
+/**
+ * Cost of an item whose price is COMPUTED from other fields rather than authored
+ * or read off a rating table. Returns null for everything else.
+ *
+ * Why this exists: `system.cost` on such an item is the value already derived for
+ * its CURRENT configuration — a snapshot, not a formula. Pricing a HYPOTHETICAL
+ * configuration (what the purchase hook does when a rating changes) off that
+ * snapshot returns the old price, so the delta computes as zero and the change is
+ * free. This recomputes from the formula instead.
+ *
+ * The rules module is Foundry-free: it can read neither `game.settings` (the VR2
+ * ruleset) nor a document's `_source` (an authored DataSoft price) nor a sibling
+ * item (a weapon focus's bonded Reach). Every caller supplies those via `ctx`.
+ *
+ * MUST be the only derivation site — `prepareDerivedData` calls it too, or the two
+ * drift and the hook prices something the sheet doesn't.
+ *
+ * @param {object} sys item system data (plus `type`)
+ * @param {{authoredCost?:number, vr2?:boolean, bondedWeaponReach?:number|null}} [ctx]
+ * @returns {number|null} null when the item's cost is authored/rated, not derived
+ */
+export function derivedItemCost(sys, ctx = {}) {
+  if (!sys) return null;
+  // Every branch REFUSES to compute unless it has every input. A caller that
+  // projects a partial item (chargenSpend passes no `multiplier`) must fall back to
+  // the stored snapshot, not receive NaN — and `NaN ?? fallback` does NOT fall
+  // through, so a garbage number here would propagate silently into a nuyen total.
+  const num = (v) => (typeof v === "number" && Number.isFinite(v));
+
+  if (sys.type === "gear" && sys.category === "skillsoft") {
+    if (!num(sys.rating)) return null;
+    return skillsoftCost(sys.grantedSkillCategory, sys.rating, ctx.authoredCost ?? 0);
+  }
+  // Gear the Street Gear list prices "x Rating" — Jammer, Voice Mask, Signal
+  // Locator, the scanners and taps (p.257-258). The stored costPerRating is the
+  // price of ONE point, so a Rating 1 item is unchanged and only raising the
+  // rating moves the price. Gate on > 0 so ordinary flat-priced gear is
+  // untouched and still falls through to the stored cost.
+  if (sys.type === "gear" && num(sys.costPerRating) && sys.costPerRating > 0) {
+    if (!num(sys.rating)) return null;
+    return sys.costPerRating * sys.rating;
+  }
+  if (sys.type === "program") {
+    if (!num(sys.rating) || !num(sys.multiplier)) return null;
+    // Utility Options (VR2.0 p.103): the design size × the base rating's band; `activeOpts` is resolved by the
+    // data model (setting + allow-list), so no options = programCostVR2 exactly.
+    if (!ctx.vr2) return programCost(sys.rating, sys.multiplier, sys.category === "persona");
+    const price = sys.activeOpts?.length ? programSizes({ rating: sys.rating, multiplier: sys.multiplier, options: sys.activeOpts }).price
+                                         : programCostVR2(sys.rating, sys.multiplier);
+    // Object code only (VR2.0 p.107): 25% off the listed price.
+    return sys.objectCodeOnly ? Math.ceil(price * 0.75 - 1e-9) : price;
+  }
+  if (sys.type === "focus") {
+    // A WEAPON focus bonded to a weapon prices off that weapon's Reach (p.126) and
+    // OVERRIDES the flat per-Force path — mirroring _applyWeaponFoci, which runs
+    // after the item's own prepare. Gate on focusType exactly as that pass does:
+    // a focus retyped to "spell" while a stale bondedWeaponId lingers must NOT keep
+    // weapon pricing, or the hook prices something the sheet doesn't.
+    if (sys.focusType === "weapon" && num(ctx.bondedWeaponReach) && num(sys.force)) {
+      return weaponFocusCost(ctx.bondedWeaponReach, sys.force);
+    }
+    if (num(sys.force) && num(sys.costPerForce) && sys.costPerForce > 0) {
+      return focusCost(sys.force, sys.costPerForce);
+    }
+  }
+  if (sys.type === "cyberware" && sys.limbOption) {
+    // A cyberlimb option is priced for its RECORDED placement (Cybertechnology p.31,
+    // p.51): the caller passes the linked limb's type and the option's resolved kind.
+    return limbOptionPrice(sys, ctx.limbOptionKind ?? null, ctx.limbType ?? null);
+  }
+  if (sys.type === "weapon") {
+    // Bows: price scales with the Strength Minimum they were bought at (p.96).
+    const scaled = strengthMinWeaponStats(sys);
+    if (scaled) return scaled.cost;
+  }
+  return null;
+}
+
+/**
+ * Full base (list) nuyen cost of an item at its rating AND grade — before the
+ * Street Index markup. The single source of truth for what a configured item costs.
+ * @param {{type:string, grade:string, rating:number, ratingStats:Array, cost:number}} sys
+ * @param {{authoredCost?:number, vr2?:boolean, bondedWeaponReach?:number|null}} [ctx]
+ * @returns {number}
+ */
+export function itemBaseCost(sys, ctx = {}) {
+  let base = derivedItemCost(sys, ctx)
+    ?? ratedCost(sys?.ratingStats, sys?.rating, sys?.cost);
+  // Cybertechnology Phase 3b, applied ONCE here from the caller's context: a single
+  // cybereye is 60% of the pair's price (p.45); muscle replacement/augmentation is 20%
+  // cheaper per full cyberlimb (p.57), rounded up to the nuyen.
+  if (ctx.wareRule === "cybereye-pair" && sys?.eyes === "single") base = Math.ceil(base * 0.6 - 1e-9);
+  if (MUSCLE.has(ctx.wareRule)) base = Math.ceil(base * muscleFactor(ctx.fullCyberlimbs) - 1e-9);
+  return base * gradeCostMultiplier(sys?.type, sys?.grade, sys?.bodySystem, sys?.secondhandDiscount)
+    * (cyberSecondhand(sys) ? SECONDHAND_CYBER_MULTIPLIER : 1);
+}
+
+// --- Cybersurgery (Cybertechnology p.53; elective surgery, core p.114) ---------
+
+/** Essence Cost Change Table (Cybertechnology p.53), from the surgeon's successes, in %. */
+export function surgeryEssencePct(successes) {
+  const n = Math.max(0, Math.floor(Number(successes) || 0));
+  return n === 0 ? 15 : n === 1 ? 10 : n <= 3 ? 0 : n <= 5 ? -10 : -20;
+}
+
+/** The surgeon's TN: 10 − ⌊the Essence the character ends with⌋, −2 intensive care (min 2). */
+export function surgeonTN(endEssence) {
+  return Math.max(2, 10 - Math.floor(Math.max(0, Number(endEssence) || 0)) - 2);
+}
+
+/** An implant's Essence after the surgeon's change, rounded up (p.53); 0% leaves it exactly as it was. */
+export function surgicalEssence(graded, pct) {
+  const g = Math.max(0, Number(graded) || 0), p = Number(pct) || 0;
+  if (!p || !g) return g;
+  return Math.max(0.01, Math.ceil(g * (1 + p / 100) * 100 - 1e-9) / 100);
+}
+
+/**
+ * The elective-surgery category of a procedure (core p.114) by its total Essence,
+ * rounded up to the hundredth first, with its wound and fee (Cybertechnology p.53).
+ */
+export function surgeryCategory(essence) {
+  const e = Math.max(0, Math.ceil((Number(essence) || 0) * 100 - 1e-9) / 100);
+  if (e === 0)   return { key: "cosmetic", label: "Minor Cosmetic", wound: "L", boxes: 1, fee: 1000 };
+  if (e <= 0.4)  return { key: "minor", label: "Minor Invasive", wound: "M", boxes: 3, fee: 5000 };
+  if (e < 1)     return { key: "major", label: "Major Invasive", wound: "S", boxes: 6, fee: 25000 };
+  return { key: "drastic", label: "Drastic Invasive", wound: "D", boxes: 10, fee: 250000 };
+}
+
+/**
+ * The cost-driving fields a buyer should pick when purchasing this item — the
+ * spec behind the drop-time purchase dialog. Empty array = nothing to ask (the
+ * item has a single fixed price), so no dialog opens. Weapon foci are excluded:
+ * they bond to a weapon through their own dialog (_bondWeaponFocusOnDrop).
+ * @param {{type?:string, category?:string, focusType?:string, costPerForce?:number, ratingStats?:Array}} [sys]
+ * @returns {string[]} subset of ["rating","grantedSkillCategory","force","grade"]
+ */
+export function purchasePromptFields(sys = {}) {
+  const out = [];
+  const rows = sys.ratingStats ?? [];
+  const skillsoft = sys.type === "gear" && sys.category === "skillsoft";
+  const program   = sys.type === "program";
+  const flatFocus = sys.type === "focus" && sys.focusType !== "weapon" && (sys.costPerForce ?? 0) > 0;
+  if (rows.length > 1 || skillsoft || program) out.push("rating");
+  // The skill a chip grants is what makes it work at all (p.243).
+  if (skillsoft) out.push("grantedSkillCategory", "grantedSkill");
+  if (flatFocus) out.push("force");
+  if (sys.type === "weapon" && (sys.costPerStrengthMin ?? 0) > 0) out.push("strengthMinimum");
+  // Neural bioware has no grade to choose: it is always cultured (Shadowtech p.7).
+  if (sys.type === "cyberware" || (sys.type === "bioware" && sys.bodySystem !== "neural")) out.push("grade");
+  // Installing cyberware is surgery (Cybertechnology p.53); the sheet decides when it applies.
+  if (sys.type === "cyberware") out.push("surgery");
+  return out;
+}
+
+/**
+ * Split a nuyen payout across runners. Every mode leaves any unallocated
+ * remainder (or rounding) for the communal pot — matching the even-split
+ * default. Awards are whole nuyen (floored).
+ *
+ * @param {object} o
+ * @param {number}  [o.total]       base payout the GM entered
+ * @param {number}  [o.pot]         current communal pot
+ * @param {boolean} [o.includePot]  fold the pot into the pool being split
+ * @param {"even"|"amount"|"percent"|"weight"} [o.mode]
+ * @param {string[]} [o.ids]        selected recipient ids
+ * @param {Object<string,number>} [o.shares]  per-id value: ¥ (amount), % (percent), or weight
+ * @returns {{ok:boolean, error?:string, pool:number, awards:Object<string,number>, awarded:number, leftover:number, newPot:number}}
+ */
+export function allocateNuyen({ total = 0, pot = 0, includePot = false, mode = "even", ids = [], shares = {} } = {}) {
+  const num = (v) => { const n = Number(v); return Number.isFinite(n) ? n : 0; };
+  const potFloor = Math.max(0, Math.floor(num(pot)));
+  const pool = Math.max(0, Math.floor(num(total))) + (includePot ? potFloor : 0);
+  const potBase = includePot ? 0 : potFloor;
+  ids = (ids ?? []).filter(Boolean);
+  const fail = (error) => ({ ok: false, error, pool, awards: {}, awarded: 0, leftover: 0, newPot: potFloor });
+  if (!ids.length) return fail("No recipients selected.");
+
+  const awards = {};
+  if (mode === "even") {
+    const share = Math.floor(pool / ids.length);
+    for (const id of ids) awards[id] = share;
+  } else if (mode === "amount") {
+    for (const id of ids) awards[id] = Math.max(0, Math.floor(num(shares[id])));
+  } else if (mode === "percent") {
+    for (const id of ids) awards[id] = Math.max(0, Math.floor(pool * Math.max(0, num(shares[id])) / 100));
+  } else if (mode === "weight") {
+    const totalW = ids.reduce((s, id) => s + Math.max(0, num(shares[id])), 0);
+    if (totalW <= 0) return fail("Weights must add up to more than zero.");
+    for (const id of ids) awards[id] = Math.floor(pool * Math.max(0, num(shares[id])) / totalW);
+  } else {
+    return fail(`Unknown allocation mode "${mode}".`);
+  }
+
+  const awarded = ids.reduce((s, id) => s + awards[id], 0);
+  if (awarded > pool) return fail(`Shares total ${awarded}¥ but only ${pool}¥ is available.`);
+  const leftover = pool - awarded;
+  return { ok: true, pool, awards, awarded, leftover, newPot: potBase + leftover };
+}
+
+/**
+ * The Award Nuyen dialog's split: runners whose amount the GM typed keep it, the
+ * rest share what's left evenly (floored), and the remainder goes to the pot.
+ * @param {number} pool  ¥ to hand out (payout, plus the pot if folded in)
+ * @param {string[]} ids recipients
+ * @param {Object<string,number>} pinned id → ¥ the GM typed
+ * @returns {{ok:boolean, error?:string, awards:Object<string,number>, awarded:number, leftover:number}}
+ */
+export function splitAward(pool, ids, pinned = {}) {
+  pool = Math.max(0, Math.floor(Number(pool) || 0));
+  const awards = {};
+  let fixed = 0;
+  const free = [];
+  for (const id of ids) {
+    if (id in pinned) fixed += awards[id] = Math.max(0, Math.floor(Number(pinned[id]) || 0));
+    else free.push(id);
+  }
+  if (fixed > pool) return { ok: false, error: `The typed amounts add up to ${fixed}¥, more than the ${pool}¥ payout.`, awards, awarded: fixed, leftover: 0 };
+  const each = free.length ? Math.floor((pool - fixed) / free.length) : 0;
+  for (const id of free) awards[id] = each;
+  const awarded = fixed + each * free.length;
+  return { ok: true, awards, awarded, leftover: pool - awarded };
+}
+
+/**
+ * Overstress penalty (Shadowtech p.7): +1 TN to Body tests per whole or partial
+ * point the Body Index exceeds its max; zero-floored so it never reads negative.
+ * @param {number} value Body Index
+ * @param {number} max cap (natural Body)
+ * @returns {number}
+ */
+export function overstressPenalty(value, max) {
+  return Math.ceil(Math.max(0, (Number(value) || 0) - (Number(max) || 0)));
+}
+
+/**
+ * Magical-healing interference (Shadowtech p.6): heal-test TNs rise by half the
+ * subject's current Body Index, rounded down.
+ * @param {number} bodyIndex
+ * @returns {number}
+ */
+export function biowareHealingTnMod(bodyIndex) {
+  return Math.floor((Number(bodyIndex) || 0) / 2);
+}
+
+/**
+ * Unarmed damage code with a cyber-implant Power bonus folded in — bone lacing
+ * (Shadowtech p.42): "Unarmed blows by persons with plastic bone lacing are at
+ * (Str + 1)M2, (Str + 2)M2 for aluminum, and (Str + 3)M2 for titanium."
+ *
+ * NOTE ON THE BOOK'S NOTATION: Shadowtech is a 1st-edition book, and "M2" is 1e
+ * damage notation — Power, Level, then the STAGING interval. SR2 made staging
+ * universally 2 successes and dropped the trailing digit (the SR2 core lists
+ * unarmed as plain "(STR)M Stun"). So the SR2 code is "(Str+1)M", not "(Str+1)M2".
+ *
+ * Rewrites the formula inside the parens rather than replacing the whole code, so
+ * a modified base survives: an adept's Killing Hands "(Str+2)M" plus titanium
+ * becomes "(Str+2+3)M", which evaluateDamageCode resolves arithmetically. A plain
+ * numeric code ("6M") is wrapped so it stays parseable.
+ *
+ * @param {string} baseCode e.g. "(Str)M"
+ * @param {number} powerBonus 0 = unchanged
+ * @returns {string}
+ */
+export function unarmedDamageCode(baseCode, powerBonus) {
+  const bonus = Math.max(0, Math.floor(Number(powerBonus) || 0));
+  const code = String(baseCode ?? "").trim();
+  if (bonus === 0 || !code) return code;
+  const formula = code.match(/^\(([^)]+)\)([LMSD])$/i);
+  if (formula) return `(${formula[1]}+${bonus})${formula[2].toUpperCase()}`;
+  const simple = code.match(/^(\d+)([LMSD])$/i);
+  if (simple) return `(${simple[1]}+${bonus})${simple[2].toUpperCase()}`;
+  return code;   // unrecognised shape — leave it alone rather than corrupt it
+}
+
+/**
+ * Unarmed Power when the wielder opts to do PHYSICAL rather than Stun damage
+ * (Shadowtech p.42): "A character with bone lacing can also choose to have his
+ * unarmed blows do physical damage, but the Power Level of the attack is halved
+ * (round up)."
+ * @param {number} power
+ * @returns {number}
+ */
+export function unarmedPhysicalPower(power) {
+  return Math.ceil(Math.max(0, Number(power) || 0) / 2);
+}
+
+/**
+ * Whether an unarmed strike should take the bone-lacing physical option this
+ * attack (Shadowtech p.42) — halved Power, physical damage.
+ *
+ * It is a per-attack CHOICE, never inferred from the weapon's damage type: the
+ * type alone can't tell "chose the lacing option" from "an adept who set their
+ * fists to physical" from stray data. The three conditions (Codex's review):
+ *  - the option was chosen this attack;
+ *  - the character actually has lacing that adds unarmed Power (bonus > 0);
+ *  - Killing Hands is NOT in play — it supplies physical damage under its own
+ *    rule and replaces the level, so it isn't the lacing option and isn't halved.
+ *
+ * @param {{boneLacingPhysical?:boolean, killingHands?:string, unarmedPowerBonus?:number}} o
+ * @returns {boolean}
+ */
+export function appliesBoneLacingPhysical({ boneLacingPhysical, killingHands, unarmedPowerBonus } = {}) {
+  return !!boneLacingPhysical && !killingHands && (Number(unarmedPowerBonus) || 0) > 0;
+}
+
+/**
+ * Tactical computer initiative cap (Shadowtech p.53): the implant's rating adds
+ * to Initiative, but "an Initiative value calculated in this fashion cannot
+ * exceed the normal Reaction maximum" — i.e. the highest total the character
+ * could have rolled unaided (base + 6 per Initiative die). The book's example:
+ * Reaction 4 + 1D6 with a Level 2 computer may add +2 but never exceed 10.
+ *
+ * The bonus therefore only fills the gap up to that ceiling; it never raises it.
+ * @param {number} rolled  base + dice result, before the implant
+ * @param {number} rating  tactical computer effective level
+ * @param {number} base    adjusted Reaction (initiative base)
+ * @param {number} dice    number of Initiative dice
+ * @returns {number} final Initiative total
+ */
+export function tacticalComputerInitiative(rolled, rating, base, dice) {
+  const r = Math.max(0, Number(rating) || 0);
+  const cap = (Number(base) || 0) + 6 * Math.max(0, Number(dice) || 0);
+  return Math.min((Number(rolled) || 0) + r, cap);
+}
+
+/**
+ * Pick a random portrait variation for a summoned spirit/elemental.
+ * @param {number} count  How many variations ship for this domain (0 = none).
+ * @param {() => number} rng  Random source (injectable for tests).
+ * @returns {number} 1..count, or 0 when no art exists (caller keeps the SVG).
+ */
+export function spiritPortraitVariant(count, rng = Math.random) {
+  const n = Math.max(0, Math.floor(Number(count) || 0));
+  return n <= 0 ? 0 : 1 + Math.floor(rng() * n);
+}
+
+/**
+ * Stats for a weapon bought at a chosen Strength Minimum.
+ *
+ * SR2 p.96 (Projectile Weapons Table): a bow is "purchased with a specified
+ * Strength Minimum", and that one number sets BOTH its price (100¥ x Str Min)
+ * and its damage ((Str Min + 2)M). Note the damage keys off the WEAPON's Str
+ * Min, not the wielder's Strength — a troll does not hit harder with a weak bow.
+ *
+ * Power is computed from Str Min rather than parsed out of the stored code, so
+ * re-deriving an already-derived weapon returns the same values (idempotent) —
+ * a sheet that saves the derived "6M" back over the "(Str Min + 2)M" template
+ * therefore cannot corrupt the item.
+ *
+ * @param {{strengthMinimum?:number, costPerStrengthMin?:number,
+ *          strMinDamageBonus?:number, damageCode?:string}} [sys]
+ * @returns {{cost:number, damageCode:string}|null} null when this weapon does
+ *   not scale with Str Min (i.e. every flat-priced weapon).
+ */
+export function strengthMinWeaponStats(sys = {}) {
+  const perPoint = Number(sys.costPerStrengthMin) || 0;
+  const strMin   = Number(sys.strengthMinimum)    || 0;
+  if (perPoint <= 0 || strMin <= 0) return null;
+  const level = /([LMSD])\s*$/i.exec(sys.damageCode ?? "")?.[1]?.toUpperCase() ?? "M";
+  return {
+    cost: perPoint * strMin,
+    damageCode: `${strMin + (Number(sys.strMinDamageBonus) || 0)}${level}`
+  };
+}
+
+/**
+ * The update object that refreshes an actor's refreshable dice pools to full
+ * (SR2E p.84): Combat, Hacking, Magic and Control all follow the standard Dice
+ * Pool refresh; the Karma Pool does NOT (it isn't a dicePool). Committed Spell
+ * Defense releases when the Magic Pool refreshes (p.132). Only pools present on
+ * `pools` are touched, and a pool already at full is skipped — so the caller can
+ * avoid a no-op document update (and its re-render).
+ * @param {object} pools - the actor's system.dicePools
+ * @returns {Record<string, number>} update keys (empty when nothing changed)
+ */
+export function dicePoolRefreshUpdates(pools = {}) {
+  const updates = {};
+  for (const key of ["combat", "hacking", "magic", "control", "astral", "task"]) {
+    const p = pools[key];
+    if (p && p.value !== p.max) updates[`system.dicePools.${key}.value`] = p.max;
+  }
+  // Spell Defense AND its free Shielding bonus both release when the Magic Pool
+  // refreshes — the normal clear path resets both, so refresh must too, or
+  // surviving Shielding dice keep getting rolled on Resist Spell.
+  if ("spellDefense" in pools && pools.spellDefense !== 0) {
+    updates["system.dicePools.spellDefense"] = 0;
+  }
+  if ("shieldingBonus" in pools && pools.shieldingBonus !== 0) {
+    updates["system.dicePools.shieldingBonus"] = 0;
+  }
+  // An elemental's reserved Spell Defense dice go too — unused, so its Force
+  // is untouched (p.141: reduced only for each die USED).
+  if ("spellDefenseAid" in pools && (pools.spellDefenseAid !== 0 || pools.spellDefenseAidSpirit)) {
+    updates["system.dicePools.spellDefenseAid"] = 0;
+    updates["system.dicePools.spellDefenseAidSpirit"] = "";
+    updates["system.dicePools.spellDefenseAidInstance"] = "";
+  }
+  return updates;
+}
+
+/* ── SUMMONED-SPIRIT PLACEMENT ── nearest unoccupied grid cell to the caster ── */
+
+/**
+ * The nearest unoccupied grid cell to a summoner, searched ring by ring
+ * (Chebyshev distance) outward from the caster's cell — so a summoned spirit
+ * materialises right beside the caster in the first free space.
+ *
+ * Pure and grid-coordinate based (col/row), so it unit-tests without a canvas.
+ * The caller resolves pixel positions and the live occupancy set from the scene.
+ *
+ * @param {{col:number,row:number}} origin - the caster's cell
+ * @param {Set<string>} occupied - taken cells as "col,row" strings (incl. the caster)
+ * @param {{cols:number,rows:number}} [bounds] - grid size; omit for unbounded
+ * @param {object} [opts]
+ * @param {number} [opts.maxRadius=25] - how far out to search before giving up
+ * @param {{w:number,h:number}} [opts.footprint] - the PLACED token's size in cells;
+ *   every cell it would cover (top-left = the returned cell) must be free/in-bounds,
+ *   so a 2×2 spirit never lands half-on an occupied square.
+ * @returns {{col:number,row:number}|null} the free top-left cell, or null if none
+ */
+export function nearestFreeCell(origin, occupied = new Set(), bounds = null, opts = {}) {
+  // Back-compat: an old call passed maxRadius as the 4th positional arg.
+  const maxRadius = typeof opts === "number" ? opts : (opts.maxRadius ?? 25);
+  const fw = Math.max(1, Math.floor(opts.footprint?.w ?? 1));
+  const fh = Math.max(1, Math.floor(opts.footprint?.h ?? 1));
+  const inBounds = (c, r) =>
+    !bounds || (c >= 0 && r >= 0 && c < bounds.cols && r < bounds.rows);
+  const cellOpen = (c, r) => inBounds(c, r) && !occupied.has(`${c},${r}`);
+  // The candidate (c,r) is the token's top-left; every covered cell must be open.
+  const free = (c, r) => {
+    for (let dc = 0; dc < fw; dc++) for (let dr = 0; dr < fh; dr++) {
+      if (!cellOpen(c + dc, r + dr)) return false;
+    }
+    return true;
+  };
+  const { col, row } = origin;
+
+  for (let radius = 1; radius <= maxRadius; radius++) {
+    // Walk the ring at this Chebyshev distance in a stable order (N, then
+    // clockwise) so the pick is deterministic and biased to orthogonal cells.
+    const ring = [];
+    for (let d = -radius; d <= radius; d++) {
+      ring.push([col + d, row - radius]);   // top edge
+      ring.push([col + d, row + radius]);   // bottom edge
+    }
+    for (let d = -radius + 1; d <= radius - 1; d++) {
+      ring.push([col - radius, row + d]);   // left edge
+      ring.push([col + radius, row + d]);   // right edge
+    }
+    // Nearest-by-Euclidean within the ring keeps the choice visually tightest.
+    ring.sort((a, b) => {
+      const da = (a[0] - col) ** 2 + (a[1] - row) ** 2;
+      const db = (b[0] - col) ** 2 + (b[1] - row) ** 2;
+      return da - db;
+    });
+    for (const [c, r] of ring) if (free(c, r)) return { col: c, row: r };
+  }
+  return null;
+}
+
+/* ── SUMMONED-SPIRIT NAMES ── a short evocative moniker so multiple summons of
+   the same type are told apart. Elements get themed roots; nature spirits and
+   anything unknown draw the otherworldly default pool. Pure + rng-injectable. ─ */
+const _SPIRIT_ROOTS = {
+  fire:  ["Ash", "Cinder", "Ember", "Pyre", "Scorch", "Coal", "Flare", "Soot"],
+  water: ["Tide", "Brine", "Mist", "Rill", "Surge", "Foam", "Deep", "Well"],
+  air:   ["Gale", "Zephyr", "Gust", "Cloud", "Whirl", "Squall", "Draft", "Sky"],
+  earth: ["Crag", "Loam", "Slate", "Iron", "Granite", "Moss", "Stone", "Clay"],
+  _default: ["Vael", "Umbra", "Shael", "Mor", "Nyx", "Kael", "Threx", "Vorn", "Sable", "Wraith"]
+};
+const _SPIRIT_SUFFIX = ["vex", "ith", "ael", "oth", "une", "ara", "iel", "mora", "yss", "rin", "dros", "en"];
+
+/**
+ * A random spirit name for a summoned elemental/spirit, e.g. "Cindervex".
+ * @param {string} domain - element or nature-spirit domain (drives the flavour)
+ * @param {() => number} [rng=Math.random]
+ * @returns {string}
+ */
+export function randomSpiritName(domain, rng = Math.random) {
+  const pick = (arr) => arr[Math.floor(rng() * arr.length)] ?? arr[0];
+  const roots = _SPIRIT_ROOTS[String(domain ?? "").toLowerCase()] ?? _SPIRIT_ROOTS._default;
+  return pick(roots) + pick(_SPIRIT_SUFFIX);
+}
+
+/* ── Called shots, aiming, and barriers ─────────────────────────────────────
+ * All three were added after a live session; the plan and the five-round Codex
+ * review that hardened it are in docs/archive/plans/PLAN.md / docs/archive/plans/PLAN-REVIEW-LOG.md.
+ */
+
+/** Target-number penalty for calling a shot (SR2E p.92). */
+export const CALLED_SHOT_TN = 4;
+
+/**
+ * Damage levels a called shot adds (SR2E p.92): "The Damage Code is increased
+ * by one level (L becomes M, M becomes S, and so on, up to a maximum of D)."
+ * Returned as STEPS, not a level, so the caller can sum it with the burst and
+ * success steps and cap once — capping each contribution separately would lose
+ * stages.
+ */
+export const CALLED_SHOT_STEPS = 1;
+
+/**
+ * May this weapon call a shot? (SR2E p.92: "Only weapons that fire in
+ * single-shot, semi-automatic, and burst-fire modes are eligible.")
+ *
+ * Both halves matter. `weaponType` must be one that HAS firing modes at all —
+ * melee, thrown, grenades and bows do not — and the declared mode must be one
+ * of SS/SA/BF *and actually present on the weapon*. Checking `mode !== "fa"`
+ * alone is not enough: the attack path defaults a missing mode to "sa", which
+ * would make a mode-less weapon look eligible.
+ *
+ * @param {string} weaponType - melee|projectile|throwing|firearm|heavy|grenade
+ * @param {string} mode - ss|sa|bf|fa
+ * @param {object} firingModes - {ss,sa,bf,fa} booleans from the weapon
+ * @returns {boolean}
+ */
+export function canCallShot(weaponType, mode, firingModes = {}) {
+  if (weaponType !== "firearm" && weaponType !== "heavy") return false;
+  if (!["ss", "sa", "bf"].includes(mode)) return false;
+  return firingModes[mode] === true;
+}
+
+/**
+ * Maximum sequential Take Aim actions (SR2E p.82): "equal to one-half the
+ * character's skill with that weapon, rounded down."
+ */
+export function maxAimActions(skillRating) {
+  return Math.max(0, Math.floor((skillRating || 0) / 2));
+}
+
+/**
+ * Target-number reduction from aiming (SR2E p.82): "Each Take Aim action
+ * reduces the base target number by 1." Returned POSITIVE; the caller
+ * subtracts it.
+ */
+export function aimTnReduction(aimActions, skillRating) {
+  return Math.min(Math.max(0, aimActions || 0), maxAimActions(skillRating));
+}
+
+/** May this weapon be aimed? (SR2E p.82: "a ready ranged weapon".) */
+export function canAim(weaponType, equipped) {
+  return !!equipped && ["firearm", "heavy", "projectile", "throwing"].includes(weaponType);
+}
+
+/** Barrier Rating Table (SR2E p.98). */
+export const BARRIER_RATINGS = [
+  { label: "Standard Glass", rating: 2, transparent: true },
+  { label: "Cheap Material / Regular Tires", rating: 3, transparent: false },
+  { label: "Average Material / Ballistic Glass", rating: 4, transparent: true },
+  { label: "Heavy Material", rating: 6, transparent: false },
+  { label: "Reinforced / Armored Glass", rating: 8, transparent: true },
+  { label: "Structural Material", rating: 12, transparent: false },
+  { label: "Heavy Structural Material", rating: 16, transparent: false },
+  { label: "Armored / Reinforced Material", rating: 24, transparent: false },
+  { label: "Hardened Material", rating: 32, transparent: false }
+];
+
+/**
+ * The barrier's effective rating for a given use (SR2E p.98).
+ *
+ * Two DIFFERENT adjusted ratings exist and must never be conflated:
+ *  - "penetrate": firing through at a target beyond. Normal rating vs blunt
+ *    melee; TWICE vs edged melee.
+ *  - "damage": what the barrier resists when you are attacking IT. TWICE vs
+ *    firearm rounds and other ranged attacks ("a bullet ... really does punch
+ *    only a tiny hole"), and twice vs melee.
+ *
+ * A security door is twice its material either way (p.98: "Security doors have
+ * twice the rating of the material").
+ */
+export function adjustedBarrierRating(baseRating, { use, attackKind = "ranged", doorType = "none" } = {}) {
+  let r = Math.max(0, baseRating || 0);
+  if (doorType === "security") r *= 2;
+  if (use === "damage") {
+    if (attackKind === "ranged" || attackKind === "meleeBlunt" || attackKind === "meleeEdged") r *= 2;
+  } else {                                  // penetrate
+    if (attackKind === "meleeEdged") r *= 2;
+  }
+  return r;
+}
+
+/**
+ * Barrier Effect Table (SR2E p.98) — what an attack does TO a barrier.
+ * `power` must be the base Power of the round, unmodified for burst or full
+ * auto ("Always use the base Power Rating of the round ... for comparison
+ * against the Barrier Rating").
+ *
+ * @returns {{tier:string, ratingReduction:number, holes:number}}
+ */
+export function barrierEffect(power, damageRating) {
+  const p = Math.max(0, power || 0);
+  const r = Math.max(0, damageRating || 0);
+  if (r <= 0) return { tier: "destroyed", ratingReduction: 0, holes: 0 };
+  if (p < r / 2) return { tier: "none", ratingReduction: 0, holes: 0 };
+  if (p <= r) return { tier: "damaged", ratingReduction: 1, holes: 0 };
+  // "For every increment equal to half the Barrier Rating that the Power
+  // exceeds that rating, a one-half meter hole is opened and the Barrier
+  // Rating reduced by 1."
+  const holes = Math.floor((p - r) / (r / 2));
+  return { tier: "breached", ratingReduction: Math.max(1, holes), holes };
+}
+
+/**
+ * Resolve an attack against or through a barrier (SR2E p.98).
+ *
+ * Takes the BASE rating and derives every adjustment itself — a pre-adjusted
+ * rating would make the returned `newBaseRating` and the door thresholds wrong.
+ *
+ * Returns a `powerReduction`, NOT a finished damage Power: it is not given
+ * `effectivePower` and must not invent one. Armour is deliberately absent —
+ * p.98 has the defender subtract armour *and* the barrier, but the existing
+ * resistance path already applies armour, so doing it here would double it.
+ *
+ * @returns {{stopped:boolean, powerReduction:number, effect:object|null,
+ *            newBaseRating:number, opensDoor:boolean, penetrationRating:number}}
+ */
+export function resolveBarrier({ baseRating, doorType = "none", barrierMode = "through",
+                                 comparisonPower, attackKind = "ranged" } = {}) {
+  const penetrationRating = adjustedBarrierRating(baseRating, { use: "penetrate", attackKind, doorType });
+  const damageRating      = adjustedBarrierRating(baseRating, { use: "damage",    attackKind, doorType });
+  const power = Math.max(0, comparisonPower || 0);
+
+  // Breaking through: the barrier IS the target, so there is no penetration.
+  const stopped = barrierMode === "break" ? true : power <= penetrationRating;
+
+  // p.98 assesses damage to the barrier when you attack it, and when a
+  // firing-through shot is stopped ("this may still damage the barrier"). A
+  // shot that penetrates does not also damage it.
+  const effect = (barrierMode === "break" || stopped) ? barrierEffect(power, damageRating) : null;
+
+  const newBaseRating = Math.max(0, (baseRating || 0) - (effect?.ratingReduction ?? 0));
+  // "A regular door will break open when its Barrier Rating is reduced to
+  // one-half. A security door must be reduced to 0."
+  const opensDoor = doorType === "regular" ? newBaseRating <= (baseRating || 0) / 2
+                  : doorType === "security" ? newBaseRating <= 0
+                  : false;
+
+  return {
+    stopped,
+    powerReduction: barrierMode === "break" ? 0 : penetrationRating,
+    effect, newBaseRating, opensDoor, penetrationRating
+  };
+}
+
+/* ==========================================================================
+   Attacker In Melee Combat (SR2E p.90)
+   ========================================================================== */
+
+/**
+ * How close a hostile character has to be to count as engaging the attacker.
+ *
+ * p.90, verified from a 300 dpi render of the printed page: "If the attacker is
+ * attempting to conduct a ranged attack while engaged in melee combat with an
+ * opponent, or if he is aware of another character attempting to block the
+ * attempt WITHIN TWO METERS of him, the attack takes a +2 modifier per opponent
+ * present." Two metres — not one, and not "adjacent square".
+ * @type {number}
+ */
+export const ENGAGEMENT_RANGE_M = 2;
+
+/** TN penalty per engaging opponent (p.90 Ranged Combat Modifiers Table). */
+export const ENGAGED_TN_PER_FOE = 2;
+
+/**
+ * Gap between two token footprints, in scene units. 0 when they touch or overlap.
+ *
+ * Centre-to-centre is wrong once either token is bigger than one square: a 4x4
+ * troll standing right against you has its centre well over two metres away, so
+ * a centre measurement calls it "not engaging" when it is literally adjacent.
+ * Measuring footprint-to-footprint counts it, and stays within half a square of
+ * the centre measurement for the ordinary 1x1-vs-1x1 case.
+ *
+ * Both rectangles are axis-aligned. On a SQUARE or gridless scene that is the
+ * token's true occupied area. On a HEX scene it is the bounding box of a hex
+ * footprint, so a foe diagonally past a corner can read slightly closer than it
+ * really is — accepted rather than pulling in TokenDocument#getGridSpacePolygon
+ * and polygon-to-polygon distance, because the result only pre-fills an input
+ * the player can edit. Revisit if SR2E ever ships hex scenes.
+ *
+ * @param {{x: number, y: number, width: number, height: number}} a - pixels.
+ * @param {{x: number, y: number, width: number, height: number}} b - pixels.
+ * @param {number} pxPerUnit - canvas.grid.size / canvas.grid.distance.
+ * @returns {number} distance in scene units, or NaN if it cannot be computed.
+ */
+export function footprintDistance(a, b, pxPerUnit) {
+  if (!a || !b || !Number.isFinite(pxPerUnit) || pxPerUnit <= 0) return NaN;
+  const vals = [a.x, a.y, a.width, a.height, b.x, b.y, b.width, b.height];
+  if (!vals.every(Number.isFinite)) return NaN;
+  // 0 on whichever axis the two rectangles already overlap.
+  const dx = Math.max(b.x - (a.x + a.width),  0, a.x - (b.x + b.width));
+  const dy = Math.max(b.y - (a.y + a.height), 0, a.y - (b.y + b.height));
+  return Math.hypot(dx, dy) / pxPerUnit;
+}
+
+/**
+ * Count how many nearby characters are "engaging" the attacker for the
+ * Attacker In Melee Combat modifier.
+ *
+ * Pure so it can be tested without a canvas: the caller measures distances and
+ * hands over plain descriptors.
+ *
+ * @param {number} attackerDisposition - Foundry TOKEN_DISPOSITIONS of the shooter.
+ * @param {Array<{disposition: number, distanceM: number, hidden?: boolean,
+ *                defeated?: boolean}>} others - Every other token on the scene.
+ * @returns {number} opponents present (never negative).
+ */
+export function countEngagingFoes(attackerDisposition, others = []) {
+  // A NEUTRAL shooter has no automatic enemies — sign comparison would count
+  // nobody anyway, but returning early says so on purpose rather than by luck.
+  if (!attackerDisposition) return 0;
+
+  return others.filter(o => {
+    if (!o || !Number.isFinite(o.distanceM)) return false;
+    if (o.distanceM > ENGAGEMENT_RANGE_M) return false;
+    // The book conditions this on the attacker being AWARE of the character,
+    // so a hidden token cannot contribute — which also stops the count from
+    // leaking the presence of a token the player is not allowed to see.
+    if (o.hidden) return false;
+    if (o.defeated) return false;
+    // Opposed dispositions only: FRIENDLY(1) vs HOSTILE(-1)/SECRET(-2), and the
+    // mirror for a GM-side shooter. NEUTRAL(0) is nobody's opponent.
+    return o.disposition * attackerDisposition < 0;
+  }).length;
+}
+
+/* ==========================================================================
+   Dice provenance — which dice on a chat card came from which pool
+   ========================================================================== */
+
+/**
+ * Split a rolled pool into labelled runs, in the order rollSuccessTest composes
+ * it: base skill, then each dice pool used, then karma, then positive misc.
+ *
+ * The dice themselves are indistinguishable — SR2 rolls one undifferentiated
+ * handful — so this attribution is presentational, not mechanical. It is stable
+ * because index survives both Rule-of-Six explosions (which accumulate into
+ * dice[idx]) and karma rerolls (which replace dice[idx] in place).
+ *
+ * A NEGATIVE misc modifier removes dice rather than adding them, so there is no
+ * misc run and some earlier run is short. The penalty is taken off the BASE
+ * first (the character is fumbling their own skill, not their pool spend), and
+ * only once base is exhausted does it eat later runs from the end.
+ *
+ * @param {object} p
+ * @param {number} p.baseDice      - skill/attribute dice before pools.
+ * @param {string} p.baseLabel     - what to call that run ("Firearms").
+ * @param {Array<{key:string,label:string,amount:number}>} [p.poolsUsed]
+ * @param {number} [p.karmaDice]
+ * @param {number} [p.miscDice]    - may be negative.
+ * @param {string} [p.miscLabel]
+ * @returns {Array<{key:string,label:string,count:number}>} runs, none empty.
+ */
+export function diceSourceRuns({ baseDice = 0, baseLabel = "", poolsUsed = [],
+                                 karmaDice = 0, miscDice = 0, miscLabel = "",
+                                 karmaLabel = "Karma", miscDefaultLabel = "Misc" } = {}) {
+  const runs = [{ key: "base", label: baseLabel, count: Math.max(0, baseDice) }];
+  for (const p of poolsUsed) {
+    if (p?.amount > 0) runs.push({ key: `pool:${p.key}`, label: p.label, count: p.amount });
+  }
+  if (karmaDice > 0) runs.push({ key: "karma", label: karmaLabel, count: karmaDice });
+  if (miscDice > 0)  runs.push({ key: "misc",  label: miscLabel || miscDefaultLabel, count: miscDice });
+
+  // Apply a dice PENALTY: base first, then from the end backwards.
+  let debt = miscDice < 0 ? -miscDice : 0;
+  if (debt) {
+    const take = Math.min(debt, runs[0].count);
+    runs[0].count -= take; debt -= take;
+    for (let i = runs.length - 1; i > 0 && debt > 0; i--) {
+      const t = Math.min(debt, runs[i].count);
+      runs[i].count -= t; debt -= t;
+    }
+  }
+  return runs.filter(r => r.count > 0);
+}
+
+/**
+ * Tag each rolled die with the run it belongs to, by position.
+ * Returns a NEW array; the input dice objects are spread, not mutated.
+ * Any die beyond the described runs (should not happen) is left untagged
+ * rather than silently attributed to the last run.
+ */
+export function attributeDice(dice = [], runs = []) {
+  const out = [];
+  let i = 0;
+  for (const run of runs) {
+    for (let n = 0; n < run.count && i < dice.length; n++, i++) {
+      out.push({ ...dice[i], sourceKey: run.key, sourceLabel: run.label });
+    }
+  }
+  for (; i < dice.length; i++) out.push({ ...dice[i] });
+  return out;
+}
+
+/**
+ * Which Dice Pools may legally augment a given kind of test (SR2E p.84).
+ *
+ * Verified from a 300 dpi render of the printed page:
+ *  - **Combat Pool** — "may be allocated to any offensive or defensive
+ *    combat-related tests, such as Firearm, Projectile Weapon, Throwing Weapon,
+ *    Gunnery, Melee Combat, or similar offensive Combat Skill Tests", and to
+ *    Damage Resistance Tests against normal attacks.
+ *  - **Magic Pool** — "Spell Success Tests and Drain Resistance Tests in
+ *    spellcasting (p.129), in a special manner for ritual sorcery (p.133), and
+ *    for specific or area-effect Spell Defense (p.132). Dice from the Magic
+ *    Pool CANNOT be used to augment Conjuring-related Tests."
+ *  - **Hacking Pool** — "decking-related tests such as Utility Tests (p.174)
+ *    and the MPCP Resistance Test in Matrix combat (p.179)."
+ *  - **Control Pool** — "tests relating to vehicle control, such as Driving or
+ *    Piloting (p.183) and Position Tests (p.105)."
+ *
+ * @param {string} [kind] - combat | spell | drain | conjuring | matrix |
+ *                          vehicle | damage-resist. Anything unrecognised (or
+ *                          omitted) returns null, meaning "cannot tell — offer
+ *                          everything", which preserves the old behaviour for
+ *                          generic skill rolls rather than guessing wrong.
+ * @returns {string[]|null} allowed pool keys, or null for "unconstrained".
+ */
+export function poolsAllowedFor(kind) {
+  switch (kind) {
+    case "combat":
+    case "damage-resist": return ["combat"];
+    case "spell":
+    case "drain":         return ["magic"];
+    case "conjuring":     return [];        // explicitly barred by the book
+    case "matrix":        return ["hacking"];
+    case "vehicle":       return ["control"];
+    default:              return null;
+  }
+}
+
+/**
+ * The "complete miss" defence (SR2E p.91), read from a 300 dpi render:
+ *
+ *   "If the target's Combat Pool dice ALONE are enough to exceed the attacker's
+ *    successes, the attack is a complete miss."
+ *
+ * Note how narrow this is. It is NOT "the defender rolled more successes than
+ * the attacker" — a defender who wins on Body dice merely stages the damage
+ * down in the usual way. Only the successes contributed by COMBAT POOL dice
+ * count towards this, which is why the same page says to "keep track of the
+ * total number of successes, as well as how many of the Combat Pool dice also
+ * succeed", and recommends rolling the pool dice in a different colour.
+ *
+ * Strictly EXCEED: equal successes are not a miss (p.91 gives equal successes
+ * the weapon's base Damage Level).
+ *
+ * @param {number} poolSuccesses     - successes from Combat Pool dice only.
+ * @param {number} attackerSuccesses - the attacker's successes on the attack test.
+ * @returns {boolean}
+ */
+export function isCompleteMiss(poolSuccesses, attackerSuccesses, opts = {}) {
+  if (!Number.isFinite(poolSuccesses) || !Number.isFinite(attackerSuccesses)) return false;
+  // In MELEE the clean miss is not free: p.103 grants it only to a defender who
+  // declared Full Defense, paying for it by forgoing Combat Pool on their own
+  // Attack Success Test. Ranged (p.91) has no such precondition.
+  if (opts.melee && !opts.fullDefense) return false;
+  return poolSuccesses > attackerSuccesses;
+}
+
+/**
+ * Count successes contributed by dice from a given source, using the provenance
+ * that attributeDice() stamps on each die.
+ *
+ * @param {object[]} dice     - attributed dice (see attributeDice).
+ * @param {string} sourceKey  - e.g. "pool:combat".
+ * @returns {number}
+ */
+export function successesFromSource(dice = [], sourceKey = "") {
+  return dice.filter(d => d?.success && d.sourceKey === sourceKey).length;
+}
+
+/**
+ * Should a knockdown test even be offered? (SR2E p.91 / p.103)
+ *
+ * The test exists to find out whether the character stays on their feet. When
+ * the answer is already settled there is nothing to roll:
+ *
+ *  - **A Deadly wound always drops them.** The book's threshold table stops at
+ *    Serious ("1 for a Light Wound, 2 for Moderate, and 3 for Serious") because
+ *    a Deadly wound fills the Condition Monitor — the character is going down
+ *    regardless of the dice. `knockdownOutcome` already returns "prone" for D
+ *    unconditionally, so prompting only asks for a roll that cannot change it.
+ *  - **A character whose monitor is already full** (or overflowing) is down and
+ *    dying; staying upright is not on the table.
+ *
+ * @param {"L"|"M"|"S"|"D"} level - the damage level actually taken.
+ * @param {object} [monitor] - the relevant condition monitor {value, max}.
+ * @param {number} [overflow=0]
+ * @returns {{offer: boolean, autoProne: boolean, reason: string}}
+ */
+export function knockdownPrompt(level, monitor = {}, overflow = 0) {
+  const value = Number(monitor.value) || 0;
+  const max   = Number(monitor.max)   || 0;
+  if (max > 0 && value >= max) {
+    return { offer: false, autoProne: true, reason: "incapacitated" };
+  }
+  if (overflow > 0) return { offer: false, autoProne: true, reason: "incapacitated" };
+  if (kdBoxes(level) >= 10) return { offer: false, autoProne: true, reason: "deadly" };
+  return { offer: true, autoProne: false, reason: "" };
+}
+
+/**
+ * Knockdown target number.
+ *  - **Ranged** (p.91): ½ Power, rounded down — or the FULL Power for gel
+ *    rounds, whose whole point is stopping power.
+ *  - **Melee** (p.103, "Knockback and Knockdown"): the TN is the *opponent's
+ *    Strength*, not a function of Power at all. Two different rules; using the
+ *    ranged one for a melee hit is simply the wrong number.
+ *
+ * @param {object} p
+ * @param {number} [p.power]           - attack Power (ranged).
+ * @param {boolean} [p.gel=false]
+ * @param {boolean} [p.melee=false]
+ * @param {number} [p.attackerStrength] - required when melee.
+ * @returns {number} target number, floored at 2.
+ */
+export function knockdownTestTN({ power = 0, gel = false, melee = false, attackerStrength = 0 } = {}) {
+  if (melee) return Math.max(2, Math.floor(attackerStrength) || 2);
+  return Math.max(2, gel ? Math.floor(power) : Math.floor(power / 2));
+}
+
+/* ────────────────────────────────────────────────────────────────────────────
+ * SPELL FOCI (SR2E p.137)
+ *
+ * "Both types operate in a similar manner in that they make available an
+ *  additional number of dice equal to their rating. Like Dice Pools, once the
+ *  Spell Focus dice are used, they are gone until the beginning of the
+ *  magician's next action... A specific spell focus provides extra dice equal to
+ *  its rating for the tests to cast and resist Drain associated with one
+ *  specific spell."
+ *
+ * Three things follow, and the system used to get all three wrong: the dice are
+ * a POOL that depletes, the focus is bound to ONE spell, and the dice serve the
+ * cast AND the drain — one allocation split between them, not one each.
+ * ──────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * Dice a focus still has this action, never negative.
+ *
+ * `spent` cannot carry a schema `max` because its ceiling is the focus's own
+ * (dynamic) rating, so lowering the rating on a spent focus can leave `spent`
+ * above it. Clamping here means every caller is safe even if a document slipped
+ * through in that state.
+ *
+ * @param {{force?:number, spent?:number}} focus
+ * @returns {number}
+ */
+export function focusRemaining(focus = {}) {
+  const rating = Math.max(0, Number(focus.force) || 0);
+  const spent  = Math.max(0, Number(focus.spent) || 0);
+  return Math.max(0, rating - spent);
+}
+
+/**
+ * Is this focus eligible to fuel `spellId` right now?
+ *
+ * Expendable (fetish) foci are deliberately excluded: they are consumed by their
+ * own spend-and-delete flow, and giving them a REFRESHING counter would turn a
+ * single-use item into a permanent one.
+ *
+ * @param {object} focus - A focus item's system data, plus `type`.
+ * @param {string} spellId
+ * @returns {boolean}
+ */
+export function focusEligibleFor(focus = {}, spellId = "") {
+  return focus.focusType === "spell"
+    && !!focus.bonded
+    && !!focus.active
+    && !focus.expendable
+    && focus.spellSubtype === "specific"    // category foci are not implemented
+    && !!focus.boundSpellId
+    && focus.boundSpellId === spellId
+    && focusRemaining(focus) > 0;
+}
+
+/**
+ * Clamp a requested {cast, drain} split to what the focus actually has.
+ *
+ * THE TWO SHARE ONE BUDGET. Capping each independently at `remaining` would let
+ * a Rating 4 focus yield 4 on the cast and 4 more on the drain — eight dice from
+ * a four-die focus, which is precisely the doubling this mechanic is supposed to
+ * prevent. Cast is satisfied first, drain takes what survives, so the result is
+ * deterministic regardless of how the request arrived.
+ *
+ * @param {{force?:number, spent?:number}} focus
+ * @param {number} cast
+ * @param {number} drain
+ * @returns {{cast:number, drain:number, total:number}}
+ */
+export function clampFocusAllocation(focus = {}, cast = 0, drain = 0) {
+  const remaining = focusRemaining(focus);
+  const c = Math.min(Math.max(0, Math.floor(Number(cast) || 0)), remaining);
+  const d = Math.min(Math.max(0, Math.floor(Number(drain) || 0)), remaining - c);
+  return { cast: c, drain: d, total: c + d };
+}
+
+/**
+ * `spent` normalised against a (possibly reduced) rating.
+ * Used by the Item pre-update hook so the invariant holds however the rating
+ * changes, not only on the spend path.
+ *
+ * @param {number} spent
+ * @param {number} force
+ * @returns {number}
+ */
+export function normalisedFocusSpent(spent, force) {
+  const rating = Math.max(0, Number(force) || 0);
+  return Math.min(Math.max(0, Math.floor(Number(spent) || 0)), rating);
+}
+
+/**
+ * Total successes on a success-test card, INCLUDING Karma Pool spends.
+ *
+ * The natural count is recomputed from the dice rather than stored, because a
+ * Karma reroll rewrites entries in `state.dice` in place (SR2E p.190); bought
+ * successes are added on top. A critical glitch needs no special case — it is
+ * all 1s, so the natural count is already 0.
+ *
+ * This is the single definition of "how many successes did that test get". The
+ * card renderer and every downstream card (melee, astral, matrix, spell resist)
+ * read it, so a Karma spend cannot leave them disagreeing.
+ *
+ * @param {{dice?: Array<{success?: boolean}>, boughtSuccesses?: number}} state
+ * @returns {number}
+ */
+export function testTotalSuccesses(state = {}) {
+  const natural = (state.dice ?? []).filter(d => d.success).length;
+  return natural + (state.boughtSuccesses ?? 0);
+}
+
+// ---------------------------------------------------------------------------
+// KARMA POOL (SR2E p.191)
+// ---------------------------------------------------------------------------
+// The pool is not a stored number. Capacity is one-tenth of all Karma ever
+// earned, ROUND UP, less whatever has been permanently expended; availability
+// is that capacity less this encounter's spending, plus any Team Karma the
+// character is currently holding.
+//
+// The permanent/temporary split is the whole point. p.191: Karma spent to buy
+// successes is "gone (pffft!) forever… They do not refresh with the pool in the
+// next scene", while everything else returns "with the next encounter".
+
+/**
+ * Current Karma Pool capacity.
+ * @param {number} total - Lifetime Karma earned.
+ * @param {number} burned - Capacity permanently expended (bought successes,
+ *   points gifted to the Team Karma Pool).
+ * @param {number} adjust - Signed GM adjustment. Its reason for existing is
+ *   that a pool typed in by hand cannot otherwise survive the move to a derived
+ *   model: a character with 0 recorded Karma and a hand-entered pool of 3 would
+ *   derive to 0 and lose it. The migration sets this to whatever offset
+ *   preserves the number the table was already using. It is deliberately NOT
+ *   editable on the sheet: a freely adjustable offset would let permanently
+ *   burned Karma be undone, which is the thing this model exists to prevent.
+ * @returns {number}
+ */
+/**
+ * The Karma Pool a character simply starts with (SR2E p.47, "Starting Karma"):
+ * "Human characters begin the game with 1 point in their Karma Pool.
+ * Metahumans begin the game with 2 points in their Karma Pool, unless the More
+ * Metahumans optional rule is in use, in which case they only get the standard
+ * 1 point."
+ *
+ * This is a grant, not a function of Karma earned — which is why a freshly
+ * created character has a pool at all, and why deriving from Career Karma alone
+ * produced 0 and looked wrong.
+ *
+ * The extra point is compensation for how expensive the Metahuman Race priority
+ * is at chargen. The **More Metahumans** optional rule (p.42) makes that
+ * priority cheaper, and withdraws the compensation with it — hence the flag.
+ *
+ * @param {string} race
+ * @param {boolean} [moreMetahumans] - The optional rule is in use, so
+ *   metahumans get the standard 1 point rather than 2.
+ * @returns {number}
+ */
+export function startingKarmaPool(race, moreMetahumans = false) {
+  if (String(race || "human").toLowerCase() === "human") return 1;
+  return moreMetahumans ? 1 : 2;
+}
+
+export function karmaPoolCapacity(total, burned = 0, adjust = 0, race = "human",
+                                  moreMetahumans = false) {
+  const t = Math.max(0, Number(total) || 0);
+  const b = Math.max(0, Number(burned) || 0);
+  const a = Number(adjust) || 0;              // signed on purpose
+  // p.191 says one-tenth "(round up)"; p.190 says ten percent of each award,
+  // "always round off in favor of Good Karma" — i.e. round DOWN. The book
+  // contradicts itself and both readings are verified from page renders. The
+  // pool's own section (p.191) wins here, being the rule specifically about the
+  // pool rather than about splitting an award.
+  return Math.max(0, startingKarmaPool(race, moreMetahumans) + Math.ceil(t / 10) + a - b);
+}
+
+/**
+ * Points available to spend right now.
+ * @param {number} capacity - From karmaPoolCapacity.
+ * @param {number} spent - Personal points used this encounter.
+ * @param {number} drawn - Team Karma points held this encounter.
+ * @returns {number}
+ */
+export function karmaPoolAvailable(capacity, spent = 0, drawn = 0) {
+  const c = Math.max(0, Number(capacity) || 0);
+  const s = Math.max(0, Number(spent) || 0);
+  const d = Math.max(0, Number(drawn) || 0);
+  return Math.max(0, c - s) + d;
+}
+
+/**
+ * Split a spend across the two buckets. Borrowed Team Karma goes first, so a
+ * player who drew points and did not need them all still returns capacity at
+ * the refresh rather than having burned their own.
+ *
+ * RAW does not fix the order; drawn-first is the only order under which unused
+ * borrowings can evaporate cleanly.
+ *
+ * @param {number} cost
+ * @param {number} drawn - Team points currently held.
+ * @returns {{fromDrawn:number, fromSpent:number}}
+ */
+export function allocateKarmaSpend(cost, drawn = 0) {
+  const c = Math.max(0, Math.floor(Number(cost) || 0));
+  const d = Math.max(0, Number(drawn) || 0);
+  const fromDrawn = Math.min(c, d);
+  return { fromDrawn, fromSpent: c - fromDrawn };
+}
+
+// ---------------------------------------------------------------------------
+// SKILL CONCENTRATIONS AND SPECIALIZATIONS (SR2E p.70, p.191)
+// ---------------------------------------------------------------------------
+// p.70's arithmetic is CREATION ONLY: "All these numerical gymnastics are
+// relevant only during character creation... Once the game has begun, skill
+// advancement is handled according to the Karma rules on p.190."
+//
+// So a skill has two lifecycle phases. While PENDING (being created) the three
+// tiers derive from the points allocated to it. Once FINALIZED they are
+// independent ratings, bought separately with Karma at p.191's 2x / 1.5x / 1x —
+// and nothing derives them from one another ever again.
+
+/**
+ * The three tiers a chargen skill ends up with, from the points allocated.
+ *
+ * p.70: a Concentration is the general +1 with the general reduced by 1; a
+ * Specialization is the original general +2 with the general reduced by 2, and
+ * "the character gains a Concentration governing the Specialization at a rating
+ * equal to the original general skill rating".
+ *
+ * Worked example from the book, allocation 5:
+ *   plain          → Firearms 5
+ *   concentration  → Firearms 4, SMG 6
+ *   specialization → Firearms 3, SMG 5, Uzi III 7
+ *
+ * @param {number} allocated - points put into the skill at creation
+ * @param {boolean} hasConcentration
+ * @param {boolean} hasSpecialization - implies a concentration (p.70)
+ * @returns {{general:number, concentration:number, specialization:number}}
+ */
+export function skillTiersFromAllocation(allocated, hasConcentration = false, hasSpecialization = false) {
+  const a = Math.max(0, Math.floor(Number(allocated) || 0));
+  if (hasSpecialization) {
+    return { general: a - 2, concentration: a, specialization: a + 2 };
+  }
+  if (hasConcentration) {
+    return { general: a - 1, concentration: a + 1, specialization: 0 };
+  }
+  return { general: a, concentration: 0, specialization: 0 };
+}
+
+/**
+ * Is this a legal chargen allocation? Rejected rather than clamped: silently
+ * flooring a specialization at allocation 1 (general −1) would distort the
+ * allocation the player actually paid for.
+ *
+ * @returns {{ok:boolean, reason?:string}}
+ */
+export function validateSkillAllocation(allocated, hasConcentration = false, hasSpecialization = false) {
+  const a = Number(allocated);
+  if (!Number.isInteger(a)) return { ok: false, reason: "Allocation must be a whole number." };
+  if (a < 1) return { ok: false, reason: "Allocation must be at least 1." };
+  const t = skillTiersFromAllocation(a, hasConcentration, hasSpecialization);
+  if (t.general < 0) {
+    const need = hasSpecialization ? 2 : 1;
+    return { ok: false,
+      reason: `A ${hasSpecialization ? "specialization" : "concentration"} reduces the general skill by ${need} (p.70), so it needs an allocation of at least ${need}.` };
+  }
+  return { ok: true };
+}
+
+/**
+ * Invert p.70 for a LEGACY skill, whose stored `rating` is the already-reduced
+ * general the player worked out by hand. Used once, by the migration, to
+ * recover the allocation a mid-chargen character actually spent.
+ */
+export function allocationFromLegacyRating(rating, hasConcentration = false, hasSpecialization = false) {
+  const r = Math.max(0, Math.floor(Number(rating) || 0));
+  return r + (hasSpecialization ? 2 : hasConcentration ? 1 : 0);
+}
+
+/**
+ * Skill points a chargen skill costs: the allocation. Falls back to inverting
+ * p.70 for a legacy/pending skill that predates the field.
+ *
+ * A FINALIZED skill reports its stored allocation when it has one; without it
+ * the history is unrecoverable — Karma advancement has moved the ratings — and
+ * it reports a deliberately conservative approximation instead. See below.
+ */
+export function skillChargenSpend(skill = {}) {
+  // Finalization RETAINS the allocation as provenance, so a character built in
+  // this system reports its exact historical spend.
+  if (Number.isInteger(skill.allocated)) return Math.max(0, skill.allocated);
+  // No allocation on a finalized skill means the history is genuinely unknown:
+  // a migrated legacy character, or a skill bought with Karma after creation.
+  // Charge the current general as an APPROXIMATION rather than inverting p.70,
+  // which would invent a +2 nobody spent. It drifts high as Karma advances a
+  // skill — deliberate: this panel is display-only and nothing gates on it, and
+  // a visibly over-budget number is safer for a GM reopening creation than a 0
+  // that invites re-spending the whole budget on an already-built character.
+  if (skill.ratingsFinalized) return Math.max(0, Number(skill.rating) || 0);
+  return allocationFromLegacyRating(skill.rating, !!skill.concentration?.name, !!skill.specialization?.name);
+}
+
+/**
+ * Sub-ratings that look like they were never frozen, for the 0.92.1 repair.
+ *
+ * Under the pre-0.92.0 model a named Concentration or Specialization was
+ * re-derived on every preparation and DISPLAYED at general+2 / general+4. When
+ * 0.92.0 failed to freeze them, the sheet fell back to whatever storage held.
+ *
+ * A sub-rating at or below its general is the signature: chargen puts a
+ * Concentration at general+2 (p.70) and a later purchase at general+1 (p.191).
+ * It is NOT proof, though — finalized tiers advance independently, so buying
+ * Pistols 5 on Firearms 4 and then raising Firearms to 5 or 6 produces the same
+ * shape legitimately. That is why this only proposes, and a GM applies it.
+ *
+ * @returns {{concentration?: number, specialization?: number}|null}
+ */
+export function staleSubRatingRepair(system = {}) {
+  const hasConc = !!system.concentration?.name;
+  const hasSpec = !!system.specialization?.name;
+  if (!hasConc && !hasSpec) return null;
+  if (system.ratingsFinalized === false) return null;   // still deriving
+  const general = Math.max(0, Math.floor(Number(system.rating) || 0));
+  const t = skillTiersFromAllocation(
+    allocationFromLegacyRating(general, hasConc, hasSpec), hasConc, hasSpec);
+  const out = {};
+  if (hasConc && (system.concentration.rating ?? 0) <= general) out.concentration = t.concentration;
+  if (hasSpec && (system.specialization.rating ?? 0) <= general) out.specialization = t.specialization;
+  return Object.keys(out).length ? out : null;
+}
+
+/**
+ * THE single answer to "which rating applies". Every roll path goes through
+ * this, which is what makes skillsoft suppression enforceable — suppressing the
+ * visible tags alone would leave weapon-name fallback still finding and rolling
+ * a natural specialization.
+ *
+ * @param {object} system - prepared SkillData
+ * @param {string} [variant] - "", "concentration", "specialization", "family"
+ * @returns {number}
+ */
+export function effectiveSkillRating(system, variant = "") {
+  if (!system) return 0;
+  const sub = variant === "concentration" || variant === "specialization";
+  // A slotted ActiveSoft replaces the skill wholesale; a chip is not a
+  // Concentration, so its sub-ratings do not apply while it is in.
+  if (sub && system._subRatingsSuppressed) return skillRollRating(system);
+  if (sub && system[variant]?.name && system[variant].rating > 0) return system[variant].rating;
+  if (variant === "family" && system.familyRating > 0) return system.familyRating;
+  return skillRollRating(system);
+}
+
+/**
+ * The skill an Improved Ability power improves, read from its NAME.
+ *
+ * Improved Ability adds its level in dice to one named skill (SR2E p.125). The
+ * power carries that skill in `system.improvedSkill`, but the compendium item
+ * ships with the field empty, and the natural thing a player does is rename the
+ * item the way the book writes it — "Improved Ability (Armed Combat)". The field
+ * stays blank and the power silently grants nothing. This is the fallback that
+ * makes the player's version work.
+ *
+ * Deliberately limited to Improved Ability. It is the only power that grants
+ * skill dice, and other powers carry parentheses that are NOT skills — "Killing
+ * Hands (M)", "Improved Physical Senses (Thermo Vision)" — so a general
+ * "whatever is in the brackets" rule would be wrong even where it happens to
+ * find nothing. The match is greedy to the LAST bracket so a Build/Repair skill
+ * survives: "Improved Ability (Computers (B/R))" -> "Computers (B/R)".
+ *
+ * @param {string} name - the adept power's item name
+ * @returns {string} the skill name, or "" when the name does not carry one
+ */
+export function improvedAbilitySkill(name) {
+  const m = /^\s*improved\s+ability\s*\((.+)\)\s*$/i.exec(String(name ?? ""));
+  return m ? m[1].trim() : "";
+}
+
+/**
+ * The Combat Skills whose Improved Ability dice are capped (SR2E p.125). The
+ * list is the book's own, from the IMPROVED ABILITY COSTS table.
+ */
+export const IMPROVED_ABILITY_COMBAT_SKILLS = new Set([
+  "armed combat", "unarmed combat", "throwing weapons",
+  "projectile weapons", "firearms", "gunnery"
+]);
+
+/**
+ * Improved Ability dice after the Combat Skill cap (SR2E p.125): "the adept
+ * cannot have more extra dice than the character's current Combat Skill Rating.
+ * Thus, a character with Firearms 4 cannot have more than 4 additional dice."
+ *
+ * Applied to the AGGREGATE, since two powers naming one skill must not dodge the
+ * cap between them. Non-combat skills are uncapped by this rule.
+ *
+ * @param {string} skillName - the skill's name as it appears on the sheet
+ * @param {number} rating    - its current rating
+ * @param {number} dice      - total Improved Ability dice claimed for it
+ * @returns {number}
+ */
+export function cappedImprovedAbilityDice(skillName, rating, dice) {
+  const d = Math.max(0, Math.floor(Number(dice) || 0));
+  const key = String(skillName ?? "").toLowerCase().replace(/\s*\(b\/r\)\s*/g, "").trim()
+    // "Throwing" is how the p.125 table writes it; the skill is Throwing Weapons.
+    .replace(/^throwing$/, "throwing weapons");
+  if (!IMPROVED_ABILITY_COMBAT_SKILLS.has(key)) return d;
+  return Math.min(d, Math.max(0, Math.floor(Number(rating) || 0)));
+}
+
+// ---------------------------------------------------------------------------
+// AREA-EFFECT SPELLS (SR2E p.130)
+// ---------------------------------------------------------------------------
+// "The base radius of effect for all area-effect spells, regardless of
+// category, is equal to the magician's Magic Rating in meters." Shrinking it
+// withholds dice from the Spell Success Test, 1 m per 2 dice; growing it
+// withholds 1 die per 1 m. The dice removed "may not exceed the Force Rating of
+// the spell". The test is rolled ONCE and compared against each target's own
+// target number, successes counted separately per target.
+
+/**
+ * Validated area geometry for one cast.
+ * @param {{magic:number, force:number, radiusDelta?:number}} o
+ *   radiusDelta — signed whole metres the caster moves the radius by.
+ * @returns {{radius:number, withheld:number, valid:boolean}}
+ */
+export function areaSpellGeometry({ magic, force, radiusDelta = 0 } = {}) {
+  if (![magic, force, radiusDelta].every(Number.isInteger)) {
+    return { radius: 0, withheld: 0, valid: false };
+  }
+  const withheld = radiusDelta >= 0 ? radiusDelta : -radiusDelta * 2;
+  const radius = magic + radiusDelta;
+  return { radius, withheld, valid: magic >= 0 && force >= 1 && withheld <= force && radius >= 0 };
+}
+
+/**
+ * Successes one already-rolled test scores against a DIFFERENT target number.
+ * `die.total` is the compounded Rule-of-Six value (sr2e-roll.mjs), so a
+ * 6-then-2 counts as 8. `die.success` is useless here — it was judged at the
+ * roll's own TN.
+ * @param {Array<{total:number}>} dice
+ * @param {number} tn
+ */
+export function successesAtTN(dice = [], tn) {
+  return dice.filter(d => (Number(d?.total) || 0) >= tn).length;
+}
+
+/**
+ * Who an area spell can affect, by actor type.
+ * @returns {"card"|"gm"|null} "card" — resolves with a Resist Spell card;
+ *   "gm" — caught, but the GM resolves it (a vehicle vs a physical spell uses
+ *   the Object Resistance Table, p.130); null — not affected (Matrix entities;
+ *   anything unliving vs a mana spell, which "affects only living targets",
+ *   p.151).
+ */
+export function areaTargetEligible(actorType, spellType) {
+  if (["character", "npc", "spirit"].includes(actorType)) return "card";
+  if (actorType === "vehicle" && spellType === "physical") return "gm";
+  return null;
+}
+
+/**
+ * The dice one cast actually rolls — the ONE calculation shared by the cast
+ * dialog's preview and SR2EItem#_rollSpellcast, so the two cannot disagree.
+ * Pool, Karma and misc dice are added by rollSuccessTest from its options;
+ * `baseDice` is what goes in its first argument.
+ *
+ * @param {object} o
+ * @param {number} o.force
+ * @param {number} [o.withheld]  dice withheld to reshape an area (p.130)
+ * @param {number} [o.minBase]   floor on baseDice: 1 for an ordinary cast (as
+ *   before), 0 for an area cast whose Force dice may all be withheld — p.130
+ *   still lets Magic Pool dice carry it.
+ * @returns {{ratingDice:number, baseDice:number, pool:number, karma:number, total:number}}
+ */
+export function spellCastDice({
+  force, withheld = 0, totemBonus = 0, totemPenalty = 0, focusCast = 0,
+  poolReq = 0, poolAvail = 0, poolCap = Infinity,
+  aidReq = 0, aidAvail = 0,
+  karmaReq = 0, karmaAvail = 0, misc = 0, minBase = 1
+} = {}) {
+  const n = v => Math.max(0, Math.trunc(Number(v) || 0));
+  const ratingDice = Math.max(0, n(force) - n(withheld));
+  const pool = Math.max(0, Math.min(n(poolReq), n(poolAvail), poolCap));
+  // An elemental's Aid Sorcery dice act "like an auxiliary Magic Pool" and are
+  // "allocated … in the same manner as Magic Pool dice" (p.141): they share the
+  // Magic Pool's ceiling on the spell test, after the caster's own pool.
+  const aid = Math.max(0, Math.min(n(aidReq), n(aidAvail), poolCap - pool));
+  const baseDice = Math.max(minBase,
+    ratingDice + (Number(totemBonus) || 0) - (Number(totemPenalty) || 0) + n(focusCast) + aid);
+  // p.191: Karma dice up to the rating dice in use — withheld dice are not, and
+  // neither are aid dice (pool dice).
+  const karma = Math.max(0, Math.min(n(karmaReq), n(karmaAvail), ratingDice));
+  return { ratingDice, baseDice, pool, aid, karma,
+           total: Math.max(0, baseDice + pool + karma + (Number(misc) || 0)) };
+}
+
+// ---------------------------------------------------------------------------
+// DAMAGING MANIPULATION SPELLS (SR2E p.129–131, p.158)
+// ---------------------------------------------------------------------------
+// Flamethrower, Spark, Flame Bomb: "(F)M. Every 2 successes increases the
+// Damage Code by one level. The spell is resisted by Body, and one-half the
+// value of Impact Armor reduces the Power (Force) of the attack. Resolve using
+// the ranged combat procedure." The target's Spell Resistance Test "is actually
+// a Damage Resistance Test, as in Ranged Combat" (p.131).
+
+/**
+ * Power and base Damage Level of a damaging manipulation spell's code, with
+ * F = the Force actually cast. "(F)M", "(F+2)S", "(F-1)L", "(F) M".
+ * @returns {{power:number, level:string}|null} null — not a damage code.
+ */
+export function manipulationDamage(damageCode, force) {
+  const m = /^\s*\(\s*F\s*(?:([+-])\s*(\d+)\s*)?\)\s*([LMSD])\s*$/i.exec(String(damageCode ?? ""));
+  if (!m) return null;
+  const f = Number(force);
+  if (!Number.isInteger(f) || f < 1) return null;
+  const mod = m[1] ? (m[1] === "-" ? -1 : 1) * Number(m[2]) : 0;
+  return { power: Math.max(1, f + mod), level: m[3].toUpperCase() };
+}
+
+/**
+ * The armour rating that reduces an incoming Power, per the attack's rule.
+ * @param {object} o
+ * @param {string} [o.armorCalc] standard | half_ballistic (APDS) | impact (gel)
+ *   | flechette | half_impact (damaging manipulation spells, p.158)
+ * @returns {{armor:number, label:string}}
+ */
+export function damageResistArmor({ armorCalc = "standard", armorType = "ballistic",
+                                    ballistic = 0, impact = 0, armorMod = 0 } = {}) {
+  // Damage no armour touches (VR2.0 dump shock, p.124): none at all, mods included.
+  if (armorCalc === "none") return { armor: 0, label: "No armour" };
+  let armor, label;
+  switch (armorCalc) {
+    case "half_ballistic": armor = Math.floor(ballistic / 2); label = "½ Ballistic"; break;
+    case "impact":         armor = impact;                    label = "Impact"; break;
+    case "flechette":      armor = Math.max(2 * impact, ballistic); label = "max(2×Impact, Ballistic)"; break;
+    case "half_impact":    armor = Math.floor(impact / 2);    label = "½ Impact"; break;
+    default:
+      armor = armorType === "impact" ? impact : ballistic;
+      label = armorType === "ballistic" ? "Ballistic" : "Impact";
+  }
+  return { armor: Math.max(0, armor + (Number(armorMod) || 0)), label };
+}
+
+// ---------------------------------------------------------------------------
+// ELEMENTAL SERVICES — Aid Sorcery and Spell Sustaining (SR2E p.141–142)
+// ---------------------------------------------------------------------------
+// "Each of these costs one of the elemental's services to initiate"; an
+// elemental "can only perform one service at a time". Aid Sorcery: each point
+// of Force is one die, and "its Force is reduced by 1 for each die used"; at 0
+// it vanishes, and can be called again for one service, "back at full Force".
+// Spell Sustaining: one spell of its category, one Combat Turn per point of
+// Force; "once its Force reaches 0, it disappears" — the spell with it, unless
+// the mage took it over first.
+
+const ELEMENT_AIDS = { fire: "combat", water: "illusion", air: "detection", earth: "manipulation" };
+
+/** Automatic Combat Turn bookkeeping a sustain carries; cleared when it ends. */
+const CLEAR_SUSTAIN_CLOCK = {
+  "system.sustainInstanceId": "", "system.sustainCombatId": "",
+  "system.sustainFreePending": false, "system.sustainChargedSeq": 0
+};
+
+/** Whether an elemental of this element can aid or sustain spells of this category. */
+export function elementalAidsCategory(element, category) {
+  return !!category && category !== "health" && ELEMENT_AIDS[element] === category;
+}
+
+/**
+ * The derived picture of an elemental's service state.
+ * @returns {{effectiveForce:number, depleted:boolean, busy:boolean, pending:boolean}}
+ */
+export function elementalState({ force = 1, forceUsed = 0, service = "", pendingExpireSpellUuid = "" } = {}) {
+  const full = Math.max(0, Math.trunc(Number(force) || 0));
+  const used = Math.max(0, Math.trunc(Number(forceUsed) || 0));
+  const effectiveForce = Math.max(0, full - used);
+  return { effectiveForce, depleted: effectiveForce === 0,
+           busy: service === "aid" || service === "sustain", pending: !!pendingExpireSpellUuid };
+}
+
+/**
+ * Plan one elemental service transition — pure. The caller writes `update` in
+ * ONE document update. `expire` names a spell that must now END (p.142).
+ *
+ * kinds: aid {n} | startSustain {spellUuid} | sustainTurn {n} | takeOver |
+ *        endService | recall | finishExpire
+ * @returns {{update:object, expire?:string, message:string}|{refuse:string}}
+ */
+export function planElementalTransition(sys = {}, kind, args = {}) {
+  const st = elementalState(sys);
+  const services = Math.max(0, Math.trunc(Number(sys.services) || 0));
+  const full = Math.max(0, Math.trunc(Number(sys.force) || 0));
+  const used = Math.max(0, Math.trunc(Number(sys.forceUsed) || 0));
+  const intArg = (v) => Number.isInteger(v) && v >= 1;
+  if (st.pending && kind !== "finishExpire") {
+    // A spell mid-ending has no sustain left to count: a boundary passes it by.
+    if (kind === "combatBoundary") return { skip: true };
+    return { refuse: "it must finish expiring its spell first" };
+  }
+  switch (kind) {
+    case "aid": {
+      if (!intArg(args.n)) return { refuse: "aid dice must be a whole number of at least 1" };
+      if (sys.service === "sustain") return { refuse: "it is sustaining a spell — one service at a time (p.141)" };
+      if (st.depleted) return { refuse: "its Force is spent — re-call it first (1 service)" };
+      if (args.n > st.effectiveForce) return { refuse: `it has only ${st.effectiveForce} Force left` };
+      const starting = sys.service !== "aid";
+      if (starting && services < 1) return { refuse: "it owes no more services" };
+      const nextUsed = used + args.n;
+      const spent = nextUsed >= full;
+      return {
+        update: { "system.forceUsed": nextUsed, "system.service": spent ? "" : "aid",
+                  ...(starting ? { "system.services": services - 1 } : {}),
+                  // A new aid service gets a fresh identity (Spell Defense
+                  // reservations are tied to it); a spent one loses it.
+                  ...(spent ? { "system.aidInstanceId": "" }
+                            : (starting || !sys.aidInstanceId) ? { "system.aidInstanceId": args.instanceId ?? "" } : {}) },
+        message: `${starting ? "starts Aid Sorcery (1 service) and " : ""}gives ${args.n} ${args.n === 1 ? "die" : "dice"}: Force ${st.effectiveForce} → ${full - nextUsed}${spent ? " — it vanishes (p.141)" : ""}`
+      };
+    }
+    case "startSustain": {
+      if (!args.spellUuid) return { refuse: "no spell named" };
+      if (sys.service) return { refuse: `it is already performing ${sys.service === "aid" ? "Aid Sorcery" : "Spell Sustaining"} — one service at a time (p.141)` };
+      if (st.depleted) return { refuse: "its Force is spent — re-call it first (1 service)" };
+      if (services < 1) return { refuse: "it owes no more services" };
+      return {
+        update: { "system.service": "sustain", "system.sustainingSpellUuid": args.spellUuid,
+                  "system.services": services - 1,
+                  // The Combat Turn clock (automatic countdown): a fresh instance,
+                  // and the partial turn it starts in is free when the mage is in
+                  // a running combat.
+                  "system.sustainInstanceId": args.instanceId ?? "",
+                  "system.sustainCombatId": args.combatId ?? "",
+                  "system.sustainFreePending": !!args.combatId,
+                  "system.sustainChargedSeq": 0 },
+        message: `sustains the spell (1 service) — ${st.effectiveForce} Combat Turn${st.effectiveForce === 1 ? "" : "s"} of Force`
+      };
+    }
+    case "sustainTurn": {
+      const n = args.n ?? 1;
+      if (!intArg(n)) return { refuse: "turns must be a whole number of at least 1" };
+      if (sys.service !== "sustain") return { refuse: "it is not sustaining a spell" };
+      const nextUsed = Math.min(full, used + n);
+      if (nextUsed >= full) {
+        return {
+          update: { "system.forceUsed": full, "system.service": "",
+                    "system.sustainingSpellUuid": "", "system.pendingExpireSpellUuid": sys.sustainingSpellUuid,
+                    ...CLEAR_SUSTAIN_CLOCK },
+          expire: sys.sustainingSpellUuid,
+          message: "its Force is spent — it disappears, and the spell ends with it (p.142)"
+        };
+      }
+      return { update: { "system.forceUsed": nextUsed }, message: `${full - nextUsed} Combat Turn${full - nextUsed === 1 ? "" : "s"} of Force left` };
+    }
+    case "takeOver":
+    case "endService": {
+      if (!sys.service) return { refuse: "it is not performing a service" };
+      if (sys.service === "sustain" && st.depleted) {
+        return { refuse: "its Force is already spent — the spell ends; expire it (p.142)" };
+      }
+      return {
+        update: { "system.service": "", "system.sustainingSpellUuid": "", "system.aidInstanceId": "", ...CLEAR_SUSTAIN_CLOCK },
+        message: kind === "takeOver" ? "hands the spell back — the mage sustains it again (+2 TN)" : "ends its service"
+      };
+    }
+    case "recall": {
+      if (!st.depleted) return { refuse: "it still has Force — no need to re-call it" };
+      if (sys.service === "sustain") return { refuse: "its spell must expire first" };
+      if (services < 1) return { refuse: "it owes no more services — the binding is exhausted" };
+      return {
+        update: { "system.forceUsed": 0, "system.service": "", "system.services": services - 1,
+                  "system.aidInstanceId": "", ...CLEAR_SUSTAIN_CLOCK },
+        message: `is re-called at full Force ${full} (1 service, p.141)`
+      };
+    }
+    case "combatBoundary": {
+      // One Combat Turn ended in a combat (SR2ECombat#nextRound). `seq` is the
+      // combat's monotonic boundary counter, `round` the OUTGOING round, and
+      // `timingAlive` whether the sustain's recorded combat still runs with the
+      // mage in it. A skip writes nothing.
+      const seq = Math.trunc(Number(args.seq) || 0);
+      if (sys.service !== "sustain" || !(Number(args.round) >= 1) || seq < 1) return { skip: true };
+      if (sys.sustainCombatId && sys.sustainCombatId !== args.combatId && args.timingAlive) return { skip: true };
+      const adopting = sys.sustainCombatId !== args.combatId;
+      const chargedSeq = adopting ? 0 : Math.trunc(Number(sys.sustainChargedSeq) || 0);
+      if (!adopting && chargedSeq >= seq) return { skip: true };   // this boundary was processed
+      const clock = { "system.sustainCombatId": args.combatId, "system.sustainChargedSeq": seq };
+      if (sys.sustainFreePending && !adopting) {
+        return { update: { ...clock, "system.sustainFreePending": false }, outcome: "free",
+                 message: "the Combat Turn it took the spell over in is free" };
+      }
+      if (st.depleted) return { refuse: "its Force is already spent — expire it" };
+      const nextUsed = used + 1;
+      if (nextUsed >= full) {
+        return {
+          update: { "system.forceUsed": full, "system.service": "", "system.sustainingSpellUuid": "",
+                    "system.pendingExpireSpellUuid": sys.sustainingSpellUuid, ...CLEAR_SUSTAIN_CLOCK },
+          expire: sys.sustainingSpellUuid, outcome: "charged",
+          message: "its Force is spent — it disappears, and the spell ends with it (p.142)"
+        };
+      }
+      return { update: { ...clock, "system.sustainFreePending": false, "system.forceUsed": nextUsed },
+               outcome: "charged",
+               message: `${full - nextUsed} Combat Turn${full - nextUsed === 1 ? "" : "s"} of Force left` };
+    }
+    case "startAid": {
+      // Begin Aid Sorcery without spending Force yet (a Spell Defense
+      // reservation, p.141): one service, a fresh aid identity.
+      // Already aiding: no new service. An aid service started before 0.98.0
+      // has no identity yet — give it one, free, so a reservation can bind.
+      if (sys.service === "aid") {
+        return { update: sys.aidInstanceId ? {} : { "system.aidInstanceId": args.instanceId ?? "" },
+                 message: "is already aiding sorcery", outcome: "continue" };
+      }
+      if (sys.service) return { refuse: "it is sustaining a spell — one service at a time (p.141)" };
+      if (st.depleted) return { refuse: "its Force is spent — re-call it first (1 service)" };
+      if (services < 1) return { refuse: "it owes no more services" };
+      return { update: { "system.service": "aid", "system.services": services - 1,
+                         "system.aidInstanceId": args.instanceId ?? "" },
+               message: "starts Aid Sorcery (1 service)" };
+    }
+    case "aidStudy": {
+      // Aid Study (p.141): its Force in dice for one learning attempt, for one
+      // service. No depletion clause — its Force is not reduced.
+      if (sys.service) return { refuse: "it is performing another service — one at a time (p.141)" };
+      if (st.depleted) return { refuse: "its Force is spent — re-call it first (1 service)" };
+      if (services < 1) return { refuse: "it owes no more services" };
+      return { update: { "system.services": services - 1 }, dice: st.effectiveForce,
+               message: `aids study with ${st.effectiveForce} dice (1 service)` };
+    }
+    case "consumeFree": {
+      if (sys.service !== "sustain" || !sys.sustainFreePending) return { refuse: "no free starting turn is owed" };
+      // Also record the combat's latest boundary as processed (when there is
+      // one): a still-current recovery card for it must not charge Force.
+      const seq = Math.trunc(Number(args.seq) || 0);
+      const update = { "system.sustainFreePending": false };
+      if (args.combatId && seq > 0) {
+        update["system.sustainCombatId"] = args.combatId;
+        update["system.sustainChargedSeq"] = Math.max(seq, Math.trunc(Number(sys.sustainChargedSeq) || 0));
+      }
+      return { update, message: "its free starting turn is marked as passed" };
+    }
+    case "finishExpire": {
+      if (!st.pending) return { refuse: "nothing is expiring" };
+      return { update: { "system.pendingExpireSpellUuid": "" }, message: "its spell has ended" };
+    }
+    default:
+      return { refuse: `unknown service action "${kind}"` };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// LEARNING A SPELL (SR2E p.132–133)
+// ---------------------------------------------------------------------------
+// "a Success Test using dice from the character's Sorcery and Magical Theory
+// Skills" (the table's reading: the two added) "The Target Number is twice the
+// desired Force." A teacher's Teaching successes "reduce the magician's target
+// number". Time: Force days ÷ successes, minimum one day (rounded up — the
+// table's call). Costs Force in Karma; a failed attempt costs Force days, no
+// Karma.
+
+/** Learning TN before the caster's own wound/sustain modifiers. */
+export function spellLearningTN({ force, teacherSuccesses = 0, extraTN = 0 } = {}) {
+  const f = Math.max(1, Math.trunc(Number(force) || 1));
+  return Math.max(2, 2 * f - Math.max(0, Math.trunc(Number(teacherSuccesses) || 0)) + Math.trunc(Number(extraTN) || 0));
+}
+
+/** Days of study, or null when the attempt failed (0 successes). */
+export function spellLearningDays(force, successes) {
+  const n = Math.trunc(Number(successes) || 0);
+  if (n < 1) return null;
+  return Math.max(1, Math.ceil(Math.max(1, Math.trunc(Number(force) || 1)) / n));
+}
+
+/** The teacher's Teaching Test TN: Spell Force − pupil's Intelligence, minimum 2. */
+export function teachingTN(force, pupilIntelligence) {
+  return Math.max(2, (Math.trunc(Number(force) || 0)) - (Math.trunc(Number(pupilIntelligence) || 0)));
+}
+
+/** One identity for "a particular spell" across compendium and world copies. */
+export function canonicalSpellName(name) {
+  return String(name ?? "").trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+/**
+ * Whether an elemental's Spell Defense dice defend against a spell of this
+ * category — only its own (the table's reading of p.141's category rule).
+ */
+export function defenseAidApplies(element, spellCategory) {
+  return elementalAidsCategory(element, spellCategory);
+}
+
+// ── Lasting spell effects (SR2E p.157–158) ──────────────────────────────────
+
+/** Ignite: turns until the target catches fire, 10 ÷ successes rounded up (p.158). */
+export function igniteDelay(successes) {
+  return Math.max(1, Math.ceil(10 / Math.max(1, Math.trunc(Number(successes) || 0))));
+}
+
+/** Ice Sheet: Magic × successes square metres, placed as a square of this side (p.158). */
+export function iceSheetSide(magic, successes) {
+  return Math.sqrt(Math.max(0, (Number(magic) || 0) * (Number(successes) || 0)));
+}
+
+/** Whether segment a→b passes within r of point c (a point segment: a is tested). */
+export function segmentHitsCircle(a, b, c, r) {
+  const dx = b.x - a.x, dy = b.y - a.y;
+  const len2 = dx * dx + dy * dy;
+  const t = len2 ? Math.max(0, Math.min(1, ((c.x - a.x) * dx + (c.y - a.y) * dy) / len2)) : 0;
+  return Math.hypot(a.x + t * dx - c.x, a.y + t * dy - c.y) <= r + 1e-6;
+}
+
+/** Whether segment a→b touches the axis-aligned rectangle {x, y, w, h} (Liang–Barsky). */
+export function segmentHitsRect(a, b, rect) {
+  const dx = b.x - a.x, dy = b.y - a.y;
+  let t0 = 0, t1 = 1;
+  for (const [p, q] of [[-dx, a.x - rect.x], [dx, rect.x + rect.w - a.x],
+                        [-dy, a.y - rect.y], [dy, rect.y + rect.h - a.y]]) {
+    if (p === 0) { if (q < 0) return false; continue; }
+    const r = q / p;
+    if (p < 0) { if (r > t1) return false; if (r > t0) t0 = r; }
+    else       { if (r < t0) return false; if (r < t1) t1 = r; }
+  }
+  return true;
+}
+
+/** Does segment a→b touch a polygon ([{x,y}…], any orientation)? An endpoint inside, or an edge crossed. */
+export function segmentHitsPolygon(a, b, poly) {
+  if (!poly?.length) return false;
+  const inside = (p) => {
+    let c = false;
+    for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+      const pi = poly[i], pj = poly[j];
+      if ((pi.y > p.y) !== (pj.y > p.y) && p.x < (pj.x - pi.x) * (p.y - pi.y) / (pj.y - pi.y) + pi.x) c = !c;
+    }
+    return c;
+  };
+  if (inside(a) || inside(b)) return true;
+  const cross = (o, p, q) => (p.x - o.x) * (q.y - o.y) - (p.y - o.y) * (q.x - o.x);
+  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+    const c = poly[j], d = poly[i];
+    const d1 = cross(c, d, a), d2 = cross(c, d, b), d3 = cross(a, b, c), d4 = cross(a, b, d);
+    if (((d1 > 0) !== (d2 > 0)) && ((d3 > 0) !== (d4 > 0))) return true;
+  }
+  return false;
+}
+
+// ── Nature spirits depart at sunrise and sunset (SR2E p.139) ────────────────
+
+/**
+ * Whether a sunrise or sunset lies in the half-open interval (now − dt, now].
+ * World time counts seconds from a midnight, so a day starts at a multiple of
+ * `dayLength`. Any jump of a full day or more crosses both.
+ */
+export function sunBoundaryCrossed({ now, dt, dayLength, hourLength, sunrise = 6, sunset = 18 }) {
+  if (!(dt > 0) || !(dayLength > 0)) return false;
+  if (dt >= dayLength) return true;
+  const end = ((now % dayLength) + dayLength) % dayLength;
+  const start = end - dt;                       // may reach back into the previous day
+  return [sunrise, sunset].some(h => {
+    const b = h * hourLength;
+    return (b > start && b <= end) || (b - dayLength > start && b - dayLength <= end);
+  });
+}
+
+/** Seconds from `now` until the next sunrise or sunset (0 < result ≤ a day). */
+export function nextSunBoundary({ now, dayLength, hourLength, sunrise = 6, sunset = 18 }) {
+  const t = ((now % dayLength) + dayLength) % dayLength;
+  const waits = [sunrise, sunset].map(h => {
+    const w = h * hourLength - t;
+    return w > 0 ? w : w + dayLength;
+  });
+  return Math.min(...waits);
+}
+
+// ── Ritual sorcery (SR2E p.133–137) ─────────────────────────────────────────
+
+/** Materials per Force by category (p.133); combat spells can't be ritually cast. */
+export const RITUAL_MATERIALS = { detection: 100, health: 500, illusion: 100, manipulation: 1000 };
+
+/** Materials cost, or null for a category ritual sorcery can't cast (combat). */
+export function ritualMaterialsCost(category, force) {
+  const per = RITUAL_MATERIALS[category];
+  return per ? per * Math.max(1, Math.trunc(Number(force) || 0)) : null;
+}
+
+/** Material Link Table (p.136), by how well the target's location is known. */
+export const MATERIAL_LINK_TN = { city: 5, state: 7, continent: 9, unknown: 11 };
+/** Sending Table (p.136), by target type. */
+export const SENDING_TN = { place: 6, metahuman: 6, object: 8, spirit: 8 };
+
+/** Link TN: the table row + Magic Link Modifiers (p.136). */
+export function ritualLinkTN({ location = "unknown", spirit = false, barrier = 0, lodge = 0, staleTissue = false } = {}) {
+  return (MATERIAL_LINK_TN[location] ?? MATERIAL_LINK_TN.unknown) + (spirit ? 2 : 0)
+    + Math.max(0, Math.trunc(Number(barrier) || 0)) + Math.max(0, Math.trunc(Number(lodge) || 0))
+    + (staleTissue ? 4 : 0);
+}
+
+/** Sending TN (p.136): +2 moving faster than running, −1 for an area spell. */
+export function ritualSendingTN({ targetType = "metahuman", fastMoving = false, area = false } = {}) {
+  return (SENDING_TN[targetType] ?? SENDING_TN.metahuman) + (fastMoving ? 2 : 0) - (area ? 1 : 0);
+}
+
+/**
+ * Hours a link or sending takes (p.136): Force ÷ successes, kept fractional;
+ * the sending takes at least 1 hour. With 0 successes the stage aborts after
+ * its full base time (Force hours).
+ */
+export function ritualStageHours(force, successes, { minimum = 0 } = {}) {
+  const f = Math.max(0, Number(force) || 0);
+  if (!(successes > 0)) return f;
+  return Math.max(minimum, f / successes);
+}
+
+/** Largest team the lowest Sorcery rating allows (p.135). */
+export function ritualTeamMax(sorceryRatings) {
+  return sorceryRatings.length ? Math.min(...sorceryRatings.map(r => Math.max(0, Number(r) || 0))) : 0;
+}
+
+/** Spell Resistance TN against a ritual spell (p.137): the higher of Force and the leader's Ritual Sorcery. */
+export function ritualResistTN(force, ritualSkill) {
+  return Math.max(Number(force) || 0, Number(ritualSkill) || 0);
+}
+
+/** Hours leftover pool dice sustain a ritual spell (p.137): leader Magic × dice. */
+export function ritualSustainHours(leaderMagic, dice) {
+  return Math.max(0, Number(leaderMagic) || 0) * Math.max(0, Math.trunc(Number(dice) || 0));
+}
+
+/**
+ * The whole result of taking `amount` boxes of `type` damage (p.112–113), as
+ * new monitor values: Stun past its track spills into Physical, and Physical
+ * past its track adds to overflow. Pure, so one actor update can carry it.
+ */
+export function damageUpdateFor({ physical, stun, overflow = 0 }, type, amount) {
+  const out = { physical: physical.value, stun: stun.value, overflow };
+  let phys = 0;
+  if (type === "stun") {
+    const raw = stun.value + amount;
+    out.stun = Math.min(raw, stun.max);
+    phys = Math.max(0, raw - stun.max);
+  } else {
+    phys = amount;
+  }
+  if (phys > 0) {
+    const raw = physical.value + phys;
+    out.physical = Math.min(raw, physical.max);
+    out.overflow = overflow + Math.max(0, raw - physical.max);
+  }
+  return out;
+}
+
+// ── Weapons against vehicles (SR2E p.108; APDS: Sourcebook Updates p.277) ────
+
+/** Anti-vehicle rockets and missiles (p.108) — the book's names (AVR, AVM). */
+export function isAntiVehicleOrdnance(name) {
+  return /anti-?\s?vehicle|\bAV[RM]\b/i.test(String(name ?? ""));
+}
+
+/**
+ * How a hit resolves against a vehicle (p.108).
+ *  - The Damage Level drops one step (D→S, S→M, M→L). A weapon RATED Light
+ *    can't affect a vehicle unless the shot is called or it fires special
+ *    ammunition (APDS, the one ammunition the rules tie to vehicles); a Light
+ *    APDS hit stays Light rather than vanishing.
+ *  - Vehicle armour is a Barrier Rating against the BASE Power, and the
+ *    vehicle resists with Body + ½ armour dice vs Power − (Body + armour).
+ *    Unarmoured, Body counts as composite armour.
+ *  - Anti-vehicle rockets and missiles keep their Damage Level; their Power is
+ *    still reduced by the armour.
+ *  - APDS: vehicle armour counts at half its rating (round down) against the
+ *    Power, and as a Barrier; the Damage Level still drops one step. Body is
+ *    never halved: with no vehicle armour there is nothing for APDS to halve.
+ * @returns {{ none: "stun"|"light"|"barrier"|null, level?, dice?, tn?, armorUsed? }}
+ */
+export function vehicleHit({ body = 1, armor = 0, power, basePower = power, level, lightRated = false,
+                             damageType = "physical", apds = false, antiVehicle = false, calledShot = false }) {
+  if (damageType === "stun") return { none: "stun" };
+  const stages = ["L", "M", "S", "D"];
+  // Light weapons can't affect vehicles "unless using special ammunition or when attacking for something vital
+  // (see Called Shots)" (p.108): either floors the reduced level at Light.
+  const special = apds || calledShot;
+  if (lightRated && !special) return { none: "light" };
+  let idx = Math.min(3, stages.indexOf(level)) - (antiVehicle ? 0 : 1);
+  if (idx < 0) {
+    if (!special) return { none: "light" };
+    idx = 0;
+  }
+  const armorUsed = apds ? Math.floor(armor / 2) : armor;
+  if (armor > 0 && basePower <= armorUsed) return { none: "barrier", armorUsed };
+  const soak = body + armorUsed;
+  return { none: null, level: stages[idx], dice: armor > 0 ? body + Math.floor(armor / 2) : body,
+           tn: Math.max(2, power - soak), armorUsed };
+}
+
+// ── Spirit services (SR2E p.139–142) ────────────────────────────────────────
+
+/** Whole 24-hour periods an elemental has been present (p.141); 0 when away or after a rewind. */
+export function daysPresent(presentSince, now, dayLength = 86400) {
+  if (!Number.isFinite(presentSince) || !(dayLength > 0)) return 0;
+  return Math.max(0, Math.floor((now - presentSince) / dayLength));
+}
+
+/**
+ * Charging the owed days (saturating): at most the services left, and the
+ * clock moves past ALL elapsed days, so nothing is billed twice.
+ */
+export function chargeDaysPlan({ services, presentSince, now, dayLength = 86400 }) {
+  const days = daysPresent(presentSince, now, dayLength);
+  const charged = Math.min(days, Math.max(0, services));
+  return { days, charged, services: services - charged, presentSince: days ? presentSince + days * dayLength : presentSince };
+}
+
+/**
+ * A spirit's service status, first match wins: departed (nature expiry),
+ * uncontrolled (no summoner), engaged (a paid service still running: a
+ * fight, aid, sustain or an expiry), bondEnded (owes nothing, p.141), bound.
+ */
+export function spiritServiceStatus({ departed = false, conjurerUuid = "", fighting = false, service = "",
+                                      pendingExpire = false, services = 0 }) {
+  if (departed) return "departed";
+  if (!conjurerUuid) return "uncontrolled";
+  if (fighting || service || pendingExpire) return "engaged";
+  if (!(services > 0)) return "bondEnded";
+  return "bound";
+}
+
+// ── Drugs and toxins (Shadowtech p.85–100) ──────────────────────────────────
+
+/**
+ * A drug's duration after its roll: `{minutes: "10*1d6"}` is rolled by the
+ * caller (`rolled`); `{minutes|turns: base, bodyReducesBy}` loses that much per
+ * Body success, never below 0. Returns `{minutes}`, `{turns}` or null.
+ */
+export function drugDuration(spec, { rolled = null, successes = 0 } = {}) {
+  if (!spec) return null;
+  if (typeof spec.minutes === "string") return { minutes: Math.max(0, Number(rolled) || 0) };
+  const cut = (Number(spec.bodyReducesBy) || 0) * Math.max(0, Number(successes) || 0);
+  if (Number.isFinite(spec.minutes)) return { minutes: Math.max(0, spec.minutes - cut) };
+  if (Number.isFinite(spec.turns)) return { turns: Math.max(0, spec.turns - cut) };
+  return null;
+}
+
+/**
+ * A toxin resisted by Body: every 2 successes stage the level down one (SR2E
+ * p.112). Returns the final level, or null when fully resisted.
+ */
+export function toxinLevel(level, successes) {
+  const idx = DAMAGE_LEVELS.indexOf(level) - Math.floor(Math.max(0, successes) / 2);
+  return idx >= 0 ? DAMAGE_LEVELS[idx] : null;
+}
+
+/**
+ * Damage on a drugged character (Shadowtech p.98–99), one hit:
+ *  - Kamikaze negates "the first four boxes of damage received" after the dose,
+ *    Physical or Mental alike: absorbers are used oldest first.
+ *  - Hyper then adds half the damage that LANDED, rounded up, as Stun. That
+ *    extra Stun is a consequence, not a new hit: it is not absorbed and never
+ *    overloads again (the caller applies it without calling this).
+ * @param {{amount:number, absorbers?:{id:string,left:number}[], overload?:boolean}} p
+ * @returns {{landed:number, absorbed:number, absorbUsed:Object<string,number>, overloadStun:number}}
+ */
+export function drugDamage({ amount, absorbers = [], overload = false }) {
+  let landed = Math.max(0, Math.trunc(Number(amount) || 0));
+  const absorbUsed = {};
+  for (const a of absorbers) {
+    const use = Math.min(landed, Math.max(0, Number(a.left) || 0));
+    if (use > 0) { absorbUsed[a.id] = use; landed -= use; }
+  }
+  const absorbed = Math.max(0, Math.trunc(Number(amount) || 0)) - landed;
+  return { landed, absorbed, absorbUsed, overloadStun: overload && landed > 0 ? Math.ceil(landed / 2) : 0 };
+}
+
+/** Technical Skills (core p.71): "all types of machines". */
+export const TECHNICAL_SKILLS = new Set(["biotech", "computer", "electronics"]);
+
+/**
+ * The TN penalty from drugs in force on one test.
+ *  - `all`: every test (Hyper's vertigo, +1 — "all target numbers", p.98).
+ *  - `spell`: spellcasting, Hyper's +4 concentration penalty.
+ *  - Skill penalties (Atropine, p.96) apply to skill, attack and spell tests
+ *    only: Magic skills and spells take `magic`, Technical skills `technical`,
+ *    Knowledge / Language / Build-Repair their own, every other Active skill
+ *    `active` plus `meleeClose` in melee or a close-range firearm shot.
+ * Overuse halves bonuses only, never penalties (p.85), so no halving here.
+ * @param {object[]} specs  - each drug's `tn` map
+ * @param {{kind?:string, skillCategory?:string, key?:string, magic?:boolean,
+ *          technical?:boolean, melee?:boolean, closeRange?:boolean}} [ctx]
+ */
+export function drugTnFor(specs, ctx = {}) {
+  const kind = ctx.kind ?? "other";
+  const skilled = ["skill", "attack", "spell"].includes(kind);
+  const cat = ctx.magic || kind === "spell" ? "magic"
+    : ctx.technical || TECHNICAL_SKILLS.has(ctx.key) ? "technical"
+    : ctx.skillCategory === "special" ? "active" : (ctx.skillCategory ?? "active");
+  let t = 0;
+  for (const tn of specs) {
+    if (!tn) continue;
+    t += Number(tn.all) || 0;
+    if (kind === "spell") t += Number(tn.spell) || 0;
+    if (!skilled) continue;
+    t += Number(tn[cat]) || 0;
+    if (cat === "active" && (ctx.melee || ctx.closeRange)) t += Number(tn.meleeClose) || 0;
+  }
+  return t;
+}
+
+/** A stimulant's second dose runs at half effect: bonuses halved (round down), penalties kept (p.85). */
+export const halveBonus = (v) => v > 0 ? Math.floor(v / 2) : v;
+
+/** VR2.0 Hacking Pool (VR2.0 p.18): ⌊(Intelligence + MPCP) ÷ 3⌋. */
+export function vr2HackingPool(intelligence, mpcp) {
+  return Math.max(0, Math.floor(((Number(intelligence) || 0) + (Number(mpcp) || 0)) / 3));
+}
+
+/**
+ * Task Pool (Rigger 2 p.16; Shadowtech pp.23, 49; docs/PLAN-vehicles-phase2.md 5a.0): an encephalon of Level 2 / 3 / 4
+ * gives 1 / 2 / 3 dice, a cerebral booster of Level 2 gives 1; the two ADD (user ruling R5-4).
+ */
+export function taskPoolDice({ encephalon = 0, cerebralBooster = 0 } = {}) {
+  const e = Math.max(0, Math.min(3, (Number(encephalon) || 0) - 1));
+  return e + ((Number(cerebralBooster) || 0) >= 2 ? 1 : 0);
+}
+/** May Task Pool dice be used on a test of this skill (5a.0)? `key` is the skill's normalized name. */
+export function taskPoolApplies({ category = "active", key = "" } = {}) {
+  return category === "knowledge" || category === "build_repair" || TECHNICAL_SKILLS.has(String(key));
+}

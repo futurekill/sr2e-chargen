@@ -96,7 +96,8 @@ test("someone else's document is a 404 on EVERY document route (admins included)
   assert.ok(routes.length >= 8, "the route list is walked, not hand-written");
   for (const r of routes) {
     const url = r.url.replace(":id", doc.id).replace(":n", "1");
-    const body = r.method === "GET" ? undefined : r.method === "PUT" ? { name: "Mine now", revision: 1 } : { revision: 1 };
+    const body = r.method === "GET" ? undefined : r.method === "PUT" ? { name: "Mine now", revision: 1 }
+      : r.url.endsWith("/ops") ? { revision: 1, ops: [{ op: "setName", name: "Mine now" }] } : { revision: 1 };
     const res = await boss.call(r.method, url, body);
     assert.equal(res.statusCode, 404, `${r.method} ${r.url}`);
     assert.equal(res.json().code, "not-found");
@@ -170,4 +171,42 @@ test("maintenance stops every library write; reads go on", async () => {
   assert.equal((await razor.call("POST", D, { name: "Nope" })).statusCode, 503);
   assert.equal((await razor.call("PUT", `${D}/${doc.id}`, { name: "Nope", revision: 1 })).json().code, "maintenance");
   assert.equal((await razor.call("GET", `${D}/${doc.id}`)).statusCode, 200);
+});
+
+test("a character: created whole, changed only by operations, one revision per request, refusals change nothing", async () => {
+  const { razor, boss } = await harness();
+  const made = (await razor.call("POST", `${D}/characters`, { name: "Twist" })).json();
+  assert.equal(made.document.kind, "character"); assert.equal(made.body.actor.system.lifestyle, "streets");
+  const id = made.document.id, ops = (revision, list, key) => razor.call("POST", `${D}/${id}/ops`, { revision, ops: list }, key);
+  const key = randomUUID();
+  const first = await ops(1, [{ op: "setPriority", category: "race", letter: "A" }, { op: "setMetatype", race: "elf" }], key);
+  assert.equal(first.statusCode, 200); assert.equal(first.json().document.revision, 2);
+  assert.equal(first.json().body.actor.system.race, "elf");
+  assert.deepEqual((await ops(1, [{ op: "setPriority", category: "race", letter: "A" }, { op: "setMetatype", race: "elf" }], key)).json(), first.json(), "a replay is the first answer");
+  assert.equal((await ops(1, [{ op: "setName", name: "Late" }])).json().code, "stale");
+  const refused = await ops(2, [{ op: "setName", name: "Renamed" }, { op: "setMetatype", race: "dragon" }]);
+  assert.equal(refused.statusCode, 422); assert.equal(refused.json().code, "refused");
+  assert.equal((await razor.call("GET", `${D}/${id}`)).json().document.name, "Twist", "a refused batch changes nothing");
+  // The request schema: exact fields per operation, no price, no stray key, no coercion.
+  for (const bad of [[{ op: "setAttribute", attr: "body", base: "3" }], [{ op: "setName", name: "X", cost: 0 }], [{ op: "setPrice", cost: 0 }], []])
+    assert.equal((await ops(2, bad)).statusCode, 400, JSON.stringify(bad));
+  assert.equal((await razor.call("PUT", `${D}/${id}`, { name: "Whole", revision: 2 })).json().code, "wrong-kind", "PUT is for drafts");
+  const draft = await make(razor);
+  assert.equal((await razor.call("POST", `${D}/${draft.id}/ops`, { revision: 1, ops: [{ op: "setName", name: "X" }] })).json().code, "wrong-kind");
+  assert.equal((await boss.call("POST", `${D}/${id}/ops`, { revision: 2, ops: [{ op: "setName", name: "Mine" }] })).statusCode, 404);
+  assert.equal((await razor.call("POST", `${D}/characters`, { name: "   " })).statusCode, 422);
+  assert.deepEqual((await razor.call("GET", `${D}/${id}/revisions`)).json().revisions.map(r => r.note), ["setPriority, setMetatype", "created"]);
+});
+
+test("a finished character is never restored to another revision (PLAN-M2 §5b)", async () => {
+  const { razor, ctx } = await harness();
+  const id = (await razor.call("POST", `${D}/characters`, { name: "Done" })).json().document.id;
+  await razor.call("POST", `${D}/${id}/ops`, { revision: 1, ops: [{ op: "setName", name: "Done Twice" }] });
+  assert.equal((await razor.call("POST", `${D}/${id}/revisions/1/restore`, { revision: 2 })).statusCode, 200, "unfinished: restore works");
+  // Finishing is M2d's; mark it the way that operation will.
+  const row = await ctx.db.selectFrom("documents").select("body").where("id", "=", id).executeTakeFirst();
+  const body = L.decodeBody(row.body); body.creation.finished = { at: 1 };
+  await ctx.db.updateTable("documents").set({ body: JSON.stringify(body) }).where("id", "=", id).execute();
+  const res = await razor.call("POST", `${D}/${id}/revisions/1/restore`, { revision: 3 });
+  assert.equal(res.statusCode, 409); assert.equal(res.json().code, "finished");
 });
