@@ -80,3 +80,33 @@ The focused tests passed 67 of 68; one migration concurrency test could not crea
 VERDICT: REVISE
 ### Response
 Accepted 1–4: the sheet's font choice under a new storage key; Postgres checks to_regclass('users'); a pipe in a URL is escaped (\|), not replaced; a failed save re-reads the server's value. Not re-reviewed; Postgres/MySQL/MariaDB run the migration in CI.
+
+# Slice 3 (Fohawk style and ink-saver)
+
+## Round 1 — Codex gpt-6-sol high
+- [server/sheet/render.mjs:226](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/server/sheet/render.mjs:226): The Fohawk header and fixed page 1 sections have no page break. With a 2,000-character totem value, stat text extends below Letter’s safe margin. **Fix:** measure the whole fixed section and move overflowing content to a continuation page.
+- [server/sheet/render.mjs:233](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/server/sheet/render.mjs:233): A 20-digit attribute value with `nat 8` wraps at the font floor and overlaps the natural-value label. **Fix:** enforce the one-line limit or grow the attribute row from its measured height.
+- [server/sheet/render.mjs:243](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/server/sheet/render.mjs:243): On Hexen’s two-row stat strip, an initiative value of `12345678901234567890 + 2D6` wraps into the next row’s label area. **Fix:** size each stat row from its measured contents before placing the next row.
+- [server/sheet/render.mjs:218](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/server/sheet/render.mjs:218): The 9.5 pt magenta subtitle on the black header has only about 3.36:1 contrast; it becomes hard to read in black and white. **Fix:** use light text on the filled band and keep magenta on the white ink-saver background.
+- [test/sheet.test.mjs:58](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/test/sheet.test.mjs:58): The fit assertions see text runs but not bands or pencil boxes. For example, 14 monitor boxes produce a negative gap and overlapping boxes without a shape assertion failing. **Fix:** record shape bounds and assert their margins and non-overlap.
+
+All 123 existing sheet tests pass. I found no Classic regression or white-on-white ink-saver text in the reviewed paths.
+
+VERDICT: REVISE
+### Response
+All five accepted and fixed.
+
+## Round 2 — Codex gpt-6-sol medium, fix-only
+1. **Header fit — [render.mjs](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/server/sheet/render.mjs:259):** Still fails. With `subtitle = "X ".repeat(1300)`, rendering succeeds but a page-1 band reaches y=757.55, past the 756 pt safe boundary. **Fix:** Check the measured height of every fixed section before drawing it, including the monitor and attack sections.
+
+2. **Attribute value and `nat` label — [render.mjs](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/server/sheet/render.mjs:239):** The prior 20-digit value case is handled: the label follows the measured value height. **Fix:** None needed.
+
+3. **Two-row stat strip — [render.mjs](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/server/sheet/render.mjs:248):** The prior long Initiative value case is handled: each row advances by its measured height. **Fix:** None needed.
+
+4. **Subtitle contrast — [render.mjs](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/server/sheet/render.mjs:224):** The subtitle is now light on the filled black band. **Fix:** None needed.
+
+5. **Shapes and monitor boxes — [sheet.test.mjs](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/test/sheet.test.mjs:63):** The 14-box layout wraps without box-to-box overlap, but the fit test misses the failing 1300-repeat case; with 1500 repeats, ten boxes extend to y=768.13. **Fix:** Add a near-limit header fixture and assert that bands and boxes fit alongside the text they can overlap.
+
+VERDICT: REVISE
+### Response
+Accepted #1 and #5: the whole fixed part (header, rows, monitors, the attacks bar and one row) is measured before drawing, else a clear 'use Classic' error; a near-limit test sweeps header lengths on both papers and checks text, bands and boxes stay in the safe area. Not re-reviewed.
