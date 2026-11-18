@@ -1,5 +1,6 @@
 # Plan: milestone 2c — resources (core book)
-_Draft 3 (2026-11-18), after Codex plan rounds 1–2 (14 + 4 findings; docs/PLAN-M2c-REVIEW-LOG.md). A slice of docs/PLAN-M2.md (§3, §4 Resources, §7 M2c); this file settles what that plan left
+_Draft 4 (2026-11-18), after Codex plan rounds 1–3 (14 + 4 + 3 findings; docs/PLAN-M2c-REVIEW-LOG.md). Round 3's
+fixes are not re-reviewed: the code review checks them (as for docs/PLAN-M2.md). A slice of docs/PLAN-M2.md (§3, §4 Resources, §7 M2c); this file settles what that plan left
 open for buying things with nuyen and Force Points. Rules: docs/RULES-CHARGEN.md item 6 (p.46) and the pages cited
 here, each read on the page render (not the PDF text layer)._
 
@@ -44,11 +45,11 @@ Only these choices exist; everything else in `system` comes from the snapshot.
 |---|---|---|
 | weapon | `quantity` 1–20; Bow: `strengthMinimum` 1–6 | price by the system's `derivedItemCost` (Bow) |
 | armor | `quantity` 1–5 | |
-| gear | `quantity` 1–1000; `rating` 1–6 when the entry has `costPerRating`, or one of its `ratingStats` rows' ratings that is ≤ 6 (p.44: no starting gear above 6, so higher is refused, not reported — r1 #8); skillsoft: `rating` 1–6 only — its `grantedSkillCategory` is the ENTRY's, never a choice (r1 #6) | DataSoft is refused: its price "Varies" (catalog cost 0), so no core price exists (r1 #7) |
-| ammo | `bundles` 1–100 | projected `quantity = bundles × entry.quantity` (rounds) and `flags.sr2e.acquiredListValue = bundles × entry.cost` — the field `chargenItemCost` prices ammo by (r1 #2) |
+| gear | `quantity` 1–1000; `rating` 1–6 when the entry has `costPerRating`, or one of its `ratingStats` rows' ratings that is ≤ 6 (p.44: no starting gear above 6, so higher is refused, not reported — r1 #8); skillsoft: `rating` 1–6 and `skill` (the name of the skill on the chip, 1–60 characters, projected to `grantedSkill`; required — a chip without one does nothing, r3 #3); its `grantedSkillCategory` is the ENTRY's, never a choice (r1 #6) | DataSoft is refused: its price "Varies" (catalog cost 0), so no core price exists (r1 #7) |
+| ammo | `bundles` 1–100 | projected `quantity = bundles × entry.quantity` (rounds) and `flags.sr2e.acquiredListValue = bundles × entry.cost` (where Foundry keeps it); the price call gets it at the TOP level, `acquiredListValue`, as `chargenBudgetOf` passes it to `chargenItemCost` (r1 #2, r3 #1) |
 | cyberware | `rating`: one of the `ratingStats` rows' ratings; an eye accessory: `in` = the item id of a cybereye on this character, or "" | grade is always standard (grades are the Street Samurai Catalog's, M5) |
 | spell | `force` 1–6 (above 6 refused: "no starting spell can have a Force greater than 6", p.46) | Force Points = Force (p.46) |
-| focus | `force` 1–6 (spell lock: none, its price is flat, p.137) | nuyen via `derivedItemCost` (`costPerForce` × Force); Force Points = the bonding cost (§3) |
+| focus | `force` 1–6 (spell lock: none, its price is flat, p.137); specific spell focus: `spell` = the item id of a spell on this character, required (projected `spellSubtype: "specific"`, `boundSpellId`) | nuyen via `derivedItemCost` (`costPerForce` × Force); Force Points = the bonding cost (§3); projected `bonded: true` — creation pays the bonding (p.46), so the focus works from the first session (r3 #2). A spell lock stays `bonded: false`: it is bonded when a spell is locked (p.138). Removing the spell clears the focus's bond, which the check reports |
 
 `quantity`, `rating` and `force` land in the system's own fields (`quantity`, `rating`, `force`, `level`,
 `strengthMinimum`, `grantedSkillCategory`), so `chargenSpend` / `itemBaseCost` / `chargenItemCost` price them exactly

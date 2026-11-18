@@ -48,3 +48,19 @@ VERDICT: REVISE
 All four accepted (draft 3). #1 #2: entries with no fixed core price and cyberlimb options are refused at addItem (the
 list was measured from the catalog). #3 #4: checked on the page (p.125–126): the costs depend on targets and on the
 resulting rating; adept powers move to a follow-up slice M2c-2 after the system's `adeptPowerCost` is checked (S13).
+
+## Round 3 — Codex (gpt-6-sol, high)
+- [Ammo projection](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/docs/PLAN-M2c.md:48) stores the bundle price in `flags.sr2e.acquiredListValue`, but `chargenItemCost` reads a top-level `acquiredListValue`. Three 15¥ bundles would be charged as 15¥, not 45¥.  
+  **Fix:** Pass `acquiredListValue` at the top level of each item supplied to `chargenSpend`.
+
+- [Focus projection](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/docs/PLAN-M2c.md:79) charges Force Points for bonding but retains the catalog’s `bonded: false`; a specific spell focus also lacks the `spellSubtype` and `boundSpellId` required by `focusEligibleFor`. The purchased focus would not function as a bonded focus.  
+  **Fix:** Project a bonded focus and require a valid spell target for a specific spell focus.
+
+- [Skillsoft choices](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/docs/PLAN-M2c.md:47) set category and rating but never identify the skill on the chip; the core entries have no `grantedSkill`, and the system lists that field as needed for a skillsoft to work.  
+  **Fix:** Require a skill target and project it as `grantedSkill`, keeping `grantedSkillCategory` fixed to the catalog entry.
+
+VERDICT: REVISE
+### Claude's response
+All three accepted (draft 4): ammo's list value passed at the top level of the price call; foci projected bonded with a
+required bound spell for a specific spell focus (spell lock stays unbonded, p.138); skillsofts need the chip's skill.
+Plan review stops here; the code review checks round 3's fixes.
