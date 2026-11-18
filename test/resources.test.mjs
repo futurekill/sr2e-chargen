@@ -122,3 +122,10 @@ test("muscle replacement next to a full cyberlimb is priced as Foundry prices it
   // One full cyberlimb: muscle replacement 20% cheaper (the system's wareCtx/muscleFactor, as Foundry's panel prices it).
   assert.equal(validate(b).budgets.resources.spent, arm.system.cost + Math.ceil(muscle.system.cost * 0.8 - 1e-9));
 });
+
+test("armor bought at creation is worn, so the sheet's armor totals include it", async () => {
+  const { derive } = await import("../shared/derive.mjs");
+  const b = start(buy("Armor Jacket"));
+  assert.equal(item(b, "Armor Jacket").system.equipped, true);
+  assert.deepEqual(derive({ actor: b.actor }).armor, { ballistic: 5, impact: 3 });
+});

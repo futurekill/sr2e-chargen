@@ -88,6 +88,7 @@ export function bondingCost(focusType, force) {
 export function project(rec, c) {
   const s = structuredClone(rec.snapshot), flags = structuredClone(rec.flags ?? {});
   if ("quantity" in c) s.quantity = c.quantity;
+  if (rec.type === "armor") s.equipped = true;   // armor bought at creation is worn (docs/PLAN-sheet.md, r1 #4)
   if ("rating" in c) s.rating = c.rating;
   if ("strengthMinimum" in c) s.strengthMinimum = c.strengthMinimum;
   if (rec.type === "gear" && s.category === "skillsoft") s.grantedSkill = c.skill;
