@@ -149,11 +149,12 @@ export function applyOp(body, op, lookup = () => null) {
       rec.choices = { allocated: op.allocated, concentration: conc, specialization: spec, freeLanguage: op.freeLanguage };
       break;
     }
-    case "removeSkill":
-      skillRecord(b, op.itemId);
-      delete b.creation.items[op.itemId];
-      b.actor.items = b.actor.items.filter(i => i._id !== op.itemId);
+    case "removeSkill": {
+      const id = skillItem(b, op.itemId)._id;   // the character's own id, not the request's string
+      delete b.creation.items[id];
+      b.actor.items = b.actor.items.filter(i => i._id !== id);
       break;
+    }
   }
   rebuildItems(b);
   return b;
@@ -177,12 +178,14 @@ function addItem(b, { name, img, snapshot, catalogId, source, choices }) {
   b.actor.items.push({ _id, name, type: "skill", img, system: {}, flags: {}, effects: [], _stats: { compendiumSource: source } });
 }
 const ITEM_ID = /^cg[0-9a-z]{14}$/;
-function skillRecord(b, id) {
+/** The character's skill item with this id (its record exists beside it), or a refusal. */
+function skillItem(b, id) {
   if (typeof id !== "string" || !ITEM_ID.test(id)) throw new Refusal("No such skill on this character.");   // never a key like __proto__
   const item = b.actor.items.find(i => i._id === id);
-  if (!item || item.type !== "skill" || !Object.hasOwn(b.creation.items, id)) throw new Refusal("No such skill on this character.");
-  return b.creation.items[id];
+  if (!item || item.type !== "skill" || !Object.hasOwn(b.creation.items, item._id)) throw new Refusal("No such skill on this character.");
+  return item;
 }
+const skillRecord = (b, id) => b.creation.items[skillItem(b, id)._id];
 
 /**
  * Every item's `system`, rebuilt from its snapshot and the player's choices (never stored as typed): a skill's ratings
