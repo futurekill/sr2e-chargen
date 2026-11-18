@@ -20,15 +20,17 @@ optional connector, not the foundation.
 - The part that is NOT pure is the composition in `CharacterData` (about 1,700 lines). It mixes creation rules
   with in-play state (spent pool dice, Matrix sessions, event logs). The app does not need the in-play part.
 
-No change to the Foundry system is necessary for milestones 1 to 5.
+~~No change to the Foundry system is necessary for milestones 1 to 5.~~ Corrected 2026-11-18: reading the system's
+budget code against the book found creation rules it gets wrong or lacks (programs, lifestyles, extras, allergies,
+focus bonding — docs/PLAN-M2.md §0). They are fixed in the system, in one release after the Friday game.
 
 ## Milestones
 
 Each milestone gives something you can use. Each has a short plan, a Codex review, and tests.
 
-1. **Catalog.** Build the item catalog from the system and the content modules at pinned versions. Browse and
+1. **Catalog.** _Done._ Build the item catalog from the system and the content modules at pinned versions. Browse and
    search it in the app, with page references. (This was M3b's first item.)
-2. **Create a character (core book).** The Priority system, step by step: priorities, metatype, magic, attributes,
+2. **Create a character (core book).** _In progress: M2a–M2c done (2026-11-18); adept powers and M2d next._ The Priority system, step by step: priorities, metatype, magic, attributes,
    skills, resources, contacts, lifestyle. A rules panel shows the budget and each error with its page reference.
    The app computes derived values (attributes, Essence, Reaction, Initiative, pools, armor, monitors) with the
    system's pure rules.

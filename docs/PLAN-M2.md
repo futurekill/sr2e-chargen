@@ -3,6 +3,32 @@ _Draft 4 (2026-11-18), after Codex rounds 1–3 (13 + 4 + 3 findings, all accept
 the code review checks them; docs/PLAN-M2-REVIEW-LOG.md). Roadmap: docs/ROADMAP.md (approved). Rules reference: docs/RULES-CHARGEN.md (M0, read from
 page renders; every rule here cites it). Catalog: docs/PLAN-catalog.md._
 
+## Status (2026-11-18)
+| Slice | State |
+|---|---|
+| M2a model, priorities, metatype, magic, attributes | done, pushed (docs/CODE-REVIEW-LOG-M2a.md) |
+| M2b skills | done, pushed (docs/CODE-REVIEW-LOG-M2b.md) |
+| M2c resources | done, pushed; its own plan docs/PLAN-M2c.md (docs/CODE-REVIEW-LOG-M2c.md) |
+| M2c-2 adept powers | next; needs S13 (the system's `adeptPowerCost` checked against p.125–126) |
+| M2d contacts, lifestyle, allergy, derived values, parity, finish | waits for the system release |
+| System prerequisites (§0) | S1–S4, S6–S8 (+ S10, S11 from PLAN-M2c) built on sr2e-foundryvtt branch `chargen/s-prereqs` (local, not pushed), unit-tested; NOT released — after the Friday game, with a Codex review first. S5, S12, S13 not started. |
+
+## As built (where the code differs from the text below — the code wins)
+- **Priorities live on the actor**, `actor.system.chargen.priorities` (Foundry's own field), not `creation.priorities`;
+  an unassigned category is `""`. `creation.options` holds `moreMetahumans`.
+- **One operation per letter**: `setPriority { category, letter }` (taking a held letter swaps the two), not
+  `setPriorities`. Also `setMagic`, `setTradition`, `setTotem`, `setAttribute`; skills `addSkill`, `addCustomSkill`,
+  `setSkill`, `removeSkill`; resources `addItem`, `setItem { itemId, choices }`, `removeItem`.
+- **Validation is in `shared/creation.mjs`** (`validate(body)`), not `shared/validate.mjs`; purchase rules in
+  `shared/purchase.mjs`. Severities are `error`, `todo` (not done yet) and `warning` (legal, but probably not meant);
+  finishing needs no error and no todo.
+- **Records**: `creation.items[id] = { type, name, img, source, flags, catalogId, snapshot, choices }`; `actor.items` is
+  regenerated from them after every operation (ids are a fixed-width counter, `cg…`, the same on server and client);
+  cybereye accessories become rows of their eye.
+- **The system now has `chargenBudget`** (branch): one pure whole-budget function that Foundry's panel calls. M2d
+  should call it instead of the app's own mapping, so the app and Foundry agree by construction.
+- **Rulings** where the book is unclear: docs/RULINGS.md.
+
 ## Goal
 A signed-in user creates a Shadowrun Second Edition character with the core book's Priority system, step by step,
 in the browser: priorities, metatype, magic, attributes, skills, resources (gear, cyberware, spells, foci, contacts,
@@ -187,8 +213,9 @@ Each slice is a release of this app that builds, passes and works on its own, ag
   tradition, attributes; their validation; the client's first steps. Uses only functions that exist today
   (`chargenSpend` for attributes, the tables).
 - **M2b — skills** (current pin): skills, concentrations and specializations, languages; `skillChargenSpend`.
-- **M2c — resources without the gaps** (current pin): buying weapons, armor, gear, cyberware (grades, Essence),
-  bioware, ammo, spells, foci through `itemBaseCost`/`chargenItemCost`/`wareCtx`.
+- **M2c — resources without the gaps** (current pin): buying weapons, armor, gear, cyberware (Essence), ammo, spells,
+  foci through `chargenItemCost`/`wareCtx` — core book only, so no grades and no bioware (those are sourcebooks, M5).
+  Details and refusals: docs/PLAN-M2c.md. Adept powers moved to M2c-2.
 - **M2d — the S release** (pin moved to the post-Friday system release): programs, lifestyles, contacts and extras,
   allergies, derived values (S5) and the parity test; then finish (§4) — finishing needs every budget, so it lands last.
 

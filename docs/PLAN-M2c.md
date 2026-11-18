@@ -1,6 +1,9 @@
 # Plan: milestone 2c — resources (core book)
 _Draft 4 (2026-11-18), after Codex plan rounds 1–3 (14 + 4 + 3 findings; docs/PLAN-M2c-REVIEW-LOG.md). Round 3's
-fixes are not re-reviewed: the code review checks them (as for docs/PLAN-M2.md). A slice of docs/PLAN-M2.md (§3, §4 Resources, §7 M2c); this file settles what that plan left
+fixes are not re-reviewed: the code review checks them (as for docs/PLAN-M2.md).
+**Status 2026-11-18: built and pushed** (docs/CODE-REVIEW-LOG-M2c.md). S10 and S11 are built on the system branch
+`chargen/s-prereqs` (not released); the app still uses its own `bondingCost` until the pin includes S10. S9, S12, S13
+not started. A slice of docs/PLAN-M2.md (§3, §4 Resources, §7 M2c); this file settles what that plan left
 open for buying things with nuyen and Force Points. Rules: docs/RULES-CHARGEN.md item 6 (p.46) and the pages cited
 here, each read on the page render (not the PDF text layer)._
 
@@ -93,9 +96,9 @@ bought items with their choices, price and Essence; cybereye accessories show a 
 gains Nuyen, Essence, Magic, Force Points and power points rows.
 
 ### 5. Gaps found, for the system release (added to PLAN-M2 §0)
-- **S9. Vehicles** are not in `CHARGEN_RESOURCE_TYPES`, so Foundry's own creation panel does not charge for a vehicle
-  bought at creation (p.46 lets Resources buy any gear; vehicles are on the gear list, p.264). Until the system counts
-  them, the app refuses vehicles at creation (it would show a total Foundry disagrees with).
+- **S9. Vehicles** are ACTORS in Foundry (the vehicle packs hold actors, not items), so no item type can put them in
+  `CHARGEN_RESOURCE_TYPES`: buying one at creation needs its own design (a record of the vehicles a character bought,
+  counted in `chargenBudget`). Not started; the app refuses vehicles at creation until then.
 - **S10. Focus bonding cost** is authored, not derived from Force (p.137). The system should derive it (one pure
   function in rules/, the data model calling it); the app uses that function once the pin includes it.
 - **S11. Focus price comment**: the core price list (p.263, read 2026-11-18) gives Specific Spell Focus
