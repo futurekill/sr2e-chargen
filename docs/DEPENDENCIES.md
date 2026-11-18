@@ -25,3 +25,6 @@ Still to add when their code lands: `pg`, `mysql2` (the other two databases).
 - **deepmerge (low, GHSA-gcqx-w48m-w2h4), via @sveltejs/vite-plugin-svelte** — 2026-11-16, no fixed version exists.
   Build-time only: the plugin merges OUR OWN Vite/Svelte config with it; no untrusted input reaches it and it is not
   in the server or the shipped image (`npm ci --omit=dev`). Re-check on every dependency update.
+- **picomatch (high, GHSA-fc5q-39xc-vjpf), via vite** — 2026-11-18, no fixed version exists. A ReDoS in extglob
+  patterns: Vite matches only OUR OWN build config's patterns with it, at build time; not in the server or the image.
+  Re-check on every dependency update (osv-scanner.toml expires the exception 2027-02-18).

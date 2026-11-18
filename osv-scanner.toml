@@ -3,3 +3,8 @@
 id = "GHSA-gcqx-w48m-w2h4"
 ignoreUntil = 2027-02-16T00:00:00Z
 reason = "deepmerge via @sveltejs/vite-plugin-svelte: build-time only, merges our own config, never in the image; no fixed version exists (2026-11-16)."
+
+[[IgnoredVulns]]
+id = "GHSA-fc5q-39xc-vjpf"
+ignoreUntil = 2027-02-18T00:00:00Z
+reason = "picomatch ReDoS via vite (dev): build-time only, matches our own config's glob patterns, never in the image; no fixed version exists (2026-11-18)."
