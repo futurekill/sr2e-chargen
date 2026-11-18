@@ -37,16 +37,17 @@
   const TYPE_NAME = { weapon: "Weapon", armor: "Armor", gear: "Gear", ammo: "Ammunition", cyberware: "Cyberware", spell: "Spell", focus: "Focus" };
   const CHOICE_NAME = { quantity: "Qty", bundles: "Boxes", rating: "Rating", force: "Force", strengthMinimum: "Str Min", in: "In", spell: "Spell", skill: "Skill" };
   let shopQ = $state(""), shopType = $state(""), shop = $state([]), shopBusy = $state(false);
-  let shopTimer;
+  let shopTimer, shopSeq = 0;
   function searchShop() {
     clearTimeout(shopTimer);
     shopTimer = setTimeout(async () => {
+      const mine = ++shopSeq;   // only the latest search's answer is shown (r1 #7)
       const p = new URLSearchParams({ book: "sr2", limit: "30" });
       for (const t of shopType ? [shopType] : BUYABLE) p.append("type", t);
       if (shopQ.trim()) p.set("q", shopQ.trim());
       shopBusy = true;
-      try { const r = await get(`/api/catalog/entries?${p}`); if (!gone) shop = r.entries; } catch (err) { if (!gone) error = err.message; }
-      shopBusy = false;
+      try { const r = await get(`/api/catalog/entries?${p}`); if (!gone && mine === shopSeq) shop = r.entries; } catch (err) { if (!gone && mine === shopSeq) error = err.message; }
+      if (mine === shopSeq) shopBusy = false;
     }, 250);
   }
   searchShop();

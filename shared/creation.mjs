@@ -84,9 +84,10 @@ const OPTIONS = ["moreMetahumans"];
  * character takes no creation operation (changes after creation are milestone 4's).
  */
 export function applyOp(body, op, lookup = () => null) {
-  if (!op || typeof op !== "object" || !(op.op in OPS)) throw new Refusal("Unknown operation.");
+  if (!op || typeof op !== "object" || typeof op.op !== "string" || !Object.hasOwn(OPS, op.op)) throw new Refusal("Unknown operation.");
   if (body.creation.finished && op.op !== "setNotes") throw new Refusal("This character is finished: creation can't change it.");
   const b = structuredClone(body), sys = b.actor.system;
+  fillLegacyRecords(b);   // before the operation looks records up (r1 #2)
   switch (op.op) {
     case "setName": b.name = b.actor.name = cleanName(op.name); break;
     case "setNotes":
@@ -175,6 +176,8 @@ export function applyOp(body, op, lookup = () => null) {
         const eye = Object.keys(b.creation.items).find(k => k === into);
         if (!eye || !isCybereye(b.creation.items[eye])) throw new Refusal("Place it in a cybereye of this character.");
       }
+      const spell = checked.choices.spell;   // a specific spell focus bonds to a spell of THIS character (r1 #5)
+      if (spell && !Object.keys(b.creation.items).some(k => k === spell && b.creation.items[k].type === "spell")) throw new Refusal("Bond it to one of this character's spells.", 137);
       rec.choices = checked.choices;
       break;
     }
@@ -229,15 +232,18 @@ function skillSystem(rec, int) {
     concentration: { name: c.concentration, rating: c.concentration ? t.concentration : 0 },
     specialization: { name: c.specialization, rating: c.specialization ? t.specialization : 0 } };
 }
+/** Records made before items carried their own shell data (M2b skills) take it from their item. */
+function fillLegacyRecords(b) {
+  const shells = new Map(b.actor.items.map(i => [i._id, i]));
+  for (const [id, r] of Object.entries(b.creation.items)) {
+    const sh = shells.get(id);
+    if (!r.type && sh) Object.assign(r, { type: sh.type, name: sh.name, img: sh.img ?? null, source: sh._stats?.compendiumSource ?? null, flags: {} });
+  }
+}
 /** Regenerate `actor.items` from the records: skills, bought items, and eye accessories as rows of their eye. */
 function rebuildItems(b) {
   const recs = b.creation.items, int = withRacial(b.actor.system, "intelligence");
-  const shells = new Map(b.actor.items.map(i => [i._id, i]));
   const ids = Object.keys(recs).sort();
-  for (const id of ids) {   // records made before items carried their own shell data (M2b skills)
-    const r = recs[id], sh = shells.get(id);
-    if (!r.type && sh) Object.assign(r, { type: sh.type, name: sh.name, img: sh.img ?? null, source: sh._stats?.compendiumSource ?? null, flags: {} });
-  }
   const rows = new Map(), out = [];
   for (const id of ids) {
     const r = recs[id];
@@ -355,6 +361,7 @@ export function validate(body) {
       if (!c.spell) add("resources", "todo", `${i.name}: choose the spell it's bonded to.`, 137);
       else if (!spellIds.has(c.spell)) add("resources", "error", `${i.name}: its spell is no longer on this character.`, 137);
     }
+    if (["gear", "cyberware", "weapon", "armor"].includes(i.type) && Number(i.system.rating) > 6) add("resources", "error", `${i.name} is Rating ${i.system.rating}: no starting gear above 6.`, 44);
     if (i.type === "gear" && i.system.category === "skillsoft" && !c.skill) add("resources", "todo", `${i.name}: name the skill on the chip.`, 243);
   }
 
@@ -366,6 +373,8 @@ export function validate(body) {
       ratingsFinalized: false, concentration: { name: i.system.concentration.name }, specialization: { name: i.system.specialization.name } })),
     items: items.filter(i => i.type !== "skill").map(i => priceInput(i, items)) }, allot);
   if (pr.resources && spend.resources.over) add("resources", "error", `${spend.resources.spent.toLocaleString("en-US")}¥ spent; Priority ${pr.resources} gives ${spend.resources.total.toLocaleString("en-US")}¥.`, 46);
+  if (mtype === "full_magician" && pr.resources && spend.forcePoints.remaining > 0)
+    add("resources", "warning", `${spend.forcePoints.remaining} Force Points unspent: only unspent nuyen carries into play.`, 47);
   if (spend.forcePoints.over) add("resources", "error", `${spend.forcePoints.spent} Force Points spent (spells' Force and foci bonding); ${mtype === "full_magician" ? `Priority ${pr.resources || "—"} gives ${spend.forcePoints.total}` : "only magicians receive Force Points"}.`, 46);
   if (pr.attributes) {
     if (spend.attributes.over) add("attributes", "error", `${spend.attributes.spent} Attribute Points spent; Priority ${pr.attributes} gives ${spend.attributes.total}.`, 45);

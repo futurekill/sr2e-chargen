@@ -20,7 +20,7 @@ export function choiceSpec(rec) {
   const s = rec.snapshot;
   const rows = (s.ratingStats ?? []).map(r => r.rating).filter(r => r <= 6);
   switch (rec.type) {
-    case "weapon": return { quantity: int(1, 20), ...(s.costPerStrengthMin > 0 ? { strengthMinimum: int(1, 10) } : {}) };
+    case "weapon": return { quantity: int(1, 20), ...(s.costPerStrengthMin > 0 ? { strengthMinimum: int(1, 6) } : {}) };
     case "armor": return { quantity: int(1, 5) };
     case "gear":
       if (s.category === "skillsoft") return { quantity: int(1, 1000), rating: int(1, 6), skill: text() };
@@ -109,11 +109,14 @@ export function project(rec, c) {
   return { system: s, flags };
 }
 
+/** The items as the documents `wareCtx` reads (an id and the SOURCE system), so it sees what Foundry sees (r1 #1). */
+const asDocs = (items) => items.map(i => ({ ...i, id: i._id, _source: { system: i.system } }));
+const ctxOf = (items, item) => wareCtx(asDocs(items), { ...item, id: item._id, _source: { system: item.system } });
 /** What `chargenItemCost` is given for one item, as Foundry's `chargenBudgetOf` builds it. */
 export function priceInput(item, items) {
   return { ...item.system, type: item.type, name: item.name, acquiredListValue: item.flags?.sr2e?.acquiredListValue,
     moduleListValue: rowsListValue(item.system.modules ?? []),
-    ...(item.type === "cyberware" ? wareCtx(items, item) : {}) };
+    ...(item.type === "cyberware" ? ctxOf(items, item) : {}) };
 }
 /** One item's list price. */
 export function price(rec, projected, items) {
@@ -134,7 +137,7 @@ export function essenceOf(item, items) {
   const s = item.system, base = Number(s.essenceCost) || 0;
   const rows = (s.modules ?? []).reduce((t, r) => t + (Number(r.essenceCost) || 0), 0);
   if (!(s.capacity > 0)) return base;
-  const ctx = wareCtx(items, item);
+  const ctx = ctxOf(items, item);
   return containerEssence({ base, rows, capacity: s.capacity, eyes: s.eyes ?? "pair", isEye: ctx.wareRule === "cybereye-pair", graded: false }, (e) => e);
 }
 export { isCybereye, isEyeAccessory };

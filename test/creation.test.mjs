@@ -137,7 +137,7 @@ test("a complete M2a character has no error and no todo for its steps", () => {
     { op: "setMagic", type: "full_magician" }, { op: "setTradition", tradition: "hermetic" },
     ...attrs({ body: 3, quickness: 4, strength: 2, charisma: 4, intelligence: 5, willpower: 6 })]);
   const v = validate(b);
-  assert.deepEqual(v.problems.filter(p => p.step !== "skills"), []);
+  assert.deepEqual(v.problems.filter(p => p.step !== "skills" && p.severity !== "warning"), []);
   assert.deepEqual(v.budgets.attributes, { spent: 24, total: 24, remaining: 0, over: false });
   assert.equal(v.budgets.forcePoints.total, 15, "Force Points come with the Resources priority, magicians only (p.46)");
 });

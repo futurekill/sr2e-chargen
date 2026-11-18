@@ -102,3 +102,23 @@ test("skillsofts: the rating is a choice, the category is the entry's, the chip 
   assert.throws(() => set(b, "ActiveSoft", { grantedSkillCategory: "language" }), /no choice/);
   assert.ok(validate(b).budgets.resources.spent > 0);
 });
+
+test("code review r1: rating above 6 reported, Bow Str Min 1–6, a focus bonds only this character's spell, unknown ops", () => {
+  const gyro = catalog.entries.find(x => x.book === "sr2" && x.type === "gear" && Number(x.system.rating) > 6 && !(x.system.ratingStats?.length > 1) && !(x.system.costPerRating > 0));
+  if (gyro) assert.match(texts(start(buy(gyro.name))), /no starting gear above 6\. \[p\.44\]/, gyro.name);
+  const bow = start(buy("Bow"));
+  assert.throws(() => set(bow, "Bow", { strengthMinimum: 7 }), /1 to 6/);
+  let b = start([{ op: "setMagic", type: "full_magician" }, ...buy("Spell Focus")]);
+  assert.throws(() => set(b, "Spell Focus", { spell: "cg00000000000099" }), /this character's spells/);
+  assert.throws(() => applyOp(newCharacter("X"), { op: "__proto__" }), Refusal);
+  assert.throws(() => applyOp(newCharacter("X"), { op: "toString" }), Refusal);
+  const mage = start([...prio({ magic: "A", resources: "A" }), { op: "setMagic", type: "full_magician" }]);
+  assert.match(texts(mage), /warning: 50 Force Points unspent/);
+});
+
+test("muscle replacement next to a full cyberlimb is priced as Foundry prices it (wareCtx reads the source shape)", () => {
+  const arm = byId.get(core("Cyberarm (Full)")), muscle = byId.get(core("Muscle Replacement (Rating 1)"));
+  const b = start(buy("Cyberarm (Full)", "Muscle Replacement (Rating 1)"));
+  // One full cyberlimb: muscle replacement 20% cheaper (the system's wareCtx/muscleFactor, as Foundry's panel prices it).
+  assert.equal(validate(b).budgets.resources.spent, arm.system.cost + Math.ceil(muscle.system.cost * 0.8 - 1e-9));
+});
