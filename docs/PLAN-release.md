@@ -1,5 +1,6 @@
 # Plan: release readiness (roadmap milestone 6)
-_Draft 2 (2026-11-18), after Codex plan round 1 (16 findings; its simpler path adopted — docs/PLAN-release-REVIEW-LOG.md).
+_Draft 3 (2026-11-18), after Codex plan rounds 1–2 (16 + 9 findings; docs/PLAN-release-REVIEW-LOG.md). The "Draft 3"
+section at the end wins; round 2's fixes are checked by the code review.
 The gates docs/PLAN.md sets before the group is invited: backups with a restore test, the image scanned (Trivy,
 fails on High/Critical), an SBOM, the image signed (cosign keyless via GitHub OIDC), a weekly rebuild. The repository
 is PRIVATE; the image goes to a private registry only (PLAN.md "Distribution": never a public push)._
@@ -67,3 +68,32 @@ volume, admin bootstrap, the tag ruleset).
 
 ## Out of scope
 Public publishing; off-site copies (the operator's); key-based signing; `db copy`.
+
+## Draft 3 — changes after round 2 (these win)
+- **Off the request thread** (r2 #1): `node:sqlite` is synchronous, so `VACUUM INTO` and the verify run in a separate
+  child process (its own connection), never in the server's event loop.
+- **The nightly claim** (r2 #2): a lease, not a date swap. The `settings` row `backup.lease` holds `{ owner, until }`;
+  a process takes it with a conditional UPDATE only when it is empty or expired (2 h); `backup.last_ok` is written
+  only after the new backup has verified and been renamed into place. A run is due when `last_ok` is older than 24 h
+  (the first run included); a failed run leaves `last_ok` alone, so the next check tries again.
+- **SQLite restore is one offline command** (r2 #3): `chargen backup restore <file>` with the server STOPPED: copies the
+  backup to a staging file beside the database, opens the staging copy and deletes every session and every unused
+  invite/setup/reset token, runs the full verify on it, removes the old `-wal`/`-shm` files, and renames the staging
+  file over the database (atomic). The CLI's restore path never opens or migrates the live database first. The
+  server refuses to start while a `*.restore-staging` file exists.
+- **Native restores** (r2 #4): after `pg_restore`/`mysql` into the target, BEFORE starting the app:
+  `chargen backup sanitize --database-url …` (sessions and unused tokens deleted) then `chargen backup verify
+  --database-url …`; OPERATIONS.md lists the three steps in order.
+- **Native dumps** (r2 #5): the sidecar's script writes to `*.partial`, publishes only on a zero exit with `sync` and
+  an atomic `mv`, and keeps the previous dumps; upgrades (which migrate) are done with the sidecar stopped — the
+  upgrade checklist says so.
+- **Weekly** (r2 #6): the weekly job rebuilds and scans; a failure is the signal (CI email) to cut a release. Base
+  patches arrive as Renovate pull requests (digest bumps); publishing stays a deliberate tagged release, never
+  automatic. Recorded as a decision.
+- **Private before push** (r2 #7): before pushing, the job queries the package; if it exists and is not `private`,
+  it fails without pushing; a first push relies on GHCR's private default for a private repository and is checked
+  right after (and the job deletes nothing — it fails loudly).
+- **The release object** (r2 #8): the publish job creates the GitHub release itself (`gh release create`, notes from
+  the CHANGELOG section) before uploading the SBOM; the CI call is given `contents: read` and `actions: read`.
+- **SBOM attestation** (r2 #9): after signing, `cosign verify-attestation --type spdxjson` on the digest with the same
+  identity, and the attested SBOM's digest compared with the uploaded file's.
