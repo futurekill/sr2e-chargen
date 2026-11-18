@@ -37,12 +37,12 @@ export default async function authRoutes(app) {
     return { ok: true };
   });
   // Per-user preferences (docs/PLAN-sheet.md slice 2): the readable font, on the site and as the sheet default.
-  app.get("/account/prefs", { onRequest: app.needSession }, async (req) => ({ prefs: req.session.user.prefs }));
+  app.get("/account/prefs", { onRequest: app.needSession }, async (req) => req.session.user.prefs);
   app.put("/account/prefs", { onRequest: app.needSession, schema: { body: { type: "object", additionalProperties: false, required: ["readableFont"], properties: { readableFont: { type: "boolean" } } } } },
     async (req) => {
       const prefs = { readableFont: req.body.readableFont };
       await writeTx(req.ctx, trx => trx.updateTable("users").set({ prefs: JSON.stringify(prefs) }).where("id", "=", req.session.user.id).execute());
-      return { prefs };
+      return prefs;
     });
   app.post("/account/password", { config: AUTH_LIMIT, onRequest: app.needSession, schema: { body: body({ current: str(256), next: str(256) }) } }, async (req, reply) => {
     await A.changePassword(req.ctx, { userId: req.session.user.id, ...req.body, ip: req.ip });

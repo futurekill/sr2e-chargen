@@ -219,5 +219,6 @@ test("preferences: the readable font is stored per user, comes with the session,
   assert.equal((await put({ readableFont: "yes" })).statusCode, 400);
   assert.equal((await put({ readableFont: true, theme: "x" })).statusCode, 400);
   assert.deepEqual((await app.inject({ url: "/api/session", headers: { cookie } })).json().user.prefs, { readableFont: true });
+  assert.deepEqual((await app.inject({ url: "/api/account/prefs", headers: { cookie } })).json(), { readableFont: true });
   assert.equal((await app.inject({ method: "PUT", url: "/api/account/prefs", headers: { origin: ORIGIN, cookie }, payload: { readableFont: false } })).statusCode, 403, "CSRF");
 });

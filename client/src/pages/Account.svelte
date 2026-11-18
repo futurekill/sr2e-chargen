@@ -4,10 +4,13 @@
   let current = $state(""), next = $state(""), again = $state(""), error = $state(""), busy = $state(false);
   let readable = $state(document.documentElement.dataset.font === "readable");
 
-  /** Saved on the server (every device, and the sheet's default font), applied here at once. */
+  /** Saved on the server (every device, and the sheet's default font), then applied; one save at a time (r1 #4 #5). */
+  let saving = $state(false);
   async function setFont() {
-    applyFont(readable);
-    try { await put("/api/account/prefs", { readableFont: readable }); } catch (err) { error = err.message; }
+    saving = true; error = "";
+    try { const p = await put("/api/account/prefs", { readableFont: readable }); readable = p.readableFont; applyFont(readable); }
+    catch (err) { readable = !readable; error = err.message; }
+    saving = false;
   }
   async function change(ev) {
     ev.preventDefault();
@@ -27,7 +30,7 @@
 {#if error}<p class="notice bad" role="alert">{error}</p>{/if}
 
 <h2>Reading</h2>
-<label class="row"><input class="check" type="checkbox" bind:checked={readable} onchange={setFont}><span>Use an easy-to-read font (Atkinson Hyperlegible) on the site and on printed sheets</span></label>
+<label class="row"><input class="check" type="checkbox" bind:checked={readable} onchange={setFont} disabled={saving}><span>Use an easy-to-read font (Atkinson Hyperlegible) on the site and on printed sheets</span></label>
 
 <h2>Change password</h2>
 <p class="muted">Changing it signs you out on every device.</p>
