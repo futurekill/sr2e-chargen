@@ -53,7 +53,7 @@ Never from pdftotext. M0 status: **complete** — the core book and every source
    - Special skills (p.74) with GM approval. **Language**: native language free at Intelligence + 2 (may exceed 6);
      a Street lifestyle also gives a local dialect (City Speak, Tunnel Talk) at ½ Intelligence, rounded down;
      other languages bought like skills (p.74).
-6. **Resources** (p.46): nuyen for everyone, Force Points for magicians only.
+6. **Resources** (p.46): nuyen for everyone, Force Points for magicians only — adepts, physical adepts included, are magicians (p.124, "A less powerful form of magician").
    - **Cyberware**: list price (p.254); reduces Essence; Essence never below 0; Magic follows Essence. During
      creation ignore Availability, Street Price and surgery costs.
    - **Gear**: list price (pp.254–265); no starting gear rating above 6 (also p.43). Incidentals (ammunition, armour,
