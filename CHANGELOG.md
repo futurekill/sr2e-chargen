@@ -10,6 +10,7 @@ notes come from it.
 - An item the app didn't create (a character made in Foundry) is no longer dropped when the character changes.
 
 ### Added
+- Weapon foci at creation: bond one to a melee weapon you bought; it is priced by the weapon's Reach (p.263) and bonded for 4 or 5 × Force in Force Points by its size (p.137, RULINGS R5).
 - **Backups**: with `BACKUP_DIR` set, a verified SQLite backup every night (portraits included), the newest seven
   kept; `backup create`, `backup verify` and an offline `backup restore` in the admin CLI; `backup sanitize` and
   `backup verify --database-url` for Postgres/MySQL after their own restore. See docs/OPERATIONS.md.

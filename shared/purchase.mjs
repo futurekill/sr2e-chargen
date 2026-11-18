@@ -4,7 +4,7 @@
  * operation, so no price or rule field is ever stored as typed. Prices and Essence come from the system's own pure
  * functions (shared/rules.mjs), called with the same inputs Foundry's creation panel gives them.
  */
-import { chargenItemCost, ratedRow, wareCtx, containerEssence, eyeAccessoryKind, rowsListValue } from "./rules.mjs";
+import { chargenItemCost, weaponFocusCost, ratedRow, wareCtx, containerEssence, eyeAccessoryKind, rowsListValue } from "./rules.mjs";
 
 export const BUYABLE = ["weapon", "armor", "gear", "ammo", "cyberware", "spell", "focus"];
 const STRING_MAX = 60;
@@ -28,7 +28,9 @@ export function choiceSpec(rec) {
     case "ammo": return { bundles: int(1, 100) };
     case "cyberware": return { ...(rows.length > 1 ? { rating: oneOf(rows) } : {}), ...(isEyeAccessory(rec) ? { in: text() } : {}) };
     case "spell": return { force: int(1, 6) };   // "no starting spell can have a Force greater than 6" (p.46)
-    case "focus": return { ...(s.focusType === "spell_lock" ? {} : { force: int(1, 6) }), ...(s.focusType === "spell" ? { spell: text() } : {}) };
+    case "focus": return { ...(s.focusType === "spell_lock" ? {} : { force: int(1, 6) }), ...(s.focusType === "spell" ? { spell: text() } : {}),
+      // The book prices the bond by the weapon's size but never defines it: the player says which (RULINGS R5, p.137).
+      ...(s.focusType === "weapon" ? { weapon: text(), size: oneOf(["small", "large"]) } : {}) };
     default: return {};
   }
 }
@@ -40,6 +42,7 @@ export function defaultChoices(rec) {
     else if (k === "rating") out[k] = spec.kind === "oneOf" ? spec.values.find(v => v >= (s.rating || 1)) ?? spec.values[0] : Math.min(6, Math.max(1, s.rating || 1));
     else if (k === "force") out[k] = Math.max(1, s.force || 1);
     else if (k === "strengthMinimum") out[k] = Math.max(1, s.strengthMinimum || 1);
+    else if (spec.kind === "oneOf") out[k] = spec.values[0];
     else out[k] = 1;
   }
   return out;
@@ -72,7 +75,6 @@ export function refusalFor(entry) {
   if (!BUYABLE.includes(entry.type)) return "That isn't something a character buys.";
   if (entry.system?.limbOption) return "A cyberlimb option needs a cyberlimb: it arrives with the Cybertechnology rules.";
   if (entry.system?.category === "skillsoft" && entry.system?.grantedSkillCategory === "data") return "A DataSoft's price varies with its data (core): not yet.";
-  if (entry.type === "focus" && entry.system?.focusType === "weapon") return "A weapon focus is priced by the weapon it's bonded to: not yet.";
   const rec = { type: entry.type, name: entry.name, snapshot: entry.system, flags: entry.flags ?? {}, source: entry._stats?.compendiumSource ?? null };
   if (entry.type !== "spell" && price(rec, project(rec, defaultChoices(rec)), []) <= 0) return "This has no fixed price in the core book (it varies): not yet.";
   return null;
@@ -84,8 +86,9 @@ export function bondingCost(focusType, force) {
   return { spell: f, spirit: 2 * f, power: 5 * f, spell_lock: 1 }[focusType] ?? f;
 }
 
-/** The item's `system` (and flags) from its snapshot and choices. */
-export function project(rec, c) {
+/** The item's `system` (and flags) from its snapshot and choices; `recs` are the character's records (a weapon focus
+ * reads its weapon's Reach). */
+export function project(rec, c, recs = {}) {
   const s = structuredClone(rec.snapshot), flags = structuredClone(rec.flags ?? {});
   if ("quantity" in c) s.quantity = c.quantity;
   if (rec.type === "armor") s.equipped = true;   // armor bought at creation is worn (docs/PLAN-sheet.md, r1 #4)
@@ -106,6 +109,11 @@ export function project(rec, c) {
     s.bondingCost = bondingCost(s.focusType, s.force);
     s.bonded = s.focusType !== "spell_lock";   // creation pays the bond (p.46); a lock bonds when it locks a spell (p.138)
     if (s.focusType === "spell") { s.spellSubtype = "specific"; s.boundSpellId = c.spell ?? ""; }
+    if (s.focusType === "weapon") {   // p.137 bond, p.263 price; unbonded it is priced at Reach 0, its lowest
+      s.bondedWeaponId = c.weapon ?? "";
+      s.bondingCost = (c.size === "large" ? 5 : 4) * s.force;
+      s.cost = weaponFocusCost(Number(recs[c.weapon]?.snapshot?.reach) || 0, s.force);
+    }
   }
   return { system: s, flags };
 }

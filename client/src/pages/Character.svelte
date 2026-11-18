@@ -35,7 +35,7 @@
   }
   // Resources (docs/PLAN-M2c.md).
   const TYPE_NAME = { weapon: "Weapon", armor: "Armor", gear: "Gear", ammo: "Ammunition", cyberware: "Cyberware", spell: "Spell", focus: "Focus" };
-  const CHOICE_NAME = { quantity: "Qty", bundles: "Boxes", rating: "Rating", force: "Force", strengthMinimum: "Str Min", in: "In", spell: "Spell", skill: "Skill" };
+  const CHOICE_NAME = { quantity: "Qty", bundles: "Boxes", rating: "Rating", force: "Force", strengthMinimum: "Str Min", in: "In", spell: "Spell", skill: "Skill", weapon: "Weapon", size: "Size" };
   let shopQ = $state(""), shopType = $state(""), shop = $state([]), shopBusy = $state(false);
   let shopTimer, shopSeq = 0;
   function searchShop() {
@@ -58,11 +58,12 @@
   }
   /** Every bought thing (eye accessories included), with what it costs and the Essence it takes. */
   const bought = $derived(Object.entries(body.creation.items).filter(([, r]) => r.type !== "skill").sort(([a], [b]) => (a < b ? -1 : 1)).map(([id, r]) => {
-    const item = body.actor.items.find(i => i._id === id), projected = item ? { system: item.system, flags: item.flags } : project(r, r.choices);
+    const item = body.actor.items.find(i => i._id === id), projected = item ? { system: item.system, flags: item.flags } : project(r, r.choices, body.creation.items);
     return { id, r, spec: choiceSpec(r), price: price(r, projected, body.actor.items), essence: item && r.type === "cyberware" ? essenceOf(item, body.actor.items) : null };
   }));
   const eyes = $derived(bought.filter(x => isCybereye(x.r)));
   const spells = $derived(bought.filter(x => x.r.type === "spell"));
+  const melee = $derived(bought.filter(x => x.r.type === "weapon" && x.r.snapshot.weaponType === "melee"));
   const setChoice = (id, key, value) => change({ op: "setItem", itemId: id, choices: { [key]: value } });
 
   async function addCoreSkill() {
@@ -383,11 +384,13 @@
                         <input type="number" min={sp.lo} max={sp.hi} step="1" value={x.r.choices[k]} disabled={finished}
                           onchange={(ev) => { const n = numberFrom(ev); if (Number.isInteger(n) && n >= sp.lo && n <= sp.hi) setChoice(x.id, k, n); else ev.currentTarget.value = x.r.choices[k]; }}>
                       {:else if sp.kind === "oneOf"}
-                        <select value={x.r.choices[k]} disabled={finished} onchange={(ev) => setChoice(x.id, k, Number(ev.currentTarget.value))}>{#each sp.values as v}<option value={v}>{v}</option>{/each}</select>
+                        <select value={x.r.choices[k]} disabled={finished} onchange={(ev) => setChoice(x.id, k, typeof sp.values[0] === "number" ? Number(ev.currentTarget.value) : ev.currentTarget.value)}>{#each sp.values as v}<option value={v}>{v}</option>{/each}</select>
                       {:else if k === "in"}
                         <select value={x.r.choices.in} disabled={finished} onchange={(ev) => setChoice(x.id, "in", ev.currentTarget.value)}><option value="">On its own</option>{#each eyes as e (e.id)}<option value={e.id}>{e.r.name}</option>{/each}</select>
                       {:else if k === "spell"}
                         <select value={x.r.choices.spell} disabled={finished} onchange={(ev) => setChoice(x.id, "spell", ev.currentTarget.value)}><option value="">Choose…</option>{#each spells as sp2 (sp2.id)}<option value={sp2.id}>{sp2.r.name}</option>{/each}</select>
+                      {:else if k === "weapon"}
+                        <select value={x.r.choices.weapon} disabled={finished} onchange={(ev) => setChoice(x.id, "weapon", ev.currentTarget.value)}><option value="">Choose…</option>{#each melee as w (w.id)}<option value={w.id}>{w.r.name} (Reach {w.r.snapshot.reach ?? 0})</option>{/each}</select>
                       {:else}
                         <input value={x.r.choices[k]} maxlength="60" disabled={finished} onchange={(ev) => setChoice(x.id, k, ev.currentTarget.value)}>
                       {/if}

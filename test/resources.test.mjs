@@ -83,7 +83,7 @@ test("spells and foci spend Force Points (p.46, p.137); only magicians", () => {
 });
 
 test("refused at creation: no fixed price, limb options, weapon foci, adept powers, vehicles, programs, sourcebooks", () => {
-  for (const n of ["Personal Computer (Pocket)", "DataSoft", "Smartgun System (Internal)", "Built-In Device (Cyberlimb)", "Weapon Focus", "Unarmed Strike"])
+  for (const n of ["Personal Computer (Pocket)", "DataSoft", "Smartgun System (Internal)", "Built-In Device (Cyberlimb)", "Unarmed Strike"])
     assert.throws(() => start(buy(n)), Refusal, n);
   for (const type of ["adept_power", "vehicle", "program", "lifestyle", "contact"]) {
     const e = catalog.entries.find(x => x.book === "sr2" && x.type === type);
@@ -128,4 +128,23 @@ test("armor bought at creation is worn, so the sheet's armor totals include it",
   const b = start(buy("Armor Jacket"));
   assert.equal(item(b, "Armor Jacket").system.equipped, true);
   assert.deepEqual(derive({ actor: b.actor }).armor, { ballistic: 5, impact: 3 });
+});
+
+test("a weapon focus bonds to one melee weapon of this character: priced by its Reach (p.263), bonded 4 or 5 × Force (p.137)", () => {
+  let b = start([...prio({ magic: "A", resources: "A" }), { op: "setMagic", type: "full_magician" }, ...buy("Weapon Focus", "Katana", "Ares Predator", "Pole Arm")]);
+  assert.match(texts(b), /todo: Weapon Focus: choose the melee weapon it's bonded to\. \[p\.137\]/);
+  assert.equal(item(b, "Weapon Focus").system.cost, 100000 + 90000, "unbonded: priced at Reach 0, its lowest");
+  assert.throws(() => set(b, "Weapon Focus", { weapon: idOf(b, "Ares Predator") }), /melee weapons/, "a firearm can't be a focus (p.147)");
+  assert.throws(() => set(b, "Weapon Focus", { size: "huge" }), /one of small, large/);
+  b = set(b, "Weapon Focus", { weapon: idOf(b, "Katana"), force: 3 });
+  const f = item(b, "Weapon Focus").system;
+  assert.deepEqual([f.cost, f.bondingCost, f.bondedWeaponId, f.bonded], [(1 + 1) * 100000 + 3 * 90000, 12, idOf(b, "Katana"), true]);
+  assert.equal(validate(b).budgets.forcePoints.spent, 12);
+  b = set(b, "Weapon Focus", { weapon: idOf(b, "Pole Arm"), size: "large" });
+  assert.deepEqual([item(b, "Weapon Focus").system.cost, item(b, "Weapon Focus").system.bondingCost], [3 * 100000 + 3 * 90000, 15]);
+  b = applyOp(b, { op: "addItem", catalogId: core("Weapon Focus") }, lookup);
+  const second = Object.keys(b.creation.items).sort().at(-1);
+  assert.throws(() => applyOp(b, { op: "setItem", itemId: second, choices: { weapon: idOf(b, "Pole Arm") } }, lookup), /already a focus/);
+  b = applyOp(b, { op: "removeItem", itemId: idOf(b, "Pole Arm") }, lookup);
+  assert.match(texts(b), /error: Weapon Focus: its weapon is no longer on this character\. \[p\.137\]/);
 });
