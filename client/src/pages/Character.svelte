@@ -356,7 +356,7 @@
 
     <section id="step-resources">
       <h2>Resources</h2>
-      <p class="muted">Spend your nuyen on gear at list price; magicians spend Force Points on spells (Force up to 6) and on bonding foci. No starting gear above Rating 6. Cybereyes take up to .5 Essence of accessories for free. <span class="cite">SR2 p.46, p.137, p.247</span></p>
+      <p class="muted">Spend your nuyen on gear at list price; magicians (adepts too) spend Force Points on bonding foci, and full magicians on spells (Force up to 6); a physical adept uses only a weapon focus. No starting gear above Rating 6. Cybereyes take up to .5 Essence of accessories for free. <span class="cite">SR2 p.46, p.124, p.137, p.247</span></p>
       {#if !finished}
         <div class="row adders">
           <label class="grow"><span>Search the core book</span><input bind:value={shopQ} oninput={searchShop} maxlength="64" placeholder="Ares Predator, armor jacket, wired reflexes…"></label>

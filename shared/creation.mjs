@@ -395,8 +395,10 @@ export function validate(body) {
   const spellIds = new Set(items.filter(i => i.type === "spell").map(i => i._id));
   for (const i of items) {
     const c = body.creation.items[i._id]?.choices ?? {};
-    if (i.type === "spell" && mtype !== "full_magician") add("resources", "error", `${i.name}: only magicians learn spells with Force Points.`, 46);
-    if (i.type === "focus" && mtype !== "full_magician") add("resources", "error", `${i.name}: only a magician bonds this focus (an adept can use only a weapon focus, p.124).`, 46);
+    if (i.type === "spell" && mtype !== "full_magician") add("resources", "error", `${i.name}: only a full magician learns spells.`, 46);
+    // Adepts are magicians (p.124) and get Force Points (p.46); a physical adept's only useful focus is a weapon focus (p.124).
+    if (i.type === "focus" && mtype === "none") add("resources", "error", `${i.name}: only a magician bonds a focus.`, 46);
+    else if (i.type === "focus" && mtype === "physical_adept" && i.system.focusType !== "weapon") add("resources", "error", `${i.name}: a physical adept can use only a weapon focus.`, 124);
     if (i.type === "focus" && i.system.focusType === "spell") {
       if (!c.spell) add("resources", "todo", `${i.name}: choose the spell it's bonded to.`, 137);
       else if (!spellIds.has(c.spell)) add("resources", "error", `${i.name}: its spell is no longer on this character.`, 137);
@@ -412,15 +414,15 @@ export function validate(body) {
 
   // Budgets through the system's own function (core p.44–46).
   const allot = { attributes: table[pr.attributes]?.attributes ?? 0, skills: table[pr.skills]?.skills ?? 0,
-    resources: table[pr.resources]?.resources ?? 0, forcePoints: mtype === "full_magician" ? table[pr.resources]?.forcePoints ?? 0 : 0 };
+    resources: table[pr.resources]?.resources ?? 0, forcePoints: mtype !== "none" ? table[pr.resources]?.forcePoints ?? 0 : 0 };   // every magician, adepts too (p.46, p.124)
   const spend = chargenSpend({ attributes: ATTRIBUTES.map(a => ({ base: Number(sys[a]?.base) || 0 })),
     skills: skills.map(i => ({ category: i.system.category, freeLanguage: i.system.freeLanguage, rating: i.system.rating, allocated: i.system.allocated,
       ratingsFinalized: false, concentration: { name: i.system.concentration.name }, specialization: { name: i.system.specialization.name } })),
     items: items.filter(i => i.type !== "skill").map(i => priceInput(i, items)) }, allot);
   if (pr.resources && spend.resources.over) add("resources", "error", `${spend.resources.spent.toLocaleString("en-US")}¥ spent; Priority ${pr.resources} gives ${spend.resources.total.toLocaleString("en-US")}¥.`, 46);
-  if (mtype === "full_magician" && pr.resources && spend.forcePoints.remaining > 0)
+  if (mtype !== "none" && pr.resources && spend.forcePoints.remaining > 0)
     add("resources", "warning", `${spend.forcePoints.remaining} Force Points unspent: only unspent nuyen carries into play.`, 47);
-  if (spend.forcePoints.over) add("resources", "error", `${spend.forcePoints.spent} Force Points spent (spells' Force and foci bonding); ${mtype === "full_magician" ? `Priority ${pr.resources || "—"} gives ${spend.forcePoints.total}` : "only magicians receive Force Points"}.`, 46);
+  if (spend.forcePoints.over) add("resources", "error", `${spend.forcePoints.spent} Force Points spent (spells' Force and foci bonding); ${mtype !== "none" ? `Priority ${pr.resources || "—"} gives ${spend.forcePoints.total}` : "only magicians receive Force Points"}.`, 46);
   if (pr.attributes) {
     if (spend.attributes.over) add("attributes", "error", `${spend.attributes.spent} Attribute Points spent; Priority ${pr.attributes} gives ${spend.attributes.total}.`, 45);
     else if (spend.attributes.remaining > 0) add("attributes", "todo", `${spend.attributes.remaining} Attribute Point${spend.attributes.remaining === 1 ? "" : "s"} left to spend.`, 47);

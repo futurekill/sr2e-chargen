@@ -76,8 +76,14 @@ test("spells and foci spend Force Points (p.46, p.137); only magicians", () => {
   const gone = applyOp(b, { op: "removeItem", itemId: idOf(b, "Mana Bolt") }, lookup);
   assert.match(texts(gone), /its spell is no longer on this character/);
   const adept = applyOp(b, { op: "setMagic", type: "physical_adept" }, lookup);
-  assert.match(texts(adept), /Mana Bolt: only magicians learn spells/);
-  assert.match(texts(adept), /Power Focus: only a magician bonds this focus/);
+  assert.match(texts(adept), /Mana Bolt: only a full magician learns spells/);
+  assert.match(texts(adept), /Power Focus: a physical adept can use only a weapon focus\. \[p\.124\]/);
+  // An adept is a magician (p.124): Force Points from Resources (p.46), spent on bonding a weapon focus.
+  let pa = start([...prio({ magic: "B", resources: "C" }), { op: "setMagic", type: "physical_adept" }, ...buy("Weapon Focus", "Katana")]);
+  pa = set(pa, "Weapon Focus", { weapon: idOf(pa, "Katana"), force: 2 });
+  assert.deepEqual([validate(pa).budgets.forcePoints.spent, validate(pa).budgets.forcePoints.total], [10, 25]);
+  assert.doesNotMatch(texts(pa), /Weapon Focus: .*(only|physical adept)/);
+  assert.match(texts(applyOp(pa, { op: "setMagic", type: "none" }, lookup)), /Weapon Focus: only a magician bonds a focus/);
   assert.deepEqual([1, 2, 3].map(f => [bondingCost("spell", f), bondingCost("spirit", f), bondingCost("power", f)]), [[1, 2, 5], [2, 4, 10], [3, 6, 15]]);
   assert.equal(bondingCost("spell_lock", 1), 1);
 });

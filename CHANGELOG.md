@@ -6,6 +6,7 @@ notes come from it.
 ## Unreleased
 
 ### Fixed
+- Physical adepts get the Resources priority's Force Points and can bond a weapon focus at creation: an adept is a magician (p.124, p.46). Other foci and spells stay refused for them.
 - The 30-day purge of deleted documents could remove a document restored at the same moment; it now checks again.
 - An item the app didn't create (a character made in Foundry) is no longer dropped when the character changes.
 
