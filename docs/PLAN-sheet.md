@@ -1,5 +1,5 @@
 # Plan: milestone 3 — the printable sheet (first slice: derived values + the Classic sheet)
-_Draft 1 (2026-11-18). Roadmap item 3 (docs/ROADMAP.md). The sheet rules already approved in docs/PLAN.md "Exports"
+_Draft 2 (2026-11-18), after Codex plan round 1 (13 findings: 12 accepted, 1 answered — docs/PLAN-sheet-REVIEW-LOG.md). Roadmap item 3 (docs/ROADMAP.md). The sheet rules already approved in docs/PLAN.md "Exports"
 (U16–U22: fit rule, pages, print, readable fonts, fit test) apply unchanged; this plan settles how to build the first
 style. ("M3" in docs/PLAN-M3.md is the OLD numbering — the app skeleton; this file is roadmap milestone 3.)_
 
@@ -63,3 +63,41 @@ The Fohawk style and ink-saver; the table card; the Markdown stat block; the por
 ## Risks
 - Derive duplicates `CharacterData` composition → drift. Control: unit tests now, the pregen parity test in M2d.
 - pdfkit's text measurement vs. its drawing must agree (same engine — the reason it's chosen); the fit test checks it.
+
+## Draft 2 — changes after round 1 (these win over the text above)
+- **Parity first, not later** (r1 #7): the roadmap's decision stands — the app derives a CREATION character itself
+  (no in-play state), and the control is a parity test against Foundry, not the parked system-wide derive extraction
+  (sr2e-foundryvtt docs/PLAN-derive.md). The test moves INTO this slice: a script run in the local test Foundry exports,
+  for each pregen and for test characters built to cover the core creation options (ware with Reaction/Initiative mods,
+  muscle replacement, a magician with bonded foci, a decker, a rigger, a physical adept), the actor's SOURCE and
+  Foundry's prepared values (attributes, Reaction, Initiative, every pool, armor, monitors, Essence, Magic, Karma Pool,
+  each weapon's damage code) as `test/fixtures/parity/*.json`. Because a character body IS Foundry's source shape,
+  `derive(source)` runs on the same input; any difference fails and names the value. A pregen that uses something the
+  app can't build (in-play state, sourcebook items) is compared only on what applies and says so.
+- **Reaction** (r1 #1): `reactionBase(Q, I, exempt)` with the Quickness from muscle replacement exempted, as
+  `CharacterData` does. **Initiative** (r1 #2): Reaction + 1D6 + dice from INSTALLED ware and Increased Reflexes; no
+  spells (a printed sheet shows the unbuffed character; sustained spells are play state).
+- **Pools** (r1 #3): computed by the same formulas `CharacterData._calculateDicePools` / `_calculateHackingPool` use —
+  Magic Pool only for magicians (Sorcery + active bonded power foci), Hacking and Control by the system's deck and VCR
+  rules; the parity fixtures include a decker and a rigger.
+- **Armor** (r1 #4): armor bought at creation starts WORN (`equipped: true` in the purchase projection — a creation
+  default); the sheet prints the worn totals from the actual flags.
+- **Monitors** (r1 #5): two 10-box tracks; Physical overflow against NATURAL Body, as the system's rule.
+- **Karma Pool** (r1 #6): `startingKarmaPool(race, moreMetahumans)` for a creation character; once M4 (management)
+  stores Karma, the sheet switches to `karmaPoolCapacity`/`karmaPoolAvailable`.
+- **Attacks** (r1 #8): weapons projected through the system's `strengthMinWeaponStats` (bows) and the rest of the
+  weapon's prepared values; the Bow's damage is in the parity fixtures.
+- **Fonts** (r1 #9): only fonts whose licence (SIL OFL 1.1) is verified from the font's own repository at the time
+  they are added; font files and licence texts copied into the runtime image; a test checks each bundled font has its
+  licence beside it.
+- **Process limits** (r1 #10): rendering runs in a `worker_threads` Worker with `resourceLimits` (heap caps Node
+  enforces), a wall-clock timeout that `terminate()`s it, ONE render at a time for the whole server (a queue of at most
+  N waiting, else 503 "busy"), a page cap (30) and a byte cap (10 MB) checked before the response is sent; a failed or
+  killed render returns an error, never a partial PDF.
+- **Fit test** (r1 #11): besides the renderer's placed-run list, the test re-reads every produced PDF with pdf.js
+  (dev dependency) and checks the extracted text equals the model's strings and every glyph lies inside the page's
+  safe area; fixtures add unbreakable strings (a 60-character word), non-Latin text, and the maximum item count.
+- **Untrusted text** (r1 #12): every user string is plain text — control characters and bidi overrides removed, no
+  links, no markup; the route is rate-limited per user AND server-wide.
+- **Simpler layout** (r1 #13): a FIXED Classic page 1 (the at-the-table sections in set boxes; the fit order applies
+  inside each box) and continuation pages that flow the long lists — no general column-flow engine.
