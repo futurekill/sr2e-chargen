@@ -182,7 +182,7 @@
 
     <section id="step-skills">
       <h2>Skills</h2>
-      <p class="muted">Buy each skill from 1 to 6 with Skill Points. A concentration takes 1 from the skill and gives +1 in the narrow field; a specialization takes 2 and gives +2 (Firearms 5 → Firearms 3, Pistols 5, Ares Predator 7). Your native language is free at Intelligence + 2. <span class="cite">SR2 p.45, p.70, p.74</span></p>
+      <p class="muted">Put Skill Points into each skill; no skill rating may start above 6. A concentration takes 1 from the skill and gives +1 in the narrow field; a specialization takes 2 and gives +2 (Firearms 5 → Firearms 3, Pistols 5, Ares Predator 7), and only those may start above 6. Your native language is free at Intelligence + 2. <span class="cite">SR2 p.45, p.70, p.74</span></p>
       {#if !finished}
         <div class="row adders">
           <label><span>From the core book</span>
