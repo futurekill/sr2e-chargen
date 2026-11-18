@@ -18,7 +18,8 @@ the area it touches passes.
 Each creation rule has a test that cites its page (test/creation.test.mjs, docs/RULES-CHARGEN.md):
 the Master Creation Table rows (p.47), each letter once (p.44), metatype priority (p.44, More Metahumans p.46), magic
 type per priority (p.45–46), tradition and totem (p.44), attributes after racial modifiers and the point budget
-(p.43, p.45).
+(p.43, p.45), skills 1–6 and the Skill Point budget (p.45), the concentration/specialization example (p.70), free
+languages (p.74), Sorcery and Conjuring need a Magic Rating (p.45).
 
 ## Manual walk-through (run on the dev server before a release)
 1. Library: make a character; it opens on its page. Make a draft; it opens as a text page.
@@ -30,5 +31,8 @@ type per priority (p.45–46), tradition and totem (p.44), attributes after raci
 5. Attributes: spend exactly the priority's points — "No problems in these steps".
 6. Open the same character in two tabs; change it in one, then in the other — the second tab says it changed
    elsewhere and shows the saved version.
-7. Phone width (375 px): no page-wide sideways scroll; the rules check is below the steps.
-8. History: each change is a revision named after its operation.
+7. Skills: add Firearms from the core list, give it 5 points, concentration Pistols, specialization Ares Predator —
+   it shows 3, Pistols 5, Ares Predator 7. Add English, mark it Native — it shows Intelligence + 2 and costs no points.
+   Add Sorcery to a mundane character — the check flags it (p.45). Add your own Knowledge skill by name.
+8. Phone width (375 px): no page-wide sideways scroll; the rules check is below the steps.
+9. History: each change is a revision named after its operation.

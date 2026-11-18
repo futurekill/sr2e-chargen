@@ -128,11 +128,11 @@ export function createCharacter(ctx, userId, { name }, key) {
   });
 }
 /** Apply creation operations, in order, as ONE new revision; any refusal refuses them all. */
-export function applyOps(ctx, userId, id, { revision, ops }, key) {
+export function applyOps(ctx, userId, id, { revision, ops }, key, lookup = () => null) {
   return idempotent(ctx, userId, key, fingerprint("POST", `/documents/${id}/ops`, { revision, ops }), async trx => {
     const doc = await current(trx, userId, id, revision, "character");
     let body = decodeBody(doc.body);
-    try { for (const op of ops) body = applyOp(body, op); } catch (e) { throw refusal(e); }
+    try { for (const op of ops) body = applyOp(body, op, lookup); } catch (e) { throw refusal(e); }
     const text = encode(body);
     await bump(trx, ctx, userId, id, revision, { name: body.name, body: text, bytes: Buffer.byteLength(text) });
     await appendRevision(trx, ctx, { id, owner_id: userId }, revision + 1, body, ops.map(o => o.op).join(", ").slice(0, 200));

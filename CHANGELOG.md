@@ -6,6 +6,11 @@ notes come from it.
 ## Unreleased
 
 ### Added
+- **Skills (milestone 2b).** Add the core book's skills from the catalog, or name your own Knowledge, Language or
+  Build/Repair skill. Buy each from 1 to 6 with Skill Points; a concentration and a specialization follow p.70 (Firearms
+  5 → Firearms 3, Pistols 5, Ares Predator 7). The native language is free at Intelligence + 2 and a Street dialect at
+  ½ Intelligence (p.74). The rules check shows the Skill Points and flags a skill above 6, a skill listed twice, a
+  second free language, and Sorcery or Conjuring without a Magic Rating (p.45).
 - **Character creation, first steps (milestone 2a).** "New" in the library makes a character (or a free-text draft).
   The Character page has the core book's first steps: priorities A–E (picking a letter another category has swaps the
   two), the optional More Metahumans rule, metatype, magic (magician or physical adept; hermetic or shamanic; a core

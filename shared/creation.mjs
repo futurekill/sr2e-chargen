@@ -2,12 +2,13 @@
  * Character creation with the core Priority system (docs/PLAN-M2.md; rules: docs/RULES-CHARGEN.md, core pp.43–47).
  * Pure: the same code runs on the server (the authority) and in the browser (for a fast screen).
  *   - `newCharacter(name)` — a fresh character document body.
- *   - `applyOp(body, op)` — the next body, or throws a `Refusal` (an impossible change).
+ *   - `applyOp(body, op, lookup)` — the next body, or throws a `Refusal` (an impossible change). `lookup(catalogId)`
+ *     gives a catalog entry (the server's catalog; in the browser, the entries the page fetched from it).
  *   - `validate(body)` — the budgets and every problem, each with its page.
  * A character is the Foundry system's own `character` source shapes (`actor`), so the system's functions read it
  * unchanged; the app's own record sits beside it (`creation`).
  */
-import { TABLES, chargenSpend, label } from "./rules.mjs";
+import { TABLES, chargenSpend, label, skillTiersFromAllocation, validateSkillAllocation } from "./rules.mjs";
 
 export const SCHEMA = "sr2e-chargen-character", SCHEMA_VERSION = 1;
 export const CATEGORIES = ["race", "magic", "attributes", "skills", "resources"];
@@ -20,6 +21,10 @@ export const MAGIC_TYPES = ["none", "full_magician", "physical_adept"];
 export const TRADITIONS = ["hermetic", "shamanic"];
 /** The core book's totems: the system's table less Mouse, which it notes the core book doesn't describe (review M2a #3). */
 export const CORE_TOTEMS = Object.keys(TABLES.totems).filter(k => k !== "mouse");
+/** Skills a player names (p.66: any skill of the Skills chapter): Knowledge, Language and Build/Repair skills. */
+export const CUSTOM_SKILL_CATEGORIES = ["knowledge", "language", "build_repair"];
+export const FREE_LANGUAGES = ["", "native", "dialect"];
+export const MAX_ITEMS = 500;
 const CORE = "sr2";
 const cite = (page) => ({ book: CORE, page: String(page) });
 
@@ -32,7 +37,7 @@ export function newCharacter(name) {
   const attrs = Object.fromEntries(ATTRIBUTES.map(a => [a, { base: 1 }]));
   return {
     schema: SCHEMA, schemaVersion: SCHEMA_VERSION, name: cleanName(name), notes: "",
-    creation: { method: "priority", options: { moreMetahumans: false }, finished: null, items: {} },
+    creation: { method: "priority", options: { moreMetahumans: false }, finished: null, items: {}, nextItem: 1 },
     actor: {
       name: cleanName(name), type: "character",
       system: { race: "human", magic: { type: "none", tradition: "none", totem: "" }, ...attrs, lifestyle: "streets",
@@ -59,7 +64,11 @@ export const OPS = Object.freeze({
   setMagic: { type: "string" },
   setTradition: { tradition: "string" },
   setTotem: { totem: "string" },
-  setAttribute: { attr: "string", base: "integer" }
+  setAttribute: { attr: "string", base: "integer" },
+  addSkill: { catalogId: "string" },
+  addCustomSkill: { category: "string", name: "string" },
+  setSkill: { itemId: "string", allocated: "integer", concentration: "string", specialization: "string", freeLanguage: "string" },
+  removeSkill: { itemId: "string" }
 });
 const OPTIONS = ["moreMetahumans"];
 
@@ -68,7 +77,7 @@ const OPTIONS = ["moreMetahumans"];
  * could have); rules a player may break while building are reported by `validate`, never refused. A finished
  * character takes no creation operation (changes after creation are milestone 4's).
  */
-export function applyOp(body, op) {
+export function applyOp(body, op, lookup = () => null) {
   if (!op || typeof op !== "object" || !(op.op in OPS)) throw new Refusal("Unknown operation.");
   if (body.creation.finished && op.op !== "setNotes") throw new Refusal("This character is finished: creation can't change it.");
   const b = structuredClone(body), sys = b.actor.system;
@@ -109,8 +118,83 @@ export function applyOp(body, op) {
     case "setAttribute":
       if (!ATTRIBUTES.includes(op.attr) || !Number.isInteger(op.base) || op.base < 1 || op.base > 12) throw new Refusal("An attribute is a whole number from 1 to 12.", 45);
       sys[op.attr] = { ...sys[op.attr], base: op.base }; break;
+    case "addSkill": {
+      const e = lookup(op.catalogId);
+      if (!e || e.type !== "skill") throw new Refusal("That isn't a skill in the catalog.");
+      if (e.book !== CORE) throw new Refusal("Only the core book's skills for now: sourcebooks arrive with the book toggles.");
+      addItem(b, { name: e.name, img: e.img ?? null, snapshot: e.system, catalogId: e.id, source: e._stats?.compendiumSource ?? null,
+        choices: { allocated: 1, concentration: "", specialization: "", freeLanguage: "" } });
+      break;
+    }
+    case "addCustomSkill": {
+      if (!CUSTOM_SKILL_CATEGORIES.includes(op.category)) throw new Refusal("Name a Knowledge, Language or Build/Repair skill.", 66);
+      const name = shortText(op.name, "A skill's name");
+      if (!name) throw new Refusal("A skill needs a name.");
+      addItem(b, { name, img: null, catalogId: null, source: null,
+        snapshot: { category: op.category, linkedAttribute: "intelligence", rating: 0, concentration: { name: "", rating: 0 }, specialization: { name: "", rating: 0 }, isMagical: false, notes: "" },
+        choices: { allocated: 1, concentration: "", specialization: "", freeLanguage: "" } });
+      break;
+    }
+    case "setSkill": {
+      const rec = skillRecord(b, op.itemId);
+      if (!Number.isInteger(op.allocated) || op.allocated < 0 || op.allocated > 12) throw new Refusal("A skill's points are a whole number from 0 to 12.", 45);
+      if (!FREE_LANGUAGES.includes(op.freeLanguage)) throw new Refusal("Unknown free language.", 74);
+      if (op.freeLanguage && rec.snapshot.category !== "language") throw new Refusal("Only a language can be free.", 74);
+      const spec = shortText(op.specialization, "A specialization"), conc = shortText(op.concentration, "A concentration");
+      if (spec && !conc) throw new Refusal("A specialization sits under a concentration: name the concentration too.", 70);
+      rec.choices = { allocated: op.allocated, concentration: conc, specialization: spec, freeLanguage: op.freeLanguage };
+      break;
+    }
+    case "removeSkill":
+      skillRecord(b, op.itemId);
+      delete b.creation.items[op.itemId];
+      b.actor.items = b.actor.items.filter(i => i._id !== op.itemId);
+      break;
   }
+  rebuildItems(b);
   return b;
+}
+
+/* ── Items: the app's record beside each Foundry item source (docs/PLAN-M2.md §2) ──────────────────────────── */
+
+const shortText = (v, what) => {
+  const t = String(v ?? "").replace(/\s+/g, " ").trim();
+  if (t.length > 60) throw new Refusal(`${what} is at most 60 characters.`);
+  return t;
+};
+/** A Foundry-shaped id (16 letters and digits), the same on the server and in the browser: a counter, not a random. */
+const itemId = (n) => `cg${n.toString(36).padStart(14, "0")}`;
+function addItem(b, { name, img, snapshot, catalogId, source, choices }) {
+  if (b.actor.items.length >= MAX_ITEMS) throw new Refusal(`A character holds at most ${MAX_ITEMS} items.`);
+  const n = b.creation.nextItem ?? 1;
+  b.creation.nextItem = n + 1;
+  const _id = itemId(n);
+  b.creation.items[_id] = { catalogId, snapshot: structuredClone(snapshot), choices };
+  b.actor.items.push({ _id, name, type: "skill", img, system: {}, flags: {}, effects: [], _stats: { compendiumSource: source } });
+}
+function skillRecord(b, id) {
+  const item = b.actor.items.find(i => i._id === id);
+  if (!item || item.type !== "skill" || !Object.hasOwn(b.creation.items, id)) throw new Refusal("No such skill on this character.");
+  return b.creation.items[id];
+}
+
+/**
+ * Every item's `system`, rebuilt from its snapshot and the player's choices (never stored as typed): a skill's ratings
+ * come from its allocation by p.70 (`skillTiersFromAllocation`, the system's own), still pending (`ratingsFinalized`
+ * false) as in Foundry's creation; a free native language is rated Intelligence + 2, a dialect ½ Intelligence (p.74).
+ */
+function rebuildItems(b) {
+  const sys = b.actor.system, int = withRacial(sys, "intelligence");
+  for (const item of b.actor.items) {
+    const rec = b.creation.items[item._id];
+    if (item.type !== "skill" || !rec) continue;
+    const c = rec.choices, free = c.freeLanguage;
+    const t = skillTiersFromAllocation(c.allocated, !!c.concentration, !!c.specialization);
+    const rating = free === "native" ? int + 2 : free === "dialect" ? Math.floor(int / 2) : Math.max(0, t.general);
+    item.system = { ...structuredClone(rec.snapshot), rating, allocated: free ? null : c.allocated, ratingsFinalized: false, freeLanguage: free,
+      concentration: { name: c.concentration, rating: c.concentration ? t.concentration : 0 },
+      specialization: { name: c.specialization, rating: c.specialization ? t.specialization : 0 } };
+  }
 }
 
 /* ── Validation: the rules panel ─────────────────────────────────────────────────────────────────────────────── */
@@ -172,13 +256,42 @@ export function validate(body) {
     if (v < 1) add("attributes", "error", `${ATTR_NAMES[a]} is ${v} after racial modifiers: raise it to at least 1.`, 45);
   }
 
+  // Skills (p.45, p.66, p.70, p.74).
+  const skills = body.actor.items.filter(i => i.type === "skill");
+  const names = {};
+  let natives = 0, dialects = 0;
+  for (const item of skills) {
+    const s = item.system, c = body.creation.items[item._id]?.choices ?? {}, nm = item.name;
+    const key = `${s.category}:${nm.toLowerCase()}`;
+    if (names[key]) add("skills", "error", `${nm} is listed twice: one entry per skill.`, 66);
+    names[key] = true;
+    if (s.freeLanguage === "native") natives++;
+    if (s.freeLanguage === "dialect") dialects++;
+    if (s.freeLanguage) continue;
+    if (c.allocated < 1) add("skills", "error", `${nm}: a starting skill is at least 1.`, 45);
+    else if (c.allocated > 6) add("skills", "error", `${nm}: no starting skill above 6 (a concentration or specialization may go higher).`, 45);
+    const ok = validateSkillAllocation(c.allocated, !!c.concentration, !!c.specialization);
+    if (c.allocated >= 1 && !ok.ok) add("skills", "error", `${nm}: ${ok.reason}`, 70);
+    if (s.isMagical && mtype === "none") add("skills", "error", `${nm} needs a Magic Rating.`, 45);
+  }
+  if (natives > 1) add("skills", "error", "Only one native language is free.", 74);
+  if (dialects > 1) add("skills", "error", "Only one local dialect is free.", 74);
+  if (dialects && sys.lifestyle !== "streets") add("skills", "error", "A free local dialect comes with a Street lifestyle.", 74);
+  if (!natives) add("skills", "todo", "Add your native language and mark it free (Intelligence + 2).", 74);
+
   // Budgets through the system's own function (core p.44–46).
   const allot = { attributes: table[pr.attributes]?.attributes ?? 0, skills: table[pr.skills]?.skills ?? 0,
     resources: table[pr.resources]?.resources ?? 0, forcePoints: mtype === "full_magician" ? table[pr.resources]?.forcePoints ?? 0 : 0 };
-  const spend = chargenSpend({ attributes: ATTRIBUTES.map(a => ({ base: Number(sys[a]?.base) || 0 })), skills: [], items: [] }, allot);
+  const spend = chargenSpend({ attributes: ATTRIBUTES.map(a => ({ base: Number(sys[a]?.base) || 0 })),
+    skills: skills.map(i => ({ category: i.system.category, freeLanguage: i.system.freeLanguage, rating: i.system.rating, allocated: i.system.allocated,
+      ratingsFinalized: false, concentration: { name: i.system.concentration.name }, specialization: { name: i.system.specialization.name } })), items: [] }, allot);
   if (pr.attributes) {
     if (spend.attributes.over) add("attributes", "error", `${spend.attributes.spent} Attribute Points spent; Priority ${pr.attributes} gives ${spend.attributes.total}.`, 45);
     else if (spend.attributes.remaining > 0) add("attributes", "todo", `${spend.attributes.remaining} Attribute Point${spend.attributes.remaining === 1 ? "" : "s"} left to spend.`, 47);
+  }
+  if (pr.skills) {
+    if (spend.skills.over) add("skills", "error", `${spend.skills.spent} Skill Points spent; Priority ${pr.skills} gives ${spend.skills.total}.`, 45);
+    else if (spend.skills.remaining > 0) add("skills", "todo", `${spend.skills.remaining} Skill Point${spend.skills.remaining === 1 ? "" : "s"} left to spend.`, 47);
   }
   return { budgets: spend, problems, finishable: !problems.some(p => p.severity !== "warning") };
 }

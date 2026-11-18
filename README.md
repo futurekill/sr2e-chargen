@@ -10,8 +10,9 @@ Built for a small private group: invite-only accounts, one Docker container on y
 > **Status: early development build.** The tool is **standalone first**: you can make and manage a character for a
 > physical table without Foundry ([docs/ROADMAP.md](docs/ROADMAP.md)). Done so far: the app skeleton (accounts,
 > library, Docker, CI), **milestone 1, the catalog** — 1,763 entries from the core book and 11 sourcebooks, each
-> with its page reference — and the first part of **milestone 2, character creation** (M2a): priorities, metatype,
-> magic, attributes, with a rules check that cites the page. Next: skills (M2b). Not released: no image is published.
+> with its page reference — and the first parts of **milestone 2, character creation**: priorities, metatype, magic,
+> attributes (M2a) and skills (M2b), with a rules check that cites the page. Next: resources (M2c). Not released: no
+> image is published.
 
 ## Run it locally (development)
 
@@ -82,7 +83,7 @@ The approved order is in [docs/ROADMAP.md](docs/ROADMAP.md) (standalone first, r
 | M0 | Capture the creation rules from the books | done |
 | — | App skeleton: Docker, accounts, library, one theme | done |
 | 1 | Catalog: browse and search every item, with page references | done |
-| 2 | Create a character, core book ([docs/PLAN-M2.md](docs/PLAN-M2.md)) | M2a done; M2b skills next |
+| 2 | Create a character, core book ([docs/PLAN-M2.md](docs/PLAN-M2.md)) | M2a, M2b done; M2c resources next |
 | 3 | Printable sheet | |
 | 4 | Manage a character: Karma, nuyen, purchases, damage, history | |
 | 5 | Sourcebooks, alternate methods, Edges and Flaws | |

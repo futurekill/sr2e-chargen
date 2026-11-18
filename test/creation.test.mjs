@@ -137,8 +137,7 @@ test("a complete M2a character has no error and no todo for its steps", () => {
     { op: "setMagic", type: "full_magician" }, { op: "setTradition", tradition: "hermetic" },
     ...attrs({ body: 3, quickness: 4, strength: 2, charisma: 4, intelligence: 5, willpower: 6 })]);
   const v = validate(b);
-  assert.deepEqual(v.problems, []);
-  assert.equal(v.finishable, true);
+  assert.deepEqual(v.problems.filter(p => p.step !== "skills"), []);
   assert.deepEqual(v.budgets.attributes, { spent: 24, total: 24, remaining: 0, over: false });
   assert.equal(v.budgets.forcePoints.total, 15, "Force Points come with the Resources priority, magicians only (p.46)");
 });
@@ -152,4 +151,92 @@ test("refusals: an unknown operation; any creation change to a finished characte
   const before = newCharacter("X"), snapshot = structuredClone(before);
   applyOp(before, { op: "setName", name: "Y" });
   assert.deepEqual(before, snapshot, "the reducer never changes its input");
+});
+
+/* ── Skills (M2b) ───────────────────────────────────────────────────────────────────────────────────────────── */
+const CAT = {
+  "sr2e.skills.fire": { id: "sr2e.skills.fire", type: "skill", book: "sr2", name: "Firearms", img: "x.webp", _stats: { compendiumSource: "Compendium.sr2e.skills.Item.fire" },
+    system: { category: "active", linkedAttribute: "quickness", rating: 0, concentration: { name: "", rating: 0 }, specialization: { name: "", rating: 0 }, isMagical: false, notes: "" } },
+  "sr2e.skills.sorc": { id: "sr2e.skills.sorc", type: "skill", book: "sr2", name: "Sorcery", system: { category: "active", linkedAttribute: "willpower", rating: 0, concentration: { name: "", rating: 0 }, specialization: { name: "", rating: 0 }, isMagical: true, notes: "" } },
+  "sr2e.skills.eng": { id: "sr2e.skills.eng", type: "skill", book: "sr2", name: "English", system: { category: "language", linkedAttribute: "intelligence", rating: 0, concentration: { name: "", rating: 0 }, specialization: { name: "", rating: 0 }, isMagical: false, notes: "" } },
+  "cp.skills.x": { id: "cp.skills.x", type: "skill", book: "cp", name: "Shapeshift", system: {} },
+  "sr2e.gear.y": { id: "sr2e.gear.y", type: "gear", book: "sr2", name: "Medkit", system: {} }
+};
+const lookup = (id) => CAT[id] ?? null;
+const runL = (ops, body = newCharacter("Razor")) => ops.reduce((b, op) => applyOp(b, op, lookup), body);
+const skill = (b, name) => b.actor.items.find(i => i.name === name);
+const setSkill = (b, name, o) => ({ op: "setSkill", itemId: skill(b, name)._id, allocated: 1, concentration: "", specialization: "", freeLanguage: "", ...o });
+
+test("skills: added from the core catalog as Foundry item sources, with the app's record beside them", () => {
+  const b = runL([{ op: "addSkill", catalogId: "sr2e.skills.fire" }]);
+  const item = skill(b, "Firearms");
+  assert.match(item._id, /^[a-z0-9]{16}$/);
+  assert.deepEqual(Object.keys(item).sort(), ["_id", "_stats", "effects", "flags", "img", "name", "system", "type"], "no app field inside the item");
+  assert.equal(item._stats.compendiumSource, "Compendium.sr2e.skills.Item.fire");
+  assert.equal(b.creation.items[item._id].catalogId, "sr2e.skills.fire");
+  assert.deepEqual([item.system.rating, item.system.allocated, item.system.ratingsFinalized], [1, 1, false]);
+  assert.equal(runL([{ op: "addSkill", catalogId: "sr2e.skills.fire" }]).actor.items[0]._id, item._id, "the same id on the server and in the browser");
+  assert.throws(() => runL([{ op: "addSkill", catalogId: "cp.skills.x" }]), /core book/);
+  assert.throws(() => runL([{ op: "addSkill", catalogId: "sr2e.gear.y" }]), Refusal);
+  assert.throws(() => runL([{ op: "addSkill", catalogId: "nope" }]), Refusal);
+  assert.throws(() => applyOp(b, { op: "addSkill", catalogId: "sr2e.skills.fire" }), Refusal, "no lookup, no catalog entry");
+});
+
+test("skills: the book's p.70 example — Firearms 5 → Firearms 3, Pistols 5, Ares Predator 7", () => {
+  let b = runL([{ op: "addSkill", catalogId: "sr2e.skills.fire" }]);
+  b = applyOp(b, setSkill(b, "Firearms", { allocated: 5, concentration: "Pistols", specialization: "Ares Predator" }));
+  const s = skill(b, "Firearms").system;
+  assert.deepEqual([s.rating, s.concentration.rating, s.specialization.rating, s.allocated], [3, 5, 7, 5]);
+  assert.deepEqual(texts(b, "skills").filter(t => !/native language/.test(t)), [], "within the rules (no priority yet: no budget line)");
+  const conc = applyOp(b, setSkill(b, "Firearms", { allocated: 5, concentration: "SMG" }));
+  assert.deepEqual([skill(conc, "Firearms").system.rating, skill(conc, "Firearms").system.concentration.rating], [4, 6]);
+  assert.throws(() => applyOp(b, setSkill(b, "Firearms", { allocated: 5, specialization: "Uzi III" })), /concentration/, "a specialization needs its concentration");
+  const tooSmall = applyOp(b, setSkill(b, "Firearms", { allocated: 1, concentration: "Pistols", specialization: "Ares Predator" }));
+  assert.match(texts(tooSmall, "skills").join(), /needs an allocation of at least 2\. \[p\.70\]/);
+});
+
+test("skills: 1–6 at creation, Skill Points = the priority's (p.45), Sorcery needs a Magic Rating", () => {
+  let b = runL([...prio({ skills: "E" }), { op: "addSkill", catalogId: "sr2e.skills.fire" }, { op: "addSkill", catalogId: "sr2e.skills.sorc" }]);
+  b = applyOp(b, setSkill(b, "Firearms", { allocated: 7 }));
+  b = applyOp(b, setSkill(b, "Sorcery", { allocated: 6 }));
+  const t = texts(b, "skills").join("\n");
+  assert.match(t, /Firearms: no starting skill above 6/);
+  assert.match(t, /Sorcery needs a Magic Rating\. \[p\.45\]/);
+  assert.equal(validate(b).budgets.skills.spent, 13);
+  b = applyOp(b, setSkill(b, "Firearms", { allocated: 6 }));
+  assert.match(texts(b, "skills").join(), /5 Skill Points left to spend/, "17 − 12");
+  b = applyOp(applyOp(b, { op: "setPriority", category: "magic", letter: "A" }), { op: "setMagic", type: "full_magician" });
+  assert.doesNotMatch(texts(b, "skills").join(), /Magic Rating/);
+  assert.throws(() => applyOp(b, setSkill(b, "Firearms", { allocated: 13 })), Refusal);
+});
+
+test("languages: the native language is free at Intelligence + 2; a Street dialect at ½ Intelligence (p.74)", () => {
+  let b = runL([...prio({ skills: "E" }), ...attrs({ intelligence: 5 }), { op: "addSkill", catalogId: "sr2e.skills.eng" }, { op: "addCustomSkill", category: "language", name: "Cityspeak" }]);
+  assert.match(texts(b, "skills").join(), /native language/);
+  b = applyOp(b, setSkill(b, "English", { freeLanguage: "native" }));
+  b = applyOp(b, setSkill(b, "Cityspeak", { freeLanguage: "dialect" }));
+  assert.deepEqual([skill(b, "English").system.rating, skill(b, "Cityspeak").system.rating], [7, 2], "may exceed 6");
+  assert.equal(validate(b).budgets.skills.spent, 0, "free languages cost no Skill Points");
+  b = applyOp(b, { op: "setAttribute", attr: "intelligence", base: 6 });
+  assert.equal(skill(b, "English").system.rating, 8, "follows Intelligence");
+  const two = applyOp(b, setSkill(b, "Cityspeak", { freeLanguage: "native" }));
+  assert.match(texts(two, "skills").join(), /Only one native language is free/);
+  const rich = structuredClone(b); rich.actor.system.lifestyle = "high";
+  assert.match(texts(rich, "skills").join(), /dialect comes with a Street lifestyle/);
+  const gun = runL([{ op: "addSkill", catalogId: "sr2e.skills.fire" }]);
+  assert.throws(() => applyOp(gun, setSkill(gun, "Firearms", { freeLanguage: "native" })), /Only a language/);
+});
+
+test("custom skills: Knowledge, Language, Build/Repair by name; removal; duplicates reported", () => {
+  let b = runL([{ op: "addCustomSkill", category: "knowledge", name: "  Seattle   Gangs " }, { op: "addCustomSkill", category: "knowledge", name: "seattle gangs" }]);
+  assert.equal(b.actor.items[0].name, "Seattle Gangs");
+  assert.equal(b.actor.items[0].system.linkedAttribute, "intelligence");
+  assert.match(texts(b, "skills").join(), /listed twice/);
+  assert.throws(() => applyOp(b, { op: "addCustomSkill", category: "active", name: "Hacking" }), Refusal, "active skills come from the catalog");
+  assert.throws(() => applyOp(b, { op: "addCustomSkill", category: "knowledge", name: "x".repeat(61) }), Refusal);
+  assert.throws(() => applyOp(b, { op: "addCustomSkill", category: "knowledge", name: "   " }), Refusal);
+  b = applyOp(b, { op: "removeSkill", itemId: b.actor.items[1]._id });
+  assert.equal(b.actor.items.length, 1); assert.equal(Object.keys(b.creation.items).length, 1);
+  assert.throws(() => applyOp(b, { op: "removeSkill", itemId: "nope" }), Refusal);
+  assert.throws(() => applyOp(b, { op: "removeSkill", itemId: "__proto__" }), Refusal);
 });

@@ -4,20 +4,42 @@
    * reducer (a fast screen), then sent to the server, whose answer replaces the local copy. Changes go out one at a
    * time, in order, each on top of the revision the previous answer gave.
    */
+  import { untrack } from "svelte";
   import { get, mutate } from "../lib/api.js";
-  import { applyOp, validate, CATEGORIES, CATEGORY_NAMES, LETTERS, METATYPES, MAGIC_TYPES, MAGIC_NAMES, TRADITIONS, ATTRIBUTES, ATTR_NAMES, totemNames } from "../../../shared/creation.mjs";
+  import { applyOp, validate, CATEGORIES, CATEGORY_NAMES, LETTERS, METATYPES, MAGIC_TYPES, MAGIC_NAMES, TRADITIONS, ATTRIBUTES, ATTR_NAMES, CUSTOM_SKILL_CATEGORIES, totemNames } from "../../../shared/creation.mjs";
   import { TABLES } from "../../../shared/rules.mjs";
   let { doc: initial, onDeleted } = $props();
 
   // Plain objects, not reactive proxies: the reducer clones them (structuredClone can't clone a proxy).
-  const start = $state.snapshot(initial);
+  // The page reads its document ONCE (Document.svelte re-creates it per id); later answers come from the server here.
+  const start = untrack(() => $state.snapshot(initial));
   let server = $state.raw(start), body = $state.raw(start.body), error = $state(""), sending = $state(0);
   let queue = Promise.resolve();
   const check = $derived(validate(body));
   const sys = $derived(body.actor.system), pr = $derived(sys.chargen.priorities), opts = $derived(body.creation.options);
   const finished = $derived(!!body.creation.finished);
   const TOTEMS = Object.entries(totemNames()).sort((a, b) => a[1].localeCompare(b[1]));
-  const STEPS = [["concept", "Concept"], ["priorities", "Priorities"], ["metatype", "Metatype"], ["magic", "Magic"], ["attributes", "Attributes"]];
+  const STEPS = [["concept", "Concept"], ["priorities", "Priorities"], ["metatype", "Metatype"], ["magic", "Magic"], ["attributes", "Attributes"], ["skills", "Skills"]];
+  const SKILL_CATEGORY = { active: "Active", knowledge: "Knowledge", language: "Language", build_repair: "Build/Repair", special: "Special" };
+  /** The full catalog entries this page fetched (the reducer copies an entry's data into the character). */
+  const entries = new Map();
+  const lookup = (id) => entries.get(id) ?? null;
+  let coreSkills = $state([]), pickSkill = $state(""), customCategory = $state("knowledge"), customName = $state("");
+  get("/api/catalog/entries?type=skill&book=sr2&limit=100").then(r => { coreSkills = r.entries; }).catch(() => { /* the add list stays empty; the page still works */ });
+  const skills = $derived(body.actor.items.filter(i => i.type === "skill"));
+  const choicesOf = (item) => body.creation.items[item._id]?.choices ?? {};
+  function skillChange(item, patch) {
+    const c = choicesOf(item);
+    change({ op: "setSkill", itemId: item._id, allocated: c.allocated, concentration: c.concentration, specialization: c.specialization, freeLanguage: c.freeLanguage, ...patch });
+  }
+  async function addCoreSkill() {
+    const id = pickSkill;   // read once: the list can change while the entry is on its way
+    if (!id) return;
+    pickSkill = "";
+    try { if (!entries.has(id)) entries.set(id, await get(`/api/catalog/entries/${encodeURIComponent(id)}`)); }
+    catch (err) { error = err.message; return; }
+    change({ op: "addSkill", catalogId: id });
+  }
   const nuyen = (n) => `${n.toLocaleString("en-US")}¥`;
   const sign = (n) => (n > 0 ? `+${n}` : n < 0 ? `−${-n}` : "");
 
@@ -29,7 +51,7 @@
   let epoch = 0, recovering = $state(false);
   function change(op) {
     if (recovering) return;   // nothing new on top of a copy that's about to be replaced (review r2)
-    try { body = applyOp(body, op); } catch (err) { error = err.message; return; }
+    try { body = applyOp(body, op, lookup); } catch (err) { error = err.message; return; }
     error = ""; sending++;
     const mine = epoch;
     queue = queue.then(async () => {
@@ -47,8 +69,8 @@
     });
   }
   const numberFrom = (ev) => Number.parseInt(ev.currentTarget.value, 10);
-  let nameInput = $state(initial.body.name);
-  let notesInput = $state(initial.body.notes);
+  let nameInput = $state(start.body.name);
+  let notesInput = $state(start.body.notes);
 </script>
 
 <div class="sheet" inert={recovering} aria-busy={recovering}>
@@ -156,6 +178,64 @@
       </table></div>
     </section>
 
+
+    <section id="step-skills">
+      <h2>Skills</h2>
+      <p class="muted">Buy each skill from 1 to 6 with Skill Points. A concentration takes 1 from the skill and gives +1 in the narrow field; a specialization takes 2 and gives +2 (Firearms 5 → Firearms 3, Pistols 5, Ares Predator 7). Your native language is free at Intelligence + 2. <span class="cite">SR2 p.45, p.70, p.74</span></p>
+      {#if !finished}
+        <div class="row adders">
+          <label><span>From the core book</span>
+            <select bind:value={pickSkill}>
+              <option value="">Choose a skill…</option>
+              {#each ["active", "knowledge", "language"] as cat}
+                <optgroup label={SKILL_CATEGORY[cat]}>
+                  {#each coreSkills.filter(e => e.category?.includes(cat)) as e (e.id)}<option value={e.id}>{e.name}</option>{/each}
+                </optgroup>
+              {/each}
+            </select></label>
+          <button type="button" disabled={!pickSkill} onclick={addCoreSkill}>Add</button>
+        </div>
+        <form class="row adders" onsubmit={(ev) => { ev.preventDefault(); if (customName.trim()) { change({ op: "addCustomSkill", category: customCategory, name: customName }); customName = ""; } }}>
+          <label><span>Your own</span>
+            <select bind:value={customCategory}>{#each CUSTOM_SKILL_CATEGORIES as c}<option value={c}>{SKILL_CATEGORY[c]}</option>{/each}</select></label>
+          <label class="grow"><span>Name</span><input bind:value={customName} maxlength="60" placeholder="Seattle Gangs, Or'zet, Car B/R…"></label>
+          <button disabled={!customName.trim()}>Add</button>
+        </form>
+      {/if}
+      {#if skills.length}
+        <div class="scroll"><table class="grid skills">
+          <thead><tr><th scope="col">Skill</th><th scope="col">Points</th><th scope="col">Concentration</th><th scope="col">Specialization</th><th scope="col"><span class="sr-only">Remove</span></th></tr></thead>
+          <tbody>
+            {#each skills as item (item._id)}
+              {@const c = choicesOf(item)}
+              {@const s = item.system}
+              <tr>
+                <th scope="row">{item.name} <strong class="rating">{s.rating}</strong><br><span class="muted small">{SKILL_CATEGORY[s.category] ?? s.category}{s.isMagical ? " · magical" : ""}{#if s.concentration.name}{` · ${s.concentration.name} ${s.concentration.rating}`}{/if}{#if s.specialization.name}{` · ${s.specialization.name} ${s.specialization.rating}`}{/if}</span></th>
+                <td>
+                  {#if s.category === "language"}
+                    <select value={c.freeLanguage} aria-label={`${item.name}: free language`} disabled={finished} onchange={(ev) => skillChange(item, { freeLanguage: ev.currentTarget.value })}>
+                      <option value="">Bought</option><option value="native">Native (free)</option><option value="dialect">Street dialect (free)</option>
+                    </select>
+                  {/if}
+                  {#if !c.freeLanguage}
+                    <input type="number" min="1" max="6" step="1" value={c.allocated} aria-label={`${item.name} points`} disabled={finished}
+                      onchange={(ev) => { const n = numberFrom(ev); if (Number.isInteger(n) && n >= 0 && n <= 12) skillChange(item, { allocated: n }); else ev.currentTarget.value = c.allocated; }}>
+                  {/if}
+                </td>
+                <td><input value={c.concentration} maxlength="60" aria-label={`${item.name} concentration`} disabled={finished || !!c.freeLanguage}
+                  onchange={(ev) => skillChange(item, { concentration: ev.currentTarget.value, specialization: ev.currentTarget.value.trim() ? c.specialization : "" })}></td>
+                <td><input value={c.specialization} maxlength="60" aria-label={`${item.name} specialization`} disabled={finished || !c.concentration}
+                  onchange={(ev) => skillChange(item, { specialization: ev.currentTarget.value })}></td>
+                <td><button type="button" class="quiet" disabled={finished} aria-label={`Remove ${item.name}`} onclick={() => change({ op: "removeSkill", itemId: item._id })}>✕</button></td>
+              </tr>
+            {/each}
+          </tbody>
+        </table></div>
+      {:else}
+        <p class="muted">No skills yet.</p>
+      {/if}
+    </section>
+
     <p class="row later"><button type="button" class="danger" onclick={onDeleted}>Delete character</button></p>
   </div>
 
@@ -163,11 +243,12 @@
     <h2>Rules check</h2>
     <dl>
       <div><dt>Attribute points</dt><dd class:bad={pr.attributes && check.budgets.attributes.over}>{check.budgets.attributes.spent} / {pr.attributes ? check.budgets.attributes.total : "—"}</dd></div>
+      <div><dt>Skill points</dt><dd class:bad={pr.skills && check.budgets.skills.over}>{check.budgets.skills.spent} / {pr.skills ? check.budgets.skills.total : "—"}</dd></div>
       {#if sys.magic.type === "full_magician"}<div><dt>Force Points</dt><dd>{check.budgets.forcePoints.total}</dd></div>{/if}
       <div><dt>Nuyen</dt><dd>{pr.resources ? nuyen(check.budgets.resources.total) : "—"}</dd></div>
     </dl>
     {#if check.problems.length === 0}
-      <p class="good">No problems in these steps. Skills, gear and finishing come next.</p>
+      <p class="good">No problems in these steps. Gear, contacts and finishing come next.</p>
     {:else}
       <ul class="problems">
         {#each check.problems as p, i (i)}
@@ -201,4 +282,13 @@
   label.notes { margin-top: 1rem; }
   .table-rows { margin-bottom: .5rem; font-size: .9rem; }
   .later { margin-top: 2.5rem; }
+  .adders { margin: 0 0 .9rem; align-items: end; }
+  table.skills input:not([type="number"]) { width: 9rem; padding: .3rem .45rem; }
+  table.skills input[type="number"] { width: 3.75rem; text-align: right; padding: .3rem .45rem; }
+  table.skills select { padding: .3rem .4rem; margin-bottom: .25rem; }
+  table.skills th[scope="row"] { min-width: 10rem; max-width: 16rem; }
+  table.skills select { width: 100%; max-width: 9rem; }
+  .rating { color: var(--accent); }
+  .small { font-size: .82rem; }
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 </style>

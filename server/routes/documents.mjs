@@ -25,7 +25,7 @@ export default async function documentRoutes(app) {
     async (req) => ({ documents: await L.listDocuments(req.ctx, me(req), { deleted: req.query.deleted === "1", limit: Number(req.query.limit ?? 50), offset: Number(req.query.offset ?? 0) }) }));
   app.post("/", { ...BIG, schema: { headers: keyHeader, querystring: noQuery, body: L.DRAFT_SCHEMA } }, (req) => L.createDraft(req.ctx, me(req), req.body, key(req)));
   app.post("/characters", { schema: { headers: keyHeader, querystring: noQuery, body: characterBody } }, (req) => L.createCharacter(req.ctx, me(req), req.body, key(req)));
-  app.post("/:id/ops", { schema: { params: idParams, headers: keyHeader, querystring: noQuery, body: opsBody } }, (req) => L.applyOps(req.ctx, me(req), req.params.id, req.body, key(req)));
+  app.post("/:id/ops", { schema: { params: idParams, headers: keyHeader, querystring: noQuery, body: opsBody } }, (req) => L.applyOps(req.ctx, me(req), req.params.id, req.body, key(req), (cid) => app.catalog?.byId.get(cid) ?? null));
   app.get("/:id", { schema: { params: idParams } }, (req) => L.getDocument(req.ctx, me(req), req.params.id));
   app.put("/:id", { ...BIG, schema: { params: idParams, headers: keyHeader, querystring: noQuery, body: updateBody } }, (req) => L.updateDraft(req.ctx, me(req), req.params.id, req.body, key(req)));
   app.delete("/:id", { schema: { params: idParams, headers: keyHeader, querystring: noQuery, body: revisionBody } }, (req) => L.deleteDocument(req.ctx, me(req), req.params.id, req.body, key(req)));

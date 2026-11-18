@@ -6,7 +6,7 @@
 import { SR2E } from "../content/sr2e-foundryvtt/module/config.mjs";
 import LABELS from "../content/sr2e-foundryvtt/lang/en.json" with { type: "json" };
 
-export { chargenSpend } from "../content/sr2e-foundryvtt/module/rules/sr2e-rules.mjs";
+export { chargenSpend, skillTiersFromAllocation, validateSkillAllocation } from "../content/sr2e-foundryvtt/module/rules/sr2e-rules.mjs";
 
 /** The system's tables the app reads. */
 export const TABLES = {

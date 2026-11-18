@@ -9,9 +9,9 @@ import * as L from "../server/library.mjs";
 import { setMaintenance } from "../server/db/fence.mjs";
 
 const ORIGIN = "https://hoi.example";
-async function harness() {
+async function harness({ catalog = null } = {}) {
   const t = await testContext();
-  const app = await buildApp({ ctx: t.ctx, config: loadConfig({ NODE_ENV: "production", BASE_URL: ORIGIN }), logger: false });
+  const app = await buildApp({ ctx: t.ctx, config: loadConfig({ NODE_ENV: "production", BASE_URL: ORIGIN }), logger: false, catalog });
   const person = async (username, secret) => {
     const res = await app.inject({ method: "POST", url: "/api/redeem", headers: { origin: ORIGIN }, payload: { secret, username, password: PW } });
     const cookie = res.headers["set-cookie"].split(";")[0];
@@ -209,4 +209,19 @@ test("a finished character is never restored to another revision (PLAN-M2 §5b)"
   await ctx.db.updateTable("documents").set({ body: JSON.stringify(body) }).where("id", "=", id).execute();
   const res = await razor.call("POST", `${D}/${id}/revisions/1/restore`, { revision: 3 });
   assert.equal(res.statusCode, 409); assert.equal(res.json().code, "finished");
+});
+
+test("a skill is copied from the SERVER's catalog: the client names an id, never the data", async () => {
+  const fire = { id: "sr2e.skills.fire", type: "skill", book: "sr2", name: "Firearms", img: null, _stats: { compendiumSource: "Compendium.sr2e.skills.Item.fire" },
+    system: { category: "active", linkedAttribute: "quickness", rating: 0, concentration: { name: "", rating: 0 }, specialization: { name: "", rating: 0 }, isMagical: false, notes: "" } };
+  const { razor } = await harness({ catalog: { byId: new Map([[fire.id, fire]]) } });
+  const id = (await razor.call("POST", `${D}/characters`, { name: "Gun" })).json().document.id;
+  const res = await razor.call("POST", `${D}/${id}/ops`, { revision: 1, ops: [{ op: "addSkill", catalogId: fire.id }] });
+  assert.equal(res.statusCode, 200);
+  const item = res.json().body.actor.items[0];
+  assert.deepEqual([item.name, item.system.linkedAttribute, item.system.rating], ["Firearms", "quickness", 1]);
+  assert.equal((await razor.call("POST", `${D}/${id}/ops`, { revision: 2, ops: [{ op: "addSkill", catalogId: "sr2e.skills.nope" }] })).json().code, "refused");
+  assert.equal((await razor.call("POST", `${D}/${id}/ops`, { revision: 2, ops: [{ op: "addSkill", catalogId: fire.id, system: { rating: 9 } }] })).statusCode, 400, "no data rides along");
+  const set = await razor.call("POST", `${D}/${id}/ops`, { revision: 2, ops: [{ op: "setSkill", itemId: item._id, allocated: 5, concentration: "Pistols", specialization: "Ares Predator", freeLanguage: "" }] });
+  assert.deepEqual([set.json().body.actor.items[0].system.rating, set.json().body.actor.items[0].system.specialization.rating], [3, 7]);
 });
