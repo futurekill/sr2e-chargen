@@ -43,4 +43,4 @@ export async function checkBackup(all, { sqlite = false } = {}) {
 /** After a restore: nobody stays signed in, and no unused one-time link from the copy works (they may have been spent since). */
 export const SANITIZE = ["DELETE FROM sessions", "DELETE FROM tokens WHERE used_at IS NULL",
   // The copy's heartbeat and backup lease are from backup time: not this database's state.
-  "DELETE FROM settings WHERE key LIKE 'server.alive.%'", "UPDATE settings SET value = '' WHERE key = 'backup.lease'"];
+  "DELETE FROM settings WHERE settings.key LIKE 'server.alive.%'", "UPDATE settings SET value = '' WHERE settings.key = 'backup.lease'"];   // qualified: KEY is reserved in MySQL
