@@ -16,7 +16,7 @@ async function harness({ catalog = null } = {}) {
     const res = await app.inject({ method: "POST", url: "/api/redeem", headers: { origin: ORIGIN }, payload: { secret, username, password: PW } });
     const cookie = res.headers["set-cookie"].split(";")[0];
     const csrf = (await app.inject({ url: "/api/session", headers: { cookie } })).json().csrf;
-    const call = (method, url, body, key = randomUUID()) => app.inject({ method, url, headers: { origin: ORIGIN, cookie, "x-csrf-token": csrf, ...(method === "GET" ? {} : { "idempotency-key": key }) }, ...(body !== undefined ? { payload: body } : {}) });
+    const call = (method, url, body, key = randomUUID(), extra = {}) => app.inject({ method, url, headers: { origin: ORIGIN, cookie, "x-csrf-token": csrf, ...(method === "GET" ? {} : { "idempotency-key": key ?? randomUUID() }), ...extra }, ...(body !== undefined ? { payload: body } : {}) });
     return { id: res.json().user.id, call };
   };
   const boss = await person("Boss", (await A.bootstrap(t.ctx)).secret);
@@ -95,7 +95,7 @@ test("someone else's document is a 404 on EVERY document route (admins included)
   const routes = app.routeList.filter(r => r.url.startsWith(`${D}/:id`));
   assert.ok(routes.length >= 8, "the route list is walked, not hand-written");
   for (const r of routes) {
-    const url = r.url.replace(":id", doc.id).replace(":n", "1");
+    const url = r.url.replace(":id", doc.id).replace(":n", "1") + (r.url.endsWith("/portrait") ? "?revision=1" : "");
     const body = r.method === "GET" ? undefined : r.method === "PUT" ? { name: "Mine now", revision: 1 }
       : r.url.endsWith("/ops") ? { revision: 1, ops: [{ op: "setName", name: "Mine now" }] } : { revision: 1 };
     const res = await boss.call(r.method, url, body);
@@ -248,4 +248,72 @@ test("table card routes: fit answer, PDF when it fits, refusal when it doesn't",
   assert.deepEqual(fit.fits, true);
   const pdf = await razor.call("GET", `${D}/${id}/card.pdf?style=fohawk-ink&paper=a4`);
   assert.equal(pdf.statusCode, 200); assert.equal(pdf.rawPayload.subarray(0, 5).toString(), "%PDF-");
+});
+
+import sharp from "sharp";
+import { processPortraitJob } from "../server/sheet/index.mjs";
+test("portraits: upload, owner only, conditional, quota charged and freed, newest five kept, purge frees", async () => {
+  const { razor, boss, ctx, advance } = await harness();
+  const bytesUsed = async () => Number((await ctx.db.selectFrom("users").select("bytes_used").where("username", "=", "Razor").executeTakeFirst()).bytes_used);
+  const start = await bytesUsed();
+  const id = (await razor.call("POST", `${D}/characters`, { name: "Face" })).json().document.id;
+  const jpeg = await sharp({ create: { width: 600, height: 800, channels: 3, background: "#c8006a" } }).jpeg().toBuffer();
+  const up = (rev, img = jpeg, type = "image/jpeg", who = razor) => who.call("PUT", `${D}/${id}/portrait?revision=${rev}`, img, undefined, { "content-type": type });
+  const before = await bytesUsed();
+  const r1 = await up(1);
+  assert.equal(r1.statusCode, 200, r1.body);
+  assert.equal(r1.json().document.revision, 2);
+  const got = await razor.call("GET", `${D}/${id}/portrait`);
+  assert.equal(got.statusCode, 200); assert.equal(got.headers["content-type"], "image/webp"); assert.equal(got.headers["cache-control"], "private, no-store");
+  assert.equal((await sharp(got.rawPayload).metadata()).format, "webp");
+  const assetBytes = Number((await ctx.db.selectFrom("assets").select("bytes").executeTakeFirst()).bytes);
+  assert.ok(await bytesUsed() >= before + assetBytes, "the asset is charged");
+  assert.equal((await boss.call("GET", `${D}/${id}/portrait`)).statusCode, 404, "someone else's: 404");
+  assert.equal((await up(1)).json().code, "stale", "the revision is checked");
+  assert.equal((await up(2, Buffer.from("<svg/>"), "image/svg+xml")).statusCode, 415);
+  assert.equal((await up(2, jpeg, "image/png")).statusCode, 415, "a JPEG declared as PNG");
+  let rev = 2;
+  for (let i = 0; i < 6; i++) { const r = await up(rev); assert.equal(r.statusCode, 200, r.body); rev = r.json().document.revision; }
+  assert.equal(Number((await ctx.db.selectFrom("assets").select(eb => eb.fn.countAll().as("n")).executeTakeFirst()).n), 5, "newest five kept");
+  const del = await razor.call("DELETE", `${D}/${id}/portrait?revision=${rev}`, {});
+  assert.equal(del.statusCode, 200); rev++;
+  assert.equal((await razor.call("GET", `${D}/${id}/portrait`)).statusCode, 404);
+  assert.equal((await razor.call("GET", `${D}/${id}/portrait?revision=${rev - 1}`)).statusCode, 200, "an earlier revision still shows its portrait");
+  // Purge (30 days after delete) frees the document's revisions AND assets.
+  await razor.call("DELETE", `${D}/${id}`, { revision: rev });
+  advance(31 * 86400e3);
+  const { purge } = await import("../server/library.mjs");
+  assert.equal(await purge(ctx), 1);
+  assert.equal(Number((await ctx.db.selectFrom("assets").select(eb => eb.fn.countAll().as("n")).executeTakeFirst()).n), 0);
+  assert.equal(await bytesUsed(), start, "all freed: back to where the account started");
+});
+
+test("a restore landing during purge keeps the document whole", async () => {
+  const { razor, ctx, advance } = await harness();
+  const doc = await make(razor);
+  await razor.call("DELETE", `${D}/${doc.id}`, { revision: 1 });
+  advance(31 * 86400e3);
+  // Deterministic: the restore lands after purge chose its candidates and just before it deletes the document.
+  const wrapTrx = (trx) => new Proxy(trx, { get: (t, k) => (k === "deleteFrom" ? (table) => {
+    if (table === "documents" && !wrapTrx.done) { wrapTrx.done = true; return { where: () => ({ where: () => ({ executeTakeFirst: async () => {
+      await t.updateTable("documents").set({ deleted_at: null }).where("id", "=", doc.id).execute();
+      return t.deleteFrom("documents").where("id", "=", doc.id).where("deleted_at", "<=", ctx.now() - 30 * 86400e3).executeTakeFirst();
+    } }) }) }; }
+    return t.deleteFrom(table);
+  } : typeof t[k] === "function" ? t[k].bind(t) : t[k]) });
+  const db = new Proxy(ctx.db, { get: (t, k) => (k === "transaction" ? () => { const tx = t.transaction(); return { execute: (fn) => tx.execute((trx) => fn(wrapTrx(trx))) }; } : typeof t[k] === "function" ? t[k].bind(t) : t[k]) });
+  const { purge } = await import("../server/library.mjs");
+  assert.equal(await purge({ ...ctx, db }), 0, "nothing purged");
+  const row = await ctx.db.selectFrom("documents").select(["deleted_at"]).where("id", "=", doc.id).executeTakeFirst();
+  assert.ok(row && row.deleted_at == null, "the document is still there, restored");
+  assert.equal(Number((await ctx.db.selectFrom("revisions").select(eb => eb.fn.countAll().as("n")).where("document_id", "=", doc.id).executeTakeFirst()).n), 2, "its history intact");
+});
+
+test("an image AT the pixel cap decodes in the child within a bounded memory", async () => {
+  const { randomBytes } = await import("node:crypto");
+  const side = 4096;   // 16,777,216 pixels: the cap; noise, so it can't compress away
+  const jpg = await sharp(randomBytes(side * side * 3), { raw: { width: side, height: side, channels: 3 } }).jpeg({ quality: 40 }).toBuffer();
+  assert.ok(jpg.length < 8 * 1024 * 1024, `fixture ${jpg.length} bytes`);
+  const r = await processPortraitJob(jpg, "image/jpeg");
+  assert.ok(r.maxRSS < 512 * 1024, `peak resident memory ${Math.round(r.maxRSS / 1024)} MB`);
 });

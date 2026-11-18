@@ -67,3 +67,9 @@ Links are shown ONCE and stored only as hashes: if one is lost, make another.
 ## Moving to Postgres or MySQL/MariaDB
 Set `DATABASE_URL` and start: an empty database is migrated on first start. Copying an existing SQLite library across
 (`db copy`) is M3b.
+
+## Portraits and memory
+Portraits are stored in the database (table `assets`), so a database backup holds them. Uploads are checked from
+their header (JPEG, PNG or WebP only, at most 4096 × 4096) before the image library opens them, then re-encoded to WebP
+with all metadata removed, in a separate process. The container's `mem_limit` (1 GB in the compose example) is the
+memory bound for that work; keep it. The image supports linux-x64 only for now (sharp's prebuilt libvips).

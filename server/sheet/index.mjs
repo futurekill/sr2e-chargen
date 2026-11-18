@@ -13,7 +13,7 @@ export const LIMITS = { heapMb: 256, timeoutMs: 20000, maxWaiting: 4, perMinute:
 let running = Promise.resolve(), queued = 0;
 const recent = [];   // start times of the last minute's renders (server-wide)
 
-function renderOnce(body, opts) {
+function runOnce(message) {
   return new Promise((resolve) => {
     const child = fork(WORKER, [], { execArgv: [`--max-old-space-size=${LIMITS.heapMb}`], serialization: "advanced", stdio: ["ignore", "ignore", "pipe", "ipc"] });
     let outcome = null;
@@ -22,26 +22,35 @@ function renderOnce(body, opts) {
     const timer = setTimeout(() => { outcome = { err: fail("The sheet took too long to draw.", 503, "sheet-timeout") }; child.kill("SIGKILL"); }, LIMITS.timeoutMs);
     child.stderr.resume();
     child.once("message", (m) => {
-      outcome ??= m?.pdf ? { pdf: Buffer.from(m.pdf) } : typeof m?.fits === "boolean" ? { fit: { fits: m.fits, overflow: m.overflow ?? [], message: m.message ?? "" } }
-        : { err: m?.error ? fail(m.error, m.user ? 422 : 500, m.user ? "sheet-unprintable" : "sheet-failed") : fail("The sheet couldn't be drawn.", 500, "sheet-failed") };
+      outcome ??= m?.pdf ? { pdf: Buffer.from(m.pdf) } : m?.webp ? { portrait: { webp: Buffer.from(m.webp), sha256: m.sha256, maxRSS: m.maxRSS } }
+        : typeof m?.fits === "boolean" ? { fit: { fits: m.fits, overflow: m.overflow ?? [], message: m.message ?? "" } }
+        : { err: m?.error ? fail(m.error, m.status ?? (m.user ? 422 : 500), m.code ?? (m.user ? "sheet-unprintable" : "sheet-failed")) : fail("The sheet couldn't be drawn.", 500, "sheet-failed") };
     });
     child.once("error", () => { outcome ??= { err: fail("The sheet couldn't be drawn.", 500, "sheet-failed") }; });
     // Settle only once the process is gone and its streams closed ("close" also fires when it never spawned).
     child.once("close", () => { clearTimeout(timer); resolve(outcome ?? { err: fail("The sheet couldn't be drawn.", 500, "sheet-failed") }); });
-    child.send({ body, paper: opts.paper, font: opts.font, style: opts.style, card: opts.card ?? null, fitOnly: !!opts.fitOnly });
+    child.send(message);
   });
 }
 
-/** Queue a render: one runs, a short line waits, a server-wide rate; else busy. */
-export async function renderSheetPdf(body, opts) {
+/** Queue a job: one runs, a short line waits, a server-wide rate; else busy. */
+async function runQueued(message) {
   const now = Date.now();
   while (recent.length && recent[0] <= now - 60000) recent.shift();
   if (queued >= LIMITS.maxWaiting + 1 || recent.length >= LIMITS.perMinute) throw new Refused("The printer is busy. Try again in a moment.", 503, "busy");
   queued++;
   recent.push(now);
-  const job = running.then(() => renderOnce(body, opts));
+  const job = running.then(() => runOnce(message));
   running = job.finally(() => { queued--; });
   const result = await job;
   if (result.err) throw result.err;
-  return opts.fitOnly ? result.fit : result.pdf;
+  return result;
+}
+export async function renderSheetPdf(body, opts) {
+  const r = await runQueued({ body, paper: opts.paper, font: opts.font, style: opts.style, card: opts.card ?? null, fitOnly: !!opts.fitOnly, portrait: opts.portrait ?? null });
+  return opts.fitOnly ? r.fit : r.pdf;
+}
+/** Check and re-encode an uploaded portrait in the child (docs/PLAN-portrait.md). */
+export async function processPortraitJob(input, mime) {
+  return (await runQueued({ job: "portrait", input, mime })).portrait;
 }

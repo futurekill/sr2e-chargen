@@ -121,6 +121,11 @@ export async function renderSheet(model, { paper = "letter", font = "standard", 
     doc.restore();
   };
   const onBand = inkSaver ? INK : "#fff";
+  /** The portrait (a JPEG made from the stored WebP), fitted into a square; recorded as a shape for the fit test. */
+  const portrait = (x, y, side) => {
+    doc.image(model.portrait, x, y, { fit: [side, side], align: "center", valign: "center" });
+    shapes.push({ kind: "image", page, x, y, w: side, h: side });
+  };
   const bar = (title, x, y, w) => {
     if (fohawk) {
       band(x, y, w, 16);
@@ -205,9 +210,13 @@ export async function renderSheet(model, { paper = "letter", font = "standard", 
   let y = MARGIN;
   let attacks, act;
   if (!fohawk) {
-  y += block(model.title, L, y, CW, { size: 18, floor: 11, weight: 700, maxLines: 2 }) + 2;
-  if (model.draft) y += block("DRAFT — character creation not finished", L, y, CW, { size: 9, weight: 700, maxLines: 1 });
-  y += block(model.header.map(([k, v]) => `${k}: ${v}`).join("   "), L, y, CW, { size: 9.5, floor: FLOOR }) + 8;
+  const PIC = model.portrait ? 72 : 0, HW = CW - (PIC ? PIC + 12 : 0);
+  if (PIC) portrait(R - PIC, y, PIC);
+  const y0 = y;
+  y += block(model.title, L, y, HW, { size: 18, floor: 11, weight: 700, maxLines: 2 }) + 2;
+  if (model.draft) y += block("DRAFT — character creation not finished", L, y, HW, { size: 9, weight: 700, maxLines: 1 });
+  y += block(model.header.map(([k, v]) => `${k}: ${v}`).join("   "), L, y, HW, { size: 9.5, floor: FLOOR }) + 8;
+  y = Math.max(y, y0 + PIC + 8);
   const top = y;
   // Left: attributes, pools, armor.
   let ly = table("Attributes", model.attributes, [0.6, 0.4], L, top, colW, BOTTOM).y;
@@ -220,18 +229,20 @@ export async function renderSheet(model, { paper = "letter", font = "standard", 
   act = table("Active skills", active, [0.4, 0.1, 0.5], L, Math.max(ly, ry), CW, BOTTOM);
   } else {
     // ── Fohawk: header band, big attribute row, stat strip, then skills | monitors + attacks ───────────────────
-    const PRW = 34 * model.priorities.length, TW = CW - PRW - 44;   // the title stops 16 pt before the priority letters
+    const PIC = model.portrait ? 84 : 0, TX = L + 14 + (PIC ? PIC + 12 : 0);
+    const PRW = 34 * model.priorities.length, TW = CW - PRW - 44 - (PIC ? PIC + 12 : 0);   // the title stops 16 pt before the priority letters
     const titleH = (() => { let s = 22, lines = wrap(model.title, s, TW, 700); while (lines.length > 2 && s - 0.5 >= 13) { s -= 0.5; lines = wrap(model.title, s, TW, 700); } return lines.length * s * LINE; })();   // as block() will draw it
     const subH = wrap(model.subtitle.toUpperCase(), 9.5, TW, 700).length * 9.5 * LINE;
     const extra = model.header.filter(([k]) => !["Metatype", "Magic", "Priorities", "Karma Pool"].includes(k)).map(([k, v]) => `${k}: ${v}`).join("   ");
     const extraH = extra ? wrap(extra, 8.5, TW, 400).length * 8.5 * LINE + 2 : 0;
-    const headH = 12 + titleH + 4 + subH + (model.draft ? 13 : 0) + extraH + 12;
+    const headH = Math.max(12 + titleH + 4 + subH + (model.draft ? 13 : 0) + extraH + 12, PIC ? PIC + 16 : 0);
     band(L, y, CW, Math.max(headH, 56), 14);
+    if (PIC) portrait(L + 8, y + 8, PIC);
     let hy = y + 12;
-    hy += block(model.title, L + 14, hy, TW, { size: 22, floor: 13, weight: 700, maxLines: 2, color: onBand }) + 4;
-    hy += block(model.subtitle.toUpperCase(), L + 14, hy, TW, { size: 9.5, floor: FLOOR, weight: 700, color: inkSaver ? ACCENT : "#e8e8ee" });   // light on black (r1 #4)
-    if (model.draft) hy += 2 + block("DRAFT — character creation not finished", L + 14, hy + 2, TW, { size: 8, floor: 6.5, weight: 700, maxLines: 1, color: onBand });
-    if (extra) block(extra, L + 14, hy + 2, TW, { size: 8.5, floor: FLOOR, color: onBand });
+    hy += block(model.title, TX, hy, TW, { size: 22, floor: 13, weight: 700, maxLines: 2, color: onBand }) + 4;
+    hy += block(model.subtitle.toUpperCase(), TX, hy, TW, { size: 9.5, floor: FLOOR, weight: 700, color: inkSaver ? ACCENT : "#e8e8ee" });   // light on black (r1 #4)
+    if (model.draft) hy += 2 + block("DRAFT — character creation not finished", TX, hy + 2, TW, { size: 8, floor: 6.5, weight: 700, maxLines: 1, color: onBand });
+    if (extra) block(extra, TX, hy + 2, TW, { size: 8.5, floor: FLOOR, color: onBand });
     model.priorities.forEach(([k, v], i) => {
       const px = R - 14 - PRW + i * 34;
       block(k, px, y + 12, 32, { size: 6.5, floor: 6.5, weight: 700, maxLines: 1, color: inkSaver ? MUTED : "#b5b5bd" });

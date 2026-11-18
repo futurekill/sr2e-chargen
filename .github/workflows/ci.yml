@@ -20,6 +20,8 @@ jobs:
         with: { node-version: "26.13.1", cache: npm }
       - run: npm ci
       - run: npm run lint
+      - name: sharp's Linux binaries are in the lockfile (the image installs from it)
+        run: grep -q '"node_modules/@img/sharp-linux-x64"' package-lock.json && grep -q '"node_modules/@img/sharp-libvips-linux-x64"' package-lock.json
       - run: npm run build
       - name: Build the catalog from content/ (the project's own copy, checked against its record)
         run: npm run build:catalog
@@ -82,6 +84,16 @@ jobs:
             sleep 2
           done
           docker logs cg; exit 1
+      # sharp's native libvips must work in the FINAL image (docs/PLAN-portrait.md r1 #10): a real conversion.
+      - name: Portrait conversion inside the image
+        run: |
+          docker run --rm --read-only --cap-drop ALL --tmpfs /tmp --workdir /app sr2e-chargen:ci --input-type=module -e '
+            const { processPortrait } = await import("/app/server/portrait/process.mjs");
+            const sharp = (await import("sharp")).default;
+            const png = await sharp({ create: { width: 2, height: 2, channels: 3, background: "#c8006a" } }).png().toBuffer();
+            const r = await processPortrait(png, "image/png");
+            if (!r.webp.length) process.exit(1);
+            console.log("sharp in the image: ok,", r.webp.length, "bytes");'
 
   osv:
     name: OSV-Scanner

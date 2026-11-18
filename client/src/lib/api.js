@@ -44,3 +44,12 @@ export async function mutate(method, url, body) {
   catch (err) { if (err.code !== "network") unanswered.delete(signature); throw err; }
 }
 export const forgetSession = () => { csrf = null; };
+/** Send a file as the raw body (a portrait), with CSRF and a fresh Idempotency-Key. */
+export async function upload(url, file) {
+  let res;
+  try { res = await fetch(url, { method: "PUT", credentials: "same-origin", headers: { "content-type": file.type, "x-csrf-token": csrf ?? "", "idempotency-key": crypto.randomUUID() }, body: file }); }
+  catch { throw new ApiError(0, null); }
+  const data = await res.json().catch(() => null);
+  if (!res.ok) throw new ApiError(res.status, data);
+  return data;
+}

@@ -114,6 +114,20 @@ test("Fohawk measures its fixed rows: long values grow the row; an impossible he
   }
 });
 
+test("a portrait prints in the header of every style, inside the page, over no text", async () => {
+  const sharp = (await import("sharp")).default;
+  const jpeg = await sharp({ create: { width: 400, height: 600, channels: 3, background: "#336" } }).jpeg().toBuffer();
+  for (const style of STYLES) for (const paper of Object.keys(PAPER)) {
+    const model = sheetModel(asBody(structuredClone(pregens.find(p => /Razor/.test(p.name)))));
+    model.portrait = jpeg;
+    const { runs, shapes, size: [W, H], margin } = await renderSheet(model, { style, paper });
+    const img = shapes.find(s => s.kind === "image");
+    assert.ok(img, `${style}: the portrait is drawn`);
+    assert.ok(img.x >= margin - 0.5 && img.x + img.w <= W - margin + 0.5 && img.y >= margin - 0.5 && img.y + img.h <= H - margin + 0.5, `${style}/${paper}: inside the page`);
+    for (const r of runs.filter(r => r.page === img.page)) assert.ok(!(r.x < img.x + img.w && img.x < r.x + r.w && r.y < img.y + img.h && img.y < r.y + r.h * 0.8), `${style}: "${r.text}" overlaps the portrait`);
+  }
+});
+
 test("a character no bundled font has stops the export with a message, never a box", async () => {
   const body = newCharacter("龍");
   await assert.rejects(renderSheet(sheetModel(body)), (e) => e instanceof SheetError && /U\+9F8D/.test(e.message));

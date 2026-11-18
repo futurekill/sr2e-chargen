@@ -40,9 +40,9 @@ test("transactions commit, roll back, and survive a statement error", async () =
 
 test("migrations: up on an empty database, idempotent, the two lock rows present", async () => {
   const db = await fresh();
-  assert.deepEqual((await migrationStatus(db)).pending, ["001-initial", "002-user-prefs"]);
+  assert.deepEqual((await migrationStatus(db)).pending, ["001-initial", "002-user-prefs", "003-assets"]);
   const after = await migrate(db);
-  assert.deepEqual(after, { applied: ["001-initial", "002-user-prefs"], pending: [], newer: [] });
+  assert.deepEqual(after, { applied: ["001-initial", "002-user-prefs", "003-assets"], pending: [], newer: [] });
   await migrate(db);
   const settings = await db.selectFrom("settings").selectAll().orderBy("key").execute();
   assert.deepEqual(settings.map(s => ({ ...s })), [{ key: "admin_gen", value: "0" }, { key: "maintenance", value: "off" }]);
@@ -90,7 +90,7 @@ test("two processes migrating a fresh database at once both succeed (one owner a
   const env = { ...process.env, BASE_URL: "http://localhost:3000", DATABASE_URL: await freshUrl({ file: true }) };
   const run = () => promisify(execFile)(process.execPath, ["server/cli.mjs", "db", "migrate"], { env });
   const out = await Promise.all([run(), run(), run()]);
-  for (const o of out) assert.deepEqual(JSON.parse(o.stdout).applied, ["001-initial", "002-user-prefs"]);
+  for (const o of out) assert.deepEqual(JSON.parse(o.stdout).applied, ["001-initial", "002-user-prefs", "003-assets"]);
   const db = await openDatabase(env.DATABASE_URL);
   assert.equal((await db.selectFrom("settings").selectAll().execute()).length, 2);
   await db.destroy();

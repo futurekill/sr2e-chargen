@@ -1,7 +1,10 @@
 /** The library's routes (docs/PLAN-M3.md §5). Every one goes through the session and `ownedDocument`. */
 import * as L from "../library.mjs";
 import { OPS, cardIds } from "../../shared/creation.mjs";
-import { renderSheetPdf } from "../sheet/index.mjs";
+import { renderSheetPdf, processPortraitJob } from "../sheet/index.mjs";
+import { checkUpload, PortraitError, MAX_UPLOAD, TYPES } from "../portrait/check.mjs";
+import { Refused } from "../auth/accounts.mjs";
+import { createHash } from "node:crypto";
 import { sheetModel } from "../sheet/model.mjs";
 import { statBlock } from "../sheet/markdown.mjs";
 
@@ -47,7 +50,8 @@ export default async function documentRoutes(app) {
     const { document, body } = await L.getDocument(req.ctx, me(req), req.params.id);
     if (document.kind !== "character") return reply.code(409).send({ error: "Only a character has a sheet.", code: "wrong-kind" });
     const font = req.query.font ?? (req.session.user.prefs?.readableFont ? "readable" : "standard");   // the user's preference by default
-    const pdf = await renderSheetPdf(body, { paper: req.query.paper ?? "letter", font, style: req.query.style ?? "classic" });
+    const portrait = await L.getPortrait(req.ctx, me(req), req.params.id);
+    const pdf = await renderSheetPdf(body, { paper: req.query.paper ?? "letter", font, style: req.query.style ?? "classic", portrait });
     reply.header("content-disposition", `inline; filename="sheet-${document.id}.pdf"`).header("cache-control", "no-store").type("application/pdf");
     return pdf;
   });
@@ -82,6 +86,30 @@ export default async function documentRoutes(app) {
     reply.header("content-disposition", `inline; filename="card-${c.document.id}.pdf"`).header("cache-control", "no-store").type("application/pdf");
     return pdf;
   });
+  // Portraits (docs/PLAN-portrait.md): the raw image as the body, parsed as a Buffer only inside this plugin.
+  const revisionQuery = { type: "object", additionalProperties: false, required: ["revision"], properties: { revision: { type: "string", pattern: "^[1-9][0-9]{0,8}$" } } };
+  await app.register(async (sub) => {
+    sub.addContentTypeParser(Object.keys(TYPES), { parseAs: "buffer", bodyLimit: MAX_UPLOAD }, (_req, body, done) => done(null, body));
+    sub.put("/:id/portrait", { bodyLimit: MAX_UPLOAD, config: { rateLimit: { max: 10, timeWindow: "1 minute", keyGenerator: (req) => `portrait:${me(req)}` } },
+      schema: { params: idParams, headers: keyHeader, querystring: revisionQuery } }, async (req) => {
+      const revision = Number(req.query.revision);
+      await L.portraitTarget(req.ctx, me(req), req.params.id, revision);   // the caller's character at that revision (404/409 first)
+      const mime = String(req.headers["content-type"] ?? "").split(";")[0].trim().toLowerCase();
+      try { checkUpload(req.body, mime); } catch (e) { if (e instanceof PortraitError) throw new Refused(e.message, e.status, e.code); throw e; }   // before the queue
+      const processed = await processPortraitJob(req.body, mime);
+      const uploadSha = createHash("sha256").update(req.body).digest("hex");
+      return L.setPortrait(req.ctx, me(req), req.params.id, { revision, mime, uploadSha }, key(req), processed);
+    });
+  });
+  app.delete("/:id/portrait", { schema: { params: idParams, headers: keyHeader, querystring: revisionQuery } },
+    (req) => L.removePortrait(req.ctx, me(req), req.params.id, { revision: Number(req.query.revision) }, key(req)));
+  app.get("/:id/portrait", { schema: { params: idParams, querystring: { type: "object", additionalProperties: false, properties: { revision: { type: "string", pattern: "^[1-9][0-9]{0,8}$" } } } } },
+    async (req, reply) => {
+      const webp = await L.getPortrait(req.ctx, me(req), req.params.id, req.query.revision ? Number(req.query.revision) : null);
+      if (!webp) return reply.code(404).send({ error: "No portrait.", code: "not-found" });
+      reply.header("cache-control", "private, no-store").header("x-content-type-options", "nosniff").header("content-disposition", "inline").type("image/webp");
+      return webp;
+    });
   app.get("/:id/statblock.md", { schema: { params: idParams } }, async (req, reply) => {
     const { document, body } = await L.getDocument(req.ctx, me(req), req.params.id);
     if (document.kind !== "character") return reply.code(409).send({ error: "Only a character has a stat block.", code: "wrong-kind" });

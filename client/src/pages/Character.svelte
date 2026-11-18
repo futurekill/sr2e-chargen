@@ -5,7 +5,7 @@
    * time, in order, each on top of the revision the previous answer gave.
    */
   import { untrack, onDestroy } from "svelte";
-  import { get, mutate } from "../lib/api.js";
+  import { get, mutate, upload } from "../lib/api.js";
   import { applyOp, validate, cardIds, cardEligible, CARD_TYPES, CATEGORIES, CATEGORY_NAMES, LETTERS, METATYPES, MAGIC_TYPES, MAGIC_NAMES, TRADITIONS, ATTRIBUTES, ATTR_NAMES, CUSTOM_SKILL_CATEGORIES, totemNames } from "../../../shared/creation.mjs";
   import { TABLES } from "../../../shared/rules.mjs";
   import { BUYABLE, choiceSpec, project, price, essenceOf, isCybereye } from "../../../shared/purchase.mjs";
@@ -127,6 +127,26 @@
     }, 700);
   });
   const cardReady = $derived(!!fit?.fits && !sending && fit.rev === server.document.revision && fit.q === cardQuery);
+  // Portrait (docs/PLAN-portrait.md): uploaded raw, re-encoded on the server; shown from the owner-only route.
+  const hasPortrait = $derived(!!body.creation?.portrait?.assetId);
+  let picBusy = $state(false);
+  async function pickPortrait(ev) {
+    const file = ev.currentTarget.files?.[0];
+    ev.currentTarget.value = "";
+    if (!file) return;
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) { error = "A portrait is a JPEG, PNG or WebP image."; return; }
+    if (file.size > 8 * 1024 * 1024) { error = "That image is over 8 MB."; return; }
+    picBusy = true; error = "";
+    try { await queue; server = await upload(`/api/documents/${server.document.id}/portrait?revision=${server.document.revision}`, file); body = server.body; }
+    catch (err) { error = err.code === "busy" ? "The server is busy. Try again in a moment." : err.message; }
+    picBusy = false;
+  }
+  async function removePortrait() {
+    picBusy = true; error = "";
+    try { await queue; server = await mutate("DELETE", `/api/documents/${server.document.id}/portrait?revision=${server.document.revision}`, {}); body = server.body; }
+    catch (err) { error = err.message; }
+    picBusy = false;
+  }
   let nameInput = $state(start.body.name);
   let notesInput = $state(start.body.notes);
 </script>
@@ -149,6 +169,14 @@
 
     <section id="step-concept">
       <h2>Concept</h2>
+      <div class="row portrait">
+        {#if hasPortrait}<img src={`/api/documents/${server.document.id}/portrait?revision=${server.document.revision}`} alt={`Portrait of ${body.name}`} width="120" height="120">{:else}<div class="nopic muted">No portrait</div>{/if}
+        {#if !finished}
+          <label class="button quiet" aria-disabled={picBusy}>{picBusy ? "Working…" : hasPortrait ? "Change portrait" : "Upload portrait"}
+            <input type="file" accept="image/jpeg,image/png,image/webp" class="sr-only" disabled={picBusy || sending > 0} onchange={pickPortrait}></label>
+          {#if hasPortrait}<button type="button" class="quiet" disabled={picBusy || sending > 0} onclick={removePortrait}>Remove</button>{/if}
+        {/if}
+      </div>
       <form class="stack wide" onsubmit={(ev) => { ev.preventDefault(); if (nameInput.trim() && nameInput.trim() !== body.name) change({ op: "setName", name: nameInput }); }}>
         <div class="row">
           <label class="grow"><span>Street name</span><input bind:value={nameInput} maxlength="120" required disabled={finished}></label>
@@ -422,6 +450,9 @@
   .table-rows { margin-bottom: .5rem; font-size: .9rem; }
   .later { margin-top: 2.5rem; }
   .print { margin: 0 0 .75rem; }
+  .portrait { margin: 0 0 1rem; align-items: center; }
+  .portrait img, .nopic { width: 120px; height: 120px; object-fit: cover; border: 1px solid var(--line); }
+  .nopic { display: grid; place-items: center; font-size: .85rem; }
   .good-text { color: var(--ok); }
   a.disabled { opacity: .55; pointer-events: none; }
   .print label.inline { margin: 0; }

@@ -8,8 +8,9 @@ import { dirname } from "node:path";
 import { openSqlite } from "./node-sqlite.mjs";
 import * as initial from "./migrations/001-initial.mjs";
 import * as userPrefs from "./migrations/002-user-prefs.mjs";
+import * as assets from "./migrations/003-assets.mjs";
 
-export const MIGRATIONS = { "001-initial": initial, "002-user-prefs": userPrefs };
+export const MIGRATIONS = { "001-initial": initial, "002-user-prefs": userPrefs, "003-assets": assets };
 
 /** `sqlite:///abs/path.db` | `sqlite://:memory:` | `postgres://…` | `mysql://…` | `mariadb://…` → { dialect, path | url }. */
 export function parseDatabaseUrl(url) {

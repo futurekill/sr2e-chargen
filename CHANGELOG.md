@@ -6,9 +6,14 @@ notes come from it.
 ## Unreleased
 
 ### Fixed
+- The 30-day purge of deleted documents could remove a document restored at the same moment; it now checks again.
 - An item the app didn't create (a character made in Foundry) is no longer dropped when the character changes.
 
 ### Added
+- **Portraits**: upload a JPEG, PNG or WebP on a character's Concept step. It is checked, re-encoded and stripped of
+  all metadata (location, camera data) before it is stored, shown only to you, and printed in the sheet's header (all
+  three styles). Up to the last five portraits of a character are kept, so restoring an older revision brings its
+  portrait back.
 - **One-page table card**: tick which attacks, active skills, cyberware, adept powers and spells go on it; the page
   tells you at once whether it fits ("Fits on one page", or what is over), and "Print card" works only when it fits.
   The choice is saved with the character and can still change after creation.

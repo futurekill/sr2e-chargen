@@ -205,14 +205,80 @@ export async function getRevision(ctx, userId, id, revision) {
 /** The sweep (startup and daily): documents deleted 30 days ago go for good, with their bytes; old keys expire. */
 export function purge(ctx) {
   return writeTx(ctx, async trx => {
-    const dead = await trx.selectFrom("documents").select(["id", "owner_id"]).where("deleted_at", "<=", ctx.now() - PURGE_AFTER_MS).execute();
+    const cutoff = ctx.now() - PURGE_AFTER_MS;
+    const dead = await trx.selectFrom("documents").select(["id", "owner_id"]).where("deleted_at", "<=", cutoff).execute();
+    let purged = 0;
     for (const d of dead) {
-      const { n } = await trx.selectFrom("revisions").select(eb => eb.fn.coalesce(eb.fn.sum("bytes"), eb.val(0)).as("n")).where("document_id", "=", d.id).executeTakeFirst();
-      await trx.deleteFrom("revisions").where("document_id", "=", d.id).execute();
-      await trx.deleteFrom("documents").where("id", "=", d.id).execute();
-      await trx.updateTable("users").set(eb => ({ doc_count: eb("doc_count", "-", 1), bytes_used: eb("bytes_used", "-", Number(n)) })).where("id", "=", d.owner_id).execute();
+      const sum = async (table) => Number((await trx.selectFrom(table).select(eb => eb.fn.coalesce(eb.fn.sum("bytes"), eb.val(0)).as("n")).where("document_id", "=", d.id).executeTakeFirst()).n);
+      const bytes = (await sum("revisions")) + (await sum("assets"));
+      // The document goes FIRST and only if it is still deleted and old: a restore landing in between keeps it whole
+      // (docs/PLAN-portrait.md r1 #7, r2 #2). Its revisions and assets go by the foreign keys' cascade.
+      if (changed(await trx.deleteFrom("documents").where("id", "=", d.id).where("deleted_at", "<=", cutoff).executeTakeFirst()) !== 1) continue;
+      await trx.updateTable("users").set(eb => ({ doc_count: eb("doc_count", "-", 1), bytes_used: eb("bytes_used", "-", bytes) })).where("id", "=", d.owner_id).execute();
+      purged++;
     }
     await trx.deleteFrom("idempotency").where("created_at", "<=", ctx.now() - KEY_TTL_MS).execute();
-    return dead.length;
+    return purged;
   });
+}
+
+/* ── Portraits (docs/PLAN-portrait.md) ─────────────────────────────────────────────────────────────────────────── */
+export const MAX_PORTRAITS = 5;
+/** A driver's binary value as a Buffer (Postgres and MySQL give Buffers, node:sqlite a Uint8Array). */
+const asBuffer = (v) => (Buffer.isBuffer(v) ? v : Buffer.from(v));
+
+/** A character's portrait is about to be processed: is it the caller's character, at that revision? (cheap, before the slow work) */
+export async function portraitTarget(ctx, userId, id, revision) {
+  const doc = await ownedDocument(ctx.db, userId, id);
+  if (!doc || doc.deleted_at != null) throw GONE();
+  if (doc.kind !== "character") throw new Refused("Only a character has a portrait.", 409, "wrong-kind");
+  if (doc.revision !== revision) throw STALE();
+}
+/** Store a processed portrait and point the character at it, as ONE new revision; keep the newest MAX_PORTRAITS. */
+export function setPortrait(ctx, userId, id, { revision, mime, uploadSha }, key, { webp, sha256 }) {
+  return idempotent(ctx, userId, key, fingerprint("PUT", `/documents/${id}/portrait`, { revision, mime, uploadSha }), async trx => {
+    const doc = await current(trx, userId, id, revision, "character");
+    // Strictly after the document's last asset, so "newest five" never depends on two uploads in one millisecond.
+    const last = await trx.selectFrom("assets").select(eb => eb.fn.max("created_at").as("t")).where("document_id", "=", id).executeTakeFirst();
+    const assetId = randomUUID(), now = Math.max(ctx.now(), Number(last?.t ?? 0) + 1);
+    await trx.insertInto("assets").values({ id: assetId, owner_id: userId, document_id: id, kind: "portrait", data: webp, bytes: webp.length, sha256, created_at: now }).execute();
+    await charge(trx, userId, { bytes: webp.length });
+    const body = decodeBody(doc.body);
+    body.creation.portrait = { assetId };
+    const text = encode(body);
+    await bump(trx, ctx, userId, id, revision, { body: text, bytes: Buffer.byteLength(text) });
+    await appendRevision(trx, ctx, { id, owner_id: userId }, revision + 1, body, "portrait");
+    // Keep the newest MAX_PORTRAITS; free only what was actually deleted.
+    const old = (await trx.selectFrom("assets").select(["id", "bytes"]).where("document_id", "=", id).orderBy("created_at", "desc").orderBy("id", "desc").execute()).slice(MAX_PORTRAITS);
+    let freed = 0;
+    for (const a of old) if (changed(await trx.deleteFrom("assets").where("id", "=", a.id).where("document_id", "=", id).executeTakeFirst()) === 1) freed += Number(a.bytes);
+    if (freed) await charge(trx, userId, { bytes: -freed });
+    return { ...(await answer(trx, userId, id)), body };
+  });
+}
+export function removePortrait(ctx, userId, id, { revision }, key) {
+  return idempotent(ctx, userId, key, fingerprint("DELETE", `/documents/${id}/portrait`, { revision }), async trx => {
+    const doc = await current(trx, userId, id, revision, "character");
+    const body = decodeBody(doc.body);
+    body.creation.portrait = null;
+    const text = encode(body);
+    await bump(trx, ctx, userId, id, revision, { body: text, bytes: Buffer.byteLength(text) });
+    await appendRevision(trx, ctx, { id, owner_id: userId }, revision + 1, body, "portrait removed");
+    return { ...(await answer(trx, userId, id)), body };
+  });
+}
+/** The portrait's WebP for the current (or a given) revision: only an asset of THIS document and owner; else null. */
+export async function getPortrait(ctx, userId, id, revision = null) {
+  const doc = await ownedDocument(ctx.db, userId, id);
+  if (!doc) throw GONE();
+  let body = decodeBody(doc.body);
+  if (revision != null) {
+    const r = await ctx.db.selectFrom("revisions").select("body").where("document_id", "=", id).where("revision", "=", revision).executeTakeFirst();
+    if (!r) throw new Refused("No such revision.", 404, "not-found");
+    body = decodeBody(r.body);
+  }
+  const assetId = body?.creation?.portrait?.assetId;
+  if (typeof assetId !== "string") return null;
+  const row = await ctx.db.selectFrom("assets").select("data").where("id", "=", assetId).where("document_id", "=", id).where("owner_id", "=", userId).executeTakeFirst();
+  return row ? asBuffer(row.data) : null;
 }
