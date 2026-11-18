@@ -1,8 +1,9 @@
 # CI (docs/PLAN-M3.md §8). Actions are pinned to commit SHAs (checked 2026-11-16); permissions are least-privilege.
 name: CI
 on:
-  push: {}                       # every branch (docs/PLAN-catalog.md A5: content/ is checked wherever it changes)
+  push: { branches: ["**"] }     # every branch (docs/PLAN-catalog.md A5: content/ is checked wherever it changes); tags run it through release.yml
   pull_request: { branches: [main] }
+  workflow_call: {}              # the release workflow runs the whole CI first (docs/PLAN-release.md)
 permissions:
   contents: read
 concurrency:
@@ -20,6 +21,8 @@ jobs:
         with: { node-version: "26.13.1", cache: npm }
       - run: npm ci
       - run: npm run lint
+      - name: actionlint (every workflow file)
+        run: docker run --rm -v "$PWD:/repo" --workdir /repo rhysd/actionlint:1.7.12@sha256:b1934ee5f1c509618f2508e6eb47ee0d3520686341fec936f3b79331f9315667 -color
       - name: sharp's Linux binaries are in the lockfile (the image installs from it)
         run: grep -q '"node_modules/@img/sharp-linux-x64"' package-lock.json && grep -q '"node_modules/@img/sharp-libvips-linux-x64"' package-lock.json
       - run: npm run build

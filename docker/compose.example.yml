@@ -8,10 +8,13 @@ services:
     environment:
       BASE_URL: https://hoichummer.example        # the public address, exactly as people type it
       TRUST_PROXY: 172.16.0.0/12                   # your proxy's address or network; leave unset to trust none
+      BACKUP_DIR: /backups                         # nightly SQLite backups (verified); its OWN volume, never under /data
+      BACKUP_KEEP: "7"
     ports:
       - "127.0.0.1:3000:3000"                      # localhost only: the proxy is the one way in
     volumes:
-      - chargen-data:/data                         # the only writable path
+      - chargen-data:/data                         # the database (characters and portraits)
+      - chargen-backups:/backups                   # backups: a different volume (better: a different disk or host path)
     read_only: true
     cap_drop: [ALL]
     security_opt: ["no-new-privileges:true"]
@@ -19,3 +22,4 @@ services:
     mem_limit: 1g      # the OS memory bound for sheet rendering and portrait decoding (docs/PLAN-portrait.md)
 volumes:
   chargen-data:
+  chargen-backups:

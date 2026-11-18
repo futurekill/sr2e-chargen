@@ -10,6 +10,11 @@ notes come from it.
 - An item the app didn't create (a character made in Foundry) is no longer dropped when the character changes.
 
 ### Added
+- **Backups**: with `BACKUP_DIR` set, a verified SQLite backup every night (portraits included), the newest seven
+  kept; `backup create`, `backup verify` and an offline `backup restore` in the admin CLI; `backup sanitize` and
+  `backup verify --database-url` for Postgres/MySQL after their own restore. See docs/OPERATIONS.md.
+- **Release workflow**: a `v*` tag on main runs the whole CI, builds and scans the image (any High/Critical fails),
+  makes its SBOM, pushes it as a private GHCR package, signs it, and creates the release; a weekly rebuild-and-scan.
 - **Portraits**: upload a JPEG, PNG or WebP on a character's Concept step. It is checked, re-encoded and stripped of
   all metadata (location, camera data) before it is stored, shown only to you, and printed in the sheet's header (all
   three styles). Up to the last five portraits of a character are kept, so restoring an older revision brings its

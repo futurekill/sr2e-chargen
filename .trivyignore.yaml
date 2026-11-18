@@ -1,0 +1,2 @@
+# Accepted Trivy findings (docs/PLAN-release.md): each with an id, a reason and an expiry, like osv-scanner.toml.
+vulnerabilities: []

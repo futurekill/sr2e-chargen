@@ -1,0 +1,23 @@
+# Weekly (docs/PLAN-release.md): rebuild the image and run the Trivy gate. No push: a failure is the signal to cut a
+# release (base-image patches arrive as Renovate pull requests). Actions pinned to commit SHAs.
+name: Weekly image scan
+on:
+  schedule: [{ cron: "17 6 * * 1" }]
+  workflow_dispatch: {}
+permissions: {}
+jobs:
+  scan:
+    runs-on: ubuntu-24.04
+    permissions: { contents: read }
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - run: docker build -f docker/Dockerfile -t sr2e-chargen:scan .
+      - uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: sr2e-chargen:scan
+          severity: HIGH,CRITICAL
+          ignore-unfixed: false
+          exit-code: "1"
+        env:
+          TRIVY_IGNOREFILE: .trivyignore.yaml   # Trivy's YAML ignore format (ids, reasons, expiry)

@@ -16,11 +16,17 @@ chargen admin users
 chargen admin disable|enable <user>
 chargen admin reset-link <user>         a one-time password reset link
 chargen db migrate | status
-chargen maintenance on|off|status`;
+chargen maintenance on|off|status
+chargen backup create                   a SQLite backup into BACKUP_DIR (verified)
+chargen backup verify <file>            check a SQLite backup
+chargen backup verify --database-url <url>   check a restored Postgres/MySQL database
+chargen backup sanitize --database-url <url> after restoring one: no sessions, no unused one-time links
+chargen backup restore <file>           SERVER STOPPED: replace the SQLite database with a verified backup`;
 
 export async function run(argv, { env = process.env, out = console.log } = {}) {
   const [group, cmd, ...rest] = argv;
   const config = loadConfig(env);
+  if (group === "backup") return backupCommand(cmd, rest, { config, env, out });   // never opens or migrates the live database first
   const db = await openDatabase(config.databaseUrl);
   const ctx = { db, dialect: db.dialectName, now: () => Date.now() };
   const when = (ms) => new Date(Number(ms)).toISOString();
@@ -49,4 +55,30 @@ export async function run(argv, { env = process.env, out = console.log } = {}) {
 
 if (import.meta.url === `file://${process.argv[1]}`) {
   run(process.argv.slice(2)).catch(err => { console.error(err.statusCode ? err.message : err); process.exitCode = 1; });
+}
+
+async function backupCommand(cmd, rest, { config, env, out }) {
+  const B = await import("./backup/index.mjs");
+  const { checkBackup, SANITIZE } = await import("./backup/checks.mjs");
+  const urlArg = rest[0] === "--database-url" ? rest[1] : null;
+  const report = (r) => { out(JSON.stringify(r)); if (!r.ok) throw new A.Refused(`backup ${cmd}: ${r.problems.join("; ")}`); };
+  if (cmd === "create") return report(await B.createBackup({ databaseUrl: config.databaseUrl, dir: env.BACKUP_DIR }));
+  if (cmd === "verify" && urlArg) {
+    const { sql } = await import("kysely");
+    const db = await openDatabase(urlArg);
+    try { return report(await checkBackup(async (q) => (await sql.raw(q).execute(db)).rows)); } finally { await db.destroy(); }
+  }
+  if (cmd === "verify" && rest[0]) return report(await B.backupJob({ action: "verify", file: rest[0] }));
+  if (cmd === "sanitize" && urlArg) {
+    const { sql } = await import("kysely");
+    const db = await openDatabase(urlArg);
+    try { for (const q of SANITIZE) await sql.raw(q).execute(db); return void out(JSON.stringify({ ok: true, sanitized: SANITIZE.length })); } finally { await db.destroy(); }
+  }
+  if (cmd === "restore" && rest[0]) {
+    const file = B.sqlitePath(config.databaseUrl);
+    if (!file) throw new A.Refused("restore works on a SQLite database; for Postgres/MySQL use the database's own restore, then backup sanitize and verify");
+    const { restoreSqlite } = await import("./backup/restore.mjs");
+    return report(await restoreSqlite(rest[0], file));
+  }
+  throw new A.Refused(USAGE);
 }

@@ -1,0 +1,101 @@
+# Release (docs/PLAN-release.md, draft 3): on a v* tag. The tagged commit must be on main and pass the whole CI; then
+# the image is built, scanned (Trivy: ANY High/Critical fails), its SBOM made, pushed to GHCR as a PRIVATE package,
+# signed with cosign keyless (GitHub OIDC), the SBOM attested, both verified against the digest, and the GitHub
+# release created with the CHANGELOG section and the SBOM. Never a public push. Actions pinned to commit SHAs.
+name: Release
+on:
+  push:
+    tags: ["v*"]
+permissions: {}
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  on-main:
+    name: The tag is on main
+    runs-on: ubuntu-24.04
+    permissions: { contents: read }
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false, fetch-depth: 0 }
+      - run: |
+          git fetch -q origin main
+          git merge-base --is-ancestor "$GITHUB_SHA" origin/main || { echo "::error::$GITHUB_REF_NAME is not on main"; exit 1; }
+
+  ci:
+    name: CI
+    needs: on-main
+    uses: ./.github/workflows/ci.yml
+    permissions: { contents: read, actions: read }
+
+  publish:
+    name: Build, scan, push (private), sign, release
+    needs: ci
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write        # the GitHub release and its SBOM asset
+      packages: write        # the private GHCR package
+      id-token: write        # cosign keyless signing
+    env:
+      IMAGE: ghcr.io/${{ github.repository }}
+      TAG: ${{ github.ref_name }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - name: Build
+        run: docker build -f docker/Dockerfile -t "$IMAGE:$TAG" .
+      - name: Trivy — any High or Critical fails
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: ${{ env.IMAGE }}:${{ env.TAG }}
+          severity: HIGH,CRITICAL
+          ignore-unfixed: false
+          exit-code: "1"
+        env:
+          TRIVY_IGNOREFILE: .trivyignore.yaml   # Trivy's YAML ignore format (ids, reasons, expiry)
+      - name: SBOM (SPDX)
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: ${{ env.IMAGE }}:${{ env.TAG }}
+          format: spdx-json
+          output: sbom.spdx.json
+          scan-type: image
+          skip-setup-trivy: true
+      - name: The package must stay private (checked before pushing)
+        run: |
+          owner="${GITHUB_REPOSITORY%%/*}"; name="${GITHUB_REPOSITORY##*/}"
+          vis=$(gh api "/users/$owner/packages/container/$name" -q .visibility 2>/dev/null || echo "none")
+          echo "package visibility before push: $vis"
+          if [ "$vis" != "none" ] && [ "$vis" != "private" ]; then echo "::error::the package is $vis, not private: not pushing"; exit 1; fi
+      - name: Push
+        run: |
+          echo "$GH_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+          docker push "$IMAGE:$TAG"
+          echo "DIGEST=$(docker inspect --format '{{index .RepoDigests 0}}' "$IMAGE:$TAG" | cut -d@ -f2)" >> "$GITHUB_ENV"
+      - name: Still private after the push
+        run: |
+          owner="${GITHUB_REPOSITORY%%/*}"; name="${GITHUB_REPOSITORY##*/}"
+          vis=$(gh api "/users/$owner/packages/container/$name" -q .visibility)
+          [ "$vis" = "private" ] || { echo "::error::the package is $vis: make it private in GitHub now"; exit 1; }
+      - uses: sigstore/cosign-installer@756fe2d284c7292c4e9b62c8a28f1e5629c59532 # v4.1.3
+      - name: Sign, attest the SBOM, verify both against the digest and this workflow's identity
+        run: |
+          ref="$IMAGE@$DIGEST"
+          id="https://github.com/${GITHUB_REPOSITORY}/.github/workflows/release.yml@${GITHUB_REF}"
+          issuer="https://token.actions.githubusercontent.com"
+          cosign sign --yes "$ref"
+          cosign attest --yes --type spdxjson --predicate sbom.spdx.json "$ref"
+          cosign verify --certificate-identity "$id" --certificate-oidc-issuer "$issuer" "$ref" > /dev/null
+          cosign verify-attestation --type spdxjson --certificate-identity "$id" --certificate-oidc-issuer "$issuer" "$ref" \
+            | head -1 | jq -r .payload | base64 -d | jq -S .predicate > attested.json
+          jq -S . sbom.spdx.json > uploaded.json
+          cmp attested.json uploaded.json || { echo "::error::the attested SBOM is not the uploaded one"; exit 1; }
+      - name: GitHub release (notes from the CHANGELOG section)
+        run: |
+          v="${TAG#v}"
+          awk -v v="$v" '$0 ~ "^## " v "( |$)" {on=1; next} on && /^## / {exit} on {print}' CHANGELOG.md > notes.md
+          [ -s notes.md ] || { echo "::error::CHANGELOG.md has no section for $v"; exit 1; }
+          echo "" >> notes.md; echo "Image: \`$IMAGE@$DIGEST\` (private; verify with cosign, docs/OPERATIONS.md)" >> notes.md
+          gh release create "$TAG" sbom.spdx.json --verify-tag --title "$TAG" --notes-file notes.md

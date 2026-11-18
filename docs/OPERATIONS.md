@@ -73,3 +73,46 @@ Portraits are stored in the database (table `assets`), so a database backup hold
 their header (JPEG, PNG or WebP only, at most 4096 × 4096) before the image library opens them, then re-encoded to WebP
 with all metadata removed, in a separate process. The container's `mem_limit` (1 GB in the compose example) is the
 memory bound for that work; keep it. The image supports linux-x64 only for now (sharp's prebuilt libvips).
+
+## Backups (docs/PLAN-release.md)
+**SQLite (the default).** Set `BACKUP_DIR` to its own volume (the compose example mounts `chargen-backups` at
+`/backups`; better still, a bind mount on another disk). Every night one server process takes a backup with SQLite's
+own `VACUUM INTO`, verifies it (integrity, schema, every portrait's checksum, every user's counters) and keeps the
+newest `BACKUP_KEEP` (default 7); an old one is deleted only after a new one verified. Files are `chargen-<time>.db`,
+readable by their owner only. A backup holds password hashes and everyone's private characters: keep it where only
+you can read it, and encrypt any copy you take off the machine (for example with `age`).
+- Now: `docker compose exec chargen /nodejs/bin/node server/cli.mjs backup create`
+- Check a file: `… server/cli.mjs backup verify /backups/chargen-….db`
+- **Restore** (the server must be STOPPED):
+  1. `docker compose stop chargen`
+  2. `docker compose run --rm chargen server/cli.mjs backup restore /backups/chargen-….db` — copies it beside the
+     database, signs everyone out, cancels unused invite/setup/reset links, verifies, then swaps it in. A bad file
+     changes nothing.
+  3. `docker compose start chargen`
+- **Drill**: restore last night's backup into a scratch copy of the compose project once a month.
+
+**Postgres / MySQL / MariaDB.** Use the database's own dump tool in a sidecar container (the official database image)
+on a schedule, writing `*.partial`, then `sync` and `mv` on success, never under the app's volume, for example:
+`pg_dump -Fc -f /backups/chargen.dump.partial "$DATABASE_URL" && sync && mv /backups/chargen.dump.partial /backups/chargen-$(date +%F).dump`
+(MySQL: `mysqldump --single-transaction --routines …`). Stop the sidecar while upgrading the app (upgrades migrate).
+To restore: restore into the database with `pg_restore`/`mysql`, then BEFORE starting the app:
+`server/cli.mjs backup sanitize --database-url <url>` and `server/cli.mjs backup verify --database-url <url>`.
+
+## Releases and the signed image
+A `v*` tag on `main` runs `.github/workflows/release.yml`: the whole CI, then the image is built, scanned (any High or
+Critical fails; accepted findings in `.trivyignore.yaml` with a reason and an expiry), its SBOM made, pushed to
+`ghcr.io/futurekill/sr2e-chargen` as a **private** package, signed (cosign keyless), and the GitHub release created
+with the CHANGELOG section and the SBOM. A weekly job rebuilds and scans (no push); its failure means "cut a release".
+Verify an image before running it:
+
+    cosign verify ghcr.io/futurekill/sr2e-chargen@sha256:<digest> \
+      --certificate-identity https://github.com/futurekill/sr2e-chargen/.github/workflows/release.yml@refs/tags/<tag> \
+      --certificate-oidc-issuer https://token.actions.githubusercontent.com
+
+## First-release checklist (the owner)
+1. GitHub → the repository → Settings → Rules: a **tag ruleset** for `v*` (only you can create, update or delete).
+2. After the first release: GitHub → Packages → sr2e-chargen: confirm it is **Private**.
+3. On the server: `compose.yml` from the example — `BASE_URL`, `TRUST_PROXY`, `mem_limit`, `BACKUP_DIR` on its own
+   volume; `docker login ghcr.io` with a read-only token; pull by digest; `cosign verify` as above.
+4. `docker compose up -d`, then `admin bootstrap` for the first admin; take a backup and restore it once (the drill).
+5. Invite the group.
