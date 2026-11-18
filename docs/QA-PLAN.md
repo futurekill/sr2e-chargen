@@ -43,6 +43,7 @@ bonding (p.46, p.137), refusals.
    add Mana Bolt (Force 6) and a Power Focus (Force 2) — Force Points 16; a Spell Focus asks for its spell. Try a
    Personal Computer — refused with the reason.
 9. Sheet: "Print sheet" on a character opens a PDF; try A4 and the readable font; print one page on paper and mark a
-   condition box with a pencil. Look at `npm run sheet:snapshots`-style renders after any layout change.
+   condition box with a pencil. Download the Markdown stat block and open it in a Markdown viewer. On Account, turn
+   on the readable font: the site changes at once, a second device shows it after sign-in, and "Print sheet" uses it. Look at `npm run sheet:snapshots`-style renders after any layout change.
 10. Phone width (375 px): no page-wide sideways scroll; the rules check is below the steps.
 11. History: each change is a revision named after its operation.

@@ -24,6 +24,12 @@ export async function session() {
 export const get = (url) => request("GET", url);
 export const post = (url, body = {}) => request("POST", url, body);
 export const del = (url) => request("DELETE", url);
+export const put = (url, body = {}) => request("PUT", url, body);
+/** Apply the readable-font preference to the page, and remember it for the next visit's sign-in page. */
+export function applyFont(readable) {
+  if (readable) document.documentElement.dataset.font = "readable"; else delete document.documentElement.dataset.font;
+  try { localStorage.setItem("font", readable ? "readable" : ""); } catch { /* not remembered in private mode */ }
+}
 /**
  * A change to the library. Its Idempotency-Key is bound to the EXACT request (method, address, body): if the answer
  * is lost, sending the identical request again reuses the key, and the server replays the first result instead of

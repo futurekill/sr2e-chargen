@@ -85,3 +85,20 @@ test("a character no bundled font has stops the export with a message, never a b
 test("user text is plain: control characters and bidi overrides removed", () => {
   assert.equal(plain("Razor‮\u0007 ⁦x⁩  y"), "Razor x y");
 });
+
+import { statBlock } from "../server/sheet/markdown.mjs";
+test("the Markdown stat block: every string, escaped, tables with the right columns", () => {
+  for (const [name, body] of FIXTURES) {
+    const model = sheetModel(body), md = statBlock(model);
+    const unescaped = squash(md.replace(/\\(.)/g, "$1"));
+    for (const s of strings(model)) assert.ok(unescaped.includes(squash(s)), `${name}: "${s.slice(0, 50)}" missing from the stat block`);
+    for (const line of md.split("\n").filter(l => l.startsWith("| "))) {
+      const cells = line.replace(/\\\|/g, "").split("|").length - 2;
+      assert.ok(cells >= 2 && cells <= 4, `${name}: a table row with ${cells} cells: ${line.slice(0, 80)}`);
+    }
+  }
+  const tricky = sheetModel(newCharacter("| *Razor* [x](http://e) <b>#1"));
+  const md = statBlock(tricky);
+  assert.match(md, /^# \\\| \\\*Razor\\\* \\\[x\\\]\(http:\/\/e\) \\<b\\>\\#1$/m);
+  assert.doesNotMatch(md, /(?<!\\)\]\(http/, "no live link (the bracket is escaped)");
+});

@@ -18,12 +18,20 @@ export async function createSession(trx, ctx, userId) {
   return secret;
 }
 
+/** A user's preferences, with defaults; anything unknown or damaged in the column reads as the default. */
+export const PREF_DEFAULTS = Object.freeze({ readableFont: false });
+export function readPrefs(raw) {
+  let p = {};
+  try { p = typeof raw === "string" ? JSON.parse(raw) : (raw ?? {}); } catch { p = {}; }
+  return { readableFont: p?.readableFont === true };
+}
+
 /** The live session for a cookie secret: `{ session, user, csrf }`, or null (unknown, expired, idle, disabled). */
 export async function findSession(ctx, secret) {
   if (typeof secret !== "string" || !secret) return null;
   const row = await ctx.db.selectFrom("sessions").innerJoin("users", "users.id", "sessions.user_id")
     .select(["sessions.id as sid", "sessions.csrf_hash", "sessions.last_seen_at", "sessions.expires_at",
-      "users.id as id", "users.username", "users.role", "users.disabled_at"])
+      "users.id as id", "users.username", "users.role", "users.disabled_at", "users.prefs"])
     .where("sessions.token_hash", "=", sha256(secret)).executeTakeFirst();
   const now = ctx.now();
   if (!row || row.disabled_at != null || Number(row.expires_at) <= now || Number(row.last_seen_at) + IDLE_MS <= now) return null;
@@ -32,7 +40,7 @@ export async function findSession(ctx, secret) {
     await writeTx(ctx, trx => trx.updateTable("sessions").set({ last_seen_at: now }).where("id", "=", row.sid).execute())
       .catch(err => { if (!(err instanceof Maintenance)) throw err; });
   }
-  return { sessionId: row.sid, csrf: csrfFor(secret), csrfHash: row.csrf_hash, user: { id: row.id, username: row.username, role: row.role } };
+  return { sessionId: row.sid, csrf: csrfFor(secret), csrfHash: row.csrf_hash, user: { id: row.id, username: row.username, role: row.role, prefs: readPrefs(row.prefs) } };
 }
 export const csrfOk = (session, presented) => typeof presented === "string" && sameHash(sha256(presented), session.csrfHash);
 

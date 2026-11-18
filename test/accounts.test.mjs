@@ -202,3 +202,22 @@ test("a write re-checks the acting session: revoked, disabled or demoted in the 
   await ctx.db.deleteFrom("sessions").execute();
   await assert.rejects(A.createInvite(acting), SessionGone);
 });
+
+test("preferences: the readable font is stored per user, comes with the session, and is the sheet's default", async () => {
+  const { buildApp } = await import("../server/app.mjs");
+  const { loadConfig } = await import("../server/config.mjs");
+  const t = await testContext();
+  const ORIGIN = "https://hoi.example";
+  const app = await buildApp({ ctx: t.ctx, config: loadConfig({ NODE_ENV: "production", BASE_URL: ORIGIN }), logger: false });
+  const { secret } = await A.bootstrap(t.ctx);
+  const res = await app.inject({ method: "POST", url: "/api/redeem", headers: { origin: ORIGIN }, payload: { secret, username: "Boss", password: PW } });
+  const cookie = res.headers["set-cookie"].split(";")[0];
+  const s = (await app.inject({ url: "/api/session", headers: { cookie } })).json();
+  assert.deepEqual(s.user.prefs, { readableFont: false });
+  const put = (body) => app.inject({ method: "PUT", url: "/api/account/prefs", headers: { origin: ORIGIN, cookie, "x-csrf-token": s.csrf }, payload: body });
+  assert.equal((await put({ readableFont: true })).statusCode, 200);
+  assert.equal((await put({ readableFont: "yes" })).statusCode, 400);
+  assert.equal((await put({ readableFont: true, theme: "x" })).statusCode, 400);
+  assert.deepEqual((await app.inject({ url: "/api/session", headers: { cookie } })).json().user.prefs, { readableFont: true });
+  assert.equal((await app.inject({ method: "PUT", url: "/api/account/prefs", headers: { origin: ORIGIN, cookie }, payload: { readableFont: false } })).statusCode, 403, "CSRF");
+});

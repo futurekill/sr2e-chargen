@@ -17,10 +17,9 @@
   --radius: 0;
   --caps: uppercase;
 }
-/* The readable-font setting (U22) overrides EVERY theme's fonts. shortcut: system sans until a dyslexia-friendly
-   face (Atkinson Hyperlegible) is self-hosted with the theme work. */
+/* The readable-font setting (U22) overrides EVERY theme's fonts: Atkinson Hyperlegible Next, self-hosted (main.js). */
 :root[data-font="readable"] {
-  --font-body: system-ui, -apple-system, "Segoe UI", Verdana, Arial, sans-serif;
+  --font-body: "Atkinson Hyperlegible Next", system-ui, -apple-system, "Segoe UI", Verdana, Arial, sans-serif;
   --font-head: var(--font-body);
   --caps: none;
 }

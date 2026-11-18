@@ -105,7 +105,7 @@
   const numberFrom = (ev) => Number.parseInt(ev.currentTarget.value, 10);
   // The printable sheet: paper and font remembered in this browser (a convenience; the server holds no preference yet).
   const pref = (k, d) => { try { return localStorage.getItem(k) ?? d; } catch { return d; } };
-  let paper = $state(pref("sheet.paper", "letter")), sheetFont = $state(pref("sheet.font", "standard"));
+  let paper = $state(pref("sheet.paper", "letter")), sheetFont = $state(pref("sheet.font", document.documentElement.dataset.font === "readable" ? "readable" : "standard"));
   $effect(() => { try { localStorage.setItem("sheet.paper", paper); localStorage.setItem("sheet.font", sheetFont); } catch { /* private mode */ } });
   const sheetHref = $derived(`/api/documents/${server.document.id}/sheet.pdf?paper=${paper}&font=${sheetFont}`);
   let nameInput = $state(start.body.name);
@@ -119,6 +119,7 @@
       <p class="muted">character · revision {server.document.revision} · {sending ? "saving…" : "saved"}{finished ? " · finished" : ""}</p>
       <div class="row print">
         <a class="button quiet" href={sheetHref} target="_blank" rel="noopener">Print sheet</a>
+        <a class="button quiet" href={`/api/documents/${server.document.id}/statblock.md`} download>Stat block (Markdown)</a>
         <label class="row inline"><span class="sr-only">Paper</span><select bind:value={paper} aria-label="Paper"><option value="letter">US Letter</option><option value="a4">A4</option></select></label>
         <label class="row inline"><span class="sr-only">Font</span><select bind:value={sheetFont} aria-label="Sheet font"><option value="standard">Standard font</option><option value="readable">Readable font</option></select></label>
       </div>

@@ -6,6 +6,9 @@ notes come from it.
 ## Unreleased
 
 ### Added
+- **The readable font is real and follows you**: the Account setting now uses Atkinson Hyperlegible Next (self-hosted)
+  on the site, is saved with your account (every device), and is your printed sheet's default font.
+- **Stat block (Markdown)** for each character: the same content as the sheet, as Markdown tables.
 - **Printable sheet (milestone 3, Classic style).** "Print sheet" on a character gives a PDF for US Letter or A4, in a
   standard or a readable font (Atkinson Hyperlegible Next). Page 1 holds what you need at the table: attributes
   (natural and augmented), Reaction and Initiative, dice pools, armor, condition monitors with boxes for pencil,

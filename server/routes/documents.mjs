@@ -2,6 +2,8 @@
 import * as L from "../library.mjs";
 import { OPS } from "../../shared/creation.mjs";
 import { renderSheetPdf } from "../sheet/index.mjs";
+import { sheetModel } from "../sheet/model.mjs";
+import { statBlock } from "../sheet/markdown.mjs";
 
 const UUID = "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$";
 const idParams = { type: "object", required: ["id"], properties: { id: { type: "string", pattern: UUID }, n: { type: "string", pattern: "^[1-9][0-9]{0,8}$" } } };   // no coercion anywhere: numbers in the URL are checked strings
@@ -44,9 +46,16 @@ export default async function documentRoutes(app) {
   async (req, reply) => {
     const { document, body } = await L.getDocument(req.ctx, me(req), req.params.id);
     if (document.kind !== "character") return reply.code(409).send({ error: "Only a character has a sheet.", code: "wrong-kind" });
-    const pdf = await renderSheetPdf(body, { paper: req.query.paper ?? "letter", font: req.query.font ?? "standard" });
+    const font = req.query.font ?? (req.session.user.prefs?.readableFont ? "readable" : "standard");   // the user's preference by default
+    const pdf = await renderSheetPdf(body, { paper: req.query.paper ?? "letter", font });
     reply.header("content-disposition", `inline; filename="sheet-${document.id}.pdf"`).header("cache-control", "no-store").type("application/pdf");
     return pdf;
+  });
+  app.get("/:id/statblock.md", { schema: { params: idParams } }, async (req, reply) => {
+    const { document, body } = await L.getDocument(req.ctx, me(req), req.params.id);
+    if (document.kind !== "character") return reply.code(409).send({ error: "Only a character has a stat block.", code: "wrong-kind" });
+    reply.header("content-disposition", `attachment; filename="statblock-${document.id}.md"`).type("text/markdown; charset=utf-8");
+    return statBlock(sheetModel(body));
   });
   app.get("/:id/download", { schema: { params: idParams } }, async (req, reply) => {
     const { document, body } = await L.getDocument(req.ctx, me(req), req.params.id);

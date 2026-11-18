@@ -1,12 +1,13 @@
 <script>
-  import { post } from "../lib/api.js";
+  import { post, put, applyFont } from "../lib/api.js";
   let { user, onSignedOut } = $props();
   let current = $state(""), next = $state(""), again = $state(""), error = $state(""), busy = $state(false);
   let readable = $state(document.documentElement.dataset.font === "readable");
 
-  function setFont() {
-    if (readable) document.documentElement.dataset.font = "readable"; else delete document.documentElement.dataset.font;
-    try { localStorage.setItem("font", readable ? "readable" : ""); } catch { /* not remembered in private mode */ }
+  /** Saved on the server (every device, and the sheet's default font), applied here at once. */
+  async function setFont() {
+    applyFont(readable);
+    try { await put("/api/account/prefs", { readableFont: readable }); } catch (err) { error = err.message; }
   }
   async function change(ev) {
     ev.preventDefault();
@@ -26,7 +27,7 @@
 {#if error}<p class="notice bad" role="alert">{error}</p>{/if}
 
 <h2>Reading</h2>
-<label class="row"><input class="check" type="checkbox" bind:checked={readable} onchange={setFont}><span>Use a plain, easy-to-read font everywhere</span></label>
+<label class="row"><input class="check" type="checkbox" bind:checked={readable} onchange={setFont}><span>Use an easy-to-read font (Atkinson Hyperlegible) on the site and on printed sheets</span></label>
 
 <h2>Change password</h2>
 <p class="muted">Changing it signs you out on every device.</p>

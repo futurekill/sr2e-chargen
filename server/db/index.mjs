@@ -7,8 +7,9 @@ import { mkdirSync } from "node:fs";
 import { dirname } from "node:path";
 import { openSqlite } from "./node-sqlite.mjs";
 import * as initial from "./migrations/001-initial.mjs";
+import * as userPrefs from "./migrations/002-user-prefs.mjs";
 
-export const MIGRATIONS = { "001-initial": initial };
+export const MIGRATIONS = { "001-initial": initial, "002-user-prefs": userPrefs };
 
 /** `sqlite:///abs/path.db` | `sqlite://:memory:` | `postgres://…` | `mysql://…` | `mariadb://…` → { dialect, path | url }. */
 export function parseDatabaseUrl(url) {
