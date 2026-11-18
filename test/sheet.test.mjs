@@ -39,20 +39,16 @@ const strings = (m) => [m.title, ...m.header.flat(), ...m.attributes.flat(), ...
 for (const [name, body] of FIXTURES) for (const paper of Object.keys(PAPER)) for (const font of Object.keys(FONT_SETS)) {
   test(`fit: ${name} · ${paper} · ${font}`, async () => {
     const model = sheetModel(body);
-    const { pdf, runs, size: [W, H], margin } = await renderSheet(model, { paper, font });
+    const { pdf, runs, cells, size: [W, H], margin } = await renderSheet(model, { paper, font });
     // 1. Every model string is placed (in order-insensitive, whitespace-free form: wrapping may split a string).
-    const placed = squash(runs.filter(r => r.kind === "text").map(r => r.text).join(""));
-    // A row split across pages interleaves its other cells, so a string may be placed in pieces: then its characters
-    // must appear in order within a short window (every character placed, none dropped).
-    const inPieces = (want) => {
-      for (let start = placed.indexOf(want[0]); start >= 0; start = placed.indexOf(want[0], start + 1)) {
-        let i = 0, j = start;
-        while (i < want.length && j < placed.length && j - start <= want.length * 3 + 400) { if (placed[j] === want[i]) i++; j++; }
-        if (i === want.length) return true;
-      }
-      return false;
-    };
-    for (const s of strings(model)) { const w = squash(s); assert.ok(placed.includes(w) || inPieces(w), `${name}: "${s.slice(0, 60)}" was not placed`); }
+    const placed = squash(runs.filter(r => r.kind === "text" && !r.cell).map(r => r.text).join(""));
+    // Table cells exactly: each cell's runs, joined, equal its full text (a split cell too).
+    const byCell = new Map();
+    for (const r of runs) if (r.cell) byCell.set(r.cell, (byCell.get(r.cell) ?? "") + r.text);
+    for (const [id, t] of Object.entries(cells)) assert.equal(squash(byCell.get(id) ?? ""), squash(t), `${name}: cell "${t.slice(0, 60)}" was not placed exactly`);
+    // Every model string is in a cell or in the free text (title, header, notes).
+    const cellSet = new Set(Object.values(cells).map(squash));
+    for (const s of strings(model)) { const w = squash(s); assert.ok(cellSet.has(w) || placed.includes(w), `${name}: "${s.slice(0, 60)}" was not placed`); }
     // 2. Inside the safe area, not under the floor, inside its own box.
     for (const r of runs) {
       assert.ok(r.x >= margin - 0.5 && r.x + r.w <= W - margin + 0.5 && r.y >= margin - 0.5 && r.y + r.h <= H - margin + 0.5, `${name}: "${r.text}" leaves the page's safe area`);

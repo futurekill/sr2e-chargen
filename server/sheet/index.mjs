@@ -18,15 +18,16 @@ function renderOnce(body, opts) {
     const child = fork(WORKER, [], { execArgv: [`--max-old-space-size=${LIMITS.heapMb}`], serialization: "advanced", stdio: ["ignore", "ignore", "pipe", "ipc"] });
     let outcome = null;
     const fail = (msg, status, code) => new Refused(msg, status, code);
-    const timer = setTimeout(() => { outcome ??= { err: fail("The sheet took too long to draw.", 503, "sheet-timeout") }; child.kill("SIGKILL"); }, LIMITS.timeoutMs);
+    // A timeout wins over anything received before it: a worker still alive at the limit is a failed render.
+    const timer = setTimeout(() => { outcome = { err: fail("The sheet took too long to draw.", 503, "sheet-timeout") }; child.kill("SIGKILL"); }, LIMITS.timeoutMs);
     child.stderr.resume();
     child.once("message", (m) => {
       outcome ??= m?.pdf ? { pdf: Buffer.from(m.pdf) }
         : { err: m?.error ? fail(m.error, m.user ? 422 : 500, m.user ? "sheet-unprintable" : "sheet-failed") : fail("The sheet couldn't be drawn.", 500, "sheet-failed") };
     });
     child.once("error", () => { outcome ??= { err: fail("The sheet couldn't be drawn.", 500, "sheet-failed") }; });
-    // Settle only once the process is gone (reaped), whatever happened.
-    child.once("exit", () => { clearTimeout(timer); resolve(outcome ?? { err: fail("The sheet couldn't be drawn.", 500, "sheet-failed") }); });
+    // Settle only once the process is gone and its streams closed ("close" also fires when it never spawned).
+    child.once("close", () => { clearTimeout(timer); resolve(outcome ?? { err: fail("The sheet couldn't be drawn.", 500, "sheet-failed") }); });
     child.send({ body, paper: opts.paper, font: opts.font });
   });
 }

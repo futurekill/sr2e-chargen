@@ -89,17 +89,18 @@ export async function renderSheet(model, { paper = "letter", font = "standard" }
     }
     return lines;
   };
-  const draw = (text, x, y, size, weight, box, kind = "text") => {
+  const cellText = {};   // every table cell's full text by id, so the fit test checks split cells exactly
+  const draw = (text, x, y, size, weight, box, kind = "text", cell = null) => {
     let cx = x;
     for (const s of segments(text, weight)) { use(s.face, size); doc.fillColor("#000").text(s.text, cx, y, { lineBreak: false }); cx += doc.widthOfString(s.text); }
-    runs.push({ text, page, x, y, w: cx - x, h: size * LINE, size, box, kind });
+    runs.push({ text, page, x, y, w: cx - x, h: size * LINE, size, box, kind, cell });
   };
   /** Text in a box: wrap; if it is a one-line field (maxLines), shrink toward the floor. Returns the height used. */
-  const block = (text, x, y, w, { size = BODY, floor = FLOOR, weight = 400, maxLines = Infinity, box, kind } = {}) => {
+  const block = (text, x, y, w, { size = BODY, floor = FLOOR, weight = 400, maxLines = Infinity, box, kind, cell } = {}) => {
     if (!text) return 0;
     let s = size, lines = wrap(text, s, w, weight);
     while (lines.length > maxLines && s - 0.5 >= floor) { s -= 0.5; lines = wrap(text, s, w, weight); }
-    lines.forEach((ln, i) => draw(ln, x, y + i * s * LINE, s, weight, box ?? { x, y, w, h: lines.length * s * LINE }, kind));
+    lines.forEach((ln, i) => draw(ln, x, y + i * s * LINE, s, weight, box ?? { x, y, w, h: lines.length * s * LINE }, kind, cell));
     return lines.length * s * LINE;
   };
 
@@ -110,21 +111,24 @@ export async function renderSheet(model, { paper = "letter", font = "standard" }
     return 18;
   };
   /** A table section: rows of cells in columns (fractions of w); rows wrap; rows past maxY go to `rest`. */
+  let cellSeq = 0;
+  /** Rows of cells as { t, id } (a cell keeps its id when it is split). */
+  const cellsOf = (rows) => rows.map(r => r.map(c => { if (c && typeof c === "object" && "id" in c) return c; const id = `c${cellSeq++}`; const t = String(c ?? ""); cellText[id] = t; return { t, id }; }));
   const table = (title, rowsIn, cols, x, y, w, maxY) => {
-    let rows = rowsIn;
+    let rows = cellsOf(rowsIn);
     let cy = y + bar(title, x, y, w);
     const rest = [];
     let placed = 0;
     for (let r = 0; r < rows.length; r++) {
       const cells = rows[r];
-      const heights = cells.map((c, i) => (c ? wrap(String(c), i === 0 ? BODY : 9, w * cols[i] - 4, i === 0 ? 400 : 400).length * (i === 0 ? BODY : 9) * LINE : 0));
+      const heights = cells.map((c, i) => (c.t ? wrap(c.t, i === 0 ? BODY : 9, w * cols[i] - 4, 400).length * (i === 0 ? BODY : 9) * LINE : 0));
       const h = Math.max(BODY * LINE, ...heights) + 2;
       if (cy + h > maxY) {
         // A row taller than the whole space left on a fresh page is split by lines; the rest continues (r1 #3).
         if (r === 0 && cy + 3 * BODY * LINE <= maxY) {
           const fit = Math.max(1, Math.floor((maxY - cy - 2) / (BODY * LINE)));
-          const cut = cells.map((c, i) => { const ln = c ? wrap(String(c), i === 0 ? BODY : 9, w * cols[i] - 4, 400) : []; return [ln.slice(0, fit).join("\n"), ln.slice(fit).join("\n")]; });
-          if (cut.some(([, more]) => more)) {
+          const cut = cells.map((c, i) => { const ln = c.t ? wrap(c.t, i === 0 ? BODY : 9, w * cols[i] - 4, 400) : []; return [{ t: ln.slice(0, fit).join("\n"), id: c.id }, { t: ln.slice(fit).join("\n"), id: c.id }]; });
+          if (cut.some(([, more]) => more.t)) {
             rows = [cut.map(([now]) => now), cut.map(([, more]) => more), ...rows.slice(1)];
             r = -1;   // place the first part as an ordinary row
             continue;
@@ -133,7 +137,7 @@ export async function renderSheet(model, { paper = "letter", font = "standard" }
         rest.push(...rows.slice(r)); break;
       }
       let cx = x;
-      cells.forEach((c, i) => { block(String(c ?? ""), cx, cy, w * cols[i] - 4, { size: i === 0 ? BODY : 9, floor: FLOOR, box: { x: cx, y: cy, w: w * cols[i] - 4, h } }); cx += w * cols[i]; });
+      cells.forEach((c, i) => { block(c.t, cx, cy, w * cols[i] - 4, { size: i === 0 ? BODY : 9, floor: FLOOR, cell: c.id, box: { x: cx, y: cy, w: w * cols[i] - 4, h } }); cx += w * cols[i]; });
       doc.save().lineWidth(0.3).moveTo(x, cy + h - 1).lineTo(x + w, cy + h - 1).stroke("#888").restore();
       cy += h;
       placed++;
@@ -213,5 +217,5 @@ export async function renderSheet(model, { paper = "letter", font = "standard" }
   }
   doc.end();
   await done;
-  return { pdf: Buffer.concat(chunks), runs, pages, size: [W, H], margin: MARGIN };
+  return { pdf: Buffer.concat(chunks), runs, cells: cellText, pages, size: [W, H], margin: MARGIN };
 }
