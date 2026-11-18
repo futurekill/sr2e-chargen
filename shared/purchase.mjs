@@ -107,7 +107,7 @@ export function project(rec, c, recs = {}) {
   if (rec.type === "spell" || rec.type === "focus") s.force = c.force ?? s.force;
   if (rec.type === "focus") {
     s.bondingCost = bondingCost(s.focusType, s.force);
-    s.bonded = s.focusType !== "spell_lock";   // creation pays the bond (p.46); a lock bonds when it locks a spell (p.138)
+    s.bonded = s.focusType === "weapon" ? !!c.weapon : s.focusType !== "spell_lock";   // creation pays the bond (p.46); a lock bonds when it locks a spell (p.138)
     if (s.focusType === "spell") { s.spellSubtype = "specific"; s.boundSpellId = c.spell ?? ""; }
     if (s.focusType === "weapon") {   // p.137 bond, p.263 price; unbonded it is priced at Reach 0, its lowest
       s.bondedWeaponId = c.weapon ?? "";

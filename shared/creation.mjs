@@ -206,6 +206,7 @@ export function applyOp(body, op, lookup = () => null) {
       if (weapon && weapon !== rec.choices.weapon) {
         const w = Object.hasOwn(b.creation.items, weapon) ? b.creation.items[weapon] : null;
         if (w?.type !== "weapon" || w.snapshot?.weaponType !== "melee") throw new Refusal("Bond it to one of this character's melee weapons.", 137);
+        if (w.choices?.quantity > 1) throw new Refusal("A focus is one weapon: buy that weapon with quantity 1.", 137);
         if (Object.entries(b.creation.items).some(([k, r]) => k !== id && r.choices?.weapon === weapon)) throw new Refusal("That weapon is already a focus.", 137);
       }
       rec.choices = checked.choices;
@@ -215,6 +216,7 @@ export function applyOp(body, op, lookup = () => null) {
       const id = ownId(b, op.itemId, r => r.type !== "skill", "item");
       const gone = new Set([id]);
       for (const [k, r] of Object.entries(b.creation.items)) if (r.choices?.in === id) gone.add(k);   // its accessories go with an eye
+      for (const r of Object.values(b.creation.items)) if (r.choices?.weapon === id) r.choices.weapon = "";   // its focus is unbonded
       for (const k of gone) delete b.creation.items[k];
       b.actor.items = b.actor.items.filter(i => !gone.has(i._id));
       break;
@@ -400,8 +402,9 @@ export function validate(body) {
       else if (!spellIds.has(c.spell)) add("resources", "error", `${i.name}: its spell is no longer on this character.`, 137);
     }
     if (i.type === "focus" && i.system.focusType === "weapon") {
-      if (!c.weapon) add("resources", "todo", `${i.name}: choose the melee weapon it's bonded to.`, 137);
-      else if (!items.some(w => w._id === c.weapon && w.type === "weapon")) add("resources", "error", `${i.name}: its weapon is no longer on this character.`, 137);
+      const w = items.find(x => x._id === c.weapon);
+      if (!w) add("resources", "todo", `${i.name}: choose the melee weapon it's bonded to.`, 137);
+      else if ((w.system.quantity ?? 1) > 1) add("resources", "error", `${i.name}: a focus is one weapon, but ${w.name} has quantity ${w.system.quantity}.`, 137);
     }
     if (["gear", "cyberware", "weapon", "armor"].includes(i.type) && Number(i.system.rating) > 6) add("resources", "error", `${i.name} is Rating ${i.system.rating}: no starting gear above 6.`, 44);
     if (i.type === "gear" && i.system.category === "skillsoft" && !c.skill) add("resources", "todo", `${i.name}: name the skill on the chip.`, 243);

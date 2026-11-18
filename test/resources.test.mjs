@@ -145,6 +145,12 @@ test("a weapon focus bonds to one melee weapon of this character: priced by its 
   b = applyOp(b, { op: "addItem", catalogId: core("Weapon Focus") }, lookup);
   const second = Object.keys(b.creation.items).sort().at(-1);
   assert.throws(() => applyOp(b, { op: "setItem", itemId: second, choices: { weapon: idOf(b, "Pole Arm") } }, lookup), /already a focus/);
+  assert.equal(validate(b).budgets.resources.spent, 3 * 100000 + 3 * 90000 + 100000 + 90000 + 1000 + 450 + 500, "two foci (one at Reach 0), Katana, Predator, Pole Arm");
+  b = set(b, "Katana", { quantity: 2 });
+  assert.throws(() => applyOp(b, { op: "setItem", itemId: second, choices: { weapon: idOf(b, "Katana") } }, lookup), /quantity 1/);
+  b = set(b, "Pole Arm", { quantity: 2 });
+  assert.match(texts(b), /error: Weapon Focus: a focus is one weapon, but Pole Arm has quantity 2\. \[p\.137\]/);
   b = applyOp(b, { op: "removeItem", itemId: idOf(b, "Pole Arm") }, lookup);
-  assert.match(texts(b), /error: Weapon Focus: its weapon is no longer on this character\. \[p\.137\]/);
+  const f2 = item(b, "Weapon Focus").system;
+  assert.deepEqual([f2.bondedWeaponId, f2.bonded, f2.cost], ["", false, 100000 + 3 * 90000], "removing the weapon unbonds its focus");
 });

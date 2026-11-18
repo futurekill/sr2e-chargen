@@ -134,7 +134,7 @@ export function shape(doc, ctx, problems, embeddedIn = null) {
   const num = (v) => (typeof v === "number" && Number.isFinite(v) ? v : null);
   const entry = {
     id, uuid, package: ctx.package, pack: ctx.pack, book: citedBook, listBook, kind, type: doc.type, name: doc.name,
-    category, citation, cost: num(system.cost), streetIndex: system.streetIndex ?? null, availability: system.availability ?? null,
+    category, citation, cost: system.focusType === "weapon" ? null : num(system.cost) /* by its weapon's Reach, p.263 */, streetIndex: system.streetIndex ?? null, availability: system.availability ?? null,
     img: typeof doc.img === "string" ? doc.img : null,
     system, text,
     flags: Object.keys(flags).length ? { sr2e: flags } : {},
