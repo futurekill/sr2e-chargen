@@ -1,5 +1,5 @@
 # Plan: milestone 2 — create a character (core Priority system)
-_Draft 2 (2026-11-16), after Codex round 1 (13 findings, all accepted; docs/PLAN-M2-REVIEW-LOG.md). Roadmap: docs/ROADMAP.md (approved). Rules reference: docs/RULES-CHARGEN.md (M0, read from
+_Draft 3 (2026-11-18), after Codex rounds 1–2 (13 + 4 findings, all accepted; docs/PLAN-M2-REVIEW-LOG.md). Roadmap: docs/ROADMAP.md (approved). Rules reference: docs/RULES-CHARGEN.md (M0, read from
 page renders; every rule here cites it). Catalog: docs/PLAN-catalog.md._
 
 ## Goal
@@ -33,7 +33,14 @@ citing the page:
   rarityBonus, severityBonus })` → `{ attributes, skills, forcePoints, nuyen }`, added to the allotments.
 - S5. Any derived value §5 needs that lives only in a Foundry data model (today `actualEssenceCost`) moves to
   `module/rules/`, the data model calling it.
-The app's work goes on meanwhile; its tests that need S1–S5 are marked pending until the pin includes that release.
+- S6. **Foundry's own panel uses them** (round 2 #1): `chargenBudgetOf` (sheets/actor-sheet.mjs) passes each program's
+  `multiplier` and rating, each lifestyle's `monthlyCost` and `monthsPaid`, and the contact items, and its allotments
+  add the allergy bonus; a test drives the WHOLE panel calculation from an actor source (program, lifestyle, three
+  contacts, a buddy, an allergy).
+- S7. **Extras the model can hold** (round 2 #3): `ContactData.contactType` gains `gang` (a gang or tribe, core p.44);
+  `buddy` and `follower` exist. A `members` number on contacts holds a gang's 2D6 members.
+The system work is done on a branch NOW and released after Friday. The app is built in slices (§7) that compile and
+pass against the CURRENT pin; a slice that imports an S-function starts only once the pin includes that release.
 
 ### 1. The rules runtime (the system's code, from the project's own copy)
 - The sync (Amendment A of the catalog plan) also copies, from the SYSTEM pin only, the **dependency closure** of the
@@ -123,8 +130,13 @@ text, cite: { book, page } }] }`, pure, run on every change on both sides. Each 
 - **Allergies** (#4): `creation.options.allergy = { substance, rarity: uncommon|common, severity:
   nuisance|mild|moderate|severe, rarityBonus, severityBonus }` (each bonus one of attributes / skills / force / nuyen);
   the system's `allergyBonus` (S4) adds to the allotments before the budgets are checked; metahumans only.
-- **Extras** (#3): contacts are `contact` items (`contactType: contact`), with an app choice `extra: contact | buddy |
-  gang | followers`; the system's `chargenExtrasCost` (S3) prices them; one buddy at most.
+- **Extras** (#3, round 2 #3): each extra is a `contact` item in the system's own shape — a contact
+  `contactType: contact`, a buddy `buddy` (an archetype at ratings 4, p.43), a gang or tribe `gang` with its 2D6
+  `members` rolled once by the server when bought (as the finish roll is), followers `follower` (five archetypes named
+  in the item, p.44). The system's `chargenExtrasCost` (S3) prices them; one buddy at most.
+- **Lifestyle** (round 2 #2): `setLifestyle` writes the lifestyle item AND `actor.system.lifestyle` in the same
+  operation; with none bought the character is on the Streets (`actor.system.lifestyle = "streets"`, p.46), never the
+  system's default `low`.
 
 ### 5. Derived values (what the sheet shows)
 `shared/derive.mjs` computes, for the rules panel and a summary: attributes after racial modifiers, Reaction
@@ -161,6 +173,18 @@ p.45), Initiative, Combat and Magic Pools, the condition monitors.
   quantity, Force). The running nuyen total and Essence are in the panel.
 - Banter (U11) appears at the steps that have it; never on a sheet or an export.
 - The library's "New" offers "Character" beside "Draft".
+
+### 7. Slices (round 2 #4)
+Each slice is a release of this app that builds, passes and works on its own, against the pin it names.
+- **M2a — the model and the first steps** (current pin, v0.160.0): the rules runtime (§1, the closure copy and its
+  checks), the `character` kind, its schema, the operation route and reducer, priorities, metatype, magic and
+  tradition, attributes; their validation; the client's first steps. Uses only functions that exist today
+  (`chargenSpend` for attributes, the tables).
+- **M2b — skills** (current pin): skills, concentrations and specializations, languages; `skillChargenSpend`.
+- **M2c — resources without the gaps** (current pin): buying weapons, armor, gear, cyberware (grades, Essence),
+  bioware, ammo, spells, foci through `itemBaseCost`/`chargenItemCost`/`wareCtx`.
+- **M2d — the S release** (pin moved to the post-Friday system release): programs, lifestyles, contacts and extras,
+  allergies, derived values (S5) and the parity test; then finish (§4) — finishing needs every budget, so it lands last.
 
 ## Key decisions & tradeoffs
 - **Foundry's own source shapes as the character model**: the system's functions apply without an adapter, and the
