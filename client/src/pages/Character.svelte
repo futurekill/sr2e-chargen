@@ -8,6 +8,7 @@
   import { get, mutate } from "../lib/api.js";
   import { applyOp, validate, CATEGORIES, CATEGORY_NAMES, LETTERS, METATYPES, MAGIC_TYPES, MAGIC_NAMES, TRADITIONS, ATTRIBUTES, ATTR_NAMES, CUSTOM_SKILL_CATEGORIES, totemNames } from "../../../shared/creation.mjs";
   import { TABLES } from "../../../shared/rules.mjs";
+  import { BUYABLE, choiceSpec, project, price, essenceOf, isCybereye } from "../../../shared/purchase.mjs";
   let { doc: initial, onDeleted } = $props();
 
   // Plain objects, not reactive proxies: the reducer clones them (structuredClone can't clone a proxy).
@@ -19,7 +20,7 @@
   const sys = $derived(body.actor.system), pr = $derived(sys.chargen.priorities), opts = $derived(body.creation.options);
   const finished = $derived(!!body.creation.finished);
   const TOTEMS = Object.entries(totemNames()).sort((a, b) => a[1].localeCompare(b[1]));
-  const STEPS = [["concept", "Concept"], ["priorities", "Priorities"], ["metatype", "Metatype"], ["magic", "Magic"], ["attributes", "Attributes"], ["skills", "Skills"]];
+  const STEPS = [["concept", "Concept"], ["priorities", "Priorities"], ["metatype", "Metatype"], ["magic", "Magic"], ["attributes", "Attributes"], ["skills", "Skills"], ["resources", "Resources"]];
   const SKILL_CATEGORY = { active: "Active", knowledge: "Knowledge", language: "Language", build_repair: "Build/Repair", special: "Special" };
   /** The full catalog entries this page fetched (the reducer copies an entry's data into the character). */
   const entries = new Map();
@@ -32,6 +33,37 @@
     const c = choicesOf(item);
     change({ op: "setSkill", itemId: item._id, allocated: c.allocated, concentration: c.concentration, specialization: c.specialization, freeLanguage: c.freeLanguage, ...patch });
   }
+  // Resources (docs/PLAN-M2c.md).
+  const TYPE_NAME = { weapon: "Weapon", armor: "Armor", gear: "Gear", ammo: "Ammunition", cyberware: "Cyberware", spell: "Spell", focus: "Focus" };
+  const CHOICE_NAME = { quantity: "Qty", bundles: "Boxes", rating: "Rating", force: "Force", strengthMinimum: "Str Min", in: "In", spell: "Spell", skill: "Skill" };
+  let shopQ = $state(""), shopType = $state(""), shop = $state([]), shopBusy = $state(false);
+  let shopTimer;
+  function searchShop() {
+    clearTimeout(shopTimer);
+    shopTimer = setTimeout(async () => {
+      const p = new URLSearchParams({ book: "sr2", limit: "30" });
+      for (const t of shopType ? [shopType] : BUYABLE) p.append("type", t);
+      if (shopQ.trim()) p.set("q", shopQ.trim());
+      shopBusy = true;
+      try { const r = await get(`/api/catalog/entries?${p}`); if (!gone) shop = r.entries; } catch (err) { if (!gone) error = err.message; }
+      shopBusy = false;
+    }, 250);
+  }
+  searchShop();
+  async function buy(id) {
+    try { if (!entries.has(id)) entries.set(id, await get(`/api/catalog/entries/${encodeURIComponent(id)}`)); }
+    catch (err) { if (!gone) error = err.message; return; }
+    if (!gone) change({ op: "addItem", catalogId: id });
+  }
+  /** Every bought thing (eye accessories included), with what it costs and the Essence it takes. */
+  const bought = $derived(Object.entries(body.creation.items).filter(([, r]) => r.type !== "skill").sort(([a], [b]) => (a < b ? -1 : 1)).map(([id, r]) => {
+    const item = body.actor.items.find(i => i._id === id), projected = item ? { system: item.system, flags: item.flags } : project(r, r.choices);
+    return { id, r, spec: choiceSpec(r), price: price(r, projected, body.actor.items), essence: item && r.type === "cyberware" ? essenceOf(item, body.actor.items) : null };
+  }));
+  const eyes = $derived(bought.filter(x => isCybereye(x.r)));
+  const spells = $derived(bought.filter(x => x.r.type === "spell"));
+  const setChoice = (id, key, value) => change({ op: "setItem", itemId: id, choices: { [key]: value } });
+
   async function addCoreSkill() {
     const id = pickSkill;   // read once: the list can change while the entry is on its way
     if (!id) return;
@@ -237,6 +269,58 @@
       {/if}
     </section>
 
+    <section id="step-resources">
+      <h2>Resources</h2>
+      <p class="muted">Spend your nuyen on gear at list price; magicians spend Force Points on spells (Force up to 6) and on bonding foci. No starting gear above Rating 6. Cybereyes take up to .5 Essence of accessories for free. <span class="cite">SR2 p.46, p.137, p.247</span></p>
+      {#if !finished}
+        <div class="row adders">
+          <label class="grow"><span>Search the core book</span><input bind:value={shopQ} oninput={searchShop} maxlength="64" placeholder="Ares Predator, armor jacket, wired reflexes…"></label>
+          <label><span>Type</span><select bind:value={shopType} onchange={searchShop}><option value="">Everything</option>{#each BUYABLE as t}<option value={t}>{TYPE_NAME[t]}</option>{/each}</select></label>
+        </div>
+        <ul class="shop" aria-busy={shopBusy}>
+          {#each shop as e (e.id)}
+            <li><span class="name">{e.name}</span><span class="muted small">{TYPE_NAME[e.type] ?? e.type}{e.cost ? ` · ${nuyen(e.cost)}` : ""}{e.citation?.page ? ` · p.${e.citation.page}` : ""}</span><button type="button" class="quiet" onclick={() => buy(e.id)}>Add</button></li>
+          {:else}
+            <li class="muted">{shopBusy ? "Searching…" : "Nothing matches."}</li>
+          {/each}
+        </ul>
+      {/if}
+      {#if bought.length}
+        <div class="scroll"><table class="grid bought">
+          <thead><tr><th scope="col">Item</th><th scope="col">Choices</th><th scope="col">Price</th><th scope="col"><span class="sr-only">Remove</span></th></tr></thead>
+          <tbody>
+            {#each bought as x (x.id)}
+              <tr>
+                <th scope="row">{x.r.name}<br><span class="muted small">{TYPE_NAME[x.r.type]}{x.essence != null ? ` · Essence ${x.essence}` : ""}{x.r.choices.in ? " · in cybereyes" : ""}</span></th>
+                <td class="choices">
+                  {#each Object.entries(x.spec) as [k, sp] (k)}
+                    <label class="choice"><span>{CHOICE_NAME[k] ?? k}</span>
+                      {#if sp.kind === "int"}
+                        <input type="number" min={sp.lo} max={sp.hi} step="1" value={x.r.choices[k]} disabled={finished}
+                          onchange={(ev) => { const n = numberFrom(ev); if (Number.isInteger(n) && n >= sp.lo && n <= sp.hi) setChoice(x.id, k, n); else ev.currentTarget.value = x.r.choices[k]; }}>
+                      {:else if sp.kind === "oneOf"}
+                        <select value={x.r.choices[k]} disabled={finished} onchange={(ev) => setChoice(x.id, k, Number(ev.currentTarget.value))}>{#each sp.values as v}<option value={v}>{v}</option>{/each}</select>
+                      {:else if k === "in"}
+                        <select value={x.r.choices.in} disabled={finished} onchange={(ev) => setChoice(x.id, "in", ev.currentTarget.value)}><option value="">On its own</option>{#each eyes as e (e.id)}<option value={e.id}>{e.r.name}</option>{/each}</select>
+                      {:else if k === "spell"}
+                        <select value={x.r.choices.spell} disabled={finished} onchange={(ev) => setChoice(x.id, "spell", ev.currentTarget.value)}><option value="">Choose…</option>{#each spells as sp2 (sp2.id)}<option value={sp2.id}>{sp2.r.name}</option>{/each}</select>
+                      {:else}
+                        <input value={x.r.choices[k]} maxlength="60" disabled={finished} onchange={(ev) => setChoice(x.id, k, ev.currentTarget.value)}>
+                      {/if}
+                    </label>
+                  {/each}
+                </td>
+                <td class="price">{x.r.type === "spell" ? `${x.r.choices.force} FP` : nuyen(x.price)}{#if x.r.choices.in}<br><span class="muted small">in the eyes' price</span>{/if}</td>
+                <td><button type="button" class="quiet" disabled={finished} aria-label={`Remove ${x.r.name}`} onclick={() => change({ op: "removeItem", itemId: x.id })}>✕</button></td>
+              </tr>
+            {/each}
+          </tbody>
+        </table></div>
+      {:else}
+        <p class="muted">Nothing bought yet.</p>
+      {/if}
+    </section>
+
     <p class="row later"><button type="button" class="danger" onclick={onDeleted}>Delete character</button></p>
   </div>
 
@@ -245,11 +329,13 @@
     <dl>
       <div><dt>Attribute points</dt><dd class:bad={pr.attributes && check.budgets.attributes.over}>{check.budgets.attributes.spent} / {pr.attributes ? check.budgets.attributes.total : "—"}</dd></div>
       <div><dt>Skill points</dt><dd class:bad={pr.skills && check.budgets.skills.over}>{check.budgets.skills.spent} / {pr.skills ? check.budgets.skills.total : "—"}</dd></div>
-      {#if sys.magic.type === "full_magician"}<div><dt>Force Points</dt><dd>{check.budgets.forcePoints.total}</dd></div>{/if}
-      <div><dt>Nuyen</dt><dd>{pr.resources ? nuyen(check.budgets.resources.total) : "—"}</dd></div>
+      {#if sys.magic.type === "full_magician" || check.budgets.forcePoints.spent}<div><dt>Force Points</dt><dd class:bad={check.budgets.forcePoints.over}>{check.budgets.forcePoints.spent} / {check.budgets.forcePoints.total}</dd></div>{/if}
+      <div><dt>Nuyen</dt><dd class:bad={pr.resources && check.budgets.resources.over}>{nuyen(check.budgets.resources.spent)} / {pr.resources ? nuyen(check.budgets.resources.total) : "—"}</dd></div>
+      <div><dt>Essence</dt><dd class:bad={check.essence < 0}>{check.essence}</dd></div>
+      {#if sys.magic.type !== "none"}<div><dt>Magic</dt><dd class:bad={check.magic < 1}>{check.magic}</dd></div>{/if}
     </dl>
     {#if check.problems.length === 0}
-      <p class="good">No problems in these steps. Gear, contacts and finishing come next.</p>
+      <p class="good">No problems in these steps. Contacts, lifestyle and finishing come next.</p>
     {:else}
       <ul class="problems">
         {#each check.problems as p, i (i)}
@@ -291,5 +377,15 @@
   table.skills select { width: 100%; max-width: 9rem; }
   .rating { color: var(--accent); }
   .small { font-size: .82rem; }
+  ul.shop { list-style: none; margin: 0 0 1rem; padding: 0; max-height: 18rem; overflow: auto; border-top: 1px solid var(--line); }
+  ul.shop li { display: flex; gap: .25rem .75rem; align-items: center; flex-wrap: wrap; padding: .35rem 0; border-bottom: 1px solid var(--line); }
+  ul.shop .name { font-weight: 700; margin-right: auto; }
+  table.bought td.choices { text-align: left; }
+  label.choice { display: inline-grid; gap: .1rem; margin: 0 .5rem .25rem 0; vertical-align: top; }
+  label.choice > span { font-size: .78rem; }
+  label.choice input[type="number"] { width: 4.5rem; padding: .25rem .4rem; text-align: right; }
+  label.choice input:not([type="number"]) { width: 8rem; padding: .25rem .4rem; }
+  label.choice select { padding: .25rem .35rem; max-width: 10rem; }
+  td.price { white-space: nowrap; text-align: right; }
   .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 </style>

@@ -6,6 +6,11 @@ notes come from it.
 ## Unreleased
 
 ### Added
+- **Resources (milestone 2c).** Buy the core book's weapons, armor, gear, ammunition (by the box), cyberware, spells
+  and foci with the Resources priority, at the system's own list prices. Rated gear takes a Rating up to 6 (p.44);
+  cybereyes take accessories up to .5 Essence for free (p.247); spells (Force up to 6) and foci bonding spend Force
+  Points (p.46, p.137); Essence and the Magic Rating follow the cyberware (p.45). Items with no fixed core price, cyberlimb
+  options, weapon foci and vehicles are refused for now, each with the reason; adept powers come next (M2c-2).
 - **Skills (milestone 2b).** Add the core book's skills from the catalog, or name your own Knowledge, Language or
   Build/Repair skill. Buy each from 1 to 6 with Skill Points; a concentration and a specialization follow p.70 (Firearms
   5 → Firearms 3, Pistols 5, Ares Predator 7). The native language is free at Intelligence + 2 and a Street dialect at

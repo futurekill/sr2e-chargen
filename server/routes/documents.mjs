@@ -11,7 +11,10 @@ const noQuery = { type: "object", additionalProperties: false };   // a mutation
 const BIG = { bodyLimit: 2.5 * 1024 * 1024 };
 const characterBody = { type: "object", additionalProperties: false, required: ["name"], properties: { name: { type: "string", minLength: 1, maxLength: 200 } } };
 /** Each operation's exact fields, from the reducer's own list (the reducer checks the values). */
-const FIELD = { string: { type: "string", maxLength: 20000 }, boolean: { type: "boolean" }, integer: { type: "integer", minimum: -1000, maximum: 1000 } };
+const FIELD = { string: { type: "string", maxLength: 20000 }, boolean: { type: "boolean" }, integer: { type: "integer", minimum: -1000, maximum: 1000 },
+  // A purchase's choices: a few small values; the reducer checks the keys and values per item type (PLAN-M2c §1).
+  choices: { type: "object", maxProperties: 4, propertyNames: { pattern: "^[a-zA-Z]{1,20}$" },
+    additionalProperties: { anyOf: [{ type: "integer", minimum: 0, maximum: 1000 }, { type: "string", maxLength: 60 }] } } };
 const opSchema = { oneOf: Object.entries(OPS).map(([op, fields]) => ({ type: "object", additionalProperties: false, required: ["op", ...Object.keys(fields)],
   properties: { op: { const: op }, ...Object.fromEntries(Object.entries(fields).map(([k, t]) => [k, FIELD[t]])) } })) };
 const opsBody = { type: "object", additionalProperties: false, required: ["revision", "ops"],

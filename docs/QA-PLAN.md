@@ -19,7 +19,9 @@ Each creation rule has a test that cites its page (test/creation.test.mjs, docs/
 the Master Creation Table rows (p.47), each letter once (p.44), metatype priority (p.44, More Metahumans p.46), magic
 type per priority (p.45–46), tradition and totem (p.44), attributes after racial modifiers and the point budget
 (p.43, p.45), skills 1–6 and the Skill Point budget (p.45), the concentration/specialization example (p.70), free
-languages (p.74), Sorcery and Conjuring need a Magic Rating (p.45).
+languages (p.74), Sorcery and Conjuring need a Magic Rating (p.45); and on the real catalog (test/resources.test.mjs):
+prices (rated × quantity, ammo boxes), cybereye accessories (p.247), Essence and Magic (p.45–46), Force Points and
+bonding (p.46, p.137), refusals.
 
 ## Manual walk-through (run on the dev server before a release)
 1. Library: make a character; it opens on its page. Make a draft; it opens as a text page.
@@ -34,5 +36,9 @@ languages (p.74), Sorcery and Conjuring need a Magic Rating (p.45).
 7. Skills: add Firearms from the core list, give it 5 points, concentration Pistols, specialization Ares Predator —
    it shows 3, Pistols 5, Ares Predator 7. Add English, mark it Native — it shows Intelligence + 2 and costs no points.
    Add Sorcery to a mundane character — the check flags it (p.45). Add your own Knowledge skill by name.
-8. Phone width (375 px): no page-wide sideways scroll; the rules check is below the steps.
-9. History: each change is a revision named after its operation.
+8. Resources: search "cybereyes", add it and Low-Light Vision, set Low-Light "In: Cybereyes" — Essence 5.8, the eyes'
+   price includes the accessory. Add a Jammer, Rating 3, Qty 2 — 6,000¥. Add Regular Ammo, 3 boxes — 60¥. A magician:
+   add Mana Bolt (Force 6) and a Power Focus (Force 2) — Force Points 16; a Spell Focus asks for its spell. Try a
+   Personal Computer — refused with the reason.
+9. Phone width (375 px): no page-wide sideways scroll; the rules check is below the steps.
+10. History: each change is a revision named after its operation.

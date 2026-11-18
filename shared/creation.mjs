@@ -9,6 +9,7 @@
  * unchanged; the app's own record sits beside it (`creation`).
  */
 import { TABLES, chargenSpend, label, skillTiersFromAllocation, validateSkillAllocation } from "./rules.mjs";
+import { defaultChoices, checkChoices, refusalFor, project, priceInput, eyeRow, essenceOf, isCybereye } from "./purchase.mjs";
 
 export const SCHEMA = "sr2e-chargen-character", SCHEMA_VERSION = 1;
 export const CATEGORIES = ["race", "magic", "attributes", "skills", "resources"];
@@ -70,7 +71,10 @@ export const OPS = Object.freeze({
   addSkill: { catalogId: "string" },
   addCustomSkill: { category: "string", name: "string" },
   setSkill: { itemId: "string", allocated: "integer", concentration: "string", specialization: "string", freeLanguage: "string" },
-  removeSkill: { itemId: "string" }
+  removeSkill: { itemId: "string" },
+  addItem: { catalogId: "string" },
+  setItem: { itemId: "string", choices: "choices" },
+  removeItem: { itemId: "string" }
 });
 const OPTIONS = ["moreMetahumans"];
 
@@ -124,8 +128,7 @@ export function applyOp(body, op, lookup = () => null) {
       const e = lookup(op.catalogId);
       if (!e || e.type !== "skill") throw new Refusal("That isn't a skill in the catalog.");
       if (e.book !== CORE) throw new Refusal("Only the core book's skills for now: sourcebooks arrive with the book toggles.");
-      addItem(b, { name: e.name, img: e.img ?? null, snapshot: e.system, catalogId: e.id, source: e._stats?.compendiumSource ?? null,
-        choices: { allocated: 1, concentration: "", specialization: "", freeLanguage: "" } });
+      addRecord(b, { ...recordOf(e), choices: { allocated: 1, concentration: "", specialization: "", freeLanguage: "" } });
       break;
     }
     case "addCustomSkill": {
@@ -133,7 +136,7 @@ export function applyOp(body, op, lookup = () => null) {
       const name = shortText(op.name, "A skill's name");
       if (!name) throw new Refusal("A skill needs a name.");
       if (MAGICAL_SKILLS.includes(name.toLowerCase())) throw new Refusal(`${name} is a magical Active skill: add it from the core list.`, 45);
-      addItem(b, { name, img: null, catalogId: null, source: null,
+      addRecord(b, { type: "skill", name, img: null, catalogId: null, source: null, flags: {},
         snapshot: { category: op.category, linkedAttribute: "intelligence", rating: 0, concentration: { name: "", rating: 0 }, specialization: { name: "", rating: 0 }, isMagical: false, notes: "" },
         choices: { allocated: 1, concentration: "", specialization: "", freeLanguage: "" } });
       break;
@@ -149,10 +152,36 @@ export function applyOp(body, op, lookup = () => null) {
       rec.choices = { allocated: op.allocated, concentration: conc, specialization: spec, freeLanguage: op.freeLanguage };
       break;
     }
-    case "removeSkill": {
-      const id = skillItem(b, op.itemId)._id;   // the character's own id, not the request's string
+    case "removeSkill":
+      delete b.creation.items[ownId(b, op.itemId, r => r.type === "skill", "skill")];
+      break;
+    case "addItem": {
+      const e = lookup(op.catalogId);
+      if (!e) throw new Refusal("That isn't in the catalog.");
+      if (e.book !== CORE) throw new Refusal("Only the core book's gear for now: sourcebooks arrive with the book toggles.");
+      if (e.type === "skill") throw new Refusal("Add a skill in the Skills step.");
+      const why = refusalFor(e);
+      if (why) throw new Refusal(why);
+      const rec = recordOf(e);
+      addRecord(b, { ...rec, choices: defaultChoices(rec) });
+      break;
+    }
+    case "setItem": {
+      const id = ownId(b, op.itemId, r => r.type !== "skill", "item");
+      const rec = b.creation.items[id], checked = checkChoices(rec, op.choices);
+      if (checked.reason) throw new Refusal(checked.reason);
+      const into = checked.choices.in;
+      if (into && into !== rec.choices.in) {   // an accessory goes only into a cybereye of this character (core p.247)
+        const eye = Object.keys(b.creation.items).find(k => k === into);
+        if (!eye || !isCybereye(b.creation.items[eye])) throw new Refusal("Place it in a cybereye of this character.");
+      }
+      rec.choices = checked.choices;
+      break;
+    }
+    case "removeItem": {
+      const id = ownId(b, op.itemId, r => r.type !== "skill", "item");
       delete b.creation.items[id];
-      b.actor.items = b.actor.items.filter(i => i._id !== id);
+      for (const [k, r] of Object.entries(b.creation.items)) if (r.choices?.in === id) delete b.creation.items[k];   // its accessories go with an eye
       break;
     }
   }
@@ -169,41 +198,60 @@ const shortText = (v, what) => {
 };
 /** A Foundry-shaped id (16 letters and digits), the same on the server and in the browser: a counter, not a random. */
 const itemId = (n) => `cg${n.toString(36).padStart(14, "0")}`;
-function addItem(b, { name, img, snapshot, catalogId, source, choices }) {
-  if (b.actor.items.length >= MAX_ITEMS) throw new Refusal(`A character holds at most ${MAX_ITEMS} items.`);
+/**
+ * The app's record of each bought thing is `creation.items[id] = { type, name, img, source, flags, catalogId,
+ * snapshot, choices }`; `actor.items` is REGENERATED from the records after every operation (rebuildItems), in id
+ * order (ids are fixed-width, so the order survives a database that sorts JSON keys).
+ */
+function addRecord(b, rec) {
+  if (Object.keys(b.creation.items).length >= MAX_ITEMS) throw new Refusal(`A character holds at most ${MAX_ITEMS} items.`);
   const n = b.creation.nextItem ?? 1;
   b.creation.nextItem = n + 1;
-  const _id = itemId(n);
-  b.creation.items[_id] = { catalogId, snapshot: structuredClone(snapshot), choices };
-  b.actor.items.push({ _id, name, type: "skill", img, system: {}, flags: {}, effects: [], _stats: { compendiumSource: source } });
+  b.creation.items[itemId(n)] = { ...rec, snapshot: structuredClone(rec.snapshot), flags: structuredClone(rec.flags ?? {}) };
 }
+const recordOf = (e) => ({ type: e.type, name: e.name, img: e.img ?? null, source: e._stats?.compendiumSource ?? null, flags: e.flags ?? {}, catalogId: e.id, snapshot: e.system });
 const ITEM_ID = /^cg[0-9a-z]{14}$/;
-/** The character's skill item with this id (its record exists beside it), or a refusal. */
-function skillItem(b, id) {
-  if (typeof id !== "string" || !ITEM_ID.test(id)) throw new Refusal("No such skill on this character.");   // never a key like __proto__
-  const item = b.actor.items.find(i => i._id === id);
-  if (!item || item.type !== "skill" || !Object.hasOwn(b.creation.items, item._id)) throw new Refusal("No such skill on this character.");
-  return item;
+/** The stored id of this character's record (never the request's string as a key), or a refusal. */
+function ownId(b, id, ok, what) {
+  const key = typeof id === "string" && ITEM_ID.test(id) ? Object.keys(b.creation.items).find(k => k === id) : undefined;
+  if (!key || !ok(b.creation.items[key])) throw new Refusal(`No such ${what} on this character.`);
+  return key;
 }
-const skillRecord = (b, id) => b.creation.items[skillItem(b, id)._id];
+const skillRecord = (b, id) => b.creation.items[ownId(b, id, r => r.type === "skill", "skill")];
 
-/**
- * Every item's `system`, rebuilt from its snapshot and the player's choices (never stored as typed): a skill's ratings
- * come from its allocation by p.70 (`skillTiersFromAllocation`, the system's own), still pending (`ratingsFinalized`
- * false) as in Foundry's creation; a free native language is rated Intelligence + 2, a dialect ½ Intelligence (p.74).
- */
+/** A skill's `system`: ratings from the allocation by p.70 (the system's own), still pending as in Foundry's creation;
+ * a free native language at Intelligence + 2, a dialect ½ Intelligence (p.74). */
+function skillSystem(rec, int) {
+  const c = rec.choices, free = c.freeLanguage;
+  const t = skillTiersFromAllocation(c.allocated, !!c.concentration, !!c.specialization);
+  const rating = free === "native" ? int + 2 : free === "dialect" ? Math.floor(int / 2) : Math.max(0, t.general);
+  return { ...structuredClone(rec.snapshot), rating, allocated: free ? null : c.allocated, ratingsFinalized: false, freeLanguage: free,
+    concentration: { name: c.concentration, rating: c.concentration ? t.concentration : 0 },
+    specialization: { name: c.specialization, rating: c.specialization ? t.specialization : 0 } };
+}
+/** Regenerate `actor.items` from the records: skills, bought items, and eye accessories as rows of their eye. */
 function rebuildItems(b) {
-  const sys = b.actor.system, int = withRacial(sys, "intelligence");
-  for (const item of b.actor.items) {
-    const rec = b.creation.items[item._id];
-    if (item.type !== "skill" || !rec) continue;
-    const c = rec.choices, free = c.freeLanguage;
-    const t = skillTiersFromAllocation(c.allocated, !!c.concentration, !!c.specialization);
-    const rating = free === "native" ? int + 2 : free === "dialect" ? Math.floor(int / 2) : Math.max(0, t.general);
-    item.system = { ...structuredClone(rec.snapshot), rating, allocated: free ? null : c.allocated, ratingsFinalized: false, freeLanguage: free,
-      concentration: { name: c.concentration, rating: c.concentration ? t.concentration : 0 },
-      specialization: { name: c.specialization, rating: c.specialization ? t.specialization : 0 } };
+  const recs = b.creation.items, int = withRacial(b.actor.system, "intelligence");
+  const shells = new Map(b.actor.items.map(i => [i._id, i]));
+  const ids = Object.keys(recs).sort();
+  for (const id of ids) {   // records made before items carried their own shell data (M2b skills)
+    const r = recs[id], sh = shells.get(id);
+    if (!r.type && sh) Object.assign(r, { type: sh.type, name: sh.name, img: sh.img ?? null, source: sh._stats?.compendiumSource ?? null, flags: {} });
   }
+  const rows = new Map(), out = [];
+  for (const id of ids) {
+    const r = recs[id];
+    const { system, flags } = r.type === "skill" ? { system: skillSystem(r, int), flags: {} } : project(r, r.choices);
+    const eye = r.choices?.in;
+    if (eye && Object.hasOwn(recs, eye) && isCybereye(recs[eye])) {
+      if (!rows.has(eye)) rows.set(eye, []);
+      rows.get(eye).push(eyeRow(id, r, { system }));
+      continue;
+    }
+    out.push({ _id: id, name: r.name, type: r.type, img: r.img, system, flags, effects: [], _stats: { compendiumSource: r.source } });
+  }
+  for (const item of out) if (item.type === "cyberware" && (item.system.capacity ?? 0) > 0) item.system.modules = rows.get(item._id) ?? [];
+  b.actor.items = out;
 }
 
 /* ── Validation: the rules panel ─────────────────────────────────────────────────────────────────────────────── */
@@ -265,6 +313,13 @@ export function validate(body) {
     if (v < 1) add("attributes", "error", `${ATTR_NAMES[a]} is ${v} after racial modifiers: raise it to at least 1.`, 45);
   }
 
+  // Essence and Magic (p.45–46): computed first — Sorcery, spells and foci need a Magic Rating of at least 1.
+  const items = body.actor.items;
+  const essence = Math.round((6 - items.filter(i => i.type === "cyberware").reduce((t, i) => t + essenceOf(i, items), 0)) * 100) / 100;
+  const magic = mtype === "none" ? 0 : Math.max(0, Math.min(6, Math.floor(essence + 1e-9)));
+  if (essence < 0) add("resources", "error", `Essence is ${essence}: cyberware can't take it below 0.`, 46);
+  if (mtype !== "none" && magic < 1) add("magic", "error", `Essence ${essence} leaves no Magic Rating: this character's magic is gone.`, 45);
+
   // Skills (p.45, p.66, p.70, p.74).
   const skills = body.actor.items.filter(i => i.type === "skill");
   const names = new Set();
@@ -283,19 +338,35 @@ export function validate(body) {
     else if (s.rating > 6) add("skills", "error", `${nm} is ${s.rating}: no starting skill above 6 (only a concentration or specialization may go higher).`, 45);
     const ok = validateSkillAllocation(c.allocated, !!c.concentration, !!c.specialization);
     if (c.allocated >= 1 && !ok.ok) add("skills", "error", `${nm}: ${ok.reason}`, 70);
-    if (s.isMagical && mtype === "none") add("skills", "error", `${nm} needs a Magic Rating.`, 45);
+    if (s.isMagical && magic < 1) add("skills", "error", `${nm} needs a Magic Rating.`, 45);
   }
   if (natives > 1) add("skills", "error", "Only one native language is free.", 74);
   if (dialects > 1) add("skills", "error", "Only one local dialect is free.", 74);
   if (dialects && sys.lifestyle !== "streets") add("skills", "error", "A free local dialect comes with a Street lifestyle.", 74);
   if (!natives) add("skills", "todo", "Add your native language and mark it free (Intelligence + 2).", 74);
 
+  // Resources (p.46, p.137): what each bought thing needs.
+  const spellIds = new Set(items.filter(i => i.type === "spell").map(i => i._id));
+  for (const i of items) {
+    const c = body.creation.items[i._id]?.choices ?? {};
+    if (i.type === "spell" && mtype !== "full_magician") add("resources", "error", `${i.name}: only magicians learn spells with Force Points.`, 46);
+    if (i.type === "focus" && mtype !== "full_magician") add("resources", "error", `${i.name}: only a magician bonds this focus (an adept can use only a weapon focus, p.124).`, 46);
+    if (i.type === "focus" && i.system.focusType === "spell") {
+      if (!c.spell) add("resources", "todo", `${i.name}: choose the spell it's bonded to.`, 137);
+      else if (!spellIds.has(c.spell)) add("resources", "error", `${i.name}: its spell is no longer on this character.`, 137);
+    }
+    if (i.type === "gear" && i.system.category === "skillsoft" && !c.skill) add("resources", "todo", `${i.name}: name the skill on the chip.`, 243);
+  }
+
   // Budgets through the system's own function (core p.44–46).
   const allot = { attributes: table[pr.attributes]?.attributes ?? 0, skills: table[pr.skills]?.skills ?? 0,
     resources: table[pr.resources]?.resources ?? 0, forcePoints: mtype === "full_magician" ? table[pr.resources]?.forcePoints ?? 0 : 0 };
   const spend = chargenSpend({ attributes: ATTRIBUTES.map(a => ({ base: Number(sys[a]?.base) || 0 })),
     skills: skills.map(i => ({ category: i.system.category, freeLanguage: i.system.freeLanguage, rating: i.system.rating, allocated: i.system.allocated,
-      ratingsFinalized: false, concentration: { name: i.system.concentration.name }, specialization: { name: i.system.specialization.name } })), items: [] }, allot);
+      ratingsFinalized: false, concentration: { name: i.system.concentration.name }, specialization: { name: i.system.specialization.name } })),
+    items: items.filter(i => i.type !== "skill").map(i => priceInput(i, items)) }, allot);
+  if (pr.resources && spend.resources.over) add("resources", "error", `${spend.resources.spent.toLocaleString("en-US")}¥ spent; Priority ${pr.resources} gives ${spend.resources.total.toLocaleString("en-US")}¥.`, 46);
+  if (spend.forcePoints.over) add("resources", "error", `${spend.forcePoints.spent} Force Points spent (spells' Force and foci bonding); ${mtype === "full_magician" ? `Priority ${pr.resources || "—"} gives ${spend.forcePoints.total}` : "only magicians receive Force Points"}.`, 46);
   if (pr.attributes) {
     if (spend.attributes.over) add("attributes", "error", `${spend.attributes.spent} Attribute Points spent; Priority ${pr.attributes} gives ${spend.attributes.total}.`, 45);
     else if (spend.attributes.remaining > 0) add("attributes", "todo", `${spend.attributes.remaining} Attribute Point${spend.attributes.remaining === 1 ? "" : "s"} left to spend.`, 47);
@@ -304,7 +375,7 @@ export function validate(body) {
     if (spend.skills.over) add("skills", "error", `${spend.skills.spent} Skill Points spent; Priority ${pr.skills} gives ${spend.skills.total}.`, 45);
     else if (spend.skills.remaining > 0) add("skills", "todo", `${spend.skills.remaining} Skill Point${spend.skills.remaining === 1 ? "" : "s"} left to spend.`, 47);
   }
-  return { budgets: spend, problems, finishable: !problems.some(p => p.severity !== "warning") };
+  return { budgets: spend, essence, magic, problems, finishable: !problems.some(p => p.severity !== "warning") };
 }
 
 export const CATEGORY_NAMES = { race: "Race", magic: "Magic", attributes: "Attributes", skills: "Skills", resources: "Resources" };

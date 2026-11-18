@@ -1,0 +1,104 @@
+/** Resources (docs/PLAN-M2c.md): buying the core book's gear, cyberware, spells and foci, on the REAL catalog. */
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { buildCatalog } from "../tools/build-catalog.mjs";
+import { newCharacter, applyOp, validate, Refusal } from "../shared/creation.mjs";
+import { bondingCost } from "../shared/purchase.mjs";
+
+const root = new URL("../", import.meta.url);
+const catalog = buildCatalog({ pins: JSON.parse(readFileSync(new URL("content-pins.json", root), "utf8")).content, contentDir: new URL("content", root).pathname });
+const byId = new Map(catalog.entries.map(e => [e.id, e])), lookup = (id) => byId.get(id) ?? null;
+const core = (name) => { const e = catalog.entries.find(x => x.book === "sr2" && x.name === name); assert.ok(e, name); return e.id; };
+const start = (ops = []) => ops.reduce((b, op) => applyOp(b, op, lookup), newCharacter("Razor"));
+const idOf = (b, name) => Object.entries(b.creation.items).find(([, r]) => r.name === name)[0];
+const item = (b, name) => b.actor.items.find(i => i.name === name);
+const buy = (...names) => names.map(n => ({ op: "addItem", catalogId: core(n) }));
+const set = (b, name, choices) => applyOp(b, { op: "setItem", itemId: idOf(b, name), choices }, lookup);
+const prio = (p) => Object.entries(p).map(([category, letter]) => ({ op: "setPriority", category, letter }));
+const texts = (b) => validate(b).problems.map(p => `${p.severity}: ${p.text} [p.${p.cite.page}]`).join("\n");
+
+test("prices are the system's own: rated gear × quantity, ammo by the bundle, list price (p.46)", () => {
+  let b = start([...prio({ resources: "D" }), ...buy("Jammer", "Regular Ammo", "Ares Predator")]);
+  b = set(b, "Jammer", { quantity: 2, rating: 3 });
+  b = set(b, "Regular Ammo", { bundles: 3 });
+  assert.equal(item(b, "Regular Ammo").system.quantity, 30, "rounds");
+  assert.equal(item(b, "Regular Ammo").flags.sr2e.acquiredListValue, 60);
+  const v = validate(b);
+  assert.equal(v.budgets.resources.spent, 2 * 3 * 1000 + 3 * 20 + 450);   // Jammer 1,000¥ × Rating (p.257); ammo 20¥/10; Predator 450¥
+  assert.match(texts(b), /6,510¥ spent; Priority D gives 5,000¥\. \[p\.46\]/);
+  assert.throws(() => set(b, "Jammer", { rating: 7 }), /1 to 6/, "no starting gear above 6 (p.44)");
+  assert.throws(() => set(b, "Jammer", { price: 0 }), /no choice "price"/);
+  assert.throws(() => set(b, "Regular Ammo", { quantity: 1 }), /no choice/, "ammo is bought by the bundle");
+});
+
+test("cybereyes absorb accessories up to .5 Essence (core p.247); accessories become rows of the eye", () => {
+  let b = start(buy("Cybereyes", "Low-Light Vision", "Thermographic Vision", "Flare Compensation", "Eye Camera"));
+  for (const n of ["Low-Light Vision", "Thermographic Vision"]) b = set(b, n, { in: idOf(b, "Cybereyes") });
+  const eye = item(b, "Cybereyes");
+  assert.deepEqual(eye.system.modules.map(r => [r.name, r.kind, r.essenceCost, r.listValue]), [["Low-Light Vision", "accessory", 0.2, 3000], ["Thermographic Vision", "accessory", 0.2, 3000]]);
+  assert.equal(item(b, "Low-Light Vision"), undefined, "not a separate item any more");
+  assert.equal(validate(b).essence, Math.round((6 - 0.2 - 0.1 - 0.4) * 100) / 100, ".4 inside the eye is free; Flare Comp and the camera still outside");
+  b = set(b, "Flare Compensation", { in: idOf(b, "Cybereyes") });
+  b = set(b, "Eye Camera", { in: idOf(b, "Cybereyes") });
+  assert.equal(validate(b).essence, Math.round((6 - 0.2 - 0.4) * 100) / 100, ".9 in the eye: .5 free, .4 over");
+  assert.equal(item(b, "Cybereyes").system.modules.find(r => r.name === "Eye Camera").kind, "camera");
+  assert.equal(validate(b).budgets.resources.spent, 5000 + 3000 + 3000 + 2000 + 5000, "accessories still cost their price");
+  assert.throws(() => set(b, "Eye Camera", { in: idOf(b, "Low-Light Vision") }), /cybereye/);
+  b = applyOp(b, { op: "removeItem", itemId: idOf(b, "Cybereyes") }, lookup);
+  assert.deepEqual(b.actor.items, [], "its accessories go with it");
+});
+
+test("Essence below 0 is reported; Magic follows Essence (p.45–46); magic needs a Magic Rating", () => {
+  let b = start([...prio({ magic: "A" }), { op: "setMagic", type: "full_magician" }, { op: "addSkill", catalogId: core("Sorcery") }, ...buy("Wired Reflexes (Level 3)", "Vehicle Control Rig")]);
+  b = set(b, "Vehicle Control Rig", { rating: 2 });
+  const v = validate(b);
+  assert.ok(v.essence < 1, `Essence ${v.essence}`);
+  assert.equal(v.magic, Math.max(0, Math.floor(v.essence)));
+  assert.match(texts(b), /no Magic Rating/);
+  assert.match(texts(b), /Sorcery needs a Magic Rating/);
+});
+
+test("spells and foci spend Force Points (p.46, p.137); only magicians", () => {
+  let b = start([...prio({ magic: "A", resources: "C" }), { op: "setMagic", type: "full_magician" }, ...buy("Mana Bolt", "Power Focus", "Spell Focus")]);
+  b = set(b, "Mana Bolt", { force: 6 });
+  b = set(b, "Power Focus", { force: 2 });
+  b = set(b, "Spell Focus", { force: 3 });
+  assert.equal(item(b, "Power Focus").system.bondingCost, 10, "5 × Rating");
+  assert.equal(item(b, "Power Focus").system.bonded, true, "creation pays the bond");
+  assert.match(texts(b), /Spell Focus: choose the spell it's bonded to/);
+  b = set(b, "Spell Focus", { spell: idOf(b, "Mana Bolt") });
+  assert.equal(item(b, "Spell Focus").system.boundSpellId, idOf(b, "Mana Bolt"));
+  const v = validate(b);
+  assert.deepEqual([v.budgets.forcePoints.spent, v.budgets.forcePoints.total], [6 + 10 + 3, 25]);
+  assert.equal(v.budgets.resources.spent, 2 * 105000 + 3 * 45000, "Power Focus 105,000¥ × Rating, Specific Spell Focus 45,000¥ × Rating (p.263)");
+  assert.throws(() => set(b, "Mana Bolt", { force: 7 }), /1 to 6/, "no starting spell above Force 6 (p.46)");
+  const gone = applyOp(b, { op: "removeItem", itemId: idOf(b, "Mana Bolt") }, lookup);
+  assert.match(texts(gone), /its spell is no longer on this character/);
+  const adept = applyOp(b, { op: "setMagic", type: "physical_adept" }, lookup);
+  assert.match(texts(adept), /Mana Bolt: only magicians learn spells/);
+  assert.match(texts(adept), /Power Focus: only a magician bonds this focus/);
+  assert.deepEqual([1, 2, 3].map(f => [bondingCost("spell", f), bondingCost("spirit", f), bondingCost("power", f)]), [[1, 2, 5], [2, 4, 10], [3, 6, 15]]);
+  assert.equal(bondingCost("spell_lock", 1), 1);
+});
+
+test("refused at creation: no fixed price, limb options, weapon foci, adept powers, vehicles, programs, sourcebooks", () => {
+  for (const n of ["Personal Computer (Pocket)", "DataSoft", "Smartgun System (Internal)", "Built-In Device (Cyberlimb)", "Weapon Focus", "Unarmed Strike"])
+    assert.throws(() => start(buy(n)), Refusal, n);
+  for (const type of ["adept_power", "vehicle", "program", "lifestyle", "contact"]) {
+    const e = catalog.entries.find(x => x.book === "sr2" && x.type === type);
+    assert.throws(() => start([{ op: "addItem", catalogId: e.id }]), Refusal, type);
+  }
+  const ssc = catalog.entries.find(x => x.book !== "sr2" && x.type === "weapon");
+  assert.throws(() => start([{ op: "addItem", catalogId: ssc.id }]), /core book/);
+  assert.throws(() => start([{ op: "addItem", catalogId: core("Firearms") }]), /Skills step/);
+});
+
+test("skillsofts: the rating is a choice, the category is the entry's, the chip names its skill", () => {
+  let b = start(buy("ActiveSoft"));
+  assert.match(texts(b), /ActiveSoft: name the skill on the chip/);
+  b = set(b, "ActiveSoft", { rating: 4, skill: "Pistols" });
+  assert.deepEqual([item(b, "ActiveSoft").system.grantedSkill, item(b, "ActiveSoft").system.grantedSkillCategory, item(b, "ActiveSoft").system.rating], ["Pistols", "active", 4]);
+  assert.throws(() => set(b, "ActiveSoft", { grantedSkillCategory: "language" }), /no choice/);
+  assert.ok(validate(b).budgets.resources.spent > 0);
+});
