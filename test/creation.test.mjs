@@ -2,7 +2,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { TABLES, chargenSpend, label } from "../shared/rules.mjs";
-import { newCharacter, applyOp, validate, Refusal, ATTRIBUTES } from "../shared/creation.mjs";
+import { newCharacter, applyOp, validate, Refusal, ATTRIBUTES, CORE_TOTEMS } from "../shared/creation.mjs";
 import { forbiddenIn, importsOf, selectPaths } from "../tools/content.mjs";
 
 const run = (ops, body = newCharacter("Razor")) => ops.reduce((b, op) => applyOp(b, op), body);
@@ -16,6 +16,7 @@ test("the system's rules load from the project's copy, with the core book's Mast
   assert.deepEqual(["A", "B", "C", "D", "E"].map(row), [[30, 40, 1e6, 50], [24, 30, 400000, 35], [20, 24, 90000, 25], [17, 20, 5000, 15], [15, 17, 500, 5]]);
   assert.equal(TABLES.racialMaximums.troll.body, 11);
   assert.equal(Object.keys(TABLES.totems).length, 15);
+  assert.equal(CORE_TOTEMS.length, 14, "Mouse is not in the core book");
   assert.equal(label("SR2E.Magic.Hermetic"), "Hermetic");
   assert.equal(label("No.Such.Key"), "No.Such.Key");
 });
@@ -27,10 +28,14 @@ test("the rules closure: only static file imports, no forbidden construct, nothi
   assert.equal(forbiddenIn("const m = await import('./x.mjs');").length, 1);
   assert.equal(forbiddenIn("globalThis.game = {};").length, 1);
   assert.equal(forbiddenIn("if (globalThis.game === undefined) {}").length, 0);
+  // A string can't hide a call; a computed global write and every import form are seen (code review M2a #1 #2).
+  assert.deepEqual(forbiddenIn(`const a = "/*"; eval("1"); const b = "*/";`), ["eval()"]);
+  assert.ok(forbiddenIn(`globalThis["pwned"] = true;`).length);
+  assert.deepEqual(forbiddenIn("const o = { process: 1 }; o.window; class A { document() {} }"), [], "property names are not globals");
+  assert.deepEqual(importsOf("module/rules/a.mjs", `import "./x.mjs"; export{foo}from"./y.mjs"; export * from "../z.mjs";`), ["module/rules/x.mjs", "module/rules/y.mjs", "module/z.mjs"]);
   const files = { "system.json": "{}", "lang/en.json": "{}", "module/config.mjs": `import "./rules/sr2e-rules.mjs";`,
     "module/rules/sr2e-rules.mjs": `export { a } from "./ware-rules.mjs";`, "module/rules/ware-rules.mjs": "export const a = 1;",
     "module/rules/unused.mjs": "export const b = 2;", "module/rules/books.mjs": "export const BOOKS = {};" };
-  // A bare `import "x"` is not followed by importsOf (only `… from`): the entries are listed explicitly anyway.
   const kept = selectPaths(Object.keys(files), (p) => files[p]);
   assert.ok(!kept.includes("module/rules/unused.mjs"), "a module nothing imports is not copied");
   assert.ok(kept.includes("module/rules/ware-rules.mjs") && kept.includes("lang/en.json"));
@@ -74,6 +79,7 @@ test("magic: magician human A / metahuman B, adept human B / metahuman C; More M
     return validate(b).problems.filter(p => p.step === "magic" && p.severity === "error").length === 0;
   };
   assert.equal(magic("human", "A", "full_magician"), true);
+  assert.equal(magic("human", "A", "physical_adept"), false, "the table gives A to the magician");
   assert.equal(magic("human", "B", "full_magician"), false);
   assert.equal(magic("human", "B", "physical_adept"), true);
   assert.equal(magic("human", "C", "physical_adept"), false);
@@ -83,6 +89,7 @@ test("magic: magician human A / metahuman B, adept human B / metahuman C; More M
   assert.equal(magic("ork", "D", "physical_adept"), false);
   assert.equal(magic("ork", "B", "full_magician", true), false);
   assert.equal(magic("ork", "A", "full_magician", true), true);
+  assert.equal(magic("human", "A", "physical_adept", true), false);
   assert.equal(magic("human", "B", "physical_adept", true), true);
   assert.equal(magic("human", "C", "physical_adept", true), false);
 });
@@ -95,6 +102,7 @@ test("magic: a magician picks a tradition; a shaman a totem (p.44); only they ca
   b = applyOp(b, { op: "setTotem", totem: "bear" });
   assert.deepEqual(texts(b, "magic"), []);
   assert.throws(() => applyOp(b, { op: "setTotem", totem: "toString" }), Refusal, "an inherited key is not a totem");
+  assert.throws(() => applyOp(b, { op: "setTotem", totem: "mouse" }), Refusal, "not a core totem");
   const herm = applyOp(b, { op: "setTradition", tradition: "hermetic" });
   assert.equal(herm.actor.system.magic.totem, "", "a hermetic has no totem");
   const adept = applyOp(b, { op: "setMagic", type: "physical_adept" });

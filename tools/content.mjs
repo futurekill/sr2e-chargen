@@ -6,6 +6,7 @@
  *   - `readVendored` reads this project's own copy in `content/<dir>/` and checks it against its record and the pin.
  * `shapeRepo` turns either into what the catalog build reads.
  */
+import * as acorn from "acorn";
 import { execFileSync } from "node:child_process";
 import { existsSync, lstatSync, readdirSync, readFileSync } from "node:fs";
 import { createHash } from "node:crypto";
@@ -23,22 +24,50 @@ export const WANTED = ["system.json", "module.json", "packs-src", "module/rules/
  */
 export const RULES_ENTRIES = ["module/config.mjs", "module/rules/sr2e-rules.mjs", "module/rules/ware-rules.mjs"];
 export const LABELS = "lang/en.json";
-/** Constructs copied code may not use: it must stay plain, side-effect-free rules (comments are ignored). */
-const FORBIDDEN = [/\bimport\s*\(/, /\beval\s*\(/, /\bnew\s+Function\b/, /\bFunction\s*\(/, /\bfetch\s*\(/, /XMLHttpRequest/, /\bprocess\./,
-  /\brequire\s*\(/, /globalThis\.[A-Za-z_$]+\s*=[^=]/, /\bdocument\./, /\bwindow\./, /\blocalStorage\b/];
-export function forbiddenIn(src) {
-  const code = String(src).replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:"'`\\])\/\/.*$/gm, "$1");
-  return FORBIDDEN.filter(re => re.test(code)).map(re => re.source);
+/**
+ * Constructs copied code may not use: it must stay plain, side-effect-free rules. Checked on the PARSED module
+ * (acorn), so a string or a comment can't hide a call and every import form is seen (code review M2a #1 #2).
+ */
+const BANNED_CALLS = new Set(["eval", "Function", "fetch", "require", "XMLHttpRequest", "importScripts"]);
+const BANNED_GLOBALS = new Set(["process", "document", "window", "localStorage", "sessionStorage", "navigator", "XMLHttpRequest", "WebSocket", "Deno", "Bun"]);
+function walk(node, visit) {
+  if (!node || typeof node.type !== "string") return;
+  visit(node);
+  for (const v of Object.values(node)) for (const c of Array.isArray(v) ? v : [v]) if (c && typeof c.type === "string") walk(c, visit);
 }
-/** The static imports of a module, resolved against its own path. */
-export function importsOf(path, src) {
-  const dir = path.split("/").slice(0, -1);
-  return [...String(src).matchAll(/(?:^|\n)\s*(?:import|export)\s[^;]*?from\s+["']([^"']+)["']/g)].map(m => {
-    if (!m[1].startsWith(".")) throw new Error(`${path} imports "${m[1]}", which is not a file of the system`);
-    const out = [...dir];
-    for (const part of m[1].split("/")) { if (part === "..") out.pop(); else if (part !== ".") out.push(part); }
-    return out.join("/");
+const parse = (src) => acorn.parse(String(src), { ecmaVersion: "latest", sourceType: "module" });
+/** The forbidden constructs a module uses (by name), or [] — a parse error counts as forbidden. */
+export function forbiddenIn(src) {
+  let ast;
+  try { ast = parse(src); } catch (e) { return [`unparsable (${e.message})`]; }
+  const bad = new Set(), names = new WeakSet();   // identifiers that are property NAMES (`a.process`, `{ window: 1 }`), not globals
+  walk(ast, (n) => {
+    if (n.type === "MemberExpression" && !n.computed) names.add(n.property);
+    if ((n.type === "Property" || n.type === "MethodDefinition" || n.type === "PropertyDefinition") && !n.computed) names.add(n.key);
+    if (n.type === "ImportExpression") bad.add("import()");
+    if ((n.type === "CallExpression" || n.type === "NewExpression") && n.callee.type === "Identifier" && BANNED_CALLS.has(n.callee.name)) bad.add(`${n.callee.name}()`);
+    if (n.type === "Identifier" && BANNED_GLOBALS.has(n.name) && !names.has(n)) bad.add(n.name);
+    if (n.type === "AssignmentExpression" || n.type === "UpdateExpression") {
+      let t = n.left ?? n.argument;
+      while (t.type === "MemberExpression") t = t.object;
+      if (t.type === "Identifier" && t.name === "globalThis") bad.add("a write to globalThis");
+    }
+    if (n.type === "MemberExpression" && n.object.type === "Identifier" && n.object.name === "globalThis" && n.property.type !== "Identifier") bad.add("globalThis[…]");
   });
+  return [...bad];
+}
+/** Every static import and re-export of a module (side-effect imports included), resolved against its own path. */
+export function importsOf(path, src) {
+  const dir = path.split("/").slice(0, -1), out = [];
+  for (const n of parse(src).body) {
+    if (!["ImportDeclaration", "ExportNamedDeclaration", "ExportAllDeclaration"].includes(n.type) || !n.source) continue;
+    const spec = n.source.value;
+    if (!spec.startsWith(".")) throw new Error(`${path} imports "${spec}", which is not a file of the system`);
+    const parts = [...dir];
+    for (const part of spec.split("/")) { if (part === "..") parts.pop(); else if (part !== ".") parts.push(part); }
+    out.push(parts.join("/"));
+  }
+  return out;
 }
 /**
  * Which listed files to keep: every manifest, pack file and the book table; for the system also the rules closure and

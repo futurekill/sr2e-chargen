@@ -14,6 +14,7 @@ the test runner (`node:test`), UUIDs and random tokens (`node:crypto`), `fetch`.
 | @fastify/helmet | 13.2.0 | 2026-11-16 | Content-Security-Policy and the other security headers |
 | kysely | 0.29.9 | 2026-11-16 | One query layer for SQLite, Postgres and MySQL/MariaDB; migrations |
 | eslint, @eslint/js (dev) | see package.json | 2026-11-16 | Lint (`no-undef` above all) |
+| acorn (dev) | 8.19.0 | 2026-11-18 | The content sync PARSES the system modules it copies (import closure, forbidden constructs); already in the tree via eslint and svelte. Tools only, not in the image |
 
 | svelte (dev) | 5.57.3 | 2026-11-16 | The client, compiled at build time; nothing of it runs on the server |
 | vite, @sveltejs/vite-plugin-svelte (dev) | 8.3.8, 7.3.1 | 2026-11-16 | Builds the client into `dist/client` |

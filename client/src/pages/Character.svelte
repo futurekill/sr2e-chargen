@@ -21,16 +21,25 @@
   const nuyen = (n) => `${n.toLocaleString("en-US")}¥`;
   const sign = (n) => (n > 0 ? `+${n}` : n < 0 ? `−${-n}` : "");
 
-  /** Make a change: refused here (the same reducer the server runs) or shown at once, then saved. */
+  /**
+   * Make a change: refused here (the same reducer the server runs) or shown at once, then saved. When a save fails,
+   * the changes still waiting are DROPPED (code review M2a #5): each was made on top of the failed one, so sending it
+   * against what the server really holds could save something the player never saw.
+   */
+  let epoch = 0;
   function change(op) {
     try { body = applyOp(body, op); } catch (err) { error = err.message; return; }
     error = ""; sending++;
+    const mine = epoch;
     queue = queue.then(async () => {
-      try { server = await mutate("POST", `/api/documents/${server.document.id}/ops`, { revision: server.document.revision, ops: [op] }); }
-      catch (err) {
-        error = err.code === "stale" ? "This character changed somewhere else. It now shows the saved version: check your last change."
-          : err.code === "network" ? "The line dropped. This shows what was saved: check your last change." : err.message;
-        try { server = await get(`/api/documents/${server.document.id}`); } catch { /* keep the last answer */ }
+      if (mine === epoch) {
+        try { server = await mutate("POST", `/api/documents/${server.document.id}/ops`, { revision: server.document.revision, ops: [op] }); }
+        catch (err) {
+          epoch++;
+          error = err.code === "stale" ? "This character changed somewhere else. It now shows the saved version: redo your last changes."
+            : err.code === "network" ? "The line dropped. This shows what was saved: redo your last changes." : err.message;
+          try { server = await get(`/api/documents/${server.document.id}`); } catch { /* keep the last answer */ }
+        }
       }
       if (--sending === 0) body = server.body;   // the server's copy wins once nothing else is on its way
     });

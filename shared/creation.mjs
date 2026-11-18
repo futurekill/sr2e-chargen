@@ -18,6 +18,8 @@ export const METATYPES = ["human", "dwarf", "elf", "ork", "troll"];
 /** Core magic: a full magician or a physical adept (p.45); the Grimoire's other adepts are milestone 5. */
 export const MAGIC_TYPES = ["none", "full_magician", "physical_adept"];
 export const TRADITIONS = ["hermetic", "shamanic"];
+/** The core book's totems: the system's table less Mouse, which it notes the core book doesn't describe (review M2a #3). */
+export const CORE_TOTEMS = Object.keys(TABLES.totems).filter(k => k !== "mouse");
 const CORE = "sr2";
 const cite = (page) => ({ book: CORE, page: String(page) });
 
@@ -101,7 +103,7 @@ export function applyOp(body, op) {
       if (op.tradition !== "shamanic") sys.magic.totem = "";
       break;
     case "setTotem":
-      if (op.totem !== "" && !Object.hasOwn(TABLES.totems, op.totem)) throw new Refusal("That isn't a core totem.", 119);
+      if (op.totem !== "" && !CORE_TOTEMS.includes(op.totem)) throw new Refusal("That isn't a core totem.", 119);
       if (op.totem !== "" && sys.magic.tradition !== "shamanic") throw new Refusal("Only a shaman has a totem.", 44);
       sys.magic.totem = op.totem; break;
     case "setAttribute":
@@ -113,14 +115,14 @@ export function applyOp(body, op) {
 
 /* ── Validation: the rules panel ─────────────────────────────────────────────────────────────────────────────── */
 
-/** What a priority letter allows for magic (p.45; More Metahumans, p.46). Returns the magic types it buys. */
+/**
+ * The magic type a Magic priority buys (core p.45 and the Master Table p.47; More Metahumans, p.46): exactly the
+ * table's entry — human A magician, B adept; metahuman B magician, C adept; More Metahumans A magician, B adept for
+ * every race (code review M2a #4: the table assigns a type to a letter, it doesn't set a minimum).
+ */
 export function magicAllowed(letter, race, moreMetahumans) {
-  const meta = race !== "human";
-  if (moreMetahumans) return letter === "A" ? ["full_magician", "physical_adept"] : letter === "B" ? ["physical_adept"] : [];
-  if (letter === "A") return ["full_magician", "physical_adept"];   // a higher priority than needed still buys it
-  if (letter === "B") return meta ? ["full_magician", "physical_adept"] : ["physical_adept"];
-  if (letter === "C") return meta ? ["physical_adept"] : [];
-  return [];
+  const table = moreMetahumans || race === "human" ? { A: "full_magician", B: "physical_adept" } : { B: "full_magician", C: "physical_adept" };
+  return table[letter] ? [table[letter]] : [];
 }
 /** Does the Race priority allow this metatype (p.44; More Metahumans moves it to C, p.46)? */
 export const metatypeAllowed = (letter, race, moreMetahumans) =>
@@ -188,4 +190,4 @@ const aRace = (race) => `${/^[aeiou]/.test(RACE_NAMES[race]) ? "an" : "a"} ${RAC
 export const MAGIC_NAMES = { none: "mundane", full_magician: "full magician", physical_adept: "physical adept" };
 export const ATTR_NAMES = { body: "Body", quickness: "Quickness", strength: "Strength", charisma: "Charisma", intelligence: "Intelligence", willpower: "Willpower" };
 /** The totem names, from the system's labels. */
-export const totemNames = () => Object.fromEntries(Object.entries(TABLES.totems).map(([k, t]) => [k, label(t.label)]));
+export const totemNames = () => Object.fromEntries(CORE_TOTEMS.map(k => [k, label(TABLES.totems[k].label)]));
