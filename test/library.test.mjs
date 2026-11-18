@@ -225,3 +225,18 @@ test("a skill is copied from the SERVER's catalog: the client names an id, never
   const set = await razor.call("POST", `${D}/${id}/ops`, { revision: 2, ops: [{ op: "setSkill", itemId: item._id, allocated: 5, concentration: "Pistols", specialization: "Ares Predator", freeLanguage: "" }] });
   assert.deepEqual([set.json().body.actor.items[0].system.rating, set.json().body.actor.items[0].system.specialization.rating], [3, 7]);
 });
+
+test("the printable sheet: a character's PDF, rendered in a separate process; drafts and unprintable names refused", async () => {
+  const { razor } = await harness();
+  const id = (await razor.call("POST", `${D}/characters`, { name: "Sheet Test" })).json().document.id;
+  const res = await razor.call("GET", `${D}/${id}/sheet.pdf?paper=a4&font=readable`);
+  assert.equal(res.statusCode, 200);
+  assert.equal(res.headers["content-type"], "application/pdf");
+  assert.equal(res.rawPayload.subarray(0, 5).toString(), "%PDF-");
+  assert.equal((await razor.call("GET", `${D}/${id}/sheet.pdf?paper=legal`)).statusCode, 400);
+  const dragon = (await razor.call("POST", `${D}/characters`, { name: "龍" })).json().document.id;
+  const bad = await razor.call("GET", `${D}/${dragon}/sheet.pdf`);
+  assert.equal(bad.statusCode, 422); assert.match(bad.json().error, /U\+9F8D/);
+  const draft = await make(razor);
+  assert.equal((await razor.call("GET", `${D}/${draft.id}/sheet.pdf`)).json().code, "wrong-kind");
+});

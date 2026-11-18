@@ -6,6 +6,14 @@ notes come from it.
 ## Unreleased
 
 ### Added
+- **Printable sheet (milestone 3, Classic style).** "Print sheet" on a character gives a PDF for US Letter or A4, in a
+  standard or a readable font (Atkinson Hyperlegible Next). Page 1 holds what you need at the table: attributes
+  (natural and augmented), Reaction and Initiative, dice pools, armor, condition monitors with boxes for pencil,
+  attacks and active skills; the rest follows (other skills, cyberware, adept powers, spells, foci, gear, notes) with
+  book pages. Nothing is cut off: text wraps and long lists continue on the next page. An unfinished character prints
+  marked "draft".
+- **Derived values match Foundry**: the sheet's numbers for all seven pregens equal what the Foundry system computes
+  (a test checks every value).
 - **Resources (milestone 2c).** Buy the core book's weapons, armor, gear, ammunition (by the box), cyberware, spells
   and foci with the Resources priority, at the system's own list prices. Rated gear takes a Rating up to 6 (p.44);
   cybereyes take accessories up to .5 Essence for free (p.247); spells (Force up to 6) and foci bonding spend Force

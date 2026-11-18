@@ -1,6 +1,7 @@
 /** The library's routes (docs/PLAN-M3.md §5). Every one goes through the session and `ownedDocument`. */
 import * as L from "../library.mjs";
 import { OPS } from "../../shared/creation.mjs";
+import { renderSheetPdf } from "../sheet/index.mjs";
 
 const UUID = "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$";
 const idParams = { type: "object", required: ["id"], properties: { id: { type: "string", pattern: UUID }, n: { type: "string", pattern: "^[1-9][0-9]{0,8}$" } } };   // no coercion anywhere: numbers in the URL are checked strings
@@ -37,6 +38,16 @@ export default async function documentRoutes(app) {
   app.get("/:id/revisions/:n", { schema: { params: idParams } }, (req) => L.getRevision(req.ctx, me(req), req.params.id, Number(req.params.n)));
   app.post("/:id/revisions/:n/restore", { schema: { params: idParams, headers: keyHeader, querystring: noQuery, body: revisionBody } },
     (req) => L.restoreRevision(req.ctx, me(req), req.params.id, Number(req.params.n), req.body, key(req)));
+  // The printable sheet (docs/PLAN-sheet.md): characters only; rate-limited per user, one render at a time server-wide.
+  app.get("/:id/sheet.pdf", { config: { rateLimit: { max: 6, timeWindow: "1 minute", keyGenerator: (req) => `sheet:${me(req)}` } },
+    schema: { params: idParams, querystring: { type: "object", additionalProperties: false, properties: { paper: { enum: ["letter", "a4"] }, font: { enum: ["standard", "readable"] } } } } },
+  async (req, reply) => {
+    const { document, body } = await L.getDocument(req.ctx, me(req), req.params.id);
+    if (document.kind !== "character") return reply.code(409).send({ error: "Only a character has a sheet.", code: "wrong-kind" });
+    const pdf = await renderSheetPdf(body, { paper: req.query.paper ?? "letter", font: req.query.font ?? "standard" });
+    reply.header("content-disposition", `inline; filename="sheet-${document.id}.pdf"`).header("cache-control", "no-store").type("application/pdf");
+    return pdf;
+  });
   app.get("/:id/download", { schema: { params: idParams } }, async (req, reply) => {
     const { document, body } = await L.getDocument(req.ctx, me(req), req.params.id);
     reply.header("content-disposition", `attachment; filename="${document.id}.json"`).type("application/json");
