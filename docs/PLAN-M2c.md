@@ -1,13 +1,16 @@
 # Plan: milestone 2c — resources (core book)
-_Draft 2 (2026-11-18), after Codex plan round 1 (14 findings: 13 accepted, 1 deferred to M5;
-docs/PLAN-M2c-REVIEW-LOG.md). A slice of docs/PLAN-M2.md (§3, §4 Resources, §7 M2c); this file settles what that plan left
+_Draft 3 (2026-11-18), after Codex plan rounds 1–2 (14 + 4 findings; docs/PLAN-M2c-REVIEW-LOG.md). A slice of docs/PLAN-M2.md (§3, §4 Resources, §7 M2c); this file settles what that plan left
 open for buying things with nuyen and Force Points. Rules: docs/RULES-CHARGEN.md item 6 (p.46) and the pages cited
 here, each read on the page render (not the PDF text layer)._
 
 ## Goal
 A player spends the Resources priority on the core book's gear: weapons, armor, gear, ammunition, cyberware (with its
-Essence), spells, foci, and a physical adept's powers. The rules check shows nuyen, Force Points, Essence and power
-points, each with its page. Programs, lifestyles and contacts are M2d (they need the system release S1–S3).
+Essence), spells, foci, and a physical adept's powers. The rules check shows nuyen, Force Points and Essence, each with its
+page. **Adept powers move to a follow-up slice, M2c-2** (round 2 #3 #4): their costs depend on a chosen target (Improved
+Ability's skill, p.125, .25–1 per die by skill area; Improved Physical Senses' named senses, .25 each) or on the
+RESULTING rating against the racial maximum (Improved Physical Attributes, Increased Reaction: .5 / 1 / 1.5 or 2 per
+point by tier, up to 1.5 × the racial maximum, p.125–126 read on the page), and Combat Sense and Killing Hands have
+their own tables (p.125–126). The system's `adeptPowerCost` must be checked against those tables first (S13). Programs, lifestyles and contacts are M2d (they need the system release S1–S3).
 
 ## What the catalog holds (measured 2026-11-18, core book `sr2`)
 weapon 64, armor 20, gear 107 (incl. skillsoft 4, cyberdeck), ammo 13, cyberware 56, spell 68, focus 5, adept_power 14,
@@ -18,11 +21,14 @@ is the price of one bundle (`quantity` rounds, usually 10). Cybereyes have `capa
 ## Approach
 
 ### 1. Operations (added to shared/creation.mjs)
-- `addItem { catalogId }` — a core (`book: "sr2"`) entry of type weapon, armor, gear, ammo, cyberware, spell, focus or
-  adept_power, copied from the SERVER's catalog as a Foundry item source, exactly as `addSkill` does (deterministic id,
+- `addItem { catalogId }` — a core (`book: "sr2"`) entry of type weapon, armor, gear, ammo, cyberware, spell or focus, copied from the SERVER's catalog as a Foundry item source, exactly as `addSkill` does (deterministic id,
   `creation.items[id] = { catalogId, snapshot, choices }`), with the entry's own `type` (the shared item helper takes
   the type; it is not "skill" for everything — r1 #1). Every price and budget call gets `{ type, name, ...system }`.
-  An adept power is bought once (a second entry of the same power is refused: its level is the choice — r1 #12). Refused: other types (skill has its own operation;
+  Also refused (round 2 #1 #2): an entry with no fixed core price — its projected `itemBaseCost` is 0 (measured: the
+  personal computers, Telecom, Data Display Unit, Display Headset and Heads-Up Display, whose price is per Mp of
+  memory; Computer Memory; the internal Smartgun System, priced as its weapon; DataSoft; Unarmed Strike) — and any
+  cyberlimb option (`limbOption`: Built-In Device, Built-In Smartlink, Increased Strength), which needs a limb (M5).
+  Each refusal names the reason; pricing them is a follow-up. Refused: other types (skill has its own operation;
   program, lifestyle, contact wait for M2d; vehicle — see §5; race, tradition, archetype are not items a character
   buys).
 - `setItem { itemId, choices }` — `choices` is an object; the reducer accepts ONLY the keys its type lists (below),
@@ -43,7 +49,6 @@ Only these choices exist; everything else in `system` comes from the snapshot.
 | cyberware | `rating`: one of the `ratingStats` rows' ratings; an eye accessory: `in` = the item id of a cybereye on this character, or "" | grade is always standard (grades are the Street Samurai Catalog's, M5) |
 | spell | `force` 1–6 (above 6 refused: "no starting spell can have a Force greater than 6", p.46) | Force Points = Force (p.46) |
 | focus | `force` 1–6 (spell lock: none, its price is flat, p.137) | nuyen via `derivedItemCost` (`costPerForce` × Force); Force Points = the bonding cost (§3) |
-| adept_power | `level` 1–the power's `maxLevel` | power points via `adeptPowerCost({ name, ...system }, racial Reaction max)` — the name picks Increased Reflexes' 1/4/6 and the race's Reaction maximum Increased Reaction's tiers (r1 #11) |
 
 `quantity`, `rating` and `force` land in the system's own fields (`quantity`, `rating`, `force`, `level`,
 `strengthMinimum`, `grantedSkillCategory`), so `chargenSpend` / `itemBaseCost` / `chargenItemCost` price them exactly
@@ -78,8 +83,7 @@ as Foundry's creation panel does. Prices are never stored as typed: `cost` stays
   is the SPECIFIC spell focus (the system implements only that subtype; its price, 45,000¥ × Rating, is the price
   list's "Specific Spell Focus", core p.263): bonding = Rating. A spell category ("Spell
   Type") focus (75,000¥ × Rating, 3 × Rating) is not in the catalog and not offered (r1 #9). Weapon foci: §5.
-- **Adept power points** (p.124): the sum of `adeptPowerCost` over powers ≤ the adept's Magic Rating; physical adepts
-  only (a magician buying a power is an error).
+- **Adept power points**: M2c-2 (above).
 - **Rating availability**: core character creation has no availability limit (the Companion's are M5).
 
 ### 4. Client
@@ -97,6 +101,9 @@ gains Nuyen, Essence, Magic, Force Points and power points rows.
   45,000¥ × Rating, Spell Type Focus 75,000¥ × Rating, Spirit Focus 60,000¥ × Rating, Power Focus 105,000¥ × Rating,
   Spell Lock 45,000¥ — the catalog's `costPerForce` values are RIGHT; only `focusCost`'s comment (10,000 / 20,000 /
   5,000) is stale. Fix the comment (r1 #10: resolved, no price changes).
+- **S13. Adept power costs**: check `adeptPowerCost` against p.125–126 (Improved Physical Attributes and Increased
+  Reaction tier by the RESULTING rating; Combat Sense 2/3/4; Killing Hands .5/1/2/4 per level held; Improved Ability by
+  skill area with its Combat Skill cap; Improved Physical Senses per sense) and fix it in the system; M2c-2 uses it.
 - **S12. Weapon foci** price off the bonded weapon's Reach (`weaponFocusCost`, p.126) and need a weapon to bond to;
   the app refuses weapon foci until it has a bond choice (M2c follow-up).
 
@@ -104,9 +111,9 @@ gains Nuyen, Essence, Magic, Force Points and power points rows.
 - Per type: the projection (choices → `system`), refusals for every unlisted choice key and every out-of-range value,
   and the price against a hand-computed value from the page (`costPerRating`, a ratingStats row, a bundle of ammo, a
   focus at Force 3). And the interactions (r1 #14): two Rating 3 Jammers (quantity × rated price), three ammo bundles
-  (rounds and price), an Eye Camera in cybereyes (kind camera), an adept with cyberware (Magic and power points fall),
-  a magician at Essence 0.9 (Magic 0: Sorcery, spells and foci reported), a spell on an adept (refused at the budget:
-  no Force Points), Increased Reflexes 2 for 4 points and a second Increased Reflexes refused.
+  (rounds and price), an Eye Camera in cybereyes (kind camera), an adept with cyberware (Magic falls), a magician at
+  Essence 0.9 (Magic 0: Sorcery, spells and foci reported), a spell on an adept (reported: no Force Points), and every
+  refused entry class above (no fixed price, limb option, adept power, vehicle, program).
 - Essence: wired reflexes + cybereyes with Low-Light (.2) and Thermographic (.2) inside = .2 eyes only; a third
   accessory pushing past .5 adds only the excess; Essence below 0 reported; Magic follows Essence.
 - Force Points: a spell at Force 6 + a power focus Force 2 (10) against Priority C's 25.

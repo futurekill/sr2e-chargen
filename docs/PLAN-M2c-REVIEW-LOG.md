@@ -34,3 +34,17 @@
 VERDICT: REVISE
 ### Claude's response
 Accepted 1–4, 6–14 (draft 2). #10 resolved by reading the core price list (p.263): the catalog's prices are right, only the system comment is stale (S11). #5 deferred: the 1.2 cap and slot rules are Cybertechnology p.45's, enabled with that book in M5.
+
+## Round 2 — Codex (gpt-6-sol, high)
+I verified that draft 2 carries forward accepted fixes #1–4, #6–10, and #13–14. Fixes #11–12 need more work; I did not re-raise deferred finding #5.
+
+- **Variable-price gear is free.** The plan offers all core gear except DataSoft ([plan](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/docs/PLAN-M2c.md:41)), but Computer Memory has `cost: 0` despite costing 20¥ per Mp, and an internal Smartgun System has `cost: 0` despite costing the weapon’s price ([memory](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/content/sr2e-foundryvtt/packs-src/gear/Computer_Memory_Non-Cyber_797bbbbf7ce46754.json:11), [smartgun](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/content/sr2e-foundryvtt/packs-src/gear/Smartgun_System_Internal_5587a28d28518a48.json:11)). **Fix:** Add validated capacity or linked-weapon pricing for these entries, or refuse every unresolved variable-price item.
+- **Core cyberlimb options slip through the cyberware filter.** Built-In Device is admitted at zero cost and with no linked limb or device price ([plan](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/docs/PLAN-M2c.md:43), [entry](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/content/sr2e-foundryvtt/packs-src/cyberware/Built-In_Device_Cyberlimb_9f04a7b3e2c81d56.json:11)). **Fix:** Explicitly refuse `limbOption` cyberware in M2c, as the plan’s M5 scope requires.
+- **Improved Ability has no skill choice and the wrong fixed price.** The sole `level` choice cannot set its target; its catalog cost is 0.5 per die, while the entry specifies 0.25, 0.5, or 1 by skill, and the one-entry rule prevents buying it for two different skills ([plan](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/docs/PLAN-M2c.md:25), [entry](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/content/sr2e-foundryvtt/packs-src/adept-powers/Improved_Ability_7a4b0e85072ce4c6.json:17)). Improved Physical Senses likewise lacks a choice naming the purchased senses. **Fix:** Require validated skill or sense targets, derive each cost, and enforce uniqueness per target.
+- **Tiered adept costs use the purchased level instead of the resulting attribute.** `adeptPowerCost` charges Improved Physical Attributes a flat `pointCost × level` and starts Increased Reaction’s tiers at level 1 ([function](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/content/sr2e-foundryvtt/module/rules/sr2e-rules.mjs:1782)); SR2’s tiers depend on the [resulting attribute rating](https://archive.thatpaolo.com/articles/magic/physad5.html), and the plan has no 1.5× racial-maximum check. **Fix:** Add system rules that price each increase from the character’s current attribute or Reaction and validate the resulting cap.
+
+VERDICT: REVISE
+### Claude's response
+All four accepted (draft 3). #1 #2: entries with no fixed core price and cyberlimb options are refused at addItem (the
+list was measured from the catalog). #3 #4: checked on the page (p.125–126): the costs depend on targets and on the
+resulting rating; adept powers move to a follow-up slice M2c-2 after the system's `adeptPowerCost` is checked (S13).
