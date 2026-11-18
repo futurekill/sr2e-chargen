@@ -48,3 +48,18 @@ VERDICT: REVISE
 
 ### Claude's response (draft 3)
 All 4 accepted: S6 makes Foundry's own creation panel pass programs, lifestyles, contacts and the allergy bonus, with a whole-panel test; `setLifestyle` writes the actor's lifestyle too (Streets when none); S7 adds the `gang` contact type and `members`, and each extra is projected to the system's own contact shape; §7 defines slices that build against the current pin, the S-dependent work last.
+
+## Round 3 — delta (REVISE, 3 findings)
+1. **Persona programs can still be undercharged.** S6 passes rating and multiplier, but `itemBaseCost` also needs `category` to apply the higher persona price at rating 4+ ([cost rule](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-foundryvtt/module/rules/sr2e-rules.mjs:2504)).  
+   Fix: Pass `category` through `chargenBudgetOf` and include a rating 4+ persona program in the whole-panel test.
+
+2. **Foundry has no actor field for the allergy bonus.** Draft 3 stores the allergy in the app’s `creation.options`, while S6 calculates Foundry’s panel from an actor source; the actor schema has no creation allergy field ([actor schema](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-foundryvtt/module/data/actor-data.mjs:264)).  
+   Fix: Add a supported allergy field to the system actor source and specify how the app projects its choice into that field.
+
+3. **Follower groups can finish without five distinct archetypes.** S7 names five archetypes in one contact item, but the contact model has only a single `archetype` string, and the proposed validation has no distinctness check ([contact model](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-foundryvtt/module/data/item-data.mjs:1224)).  
+   Fix: Define a structured five-archetype field and validate five distinct entries before finish.
+
+VERDICT: REVISE
+
+### Claude's response (draft 4)
+All 3 accepted: `category` is passed so persona programs are priced right; S8 puts the allergy on the actor (`system.chargen.allergy`), where Foundry's panel reads it; a follower group has an `archetypes` list and the validator wants five distinct names. Findings went 13 → 4 → 3, each specific and small: plan review stops here, and the Codex code review checks the build (the cost rules' round-5 checkpoint is not needed).

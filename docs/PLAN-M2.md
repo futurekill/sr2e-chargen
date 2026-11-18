@@ -1,5 +1,6 @@
 # Plan: milestone 2 — create a character (core Priority system)
-_Draft 3 (2026-11-18), after Codex rounds 1–2 (13 + 4 findings, all accepted; docs/PLAN-M2-REVIEW-LOG.md). Roadmap: docs/ROADMAP.md (approved). Rules reference: docs/RULES-CHARGEN.md (M0, read from
+_Draft 4 (2026-11-18), after Codex rounds 1–3 (13 + 4 + 3 findings, all accepted; round 3's fixes are not re-reviewed —
+the code review checks them; docs/PLAN-M2-REVIEW-LOG.md). Roadmap: docs/ROADMAP.md (approved). Rules reference: docs/RULES-CHARGEN.md (M0, read from
 page renders; every rule here cites it). Catalog: docs/PLAN-catalog.md._
 
 ## Goal
@@ -34,11 +35,16 @@ citing the page:
 - S5. Any derived value §5 needs that lives only in a Foundry data model (today `actualEssenceCost`) moves to
   `module/rules/`, the data model calling it.
 - S6. **Foundry's own panel uses them** (round 2 #1): `chargenBudgetOf` (sheets/actor-sheet.mjs) passes each program's
-  `multiplier` and rating, each lifestyle's `monthlyCost` and `monthsPaid`, and the contact items, and its allotments
+  `multiplier`, rating AND `category` (a persona program is priced higher from rating 4, round 3 #1), each lifestyle's `monthlyCost` and `monthsPaid`, and the contact items, and its allotments
   add the allergy bonus; a test drives the WHOLE panel calculation from an actor source (program, lifestyle, three
-  contacts, a buddy, an allergy).
+  contacts, a buddy, an allergy, a rating-4+ persona program).
 - S7. **Extras the model can hold** (round 2 #3): `ContactData.contactType` gains `gang` (a gang or tribe, core p.44);
-  `buddy` and `follower` exist. A `members` number on contacts holds a gang's 2D6 members.
+  `buddy` and `follower` exist. A `members` number on contacts holds a gang's 2D6 members, and `archetypes` (a list of
+  strings) a follower group's FIVE archetypes; the validator requires five distinct, non-blank names (round 3 #3).
+- S8. **The allergy lives on the actor** (round 3 #2): `system.chargen.allergy = { substance, rarity, severity,
+  rarityBonus, severityBonus }` (choice fields with `blank: true`, so existing actors stay valid); `chargenBudgetOf`
+  adds `allergyBonus` from it. The app writes the player's choice THERE (not only in `creation.options`), so the
+  Foundry connector carries it unchanged.
 The system work is done on a branch NOW and released after Friday. The app is built in slices (§7) that compile and
 pass against the CURRENT pin; a slice that imports an S-function starts only once the pin includes that release.
 
