@@ -1,5 +1,6 @@
 # Plan: milestone 2c-2 — physical adept powers (core book), and the system fix it needs (S13)
-_Draft 2 (2026-11-18), after Codex plan round 1 (10 findings, all accepted; docs/PLAN-M2c-2-REVIEW-LOG.md). Rules: core
+_Draft 3 (2026-11-18), after Codex plan rounds 1–2 (10 + 5 findings, all accepted; docs/PLAN-M2c-2-REVIEW-LOG.md).
+Round 2's fixes are checked by the code review. Rules: core
 p.124–126, read on the page (PDF 135–136). Parent: docs/PLAN-M2.md, docs/PLAN-M2c.md._
 
 ## Goal
@@ -65,3 +66,16 @@ by tests. Several core powers are not linear, so Foundry's numbers are wrong for
 
 ## Out of scope
 Grimoire adept types and powers (M5), initiation, geasa.
+
+## Round 2 additions (draft 3)
+- **No fixed level caps** where the book has none: Pain Resistance, Improved Ability and Improved Physical Senses
+  get `maxLevel` 24 in the pack (a sanity bound); the real limit is the power points (Used ≤ Magic, reported).
+- **One Improved Physical Attributes power per attribute** (a second is reported in Foundry and refused in the app),
+  priced cumulatively: the k-th +1 is priced by `base + k`, where `base` is the attribute's NATURAL rating (bought +
+  racial modifier) — cyberware and spells do not count toward the tier (docs/RULINGS.md R4, to add).
+- **The unowned fallback is the book's where it needs no context**: Combat Sense, Increased Reflexes, Killing Hands,
+  Pain Resistance, Senses, Astral Perception price by the table without an actor; Increased Reaction, Improved
+  Physical Attributes and Improved Ability show "depends on the character" when unowned.
+- **Senses are kept**: Improved Physical Senses stores the named improvements in the item's `notes` as a list
+  ("Senses: low-light, thermographic"); the app's `senses` choice is that list, and its count is the level.
+- **Combat Sense dice only for a physical adept** (the adept-effect gate checks magic type, not just form).

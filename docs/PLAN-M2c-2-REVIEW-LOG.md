@@ -15,3 +15,14 @@
 VERDICT: REVISE
 ### Claude's response
 All ten accepted (draft 2): powers identified by compendium source (no migration); one ephemeral per-actor cost map read by all three displays; Combat Sense added to the Combat Pool; pack limits and texts corrected; overage reported, never deleted; the app part waits for the released pin.
+
+## Round 2 — Codex gpt-6-sol high
+- [Fixed level caps](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/docs/PLAN-M2c-2.md:45) still reject legal purchases: at Magic 6, Pain Resistance 12 costs 6 points, and Athletics Improved Ability 11 costs 2.75; Improved Physical Senses remains capped at 6. **Fix:** Derive purchase limits from power cost and Magic instead of fixed pack `maxLevel` values.
+- [Attribute pricing](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/docs/PLAN-M2c-2.md:34) starts each item from the same pre-power rating: two separate +1 Quickness powers at rating 5 cost 1 + 1 instead of 1 + 1.5. **Fix:** Price increments against the cumulative rating, including other boosts that count toward the final rating.
+- [The unowned-item fallback](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/docs/PLAN-M2c-2.md:38) still displays a wrong core cost: Combat Sense level 1 falls back to `totalCost` of 1 instead of 2. **Fix:** Use the book rule for context-free unowned powers and show a context-dependent cost only when an actor supplies its context.
+- [The senses choice](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/docs/PLAN-M2c-2.md:56) has no specified projection into the Foundry item, so the selected senses can disappear on export. **Fix:** Store the named senses in an item field and validate that their count matches the purchased level.
+- [Combat Sense’s new pool bonus](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/docs/PLAN-M2c-2.md:43) needs an eligibility check: the existing adept-effect gate checks form but not magic type, so a power on a mundane actor could grant dice. **Fix:** Apply the bonus only when the actor has an eligible adept magic type.
+
+VERDICT: REVISE
+### Claude's response
+All five accepted (draft 3, "Round 2 additions"). The attribute tier base is a ruling (R4). Plan review stops here.
