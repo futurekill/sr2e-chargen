@@ -6,6 +6,10 @@ notes come from it.
 ## Unreleased
 
 ### Added
+- **Fohawk sheet style**, with an **ink-saver** version: the Pink Fohawk look — a black header band with the
+  priorities, black angled section bars, a big attribute row (magenta and bold when augmented, with the natural
+  rating under it), a stat strip, skills beside the condition monitor (wound levels marked) and attacks. The
+  ink-saver draws the same layout with outlines. Choose the style next to "Print sheet".
 - **The readable font is real and follows you**: the Account setting now uses Atkinson Hyperlegible Next (self-hosted)
   on the site, is saved with your account (every device), and is your printed sheet's default font.
 - **Stat block (Markdown)** for each character: the same content as the sheet, as Markdown tables.

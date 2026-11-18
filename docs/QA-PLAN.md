@@ -12,7 +12,7 @@ the area it touches passes.
 | Content copy | `npm run content:verify` | `content/` is exactly the pinned upstream files, the rules code included |
 | Catalog | `npm run build:catalog && npm run check:catalog` | Reproducible catalog, every entry with a valid citation |
 | Client build | `npm run build` | The browser bundle builds (shared rules code included) |
-| Sheet fit | `npm test` (test/sheet.test.mjs) | Every fixture × Letter/A4 × both fonts: all text placed, inside the safe area, no overlaps, no size under the floor, the PDF's own text (pdf.js) equals what was placed |
+| Sheet fit | `npm test` (test/sheet.test.mjs) | Every fixture × the three styles × Letter/A4 × both fonts: all text placed, inside the safe area, no overlaps, no size under the floor, the PDF's own text (pdf.js) equals what was placed |
 | Derive parity | `npm test` (test/derive.test.mjs) | The seven pregens' derived values equal Foundry's (fixture exported from the test world at the pinned version) |
 | Image | `docker build -f docker/Dockerfile .` | The image builds its own catalog and ships `shared/` and the rules copy |
 

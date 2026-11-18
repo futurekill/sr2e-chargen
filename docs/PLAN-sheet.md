@@ -143,3 +143,11 @@ A small slice under the same approved rules (docs/PLAN.md U22 and Exports); its 
   attachment) from the SAME sheet model: every section as a Markdown table, user text escaped for Markdown (`|`, `\`,
   `*`, `_`, `` ` ``, `<`, `[`, leading `#`), no links. A test checks every model string appears (unescaped form) and
   the table rows parse to the right column count. "Download stat block" beside "Print sheet".
+
+## Slice 3 (2026-11-18): the Fohawk style and its ink-saver
+Under the approved rules (PLAN.md "Exports": U16 styles, ink-saver for heavy-ink styles): `style=classic|fohawk|
+fohawk-ink`. Same sheet model and engine; Fohawk draws a header band (title, metatype · magic, draft, resources left,
+the priority letters), a big attribute row (accent + bold when augmented, "nat X"), a stat strip (Reaction,
+Initiative, the pools that apply, Karma Pool, Essence, Magic, Armor), Skills | Condition monitor (wound levels
+L/M/S/D marked, p.112) + Attacks, then the shared flow. The ink-saver outlines every band. Magenta never carries
+meaning alone (accent text is also bold). No portrait yet (needs uploads). The fit test runs every style.

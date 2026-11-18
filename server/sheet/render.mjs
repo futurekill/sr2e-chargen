@@ -42,9 +42,15 @@ const MARGIN = 36;                 // 0.5 in = 12.7 mm (PLAN.md: safe margins fo
 const BODY = 10, FLOOR = 8, LABEL = 7.5, LABEL_FLOOR = 6.5, LINE = 1.22;
 const BOX = 20;                    // condition-monitor box ≥ 7 mm (19.8 pt)
 
-export async function renderSheet(model, { paper = "letter", font = "standard" } = {}) {
+/** Sheet styles (PLAN.md U16): Classic; Fohawk (black angled bars, magenta accents); Fohawk ink-saver (outlined bars). */
+export const STYLES = ["classic", "fohawk", "fohawk-ink"];
+const INK = "#0e0e10", ACCENT = "#c8006a", MUTED = "#55555d";   // magenta also differs by weight: never colour alone
+
+export async function renderSheet(model, { paper = "letter", font = "standard", style = "classic" } = {}) {
   if (!PAPER[paper]) throw new SheetError("Unknown paper size.");
   if (!FONT_SETS[font]) throw new SheetError("Unknown font set.");
+  if (!STYLES.includes(style)) throw new SheetError("Unknown sheet style.");
+  const fohawk = style !== "classic", inkSaver = style === "fohawk-ink";
   const [W, H] = PAPER[paper];
   const doc = new PDFDocument({ size: [W, H], margin: 0, autoFirstPage: false, bufferPages: true, info: { Title: model.title, Producer: "sr2e-chargen" } });
   const chunks = [];
@@ -90,22 +96,34 @@ export async function renderSheet(model, { paper = "letter", font = "standard" }
     return lines;
   };
   const cellText = {};   // every table cell's full text by id, so the fit test checks split cells exactly
-  const draw = (text, x, y, size, weight, box, kind = "text", cell = null) => {
+  const draw = (text, x, y, size, weight, box, kind = "text", cell = null, color = "#000") => {
     let cx = x;
-    for (const s of segments(text, weight)) { use(s.face, size); doc.fillColor("#000").text(s.text, cx, y, { lineBreak: false }); cx += doc.widthOfString(s.text); }
+    for (const s of segments(text, weight)) { use(s.face, size); doc.fillColor(color).text(s.text, cx, y, { lineBreak: false }); cx += doc.widthOfString(s.text); }
     runs.push({ text, page, x, y, w: cx - x, h: size * LINE, size, box, kind, cell });
   };
   /** Text in a box: wrap; if it is a one-line field (maxLines), shrink toward the floor. Returns the height used. */
-  const block = (text, x, y, w, { size = BODY, floor = FLOOR, weight = 400, maxLines = Infinity, box, kind, cell } = {}) => {
+  const block = (text, x, y, w, { size = BODY, floor = FLOOR, weight = 400, maxLines = Infinity, box, kind, cell, color } = {}) => {
     if (!text) return 0;
     let s = size, lines = wrap(text, s, w, weight);
     while (lines.length > maxLines && s - 0.5 >= floor) { s -= 0.5; lines = wrap(text, s, w, weight); }
-    lines.forEach((ln, i) => draw(ln, x, y + i * s * LINE, s, weight, box ?? { x, y, w, h: lines.length * s * LINE }, kind, cell));
+    lines.forEach((ln, i) => draw(ln, x, y + i * s * LINE, s, weight, box ?? { x, y, w, h: lines.length * s * LINE }, kind, cell, color));
     return lines.length * s * LINE;
   };
 
   const newPage = () => { doc.addPage({ size: [W, H], margin: 0 }); page++; };
+  /** A black band with a clipped right corner (Fohawk), outlined in ink-saver. */
+  const band = (x, y, w, h, cut = 7) => {
+    doc.save().moveTo(x, y).lineTo(x + w - cut, y).lineTo(x + w, y + cut).lineTo(x + w, y + h).lineTo(x, y + h).closePath();
+    if (inkSaver) doc.lineWidth(1.2).stroke(INK); else doc.fill(INK);
+    doc.restore();
+  };
+  const onBand = inkSaver ? INK : "#fff";
   const bar = (title, x, y, w) => {
+    if (fohawk) {
+      band(x, y, w, 16);
+      block(title.toUpperCase(), x + 6, y + 2.5, w - 16, { size: 9, floor: LABEL_FLOOR, weight: 700, maxLines: 1, kind: "title", color: onBand });
+      return 21;
+    }
     doc.save().lineWidth(1.2).moveTo(x, y + 14).lineTo(x + w, y + 14).stroke("#000").restore();
     block(title.toUpperCase(), x, y + 1, w, { size: 9, floor: LABEL_FLOOR, weight: 700, maxLines: 1, kind: "title" });
     return 18;
@@ -114,20 +132,21 @@ export async function renderSheet(model, { paper = "letter", font = "standard" }
   let cellSeq = 0;
   /** Rows of cells as { t, id } (a cell keeps its id when it is split). */
   const cellsOf = (rows) => rows.map(r => r.map(c => { if (c && typeof c === "object" && "id" in c) return c; const id = `c${cellSeq++}`; const t = String(c ?? ""); cellText[id] = t; return { t, id }; }));
-  const table = (title, rowsIn, cols, x, y, w, maxY) => {
+  const table = (title, rowsIn, cols, x, y, w, maxY, { accent = [] } = {}) => {
     let rows = cellsOf(rowsIn);
     let cy = y + bar(title, x, y, w);
     const rest = [];
     let placed = 0;
     for (let r = 0; r < rows.length; r++) {
       const cells = rows[r];
-      const heights = cells.map((c, i) => (c.t ? wrap(c.t, i === 0 ? BODY : 9, w * cols[i] - 4, 400).length * (i === 0 ? BODY : 9) * LINE : 0));
+      const sz = (i) => (i === 0 || (fohawk && accent.includes(i)) ? BODY : 9), wt = (i) => (fohawk && accent.includes(i) ? 700 : 400);
+      const heights = cells.map((c, i) => (c.t ? wrap(c.t, sz(i), w * cols[i] - 4, wt(i)).length * sz(i) * LINE : 0));
       const h = Math.max(BODY * LINE, ...heights) + 2;
       if (cy + h > maxY) {
         // A row taller than the whole space left on a fresh page is split by lines; the rest continues (r1 #3).
         if (r === 0 && cy + 3 * BODY * LINE <= maxY) {
           const fit = Math.max(1, Math.floor((maxY - cy - 2) / (BODY * LINE)));
-          const cut = cells.map((c, i) => { const ln = c.t ? wrap(c.t, i === 0 ? BODY : 9, w * cols[i] - 4, 400) : []; return [{ t: ln.slice(0, fit).join("\n"), id: c.id }, { t: ln.slice(fit).join("\n"), id: c.id }]; });
+          const cut = cells.map((c, i) => { const ln = c.t ? wrap(c.t, sz(i), w * cols[i] - 4, wt(i)) : []; return [{ t: ln.slice(0, fit).join("\n"), id: c.id }, { t: ln.slice(fit).join("\n"), id: c.id }]; });
           if (cut.some(([, more]) => more.t)) {
             rows = [cut.map(([now]) => now), cut.map(([, more]) => more), ...rows.slice(1)];
             r = -1;   // place the first part as an ordinary row
@@ -137,7 +156,11 @@ export async function renderSheet(model, { paper = "letter", font = "standard" }
         rest.push(...rows.slice(r)); break;
       }
       let cx = x;
-      cells.forEach((c, i) => { block(c.t, cx, cy, w * cols[i] - 4, { size: i === 0 ? BODY : 9, floor: FLOOR, cell: c.id, box: { x: cx, y: cy, w: w * cols[i] - 4, h } }); cx += w * cols[i]; });
+      cells.forEach((c, i) => {
+        const hot = fohawk && accent.includes(i);
+        block(c.t, cx, cy, w * cols[i] - 4, { size: i === 0 ? BODY : hot ? BODY : 9, floor: FLOOR, cell: c.id, weight: hot ? 700 : 400, color: hot ? ACCENT : "#000", box: { x: cx, y: cy, w: w * cols[i] - 4, h } });
+        cx += w * cols[i];
+      });
       doc.save().lineWidth(0.3).moveTo(x, cy + h - 1).lineTo(x + w, cy + h - 1).stroke("#888").restore();
       cy += h;
       placed++;
@@ -148,7 +171,26 @@ export async function renderSheet(model, { paper = "letter", font = "standard" }
   // ── Page 1: the at-the-table sections, in fixed places ──────────────────────────────────────────────────────
   newPage();
   const L = MARGIN, R = W - MARGIN, CW = R - L, colW = (CW - 18) / 2, X2 = L + colW + 18, BOTTOM = H - MARGIN - 14;
+  const active = model.skills.filter(s => s[3] === "active").map(([n, r, sub]) => [n, r, sub]);
+  /** Condition monitors: pencil boxes; Fohawk marks the wound levels (L 1, M 3, S 6, D 10 boxes, p.112). */
+  const monitors = (x, y0, w) => {
+    let yy = y0;
+    for (const [name, n] of [["Physical", model.monitors.physical], ["Stun", model.monitors.stun]]) {
+      block(fohawk ? name.toUpperCase() : name, x, yy, w, { size: fohawk ? 8 : 9, weight: 700, maxLines: 1, color: fohawk ? MUTED : "#000" });
+      yy += 12;
+      const gap = Math.min(4, (w - n * BOX) / Math.max(1, n - 1));
+      for (let i = 0; i < n; i++) {
+        const lvl = fohawk ? { 0: "L", 2: "M", 5: "S", 9: "D" }[i] : null;
+        doc.save().lineWidth(lvl ? 1.6 : 0.8).rect(x + i * (BOX + gap), yy, BOX, BOX).stroke(fohawk && !lvl ? "#888" : "#000").restore();
+        if (lvl) block(lvl, x + i * (BOX + gap) + BOX / 2 - 3, yy + BOX + 1, 10, { size: 6.5, floor: 6.5, weight: 700, maxLines: 1, color: MUTED });
+      }
+      yy += BOX + (fohawk ? 13 : 6);
+    }
+    return yy + block(`Physical overflow: up to ${model.monitors.overflow} boxes (Body)`, x, yy, w, { size: 8.5, floor: FLOOR }) + 8;
+  };
   let y = MARGIN;
+  let attacks, act;
+  if (!fohawk) {
   y += block(model.title, L, y, CW, { size: 18, floor: 11, weight: 700, maxLines: 2 }) + 2;
   if (model.draft) y += block("DRAFT — character creation not finished", L, y, CW, { size: 9, weight: 700, maxLines: 1 });
   y += block(model.header.map(([k, v]) => `${k}: ${v}`).join("   "), L, y, CW, { size: 9.5, floor: FLOOR }) + 8;
@@ -158,20 +200,56 @@ export async function renderSheet(model, { paper = "letter", font = "standard" }
   ly = table("Dice pools", model.pools, [0.6, 0.4], L, ly, colW, BOTTOM).y;
   ly = table("Armor (Ballistic / Impact)", [["Worn", model.armor]], [0.6, 0.4], L, ly, colW, BOTTOM).y;
   // Right: condition monitors (pencil boxes), then attacks.
-  let ry = top + bar("Condition monitors", X2, top, colW);
-  for (const [name, n] of [["Physical", model.monitors.physical], ["Stun", model.monitors.stun]]) {
-    block(name, X2, ry, colW, { size: 9, weight: 700, maxLines: 1 });
-    ry += 12;
-    const gap = Math.min(4, (colW - n * BOX) / Math.max(1, n - 1));
-    for (let i = 0; i < n; i++) doc.save().lineWidth(0.8).rect(X2 + i * (BOX + gap), ry, BOX, BOX).stroke("#000").restore();
-    ry += BOX + 6;
-  }
-  ry += block(`Physical overflow: up to ${model.monitors.overflow} boxes (Body)`, X2, ry, colW, { size: 8.5, floor: FLOOR }) + 8;
-  const attacks = table("Attacks", model.attacks, [0.55, 0.2, 0.25], X2, ry, colW, BOTTOM);
+  let ry = monitors(X2, top + bar("Condition monitors", X2, top, colW), colW);
+  attacks = table("Attacks", model.attacks, [0.55, 0.2, 0.25], X2, ry, colW, BOTTOM);
   ry = attacks.y;
-  const active = model.skills.filter(s => s[3] === "active").map(([n, r, sub]) => [n, r, sub]);
-  const skillsY = Math.max(ly, ry);
-  const act = table("Active skills", active, [0.4, 0.1, 0.5], L, skillsY, CW, BOTTOM);
+  act = table("Active skills", active, [0.4, 0.1, 0.5], L, Math.max(ly, ry), CW, BOTTOM);
+  } else {
+    // ── Fohawk: header band, big attribute row, stat strip, then skills | monitors + attacks ───────────────────
+    const PRW = 34 * model.priorities.length, TW = CW - PRW - 44;   // the title stops 16 pt before the priority letters
+    const titleH = (() => { let s = 22, lines = wrap(model.title, s, TW, 700); while (lines.length > 2 && s - 0.5 >= 13) { s -= 0.5; lines = wrap(model.title, s, TW, 700); } return lines.length * s * LINE; })();   // as block() will draw it
+    const subH = wrap(model.subtitle.toUpperCase(), 9.5, TW, 700).length * 9.5 * LINE;
+    const extra = model.header.filter(([k]) => !["Metatype", "Magic", "Priorities", "Karma Pool"].includes(k)).map(([k, v]) => `${k}: ${v}`).join("   ");
+    const extraH = extra ? wrap(extra, 8.5, TW, 400).length * 8.5 * LINE + 2 : 0;
+    const headH = 12 + titleH + 4 + subH + (model.draft ? 13 : 0) + extraH + 12;
+    band(L, y, CW, Math.max(headH, 56), 14);
+    let hy = y + 12;
+    hy += block(model.title, L + 14, hy, TW, { size: 22, floor: 13, weight: 700, maxLines: 2, color: onBand }) + 4;
+    hy += block(model.subtitle.toUpperCase(), L + 14, hy, TW, { size: 9.5, floor: FLOOR, weight: 700, color: ACCENT });
+    if (model.draft) hy += 2 + block("DRAFT — character creation not finished", L + 14, hy + 2, TW, { size: 8, floor: 6.5, weight: 700, maxLines: 1, color: onBand });
+    if (extra) block(extra, L + 14, hy + 2, TW, { size: 8.5, floor: FLOOR, color: onBand });
+    model.priorities.forEach(([k, v], i) => {
+      const px = R - 14 - PRW + i * 34;
+      block(k, px, y + 12, 32, { size: 6.5, floor: 6.5, weight: 700, maxLines: 1, color: inkSaver ? MUTED : "#b5b5bd" });
+      block(v, px, y + 22, 32, { size: 16, floor: 12, weight: 700, maxLines: 1, color: i === 0 ? ACCENT : onBand });
+    });
+    y += Math.max(headH, 56) + 10;
+    // Attributes: big values, accent when augmented, "nat X" under them.
+    y += bar("Attributes", L, y, CW);
+    const aw = CW / model.attrRow.length;
+    model.attrRow.forEach((a, i) => {
+      const ax = L + i * aw;
+      block(a.abbr, ax + 4, y, aw - 8, { size: 7.5, floor: 6.5, weight: 700, maxLines: 1, color: MUTED });
+      block(a.value, ax + 4, y + 10, aw - 8, { size: 20, floor: 12, weight: 700, maxLines: 1, color: a.natural ? ACCENT : "#000" });
+      if (a.natural) block(`nat ${a.natural}`, ax + 4, y + 36, aw - 8, { size: 7.5, floor: 6.5, maxLines: 1, color: MUTED });
+    });
+    y += 50;
+    doc.save().lineWidth(0.5).moveTo(L, y).lineTo(R, y).stroke("#999").restore();
+    y += 4;
+    const perRow = Math.min(model.stats.length, 6), sw = CW / perRow;
+    for (let r = 0; r * perRow < model.stats.length; r++) {
+      model.stats.slice(r * perRow, r * perRow + perRow).forEach(([k, v], i) => {
+        block(k.toUpperCase(), L + i * sw + 4, y, sw - 8, { size: 6.5, floor: 6.5, weight: 700, maxLines: 2, color: MUTED });
+        block(v, L + i * sw + 4, y + 17, sw - 8, { size: 13, floor: 9, weight: 700, maxLines: 1 });
+      });
+      y += 38;
+    }
+    y += 4;
+    act = table("Skills", active, [0.62, 0.12, 0.26], L, y, colW, BOTTOM, { accent: [1] });
+    let ry = monitors(X2, y + bar("Condition monitor", X2, y, colW), colW);
+    attacks = table("Attacks", model.attacks, [0.5, 0.25, 0.25], X2, ry, colW, BOTTOM, { accent: [1] });
+    act = { ...act, y: Math.max(act.y, attacks.y) };
+  }
 
   // ── Continuation pages: everything else, flowing ───────────────────────────────────────────────────────────
   const flow = [

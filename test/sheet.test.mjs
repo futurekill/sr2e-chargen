@@ -5,7 +5,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync, readdirSync } from "node:fs";
 import { sheetModel, plain } from "../server/sheet/model.mjs";
-import { renderSheet, SheetError, PAPER, FONT_SETS } from "../server/sheet/render.mjs";
+import { renderSheet, SheetError, PAPER, FONT_SETS, STYLES } from "../server/sheet/render.mjs";
 import { newCharacter } from "../shared/creation.mjs";
 import { getDocument } from "pdfjs-dist/legacy/build/pdf.mjs";
 
@@ -32,14 +32,19 @@ function hugeRow() {
 }
 const FIXTURES = [["huge row", hugeRow()], ["new character", { ...newCharacter("Blank Slate") }], ...pregens.map(p => [p.name, asBody(p, "Notes.")]), ["stress", stress()]];
 const squash = (s) => String(s).replace(/\s+/g, "");
-/** Every string the model holds (what must appear on the sheet). */
-const strings = (m) => [m.title, ...m.header.flat(), ...m.attributes.flat(), ...m.pools.flat(), m.armor, ...m.attacks.flat(), ...m.skills.map(r => r.slice(0, 3)).flat(),
+/** Every string the model holds (what must appear on the sheet); the Fohawk style draws the attribute row, the stat
+ * strip and the priorities instead of the Classic tables. */
+const strings = (m, style = "classic") => [m.title,
+  ...(style === "classic" ? [...m.header.flat(), ...m.attributes.flat(), ...m.pools.flat(), m.armor]
+    : [m.subtitle.toUpperCase(), ...m.header.filter(([k]) => !["Metatype", "Magic", "Priorities", "Karma Pool"].includes(k)).flat(),
+      ...m.attrRow.flatMap(a => [a.abbr, a.value, a.natural]), ...m.stats.flatMap(([k, v]) => [k.toUpperCase(), v]), ...m.priorities.flat()]),
+  ...m.attacks.flat(), ...m.skills.map(r => r.slice(0, 3)).flat(),
   ...m.cyberware.flat(), ...m.gear.flat(), ...m.spells.flat(), ...m.foci.flat(), ...m.powers.flat(), m.notes].map(String).filter(Boolean);
 
-for (const [name, body] of FIXTURES) for (const paper of Object.keys(PAPER)) for (const font of Object.keys(FONT_SETS)) {
-  test(`fit: ${name} · ${paper} · ${font}`, async () => {
+for (const [name, body] of FIXTURES) for (const style of STYLES) for (const paper of Object.keys(PAPER)) for (const font of Object.keys(FONT_SETS)) {
+  test(`fit: ${name} · ${style} · ${paper} · ${font}`, async () => {
     const model = sheetModel(body);
-    const { pdf, runs, cells, size: [W, H], margin } = await renderSheet(model, { paper, font });
+    const { pdf, runs, cells, size: [W, H], margin } = await renderSheet(model, { paper, font, style });
     // 1. Every model string is placed (in order-insensitive, whitespace-free form: wrapping may split a string).
     const placed = squash(runs.filter(r => r.kind === "text" && !r.cell).map(r => r.text).join(""));
     // Table cells exactly: each cell's runs, joined, equal its full text (a split cell too).
@@ -48,7 +53,7 @@ for (const [name, body] of FIXTURES) for (const paper of Object.keys(PAPER)) for
     for (const [id, t] of Object.entries(cells)) assert.equal(squash(byCell.get(id) ?? ""), squash(t), `${name}: cell "${t.slice(0, 60)}" was not placed exactly`);
     // Every model string is in a cell or in the free text (title, header, notes).
     const cellSet = new Set(Object.values(cells).map(squash));
-    for (const s of strings(model)) { const w = squash(s); assert.ok(cellSet.has(w) || placed.includes(w), `${name}: "${s.slice(0, 60)}" was not placed`); }
+    for (const s of strings(model, style)) { const w = squash(s); assert.ok(cellSet.has(w) || placed.includes(w), `${name}: "${s.slice(0, 60)}" was not placed`); }
     // 2. Inside the safe area, not under the floor, inside its own box.
     for (const r of runs) {
       assert.ok(r.x >= margin - 0.5 && r.x + r.w <= W - margin + 0.5 && r.y >= margin - 0.5 && r.y + r.h <= H - margin + 0.5, `${name}: "${r.text}" leaves the page's safe area`);

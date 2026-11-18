@@ -45,6 +45,13 @@ export function sheetModel(body) {
       ["Reaction", String(d.reaction)],
       ["Initiative", `${d.reaction} + ${d.initiativeDice}D6`]
     ],
+    // The big attribute row and the stat strip of the Fohawk style (the same values as `attributes`/`pools`).
+    attrRow: Object.keys(ATTR_NAMES).map(a => ({ abbr: ATTR_NAMES[a].slice(0, 3).toUpperCase(), value: String(d.attributes[a]), natural: d.attributes[a] !== d.natural[a] ? String(d.natural[a]) : "" })),
+    stats: [["Reaction", String(d.reaction)], ["Initiative", `${d.reaction} + ${d.initiativeDice}D6`], ["Combat pool", String(d.pools.combat)],
+      ...[["Magic pool", d.pools.magic], ["Astral pool", d.pools.astral], ["Hacking pool", d.pools.hacking], ["Control pool", d.pools.control]].filter(([, v]) => v > 0).map(([k, v]) => [k, String(v)]),
+      ["Karma pool", String(d.karmaPool)], ["Essence", num(d.essence)], ...(magic.type !== "none" ? [["Magic", String(d.magic)]] : []), ["Armor", `${d.armor.ballistic} / ${d.armor.impact}`]],
+    priorities: Object.keys(CATEGORY_NAMES).map(c => [{ race: "RACE", magic: "MAGIC", attributes: "ATTR", skills: "SKILLS", resources: "RES" }[c], pr[c] || "–"]),
+    subtitle: [cap(sys.race ?? "human"), magicLine].join(" · "),
     pools: [["Combat", d.pools.combat], ["Magic", d.pools.magic], ["Astral", d.pools.astral], ["Hacking", d.pools.hacking], ["Control", d.pools.control]]
       .filter(([k, v]) => v > 0 || k === "Combat").map(([k, v]) => [k, String(v)]),
     armor: `${d.armor.ballistic} / ${d.armor.impact}`,

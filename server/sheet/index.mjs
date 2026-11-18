@@ -28,7 +28,7 @@ function renderOnce(body, opts) {
     child.once("error", () => { outcome ??= { err: fail("The sheet couldn't be drawn.", 500, "sheet-failed") }; });
     // Settle only once the process is gone and its streams closed ("close" also fires when it never spawned).
     child.once("close", () => { clearTimeout(timer); resolve(outcome ?? { err: fail("The sheet couldn't be drawn.", 500, "sheet-failed") }); });
-    child.send({ body, paper: opts.paper, font: opts.font });
+    child.send({ body, paper: opts.paper, font: opts.font, style: opts.style });
   });
 }
 
