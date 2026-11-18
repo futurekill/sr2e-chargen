@@ -1,5 +1,5 @@
 # Plan: vehicles bought at creation (S9)
-_Draft 5 (2026-11-18), after Codex plan rounds 1–4 (9 + 2 + 2 + 3 findings; docs/PLAN-S9-vehicles-REVIEW-LOG.md; the "Draft 2"–"Draft 5" sections at the end win). System prerequisite S9 (docs/PLAN-M2c.md): Foundry vehicles are ACTORS, so no item type can
+_Draft 5 (2026-11-18), APPROVED by the GM at the round-5 checkpoint; system side built on `chargen/s-prereqs` (30924db3…4eb2ce25), after Codex plan rounds 1–4 (9 + 2 + 2 + 3 findings; docs/PLAN-S9-vehicles-REVIEW-LOG.md; the "Draft 2"–"Draft 5" sections at the end win). System prerequisite S9 (docs/PLAN-M2c.md): Foundry vehicles are ACTORS, so no item type can
 count them in the creation budget. Today a vehicle dropped on a character during creation costs nothing._
 
 ## Rules
