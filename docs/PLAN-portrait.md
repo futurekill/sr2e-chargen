@@ -13,7 +13,7 @@ A player uploads a portrait for a character; the Character page shows it; the Fo
   image/webp`; anything else 415), body limit 8 MB, characters only, the owner only (the library's `ownedDocument`),
   CSRF + origin like every write, an Idempotency-Key, and the revision the client read (`?revision=n`) — the write is
   conditional like every other.
-- Rate-limited per user (10 a minute) and admitted through the SAME queue as sheet rendering (one at a time
+- Rate-limited per user (20 a minute) and admitted through the SAME queue as sheet rendering (one at a time
   server-wide, a short line, else 503 busy).
 
 ## 2. Processing (in the child process, sharp)

@@ -228,6 +228,15 @@ export const MAX_PORTRAITS = 5;
 /** A driver's binary value as a Buffer (Postgres and MySQL give Buffers, node:sqlite a Uint8Array). */
 const asBuffer = (v) => (Buffer.isBuffer(v) ? v : Buffer.from(v));
 
+/** A request already answered under this key: its stored answer (a replay), or null when the key is new. */
+export async function replayOf(ctx, userId, key, fp) {
+  const prior = await ctx.db.selectFrom("idempotency").selectAll().where("user_id", "=", userId).where("key", "=", key).executeTakeFirst();
+  if (!prior || prior.response == null) return null;
+  if (prior.fingerprint !== fp) throw new Refused("That key was used for another request.", 422, "key-reused");
+  return JSON.parse(prior.response);
+}
+export const portraitFingerprint = (id, { revision, mime, uploadSha }) => fingerprint("PUT", `/documents/${id}/portrait`, { revision, mime, uploadSha });
+
 /** A character's portrait is about to be processed: is it the caller's character, at that revision? (cheap, before the slow work) */
 export async function portraitTarget(ctx, userId, id, revision) {
   const doc = await ownedDocument(ctx.db, userId, id);
@@ -237,8 +246,14 @@ export async function portraitTarget(ctx, userId, id, revision) {
 }
 /** Store a processed portrait and point the character at it, as ONE new revision; keep the newest MAX_PORTRAITS. */
 export function setPortrait(ctx, userId, id, { revision, mime, uploadSha }, key, { webp, sha256 }) {
-  return idempotent(ctx, userId, key, fingerprint("PUT", `/documents/${id}/portrait`, { revision, mime, uploadSha }), async trx => {
+  return idempotent(ctx, userId, key, portraitFingerprint(id, { revision, mime, uploadSha }), async trx => {
     const doc = await current(trx, userId, id, revision, "character");
+    // Keep the newest MAX_PORTRAITS INCLUDING this one: evict first and free what was actually deleted, so a full
+    // account can still replace a portrait with one of the same size (r1 #3).
+    const old = (await trx.selectFrom("assets").select(["id", "bytes"]).where("document_id", "=", id).orderBy("created_at", "desc").orderBy("id", "desc").execute()).slice(MAX_PORTRAITS - 1);
+    let freed = 0;
+    for (const a of old) if (changed(await trx.deleteFrom("assets").where("id", "=", a.id).where("document_id", "=", id).executeTakeFirst()) === 1) freed += Number(a.bytes);
+    if (freed) await charge(trx, userId, { bytes: -freed });
     // Strictly after the document's last asset, so "newest five" never depends on two uploads in one millisecond.
     const last = await trx.selectFrom("assets").select(eb => eb.fn.max("created_at").as("t")).where("document_id", "=", id).executeTakeFirst();
     const assetId = randomUUID(), now = Math.max(ctx.now(), Number(last?.t ?? 0) + 1);
@@ -249,11 +264,6 @@ export function setPortrait(ctx, userId, id, { revision, mime, uploadSha }, key,
     const text = encode(body);
     await bump(trx, ctx, userId, id, revision, { body: text, bytes: Buffer.byteLength(text) });
     await appendRevision(trx, ctx, { id, owner_id: userId }, revision + 1, body, "portrait");
-    // Keep the newest MAX_PORTRAITS; free only what was actually deleted.
-    const old = (await trx.selectFrom("assets").select(["id", "bytes"]).where("document_id", "=", id).orderBy("created_at", "desc").orderBy("id", "desc").execute()).slice(MAX_PORTRAITS);
-    let freed = 0;
-    for (const a of old) if (changed(await trx.deleteFrom("assets").where("id", "=", a.id).where("document_id", "=", id).executeTakeFirst()) === 1) freed += Number(a.bytes);
-    if (freed) await charge(trx, userId, { bytes: -freed });
     return { ...(await answer(trx, userId, id)), body };
   });
 }

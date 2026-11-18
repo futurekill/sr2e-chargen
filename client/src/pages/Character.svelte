@@ -133,8 +133,10 @@
   get("/api/catalog/portraits").then(r => { if (!gone) stock = r.portraits; }).catch(() => { /* no gallery: uploads still work */ });
   async function pickStock(id) {
     picBusy = true; error = "";
-    try { await queue; server = await mutate("POST", `/api/documents/${server.document.id}/portrait/stock`, { revision: server.document.revision, stock: id }); body = server.body; showStock = false; }
-    catch (err) { error = err.message; }
+    await (queue = queue.then(async () => {
+      try { server = await mutate("POST", `/api/documents/${server.document.id}/portrait/stock`, { revision: server.document.revision, stock: id }); if (!sending) body = server.body; showStock = false; }
+      catch (err) { error = err.message; }
+    }));
     picBusy = false;
   }
   let picBusy = $state(false);
@@ -145,14 +147,19 @@
     if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) { error = "A portrait is a JPEG, PNG or WebP image."; return; }
     if (file.size > 8 * 1024 * 1024) { error = "That image is over 8 MB."; return; }
     picBusy = true; error = "";
-    try { await queue; server = await upload(`/api/documents/${server.document.id}/portrait?revision=${server.document.revision}`, file); body = server.body; }
-    catch (err) { error = err.code === "busy" ? "The server is busy. Try again in a moment." : err.message; }
+    // On the same queue as every other change, so no two writes start from the same revision (r1 #2).
+    await (queue = queue.then(async () => {
+      try { server = await upload(`/api/documents/${server.document.id}/portrait?revision=${server.document.revision}`, file); if (!sending) body = server.body; }
+      catch (err) { error = err.code === "busy" ? "The server is busy. Try again in a moment." : err.message; }
+    }));
     picBusy = false;
   }
   async function removePortrait() {
     picBusy = true; error = "";
-    try { await queue; server = await mutate("DELETE", `/api/documents/${server.document.id}/portrait?revision=${server.document.revision}`, {}); body = server.body; }
-    catch (err) { error = err.message; }
+    await (queue = queue.then(async () => {
+      try { server = await mutate("DELETE", `/api/documents/${server.document.id}/portrait?revision=${server.document.revision}`, {}); if (!sending) body = server.body; }
+      catch (err) { error = err.message; }
+    }));
     picBusy = false;
   }
   let nameInput = $state(start.body.name);

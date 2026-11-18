@@ -50,7 +50,7 @@ export default async function documentRoutes(app) {
     const { document, body } = await L.getDocument(req.ctx, me(req), req.params.id);
     if (document.kind !== "character") return reply.code(409).send({ error: "Only a character has a sheet.", code: "wrong-kind" });
     const font = req.query.font ?? (req.session.user.prefs?.readableFont ? "readable" : "standard");   // the user's preference by default
-    const portrait = await L.getPortrait(req.ctx, me(req), req.params.id);
+    const portrait = await L.getPortrait(req.ctx, me(req), req.params.id, document.revision);   // the same revision as the body (r1 #4)
     const pdf = await renderSheetPdf(body, { paper: req.query.paper ?? "letter", font, style: req.query.style ?? "classic", portrait });
     reply.header("content-disposition", `inline; filename="sheet-${document.id}.pdf"`).header("cache-control", "no-store").type("application/pdf");
     return pdf;
@@ -90,14 +90,16 @@ export default async function documentRoutes(app) {
   const revisionQuery = { type: "object", additionalProperties: false, required: ["revision"], properties: { revision: { type: "string", pattern: "^[1-9][0-9]{0,8}$" } } };
   await app.register(async (sub) => {
     sub.addContentTypeParser(Object.keys(TYPES), { parseAs: "buffer", bodyLimit: MAX_UPLOAD }, (_req, body, done) => done(null, body));
-    sub.put("/:id/portrait", { bodyLimit: MAX_UPLOAD, config: { rateLimit: { max: 10, timeWindow: "1 minute", keyGenerator: (req) => `portrait:${me(req)}` } },
+    sub.put("/:id/portrait", { bodyLimit: MAX_UPLOAD, config: { rateLimit: { max: 20, timeWindow: "1 minute", keyGenerator: (req) => `portrait:${me(req)}` } },
       schema: { params: idParams, headers: keyHeader, querystring: revisionQuery } }, async (req) => {
       const revision = Number(req.query.revision);
-      await L.portraitTarget(req.ctx, me(req), req.params.id, revision);   // the caller's character at that revision (404/409 first)
       const mime = String(req.headers["content-type"] ?? "").split(";")[0].trim().toLowerCase();
+      const uploadSha = createHash("sha256").update(Buffer.isBuffer(req.body) ? req.body : Buffer.from(JSON.stringify(req.body ?? null))).digest("hex");
+      const replay = await L.replayOf(req.ctx, me(req), key(req), L.portraitFingerprint(req.params.id, { revision, mime, uploadSha }));
+      if (replay) return replay;   // a retried upload gets its first answer (r1 #1), before the revision check
+      await L.portraitTarget(req.ctx, me(req), req.params.id, revision);   // the caller's character at that revision (404/409 first)
       try { checkUpload(req.body, mime); } catch (e) { if (e instanceof PortraitError) throw new Refused(e.message, e.status, e.code); throw e; }   // before the queue
       const processed = await processPortraitJob(req.body, mime);
-      const uploadSha = createHash("sha256").update(req.body).digest("hex");
       return L.setPortrait(req.ctx, me(req), req.params.id, { revision, mime, uploadSha }, key(req), processed);
     });
   });

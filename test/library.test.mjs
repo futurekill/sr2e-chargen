@@ -261,8 +261,11 @@ test("portraits: upload, owner only, conditional, quota charged and freed, newes
   const jpeg = await sharp({ create: { width: 600, height: 800, channels: 3, background: "#c8006a" } }).jpeg().toBuffer();
   const up = (rev, img = jpeg, type = "image/jpeg", who = razor) => who.call("PUT", `${D}/${id}/portrait?revision=${rev}`, img, undefined, { "content-type": type });
   const before = await bytesUsed();
-  const r1 = await up(1);
+  const k1 = randomUUID();
+  const r1 = await razor.call("PUT", `${D}/${id}/portrait?revision=1`, jpeg, k1, { "content-type": "image/jpeg" });
   assert.equal(r1.statusCode, 200, r1.body);
+  const replay = await razor.call("PUT", `${D}/${id}/portrait?revision=1`, jpeg, k1, { "content-type": "image/jpeg" });
+  assert.deepEqual(replay.json(), r1.json(), "a retried upload gets its first answer, not a stale error (r1 #1)");
   assert.equal(r1.json().document.revision, 2);
   const got = await razor.call("GET", `${D}/${id}/portrait`);
   assert.equal(got.statusCode, 200); assert.equal(got.headers["content-type"], "image/webp"); assert.equal(got.headers["cache-control"], "private, no-store");
