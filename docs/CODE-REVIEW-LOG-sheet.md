@@ -110,3 +110,36 @@ All five accepted and fixed.
 VERDICT: REVISE
 ### Response
 Accepted #1 and #5: the whole fixed part (header, rows, monitors, the attacks bar and one row) is measured before drawing, else a clear 'use Classic' error; a near-limit test sweeps header lengths on both papers and checks text, bands and boxes stay in the safe area. Not re-reviewed.
+
+# Slice 4 (the one-page table card)
+
+## Round 1 — Codex gpt-6-sol high
+1. **[P1] A print choice can change a finished character.** [shared/creation.mjs:214](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/shared/creation.mjs:214) — On a finished character, I changed a recorded skill’s actor rating from 1 to 9; `setCard` rebuilt the items and reset it to 1. **Fix:** Return after updating `creation.card`, without running record hydration or `rebuildItems`.
+
+2. **[P1] A card can report a fit while text leaves the page.** [server/sheet/render.mjs:208](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/server/sheet/render.mjs:208) — A legacy/imported body with a 4,000-character name and no chosen rows returns a one-page Classic card with 25 non-footer text runs below the safe margin; the card check only examines flowing rows. **Fix:** Measure the fixed header and blocks against `BOTTOM` and refuse the card with a structured overflow result.
+
+3. **[P2] `setCard` accepts rows the card cannot display.** [shared/creation.mjs:198](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/shared/creation.mjs:198) — A 16-character ID on a knowledge skill is accepted, stored, then omitted by `cardIds`; an item whose type is `constructor` is also accepted through `in`. **Fix:** Use one eligibility predicate for `setCard` and `cardIds`, with `Object.hasOwn(CARD_TYPES, type)` and the active-skill check.
+
+4. **[P2] Adding a record can erase a foreign item.** [shared/creation.mjs:285](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/shared/creation.mjs:285) — An imported pistol with ID `cg00000000000001` disappears when the first custom skill gets that same generated ID; the foreign-item filter treats the pistol as recorded. **Fix:** Allocate new IDs only after checking both record keys and existing actor item IDs.
+
+5. **[P2] The client offers an outdated fit result.** [client/src/pages/Character.svelte:118](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/client/src/pages/Character.svelte:118) — After ticking a row that makes the card overfull, the previous “Fits” result and Print link remain active through the debounce and render; the PDF route then returns 422. **Fix:** Clear `fit` immediately on edits and option changes, and enable Print only for the saved revision and matching query.
+
+6. **[P2] Routine fit checks exhaust print capacity.** [server/routes/documents.mjs:64](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/server/routes/documents.mjs:64) — Twenty-one checkbox changes spaced a second apart trigger 21 full PDF renders: the last fit request hits the per-user limit, while fit jobs also consume the server-wide 30-render budget and shared queue. **Fix:** Cache or coalesce fits by revision and print options, and reserve PDF render capacity separately.
+
+VERDICT: REVISE
+### Response
+All six accepted and fixed.
+
+## Round 2 — Codex gpt-6-sol medium, fix-only
+1. **Finished character** — [shared/creation.mjs:101](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/shared/creation.mjs:101): No failing case found; `setCard` returns before rebuilding items. Fix: none.
+2. **Page 1 bounds** — [server/sheet/render.mjs:287](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/server/sheet/render.mjs:287): No failing case found; overflowing fixed content is refused. Fix: none.
+3. **Eligibility** — [client/src/pages/Character.svelte:115](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/client/src/pages/Character.svelte:115): An imported skill without `system` makes the card UI throw while `cardIds` safely excludes it; the UI still duplicates the rule. Fix: filter card rows with `cardEligible(i)`.
+4. **Record IDs** — [shared/creation.mjs:238](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/shared/creation.mjs:238): No failing case found; existing actor and record IDs are checked. Fix: none.
+5. **Client fit state** — [client/src/pages/Character.svelte:118](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/client/src/pages/Character.svelte:118): No failing case found; body changes clear the answer, and Print requires the saved revision and matching options. Fix: none.
+6. **Fit cache and limit** — [server/routes/documents.mjs:66](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/server/routes/documents.mjs:66): No failing case found; the key includes revision and effective options, with a separate per-user limit. Fix: none.
+
+The focused tests passed: 143/143.
+
+VERDICT: REVISE
+### Response
+Accepted #3: the page filters with the shared cardEligible. The rest confirmed fixed.
