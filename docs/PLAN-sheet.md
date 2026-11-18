@@ -1,5 +1,6 @@
 # Plan: milestone 3 — the printable sheet (first slice: derived values + the Classic sheet)
-_Draft 2 (2026-11-18), after Codex plan round 1 (13 findings: 12 accepted, 1 answered — docs/PLAN-sheet-REVIEW-LOG.md). Roadmap item 3 (docs/ROADMAP.md). The sheet rules already approved in docs/PLAN.md "Exports"
+_Draft 3 (2026-11-18), after Codex plan rounds 1–2 (13 + 5 findings; docs/PLAN-sheet-REVIEW-LOG.md). Round 2's fixes
+are checked by the code review._ Roadmap item 3 (docs/ROADMAP.md). The sheet rules already approved in docs/PLAN.md "Exports"
 (U16–U22: fit rule, pages, print, readable fonts, fit test) apply unchanged; this plan settles how to build the first
 style. ("M3" in docs/PLAN-M3.md is the OLD numbering — the app skeleton; this file is roadmap milestone 3.)_
 
@@ -101,3 +102,22 @@ The Fohawk style and ink-saver; the table card; the Markdown stat block; the por
   links, no markup; the route is rate-limited per user AND server-wide.
 - **Simpler layout** (r1 #13): a FIXED Classic page 1 (the at-the-table sections in set boxes; the fit order applies
   inside each box) and continuation pages that flow the long lists — no general column-flow engine.
+
+## Draft 3 — changes after round 2 (these win over everything above)
+- **Parity input** (r2 #1): `derive` takes `{ actor, options }` (`options` = `creation.options`: More Metahumans);
+  a fixture adapter wraps each exported Foundry source as `{ actor: source, options: { moreMetahumans } }`, with
+  More Metahumans read from the exporting world's setting/race priority, so the app path and the fixture path call
+  derive with the same input.
+- **Render isolation** (r2 #2): a separate child process (`child_process.fork`) with `--max-old-space-size` (the V8 heap
+  limit Node enforces — the only OS-free limit available in the shell-less image), a wall-clock `kill()`, one render
+  at a time server-wide, a waiting queue of at most 4 (else 503), page and byte caps before the response.
+- **Font coverage** (r2 #3): each font set has a fallback face (Noto Sans, SIL OFL, Latin/Greek/Cyrillic) chosen PER
+  GLYPH by the layout's measure step; a character no bundled font covers makes the export fail with a message naming
+  it (never a box or a blank).
+- **Fit verification** (r2 #4): CI also checks that no two placed runs' boxes overlap and that each run's box is inside
+  its section box; `npm run sheet:snapshots` renders every fixture's pages to PNG (pdftoppm, a developer tool, not in
+  CI) into a review folder, regenerated and looked at whenever the layout changes.
+- **Fonts named** (r2 #5): standard = Source Sans 3 (body) + Source Sans 3 Condensed weight for labels; readable =
+  Atkinson Hyperlegible Next (body and labels, wider spacing). Both SIL OFL, licences verified when added. The SITE
+  gains the same "readable font" setting in this slice (stored per user on the server, also used as the sheet
+  default).

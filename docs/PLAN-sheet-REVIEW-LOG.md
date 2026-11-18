@@ -18,3 +18,14 @@
 VERDICT: REVISE
 ### Claude's response
 Accepted 12 (draft 2). #7 answered differently: the approved roadmap keeps the app's own derivation for creation characters with a parity test as the control (not the parked system-wide extraction), but the parity test moves into this slice and uses Foundry's real prepared values exported from the local test world.
+
+## Round 2 — Codex gpt-6-sol high
+- **Parity input:** Draft 2 says `derive(source)` can use a Foundry actor source directly, but the app’s character body also contains `creation` data that `validate` reads; define a fixture adapter that supplies the same body and creation options before comparing prepared values.
+- **Render isolation:** A Worker with `resourceLimits` does not meet the approved plan’s separate child process and OS-enforced memory limit; run PDFKit in a killable child process with enforceable limits.
+- **Font coverage:** The plan tests non-Latin text but names no embedded fallback for missing glyphs; bundle fallback fonts and select them per glyph so accepted text remains printable.
+- **Fit verification:** Extracted text and page bounds can pass while text is clipped or overprinted; inspect rendered pages and keep the visual snapshots required by the approved fit rule.
+- **Readable font:** The sheet plan says U22 applies unchanged, but its standard and readable font choices are not distinctly specified and the site still uses a system-font placeholder; name both font sets and include the site setting in this slice.
+
+VERDICT: REVISE
+### Claude's response
+All five accepted (draft 3). Plan review stops here; the code review checks round 2's fixes.
