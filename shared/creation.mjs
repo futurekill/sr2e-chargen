@@ -176,7 +176,9 @@ function addItem(b, { name, img, snapshot, catalogId, source, choices }) {
   b.creation.items[_id] = { catalogId, snapshot: structuredClone(snapshot), choices };
   b.actor.items.push({ _id, name, type: "skill", img, system: {}, flags: {}, effects: [], _stats: { compendiumSource: source } });
 }
+const ITEM_ID = /^cg[0-9a-z]{14}$/;
 function skillRecord(b, id) {
+  if (typeof id !== "string" || !ITEM_ID.test(id)) throw new Refusal("No such skill on this character.");   // never a key like __proto__
   const item = b.actor.items.find(i => i._id === id);
   if (!item || item.type !== "skill" || !Object.hasOwn(b.creation.items, id)) throw new Refusal("No such skill on this character.");
   return b.creation.items[id];
@@ -262,13 +264,13 @@ export function validate(body) {
 
   // Skills (p.45, p.66, p.70, p.74).
   const skills = body.actor.items.filter(i => i.type === "skill");
-  const names = {};
+  const names = new Set();
   let natives = 0, dialects = 0;
   for (const item of skills) {
     const s = item.system, c = body.creation.items[item._id]?.choices ?? {}, nm = item.name;
     const key = `${s.category}:${nm.toLowerCase()}`;
-    if (names[key]) add("skills", "error", `${nm} is listed twice: one entry per skill.`, 66);
-    names[key] = true;
+    if (names.has(key)) add("skills", "error", `${nm} is listed twice: one entry per skill.`, 66);
+    names.add(key);
     if (s.freeLanguage === "native") natives++;
     if (s.freeLanguage === "dialect") dialects++;
     if (s.freeLanguage) continue;
