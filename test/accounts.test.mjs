@@ -181,11 +181,14 @@ test("a disable that lands while a login is verifying wins too", async () => {
 
 test("a reset that lands during a password change is not overwritten", async () => {
   const { ctx, admin } = await withAdmin();
-  const real = A.changePassword(ctx, { userId: admin.user.id, current: PW, next: "another fine password" });
-  // changePassword reads the user, then verifies (slow): this update is queued behind the read and lands before the write.
-  const reset = ctx.db.updateTable("users").set({ password_hash: "$reset-landed$" }).execute();
-  await assert.rejects(real, refused("bad-password"));
-  await reset;
+  // Deterministic on every database (it raced on the Postgres pool): the reset lands AFTER changePassword has read and
+  // verified the old hash, just before its write transaction opens.
+  const transaction = () => {
+    const tx = ctx.db.transaction();
+    return { execute: async (fn) => { await ctx.db.updateTable("users").set({ password_hash: "$reset-landed$" }).execute(); return tx.execute(fn); } };
+  };
+  const db = new Proxy(ctx.db, { get: (t, k) => (k === "transaction" ? transaction : typeof t[k] === "function" ? t[k].bind(t) : t[k]) });   // Kysely keeps private fields
+  await assert.rejects(A.changePassword({ ...ctx, db }, { userId: admin.user.id, current: PW, next: "another fine password" }), refused("bad-password"));
   assert.equal((await ctx.db.selectFrom("users").select("password_hash").executeTakeFirst()).password_hash, "$reset-landed$");
 });
 
