@@ -9,8 +9,9 @@ Built for a small private group: invite-only accounts, one Docker container on y
 
 > **Status: early development build.** The tool is **standalone first**: you can make and manage a character for a
 > physical table without Foundry ([docs/ROADMAP.md](docs/ROADMAP.md)). Done so far: the app skeleton (accounts,
-> library, Docker, CI) and **milestone 1, the catalog** — 1,763 entries from the core book and 11 sourcebooks, each
-> with its page reference. Next: character creation. Not released: no image is published.
+> library, Docker, CI), **milestone 1, the catalog** — 1,763 entries from the core book and 11 sourcebooks, each
+> with its page reference — and the first part of **milestone 2, character creation** (M2a): priorities, metatype,
+> magic, attributes, with a rules check that cites the page. Next: skills (M2b). Not released: no image is published.
 
 ## Run it locally (development)
 
@@ -62,6 +63,9 @@ computed the same way in both places. Tests check that both give identical resul
 | [docs/PLAN-REVIEW-LOG.md](docs/PLAN-REVIEW-LOG.md) | Every review round and how each finding was resolved |
 | [docs/ROADMAP.md](docs/ROADMAP.md) | The approved order of work: standalone first |
 | [docs/PLAN-catalog.md](docs/PLAN-catalog.md) | Milestone 1, the catalog, with its review logs |
+| [docs/PLAN-M2.md](docs/PLAN-M2.md) | Milestone 2, character creation, with its review logs |
+| [docs/QA-PLAN.md](docs/QA-PLAN.md) | How a change is checked: the automatic checks and the manual walk-through |
+| [CHANGELOG.md](CHANGELOG.md) | What changed, release by release |
 | [docs/PLAN-M3.md](docs/PLAN-M3.md) | The app skeleton's plan (accounts, library, container), with its review log |
 | [docs/OPERATIONS.md](docs/OPERATIONS.md) | Running it: Docker, settings, the admin CLI |
 | [docs/THREAT-MODEL.md](docs/THREAT-MODEL.md) | What is protected, from whom, and where each defence lives |
@@ -71,19 +75,19 @@ computed the same way in both places. Tests check that both give identical resul
 
 ## Roadmap
 
+The approved order is in [docs/ROADMAP.md](docs/ROADMAP.md) (standalone first, revised 2026-11-16).
+
 | Milestone | What | Status |
 |---|---|---|
 | M0 | Capture the creation rules from the books | done |
-| M1 | Character export/import in the Foundry system (lossless, recoverable) | planning (sr2e-foundryvtt docs/PLAN-portable.md) |
-| M1b | Structured book/page citations on every item | |
-| M2 | Share the rules code between Foundry and this app | |
-| M3 | App skeleton: Docker, accounts, library, content catalog, one theme | |
-| M4 | The core build flow, archetypes, banter | |
-| M5 | PDF and text exports | |
-| M6 | Manager: Karma, nuyen, purchases, damage, history | |
-| M7 | Sourcebooks and alternate creation methods | |
-| M8 | Vehicle Workshop | |
-| M9 | Remaining themes, portrait/token export, NPC builder | |
+| — | App skeleton: Docker, accounts, library, one theme | done |
+| 1 | Catalog: browse and search every item, with page references | done |
+| 2 | Create a character, core book ([docs/PLAN-M2.md](docs/PLAN-M2.md)) | M2a done; M2b skills next |
+| 3 | Printable sheet | |
+| 4 | Manage a character: Karma, nuyen, purchases, damage, history | |
+| 5 | Sourcebooks, alternate methods, Edges and Flaws | |
+| 6 | Release | |
+| 7 | Foundry connector (optional) | |
 
 Each milestone goes plan → review → build → code review → release.
 
