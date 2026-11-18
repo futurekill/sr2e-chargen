@@ -402,7 +402,7 @@ export function validate(body) {
       else if (!spellIds.has(c.spell)) add("resources", "error", `${i.name}: its spell is no longer on this character.`, 137);
     }
     if (i.type === "focus" && i.system.focusType === "weapon") {
-      const w = items.find(x => x._id === c.weapon);
+      const w = items.find(x => x._id === c.weapon && x.type === "weapon" && x.system.weaponType === "melee");
       if (!w) add("resources", "todo", `${i.name}: choose the melee weapon it's bonded to.`, 137);
       else if ((w.system.quantity ?? 1) > 1) add("resources", "error", `${i.name}: a focus is one weapon, but ${w.name} has quantity ${w.system.quantity}.`, 137);
     }

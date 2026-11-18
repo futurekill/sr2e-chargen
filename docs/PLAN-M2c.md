@@ -108,8 +108,10 @@ gains Nuyen, Essence, Magic, Force Points and power points rows.
 - **S13. Adept power costs**: check `adeptPowerCost` against p.125–126 (Improved Physical Attributes and Increased
   Reaction tier by the RESULTING rating; Combat Sense 2/3/4; Killing Hands .5/1/2/4 per level held; Improved Ability by
   skill area with its Combat Skill cap; Improved Physical Senses per sense) and fix it in the system; M2c-2 uses it.
-- **S12. Weapon foci** price off the bonded weapon's Reach (`weaponFocusCost`, p.126) and need a weapon to bond to;
-  the app refuses weapon foci until it has a bond choice (M2c follow-up).
+- **S12. Weapon foci** price off the bonded weapon's Reach (`weaponFocusCost`; the price table is p.263) and need a
+  weapon to bond to. **Built 2026-11-18** (app side only, no system change): choices `weapon` (a melee weapon of this
+  character, quantity 1, one focus each) and `size` (small 4 × / large 5 × Force, RULINGS R5); removing the weapon
+  unbonds the focus; docs/CODE-REVIEW-LOG-weapon-focus.md.
 
 ### 6. Tests
 - Per type: the projection (choices → `system`), refusals for every unlisted choice key and every out-of-range value,
