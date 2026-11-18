@@ -1,5 +1,6 @@
 # Plan: character portraits (upload, store, show, print)
-_Draft 1 (2026-11-18). Under the approved rules in docs/PLAN.md "Security" (portrait upload: size/type caps, a
+_Draft 2 (2026-11-18), after Codex plan round 1 (11 findings, all accepted; docs/PLAN-portrait-REVIEW-LOG.md). The
+"Draft 2" section at the end wins over the text above it. Under the approved rules in docs/PLAN.md "Security" (portrait upload: size/type caps, a
 decoded-pixel limit, re-encoded by sharp to WebP with metadata stripped, in the bounded killable subprocess queue,
 never SVG, served only to the owner) and "Backups" (the database AND the uploaded assets, as one set)._
 
@@ -63,3 +64,38 @@ rotation applied. Routes: owner only, other user 404, CSRF, wrong revision 409, 
 ## Dependencies
 `sharp` (Apache-2.0; libvips prebuilt for linux-x64 glibc, as in the distroless image — no install scripts needed),
 pinned, and the Docker build verified.
+
+## Draft 2 — changes after round 1 (these win)
+- **One stored encoding** (r1 #11): only the sanitized WebP is stored; the render job makes the PDF's JPEG from it with
+  sharp inside the same bounded child. `bytes` = the WebP's length (r1 #6).
+- **Before sharp sees a byte** (r1 #1, #2): our own code checks the magic signature (JPEG `FF D8 FF`, PNG
+  `89 50 4E 47 0D 0A 1A 0A`, WebP `RIFF....WEBP`), that it matches the declared Content-Type, and reads the width
+  and height from the header (PNG IHDR, JPEG SOFn, WebP VP8/VP8L/VP8X) — both ≤ 4096 and the product ≤ 16,777,216,
+  else refused. Then sharp runs with `limitInputPixels: 16_777_216`, `limitInputPixels` and the header check
+  agreeing; sharp's detected format must equal the signature's. No other loader is reachable.
+- **Memory** (r1 #2): the child's V8 limit does not bound libvips, and the shell-less image has no `ulimit`; the OS
+  bound is the CONTAINER's memory limit — docs/OPERATIONS.md's compose example sets `mem_limit` (and the sheet
+  queue keeps one job at a time). Tests feed decompression bombs (a 1 × 1 MB-header PNG claiming 60,000 × 60,000; a
+  JPEG with a huge SOF) and assert refusal before sharp.
+- **Parser** (r1 #3): a route-scoped content-type parser for the three image types (`parseAs: "buffer"`, 8 MB),
+  registered inside the portrait route's plugin only; an empty body is 400.
+- **Idempotency** (r1 #4): the fingerprint is `PUT /documents/:id/portrait` + revision + MIME type + SHA-256 of the
+  whole upload; the revision is re-checked inside the write transaction (the existing conditional `bump`).
+- **Asset lookups** (r1 #5): image bytes are read only by `assets.id = ? AND document_id = ? AND owner_id = ?` for the
+  already-authorized document; a mismatch is the same 404 as a missing asset.
+- **Quota and retention** (r1 #6): `charge(+bytes)` once when the asset is inserted; the 5-asset eviction deletes the
+  oldest rows in the same transaction and `charge(-their bytes)` only for rows actually deleted (the delete's own
+  result). Revisions don't charge again for the image.
+- **Purge race — an existing bug** (r1 #7): `purge` deletes a document selected as old-and-deleted without rechecking;
+  a restore landing between could be purged. Fix in this slice: delete `WHERE id = ? AND deleted_at <= cutoff`, and
+  adjust counters only when that delete removed the row (assets cascade with it, their bytes freed in the same
+  transaction).
+- **Binary columns** (r1 #8): `003-assets` uses BLOB / bytea / LONGBLOB per dialect; reads normalize to `Buffer`
+  (`Buffer.from(...)`); CI's four databases run a round-trip test with a ~1 MB value, and the migration is
+  restartable (conditional create).
+- **Backups and metadata** (r1 #9): backups are milestone 6 (not built yet); the stored `sha256` per asset is what
+  its checksum manifest will use. The metadata test reads the outputs' `metadata()` and asserts no `exif`, `xmp`,
+  `icc`, `iptc`.
+- **Container** (r1 #10): sharp pinned; the lockfile must list `@img/sharp-linux-x64` and `@img/sharp-libvips-linux-x64`
+  (a CI check); the Docker job runs a real conversion inside the FINAL image (`docker run … node -e` a 1-pixel PNG →
+  WebP). Only linux-x64 is supported for now (stated in OPERATIONS.md).
