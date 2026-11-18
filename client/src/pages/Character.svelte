@@ -40,8 +40,8 @@
   let shopTimer, shopSeq = 0;
   function searchShop() {
     clearTimeout(shopTimer);
+    const mine = ++shopSeq;   // only the latest search's answer is shown, even one still waiting to start (r1 #7, r2)
     shopTimer = setTimeout(async () => {
-      const mine = ++shopSeq;   // only the latest search's answer is shown (r1 #7)
       const p = new URLSearchParams({ book: "sr2", limit: "30" });
       for (const t of shopType ? [shopType] : BUYABLE) p.append("type", t);
       if (shopQ.trim()) p.set("q", shopQ.trim());
