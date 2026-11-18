@@ -56,7 +56,7 @@ export async function renderSheet(model, { paper = "letter", font = "standard", 
   const chunks = [];
   doc.on("data", (c) => chunks.push(c));
   const done = new Promise((res, rej) => { doc.on("end", res); doc.on("error", rej); });
-  const reg = new Set(), runs = [];
+  const reg = new Set(), runs = [], shapes = [];   // shapes: bands and pencil boxes, for the fit test
   let page = 0;
 
   /** Split text into runs of one face each (per-glyph fallback); a character no face has is an error, never a box. */
@@ -113,6 +113,7 @@ export async function renderSheet(model, { paper = "letter", font = "standard", 
   const newPage = () => { doc.addPage({ size: [W, H], margin: 0 }); page++; };
   /** A black band with a clipped right corner (Fohawk), outlined in ink-saver. */
   const band = (x, y, w, h, cut = 7) => {
+    shapes.push({ kind: "band", page, x, y, w, h });
     doc.save().moveTo(x, y).lineTo(x + w - cut, y).lineTo(x + w, y + cut).lineTo(x + w, y + h).lineTo(x, y + h).closePath();
     if (inkSaver) doc.lineWidth(1.2).stroke(INK); else doc.fill(INK);
     doc.restore();
@@ -178,13 +179,18 @@ export async function renderSheet(model, { paper = "letter", font = "standard", 
     for (const [name, n] of [["Physical", model.monitors.physical], ["Stun", model.monitors.stun]]) {
       block(fohawk ? name.toUpperCase() : name, x, yy, w, { size: fohawk ? 8 : 9, weight: 700, maxLines: 1, color: fohawk ? MUTED : "#000" });
       yy += 12;
-      const gap = Math.min(4, (w - n * BOX) / Math.max(1, n - 1));
+      // As many boxes per row as fit with a 2 pt gap at least; more wrap to a next row (never overlap, r1 #5).
+      const per = Math.max(1, Math.min(n, Math.floor((w + 2) / (BOX + 2))));
+      const gap = per > 1 ? Math.min(4, (w - per * BOX) / (per - 1)) : 0;
+      const rowH = BOX + (fohawk ? 13 : 6);
       for (let i = 0; i < n; i++) {
         const lvl = fohawk ? { 0: "L", 2: "M", 5: "S", 9: "D" }[i] : null;
-        doc.save().lineWidth(lvl ? 1.6 : 0.8).rect(x + i * (BOX + gap), yy, BOX, BOX).stroke(fohawk && !lvl ? "#888" : "#000").restore();
-        if (lvl) block(lvl, x + i * (BOX + gap) + BOX / 2 - 3, yy + BOX + 1, 10, { size: 6.5, floor: 6.5, weight: 700, maxLines: 1, color: MUTED });
+        const bx = x + (i % per) * (BOX + gap), by = yy + Math.floor(i / per) * rowH;
+        doc.save().lineWidth(lvl ? 1.6 : 0.8).rect(bx, by, BOX, BOX).stroke(fohawk && !lvl ? "#888" : "#000").restore();
+        shapes.push({ kind: "box", page, x: bx, y: by, w: BOX, h: BOX });
+        if (lvl) block(lvl, bx + BOX / 2 - 3, by + BOX + 1, 10, { size: 6.5, floor: 6.5, weight: 700, maxLines: 1, color: MUTED });
       }
-      yy += BOX + (fohawk ? 13 : 6);
+      yy += Math.ceil(n / per) * rowH;
     }
     return yy + block(`Physical overflow: up to ${model.monitors.overflow} boxes (Body)`, x, yy, w, { size: 8.5, floor: FLOOR }) + 8;
   };
@@ -215,7 +221,7 @@ export async function renderSheet(model, { paper = "letter", font = "standard", 
     band(L, y, CW, Math.max(headH, 56), 14);
     let hy = y + 12;
     hy += block(model.title, L + 14, hy, TW, { size: 22, floor: 13, weight: 700, maxLines: 2, color: onBand }) + 4;
-    hy += block(model.subtitle.toUpperCase(), L + 14, hy, TW, { size: 9.5, floor: FLOOR, weight: 700, color: ACCENT });
+    hy += block(model.subtitle.toUpperCase(), L + 14, hy, TW, { size: 9.5, floor: FLOOR, weight: 700, color: inkSaver ? ACCENT : "#e8e8ee" });   // light on black (r1 #4)
     if (model.draft) hy += 2 + block("DRAFT — character creation not finished", L + 14, hy + 2, TW, { size: 8, floor: 6.5, weight: 700, maxLines: 1, color: onBand });
     if (extra) block(extra, L + 14, hy + 2, TW, { size: 8.5, floor: FLOOR, color: onBand });
     model.priorities.forEach(([k, v], i) => {
@@ -227,24 +233,30 @@ export async function renderSheet(model, { paper = "letter", font = "standard", 
     // Attributes: big values, accent when augmented, "nat X" under them.
     y += bar("Attributes", L, y, CW);
     const aw = CW / model.attrRow.length;
+    let rowH = 0;
     model.attrRow.forEach((a, i) => {
       const ax = L + i * aw;
-      block(a.abbr, ax + 4, y, aw - 8, { size: 7.5, floor: 6.5, weight: 700, maxLines: 1, color: MUTED });
-      block(a.value, ax + 4, y + 10, aw - 8, { size: 20, floor: 12, weight: 700, maxLines: 1, color: a.natural ? ACCENT : "#000" });
-      if (a.natural) block(`nat ${a.natural}`, ax + 4, y + 36, aw - 8, { size: 7.5, floor: 6.5, maxLines: 1, color: MUTED });
+      let h = block(a.abbr, ax + 4, y, aw - 8, { size: 7.5, floor: 6.5, weight: 700, maxLines: 1, color: MUTED });
+      h += block(a.value, ax + 4, y + h, aw - 8, { size: 20, floor: 12, weight: 700, maxLines: 1, color: a.natural ? ACCENT : "#000" });
+      if (a.natural) h += block(`nat ${a.natural}`, ax + 4, y + h, aw - 8, { size: 7.5, floor: 6.5, maxLines: 1, color: MUTED });
+      rowH = Math.max(rowH, h);   // measured: a long value pushes the row down, never into the next (r1 #2)
     });
-    y += 50;
+    y += Math.max(rowH, 46) + 4;
     doc.save().lineWidth(0.5).moveTo(L, y).lineTo(R, y).stroke("#999").restore();
     y += 4;
     const perRow = Math.min(model.stats.length, 6), sw = CW / perRow;
     for (let r = 0; r * perRow < model.stats.length; r++) {
+      let rowH2 = 0;
       model.stats.slice(r * perRow, r * perRow + perRow).forEach(([k, v], i) => {
-        block(k.toUpperCase(), L + i * sw + 4, y, sw - 8, { size: 6.5, floor: 6.5, weight: 700, maxLines: 2, color: MUTED });
-        block(v, L + i * sw + 4, y + 17, sw - 8, { size: 13, floor: 9, weight: 700, maxLines: 1 });
+        let h = block(k.toUpperCase(), L + i * sw + 4, y, sw - 8, { size: 6.5, floor: 6.5, weight: 700, maxLines: 2, color: MUTED });
+        h = Math.max(h, 16);
+        h += block(v, L + i * sw + 4, y + h, sw - 8, { size: 13, floor: 9, weight: 700, maxLines: 1 });
+        rowH2 = Math.max(rowH2, h);
       });
-      y += 38;
+      y += rowH2 + 6;   // measured per row (r1 #3)
     }
     y += 4;
+    if (y + 60 > BOTTOM) throw new SheetError("This character's header is too long for the Fohawk style: print it in the Classic style.");   // r1 #1: never cut
     act = table("Skills", active, [0.62, 0.12, 0.26], L, y, colW, BOTTOM, { accent: [1] });
     let ry = monitors(X2, y + bar("Condition monitor", X2, y, colW), colW);
     attacks = table("Attacks", model.attacks, [0.5, 0.25, 0.25], X2, ry, colW, BOTTOM, { accent: [1] });
@@ -295,5 +307,5 @@ export async function renderSheet(model, { paper = "letter", font = "standard", 
   }
   doc.end();
   await done;
-  return { pdf: Buffer.concat(chunks), runs, cells: cellText, pages, size: [W, H], margin: MARGIN };
+  return { pdf: Buffer.concat(chunks), runs, shapes, cells: cellText, pages, size: [W, H], margin: MARGIN };
 }

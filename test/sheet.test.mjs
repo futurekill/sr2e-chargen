@@ -44,7 +44,7 @@ const strings = (m, style = "classic") => [m.title,
 for (const [name, body] of FIXTURES) for (const style of STYLES) for (const paper of Object.keys(PAPER)) for (const font of Object.keys(FONT_SETS)) {
   test(`fit: ${name} · ${style} · ${paper} · ${font}`, async () => {
     const model = sheetModel(body);
-    const { pdf, runs, cells, size: [W, H], margin } = await renderSheet(model, { paper, font, style });
+    const { pdf, runs, shapes, cells, size: [W, H], margin } = await renderSheet(model, { paper, font, style });
     // 1. Every model string is placed (in order-insensitive, whitespace-free form: wrapping may split a string).
     const placed = squash(runs.filter(r => r.kind === "text" && !r.cell).map(r => r.text).join(""));
     // Table cells exactly: each cell's runs, joined, equal its full text (a split cell too).
@@ -59,6 +59,13 @@ for (const [name, body] of FIXTURES) for (const style of STYLES) for (const pape
       assert.ok(r.x >= margin - 0.5 && r.x + r.w <= W - margin + 0.5 && r.y >= margin - 0.5 && r.y + r.h <= H - margin + 0.5, `${name}: "${r.text}" leaves the page's safe area`);
       assert.ok(r.size >= 6.5, `${name}: "${r.text}" is under the size floor`);
       assert.ok(r.x + r.w <= r.box.x + r.box.w + 0.5, `${name}: "${r.text}" leaves its box`);
+    }
+    // 2b. Bands and pencil boxes inside the safe area; boxes never overlap each other.
+    for (const b of shapes) assert.ok(b.x >= margin - 0.5 && b.x + b.w <= W - margin + 0.5 && b.y >= margin - 0.5 && b.y + b.h <= H - margin + 0.5, `${name}: a ${b.kind} leaves the safe area`);
+    const boxes = shapes.filter(b => b.kind === "box");
+    for (let i = 0; i < boxes.length; i++) for (let j = i + 1; j < boxes.length; j++) {
+      const a = boxes[i], b = boxes[j];
+      assert.ok(!(a.page === b.page && a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h), `${name}: two monitor boxes overlap`);
     }
     // 3. No two runs overlap on a page.
     const byPage = Map.groupBy(runs, r => r.page);
@@ -81,6 +88,23 @@ for (const [name, body] of FIXTURES) for (const style of STYLES) for (const pape
     }
   });
 }
+
+test("Fohawk measures its fixed rows: long values grow the row; an impossible header is refused, never cut", async () => {
+  const body = asBody(structuredClone(pregens.find(p => /Hexen/.test(p.name))));
+  const model = sheetModel(body);
+  model.attrRow[0] = { abbr: "BOD", value: "12345678901234567890", natural: "8" };
+  model.stats[1] = ["Initiative", "12345678901234567890 + 2D6"];
+  model.monitors.physical = 14;
+  const { runs, shapes } = await renderSheet(model, { style: "fohawk" });
+  const byPage = runs.filter(r => r.page === 1).sort((a, b) => a.y - b.y);
+  for (let i = 0; i < byPage.length; i++) for (let j = i + 1; j < byPage.length; j++) {
+    const a = byPage[i], b = byPage[j];
+    assert.ok(!(a.x < b.x + b.w - 0.5 && b.x < a.x + a.w - 0.5 && a.y < b.y + b.h * 0.8 && b.y < a.y + a.h * 0.8), `"${a.text}" overlaps "${b.text}"`);
+  }
+  assert.equal(shapes.filter(s => s.kind === "box").length, 24);
+  const huge = sheetModel(body); huge.subtitle = "X ".repeat(3000);
+  await assert.rejects(renderSheet(huge, { style: "fohawk" }), (e) => e instanceof SheetError && /Classic/.test(e.message));
+});
 
 test("a character no bundled font has stops the export with a message, never a box", async () => {
   const body = newCharacter("龍");
