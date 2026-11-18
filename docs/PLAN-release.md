@@ -1,57 +1,69 @@
 # Plan: release readiness (roadmap milestone 6)
-_Draft 1 (2026-11-18). The gates docs/PLAN.md sets before the group is invited: backups with a restore test, the image
-scanned (Trivy, fails on High/Critical), an SBOM, the image signed (cosign keyless via GitHub OIDC), a weekly rebuild.
-The repository is PRIVATE; the image goes to a private registry only (PLAN.md "Distribution": never a public push)._
+_Draft 2 (2026-11-18), after Codex plan round 1 (16 findings; its simpler path adopted — docs/PLAN-release-REVIEW-LOG.md).
+The gates docs/PLAN.md sets before the group is invited: backups with a restore test, the image scanned (Trivy,
+fails on High/Critical), an SBOM, the image signed (cosign keyless via GitHub OIDC), a weekly rebuild. The repository
+is PRIVATE; the image goes to a private registry only (PLAN.md "Distribution": never a public push)._
 
-## 1. Backups — logical, by the app (a change from PLAN.md, with the reason)
-PLAN.md named `VACUUM INTO` / `pg_dump` / `mysqldump`. The image is distroless (no shell, no client tools), so the
-database tools aren't there, and a dialect-specific dump can't be restored into another dialect. Instead the app writes
-a **logical backup** itself, the same for all four databases:
-- `chargen backup create` (CLI) and a **nightly run inside the server** when `BACKUP_DIR` is set (a timer, the same
-  pattern as the daily purge; `BACKUP_KEEP` newest kept, default 7). Writes `BACKUP_DIR/chargen-<UTC timestamp>/`:
-  - `tables/<table>.jsonl` — every row of every table in primary-key order, one JSON object per line; binary columns
-    as base64; numbers as numbers;
-  - `manifest.json` — app version, schema migrations applied, per table the row count and a SHA-256 of its canonical
-    rows, and per asset its `id`, `bytes`, `sha256`; written LAST, so a directory without it is incomplete.
-- **Consistency**: all tables read inside ONE read transaction at a snapshot — Postgres `REPEATABLE READ`,
-  MySQL/MariaDB `START TRANSACTION WITH CONSISTENT SNAPSHOT`, SQLite a read transaction (WAL gives it a stable view).
-  Writers are not stopped.
-- **Where**: `BACKUP_DIR` must be a different volume or host path from `/data` (OPERATIONS.md; the server warns at start
-  when it is inside `/data`). Written to a temp name and renamed when complete.
-- **Secrets**: a backup holds password hashes and session/token hashes (never secrets in clear, as in the database).
-  OPERATIONS.md says to protect it like the database. Sessions are NOT restored (everyone signs in again).
-- `chargen backup verify <dir>` — restores into a scratch in-memory SQLite (fresh migrations), recomputes every table's
-  checksum and every asset's SHA-256, and compares with the manifest; exit code 0 only when all match.
-- `chargen backup restore <dir>` — into an EMPTY database only (refuses otherwise), the app in maintenance mode, the
-  schema version must match (else refuse and say which build to use); then verifies like `verify`. This is also the
-  cross-database move (PLAN.md's `db copy`): back up from SQLite, restore into Postgres.
-- **CI restore test**: on each of the four databases, a seeded instance (users, characters with revisions, a portrait,
-  idempotency rows) is backed up, restored into a fresh database of EVERY other kind, and the per-table checksums and
-  asset hashes compared (covers PLAN-portrait.md's copy/restore requirement).
+## 1. Backups — the database's own tools (as PLAN.md approved), one set by construction
+Portraits are rows (`assets`), so a database backup IS the "database AND assets" set PLAN.md requires.
+- **SQLite (the default deployment)**: the server takes the backup itself with `VACUUM INTO '<file>'` — SQLite's own
+  consistent snapshot, plain SQL, no tool in the image. Run on a SEPARATE read connection (not the app's write
+  transaction path, which uses `BEGIN IMMEDIATE`), so writers are not blocked; nothing is held in Node memory.
+  - `chargen backup create` (CLI) and, when `BACKUP_DIR` is set, a nightly run.
+  - Written as `BACKUP_DIR/.chargen-<UTC timestamp>-<random>.db.partial`, then `fsync`ed, renamed to
+    `chargen-<timestamp>-<random>.db`, the directory `fsync`ed; a failure deletes the partial and keeps every older
+    backup. Retention (`BACKUP_KEEP`, default 7) deletes old ones only AFTER the new one has verified.
+  - **Verify** (run after every backup, and `chargen backup verify <file>`): open the copy read-only, `PRAGMA
+    integrity_check` = ok, the `migrations` list equals this build's, every asset's SHA-256 recomputed from its bytes
+    equals its stored `sha256`, and the users' `doc_count`/`bytes_used` recomputed from documents, revisions and
+    assets equal the stored counters (a mismatch is reported, not "fixed").
+  - **Restore** = stop the server, replace `/data/chargen.db` with the backup file, start (OPERATIONS.md step by step;
+    sessions in the copy are deleted at the next start by `chargen backup restore <file>`, which copies the file into
+    place, deletes all sessions and every unused invite/setup/reset token, and then verifies).
+  - **One owner**: the nightly run claims the day with a conditional UPDATE of a `settings` row (`backup.last` from
+    yesterday to today), so of several server processes exactly one runs it; a run in progress is never started twice
+    in one process.
+- **Postgres / MySQL / MariaDB**: their native dump tools, run OUTSIDE the app image — OPERATIONS.md gives a sidecar
+  compose service (the official database image running `pg_dump -Fc` / `mysqldump --single-transaction` on a schedule
+  into the backup volume) and the restore commands. `chargen backup verify --database-url <restored-db>` runs the same
+  checks (assets, counters, migrations) against a restored database.
+- **Where and how protected** (r1 #10): `BACKUP_DIR` is its own volume, not under `/data`; the server refuses to start
+  the nightly run if `BACKUP_DIR` is inside `/data`. Files are written mode 0600. A backup contains password hashes
+  and every private library: OPERATIONS.md says to keep it on storage only the operator can read, and to encrypt any
+  off-site copy (e.g. `age`), which is outside the app.
+- **Cross-database move** stays PLAN.md's `chargen db copy` (maintenance mode, per-table checksums) — a later item, not
+  part of this release.
 
-## 2. The image gates (a release workflow)
-`.github/workflows/release.yml`, run on a version tag (`v*`) only:
-1. Build the image (the same Dockerfile; `--provenance` and SBOM attestations on).
-2. **Trivy** scan of the built image (OS packages and npm libraries), failing on HIGH/CRITICAL with a fix available;
-   accepted findings live in `.trivyignore` with a reason and an expiry (like osv-scanner.toml).
-3. **SBOM** (SPDX JSON, by Trivy) attached to the GitHub release as an asset.
-4. Push to **GHCR as a private package** (`ghcr.io/futurekill/sr2e-chargen:<version>` + digest) with the workflow's
-   `GITHUB_TOKEN` (`packages: write` for this job only).
-5. **Sign** the pushed digest with cosign keyless (GitHub OIDC, `id-token: write` for this job only) and attach the SBOM
-   as an attestation; `docs/OPERATIONS.md` shows the `cosign verify` command with the expected identity.
-- **Weekly**: a scheduled workflow rebuilds the image from the pinned base digests and runs the Trivy gate (no push);
-  Renovate already bumps base-image digests, so a base patch arrives as a pull request and the release rebuilds it.
-- Every action pinned to a commit SHA, `permissions:` per job (CI rule).
+**CI tests**: SQLite backup during concurrent writes (writers not blocked, the copy consistent), verify catching a
+changed asset byte, a wrong counter and a missing migration; restore deleting sessions and unused tokens; the
+nightly claim with two processes (one runs); retention keeping N and never deleting before verify; a disk-full
+simulation (a failing write) leaving older backups intact. Postgres/MySQL: `backup verify --database-url` on the CI
+databases after a seeded run.
+
+## 2. The image gates — a release workflow (r1 #13–#15)
+`.github/workflows/release.yml`, on a pushed `v*` tag:
+1. **Prove the commit**: the tagged commit must be on `main` (`git merge-base --is-ancestor`); the workflow then runs
+   the whole CI (`ci.yml` made `workflow_call`-able) as its first job; publishing `needs` it.
+2. Build the image (same Dockerfile).
+3. **Trivy**: fail on ANY High or Critical finding (OS packages and npm), fixed or not; exceptions only in
+   `.trivyignore.yaml` (Trivy's YAML format) with an id, a reason and an expiry.
+4. **SBOM** (SPDX JSON) uploaded to the GitHub release (`contents: write`, that job only).
+5. **Push** to `ghcr.io/futurekill/sr2e-chargen:<version>` (`packages: write`, that job only); then the job reads the
+   package's visibility through the API and FAILS if it is not `private`.
+6. **Sign** the pushed digest with cosign keyless (`id-token: write`, that job only) and attest the SBOM to it; the job
+   then runs `cosign verify` against the digest with the exact identity
+   (`https://github.com/futurekill/sr2e-chargen/.github/workflows/release.yml@refs/tags/<tag>`, issuer
+   `https://token.actions.githubusercontent.com`), and OPERATIONS.md gives the same command for the operator.
+- **Weekly**: a scheduled job builds the image and runs the Trivy gate (no push).
+- Every action pinned to a commit SHA; `permissions: {}` at the top, granted per job.
+- **Repository settings the OWNER sets** (I don't change settings): a tag ruleset restricting who can create or move
+  `v*` tags; documented in OPERATIONS.md's release checklist.
+- `actionlint` runs in CI on every workflow file.
 
 ## 3. Operations
-OPERATIONS.md gains: the backup variables and schedule, verify and restore, a restore drill, pulling and verifying the
-signed image, and the first-release checklist (compose, BASE_URL, TRUST_PROXY, mem_limit, BACKUP_DIR, admin
-bootstrap).
+OPERATIONS.md: backup variables, the nightly run, verify/restore, the database sidecars, a restore drill, pulling and
+verifying the signed image, and the first-release checklist (compose, BASE_URL, TRUST_PROXY, mem_limit, BACKUP_DIR
+volume, admin bootstrap, the tag ruleset).
 
 ## Out of scope
-Publishing anywhere public; off-site backup copy (the operator's job, documented); key-based signing.
-
-## Tests
-Backup/restore round trips on all four databases (CI matrix) and cross-dialect; verify detecting a changed byte, a
-missing row, a missing manifest; restore refusing a non-empty database and a different schema version; the nightly
-timer keeping N; the release workflow validated by `actionlint` in CI (it only runs on a tag).
+Public publishing; off-site copies (the operator's); key-based signing; `db copy`.
