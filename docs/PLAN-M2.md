@@ -9,9 +9,9 @@ page renders; every rule here cites it). Catalog: docs/PLAN-catalog.md._
 | M2a model, priorities, metatype, magic, attributes | done, pushed (docs/CODE-REVIEW-LOG-M2a.md) |
 | M2b skills | done, pushed (docs/CODE-REVIEW-LOG-M2b.md) |
 | M2c resources | done, pushed; its own plan docs/PLAN-M2c.md (docs/CODE-REVIEW-LOG-M2c.md) |
-| M2c-2 adept powers | next; needs S13 (the system's `adeptPowerCost` checked against p.125–126) |
+| M2c-2 adept powers | plan approved (docs/PLAN-M2c-2.md, 2 rounds); system side S13 built on the branch; app side waits for the release |
 | M2d contacts, lifestyle, allergy, derived values, parity, finish | waits for the system release |
-| System prerequisites (§0) | S1–S4, S6–S8 (+ S10, S11 from PLAN-M2c) built on sr2e-foundryvtt branch `chargen/s-prereqs` (local, not pushed), unit-tested; NOT released — after the Friday game, with a Codex review first. S5, S12, S13 not started. |
+| System prerequisites (§0) | S1–S4, S6–S8 (+ S10, S11 from PLAN-M2c) and S13 built on sr2e-foundryvtt branch `chargen/s-prereqs` (local, not pushed), unit-tested, Codex-reviewed (docs/CODE-REVIEW-LOG-chargen-prereqs.md there), checked in the test world; CHANGELOG Unreleased written. NOT released — after the Friday game. S5, S9, S12 not started. |
 
 ## As built (where the code differs from the text below — the code wins)
 - **Priorities live on the actor**, `actor.system.chargen.priorities` (Foundry's own field), not `creation.priorities`;
