@@ -129,3 +129,17 @@ The Fohawk style and ink-saver; the table card; the Markdown stat block; the por
   settings it needs; this slice remembers the sheet's paper and font in the browser (r1 #9, deferred).
 - The footer is "Page n of m" only; the title is printed in full in the header (r1 #1). Notes and names print in full
   (no length cut, r1 #2); a row taller than a page splits by lines across pages (r1 #3).
+
+## Slice 2 (2026-11-18): the readable font everywhere, and the Markdown stat block
+A small slice under the same approved rules (docs/PLAN.md U22 and Exports); its code review covers it.
+- **Per-user preference, on the server**: migration `002-user-prefs` adds `users.prefs` (JSON text, nullable,
+  added only if missing — the migration can rerun). `GET /api/account/prefs` → `{ readableFont }`;
+  `PUT /api/account/prefs` (session, CSRF, origin, strict schema) sets it. The session answer carries the prefs, so the
+  site applies the font at sign-in on any device; the browser copy is only the pre-sign-in default.
+- **The site's readable font is real**: Atkinson Hyperlegible Next (the same OFL package as the sheet), bundled by
+  Vite as WOFF2 (no third-party font host; CSP `font-src 'self'`), replacing the system-sans shortcut.
+- **The sheet's default font** is the user's preference when the request names none.
+- **Markdown stat block**: `GET /api/documents/:id/statblock.md` (characters; `text/markdown; charset=utf-8`, as an
+  attachment) from the SAME sheet model: every section as a Markdown table, user text escaped for Markdown (`|`, `\`,
+  `*`, `_`, `` ` ``, `<`, `[`, leading `#`), no links. A test checks every model string appears (unescaped form) and
+  the table rows parse to the right column count. "Download stat block" beside "Print sheet".
