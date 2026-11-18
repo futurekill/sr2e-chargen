@@ -1,5 +1,6 @@
 # Plan: milestone 2c — resources (core book)
-_Draft 1 (2026-11-18). A slice of docs/PLAN-M2.md (§3, §4 Resources, §7 M2c); this file settles what that plan left
+_Draft 2 (2026-11-18), after Codex plan round 1 (14 findings: 13 accepted, 1 deferred to M5;
+docs/PLAN-M2c-REVIEW-LOG.md). A slice of docs/PLAN-M2.md (§3, §4 Resources, §7 M2c); this file settles what that plan left
 open for buying things with nuyen and Force Points. Rules: docs/RULES-CHARGEN.md item 6 (p.46) and the pages cited
 here, each read on the page render (not the PDF text layer)._
 
@@ -19,7 +20,9 @@ is the price of one bundle (`quantity` rounds, usually 10). Cybereyes have `capa
 ### 1. Operations (added to shared/creation.mjs)
 - `addItem { catalogId }` — a core (`book: "sr2"`) entry of type weapon, armor, gear, ammo, cyberware, spell, focus or
   adept_power, copied from the SERVER's catalog as a Foundry item source, exactly as `addSkill` does (deterministic id,
-  `creation.items[id] = { catalogId, snapshot, choices }`). Refused: other types (skill has its own operation;
+  `creation.items[id] = { catalogId, snapshot, choices }`), with the entry's own `type` (the shared item helper takes
+  the type; it is not "skill" for everything — r1 #1). Every price and budget call gets `{ type, name, ...system }`.
+  An adept power is bought once (a second entry of the same power is refused: its level is the choice — r1 #12). Refused: other types (skill has its own operation;
   program, lifestyle, contact wait for M2d; vehicle — see §5; race, tradition, archetype are not items a character
   buys).
 - `setItem { itemId, choices }` — `choices` is an object; the reducer accepts ONLY the keys its type lists (below),
@@ -35,12 +38,12 @@ Only these choices exist; everything else in `system` comes from the snapshot.
 |---|---|---|
 | weapon | `quantity` 1–20; Bow: `strengthMinimum` 1–6 | price by the system's `derivedItemCost` (Bow) |
 | armor | `quantity` 1–5 | |
-| gear | `quantity` 1–1000; `rating` when the entry has `costPerRating` or `ratingStats` (1–the entry's max, and ≤ 6 reported, p.44); skillsoft: `rating` 1–6 and `grantedSkillCategory` (the system's list) | |
-| ammo | `quantity` = bundles, 1–100 | price per bundle (`chargenItemCost` takes ammo by bundle) |
-| cyberware | `rating` when `ratingStats` (the rows' ratings only); cybereye accessory: `in` = a cybereye's item id or "" | grade is always standard (grades are the Street Samurai Catalog's, M5) |
+| gear | `quantity` 1–1000; `rating` 1–6 when the entry has `costPerRating`, or one of its `ratingStats` rows' ratings that is ≤ 6 (p.44: no starting gear above 6, so higher is refused, not reported — r1 #8); skillsoft: `rating` 1–6 only — its `grantedSkillCategory` is the ENTRY's, never a choice (r1 #6) | DataSoft is refused: its price "Varies" (catalog cost 0), so no core price exists (r1 #7) |
+| ammo | `bundles` 1–100 | projected `quantity = bundles × entry.quantity` (rounds) and `flags.sr2e.acquiredListValue = bundles × entry.cost` — the field `chargenItemCost` prices ammo by (r1 #2) |
+| cyberware | `rating`: one of the `ratingStats` rows' ratings; an eye accessory: `in` = the item id of a cybereye on this character, or "" | grade is always standard (grades are the Street Samurai Catalog's, M5) |
 | spell | `force` 1–6 (above 6 refused: "no starting spell can have a Force greater than 6", p.46) | Force Points = Force (p.46) |
-| focus | `force` 1–6 (spell lock: 1 only, p.137) | nuyen via `focusCost`; Force Points = the bonding cost (§3) |
-| adept_power | `level` 1–the power's `maxLevel` | power points via `adeptPowerCost` |
+| focus | `force` 1–6 (spell lock: none, its price is flat, p.137) | nuyen via `derivedItemCost` (`costPerForce` × Force); Force Points = the bonding cost (§3) |
+| adept_power | `level` 1–the power's `maxLevel` | power points via `adeptPowerCost({ name, ...system }, racial Reaction max)` — the name picks Increased Reflexes' 1/4/6 and the race's Reaction maximum Increased Reaction's tiers (r1 #11) |
 
 `quantity`, `rating` and `force` land in the system's own fields (`quantity`, `rating`, `force`, `level`,
 `strengthMinimum`, `grantedSkillCategory`), so `chargenSpend` / `itemBaseCost` / `chargenItemCost` price them exactly
@@ -52,20 +55,29 @@ as Foundry's creation panel does. Prices are never stored as typed: `cost` stays
 - **Gear rating** (p.44): "Starting gear cannot have a rating greater than 6" — an item whose rating is above 6 is an
   error (reported, not refused: some entries list ratings above 6).
 - **Essence** (p.45–46): 6 − the sum of each cyberware's Essence; below 0 is an error. Each item's Essence is its
-  `ratingStats` row's `essenceCost` (else `essenceCost`), standard grade. **Cybereyes** (p.247 per the system's note;
-  the page render to be re-checked): accessories placed in a cybereye cost no Essence up to the eye's `capacity` (.5);
-  only the excess adds — the system's `containerEssence`. In the character, an accessory placed in an eye is NOT a
-  separate item: it becomes a row of the eye's `system.modules` (the system's own shape: `{ id, name, essenceCost,
-  kind: "accessory", eye: "both", cost, rating, combatTnMod, active, notes, paid: 0, listValue: cost }`), and the eye's
-  price adds `rowsListValue` — as Foundry stores it.
-- **Magic Rating** (p.45): a magician's or adept's Magic = Essence rounded down; shown in the panel.
+  `ratingStats` row's `essenceCost` (else `essenceCost`), standard grade. **Cybereyes** (core p.247, read on the page:
+  "Cybereyes will accept additional vision enhancements up to .5 Essence Cost without further Essence loss"):
+  accessories placed in a cybereye cost no Essence up to the eye's `capacity` (.5); only the excess adds — the system's
+  `containerEssence`. Only an entry the system knows as an eye accessory (`eyeAccessoryKind(flags, source)` not null)
+  may be placed in an eye. In the character an accessory placed in an eye is NOT a separate item: it becomes a row of
+  the eye's `system.modules` in the system's own shape (`{ id, name, essenceCost, kind: eyeAccessoryKind(…), eye:
+  "both", cost, rating, combatTnMod, active: true, notes: "", paid: 0, listValue: cost }` — the Eye Camera's kind is
+  `camera`, r1 #4), and every price call gets the eye's `moduleListValue = rowsListValue(modules)`, the field
+  `chargenItemCost` adds (r1 #3). The 1.2-Essence accessory cap and the weapon/camera slot rules (`eyeReports`) are
+  Cybertechnology p.45's: they arrive with that book in M5 (r1 #5, deferred).
+- **Magic Rating** (p.45): a magician's or adept's Magic = Essence rounded down; shown in the panel. It is computed
+  BEFORE the other checks: Sorcery and Conjuring need Magic ≥ 1 (not only a magic type — a magician at Essence 0.9
+  has none, r1 #13), and so do spells, foci bonding and adept powers.
 - **Force Points** (p.46): spells' Force + foci bonding costs over the priority's Force Points is an error; a mundane
   character or a physical adept buying a spell is an error (only magicians receive Force Points). Spell Force > 6 is
   refused (p.46). Unspent Force Points are a warning (they are lost: confirm on the page during the build).
 - **Focus bonding cost** (p.137, Focus Bonding Table, checked on the render): specific spell focus = Rating; spell
   category focus 3 × Rating; spirit 2 × Rating; power 5 × Rating; spell lock 1; weapon focus small 4 × / large 5 ×
   Rating. The system stores `bondingCost` as an authored number and does not derive it from Force, so the app derives
-  it in `purchase.mjs` from `focusType` and Force (weapon foci: see §5) and writes it to `system.bondingCost`.
+  it in `purchase.mjs` from `focusType` and Force and writes it to `system.bondingCost`. The core catalog's spell focus
+  is the SPECIFIC spell focus (the system implements only that subtype; its price, 45,000¥ × Rating, is the price
+  list's "Specific Spell Focus", core p.263): bonding = Rating. A spell category ("Spell
+  Type") focus (75,000¥ × Rating, 3 × Rating) is not in the catalog and not offered (r1 #9). Weapon foci: §5.
 - **Adept power points** (p.124): the sum of `adeptPowerCost` over powers ≤ the adept's Magic Rating; physical adepts
   only (a magician buying a power is an error).
 - **Rating availability**: core character creation has no availability limit (the Companion's are M5).
@@ -81,16 +93,20 @@ gains Nuyen, Essence, Magic, Force Points and power points rows.
   them, the app refuses vehicles at creation (it would show a total Foundry disagrees with).
 - **S10. Focus bonding cost** is authored, not derived from Force (p.137). The system should derive it (one pure
   function in rules/, the data model calling it); the app uses that function once the pin includes it.
-- **S11. Focus prices**: the system's `focusCost` comment and the catalog's `costPerForce` (45,000 for the spell focus)
-  disagree; check the core price list (gear chapter) on the render and fix whichever is wrong. Until then the app uses
-  the catalog's numbers (what Foundry charges today).
+- **S11. Focus price comment**: the core price list (p.263, read 2026-11-18) gives Specific Spell Focus
+  45,000¥ × Rating, Spell Type Focus 75,000¥ × Rating, Spirit Focus 60,000¥ × Rating, Power Focus 105,000¥ × Rating,
+  Spell Lock 45,000¥ — the catalog's `costPerForce` values are RIGHT; only `focusCost`'s comment (10,000 / 20,000 /
+  5,000) is stale. Fix the comment (r1 #10: resolved, no price changes).
 - **S12. Weapon foci** price off the bonded weapon's Reach (`weaponFocusCost`, p.126) and need a weapon to bond to;
   the app refuses weapon foci until it has a bond choice (M2c follow-up).
 
 ### 6. Tests
 - Per type: the projection (choices → `system`), refusals for every unlisted choice key and every out-of-range value,
   and the price against a hand-computed value from the page (`costPerRating`, a ratingStats row, a bundle of ammo, a
-  focus at Force 3).
+  focus at Force 3). And the interactions (r1 #14): two Rating 3 Jammers (quantity × rated price), three ammo bundles
+  (rounds and price), an Eye Camera in cybereyes (kind camera), an adept with cyberware (Magic and power points fall),
+  a magician at Essence 0.9 (Magic 0: Sorcery, spells and foci reported), a spell on an adept (refused at the budget:
+  no Force Points), Increased Reflexes 2 for 4 points and a second Increased Reflexes refused.
 - Essence: wired reflexes + cybereyes with Low-Light (.2) and Thermographic (.2) inside = .2 eyes only; a third
   accessory pushing past .5 adds only the excess; Essence below 0 reported; Magic follows Essence.
 - Force Points: a spell at Force 6 + a power focus Force 2 (10) against Priority C's 25.
