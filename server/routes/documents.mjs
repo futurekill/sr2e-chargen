@@ -50,7 +50,7 @@ export default async function documentRoutes(app) {
     const { document, body } = await L.getDocument(req.ctx, me(req), req.params.id);
     if (document.kind !== "character") return reply.code(409).send({ error: "Only a character has a sheet.", code: "wrong-kind" });
     const font = req.query.font ?? (req.session.user.prefs?.readableFont ? "readable" : "standard");   // the user's preference by default
-    const portrait = await L.getPortrait(req.ctx, me(req), req.params.id, document.revision);   // the same revision as the body (r1 #4)
+    const portrait = await L.portraitOf(req.ctx, me(req), req.params.id, body);   // the body already fetched (r1 #4, r2 #4)
     const pdf = await renderSheetPdf(body, { paper: req.query.paper ?? "letter", font, style: req.query.style ?? "classic", portrait });
     reply.header("content-disposition", `inline; filename="sheet-${document.id}.pdf"`).header("cache-control", "no-store").type("application/pdf");
     return pdf;
@@ -95,9 +95,15 @@ export default async function documentRoutes(app) {
       const revision = Number(req.query.revision);
       const mime = String(req.headers["content-type"] ?? "").split(";")[0].trim().toLowerCase();
       const uploadSha = createHash("sha256").update(Buffer.isBuffer(req.body) ? req.body : Buffer.from(JSON.stringify(req.body ?? null))).digest("hex");
-      const replay = await L.replayOf(req.ctx, me(req), key(req), L.portraitFingerprint(req.params.id, { revision, mime, uploadSha }));
+      const fp = L.portraitFingerprint(req.params.id, { revision, mime, uploadSha });
+      const replay = await L.replayOf(req.ctx, me(req), key(req), fp);
       if (replay) return replay;   // a retried upload gets its first answer (r1 #1), before the revision check
-      await L.portraitTarget(req.ctx, me(req), req.params.id, revision);   // the caller's character at that revision (404/409 first)
+      try { await L.portraitTarget(req.ctx, me(req), req.params.id, revision); }   // the caller's character at that revision (404/409 first)
+      catch (e) {
+        // An overlapping retry: the first may have committed since the replay check (r2 #1).
+        if (e.code === "stale") { const again = await L.replayOf(req.ctx, me(req), key(req), fp); if (again) return again; }
+        throw e;
+      }
       try { checkUpload(req.body, mime); } catch (e) { if (e instanceof PortraitError) throw new Refused(e.message, e.status, e.code); throw e; }   // before the queue
       const processed = await processPortraitJob(req.body, mime);
       return L.setPortrait(req.ctx, me(req), req.params.id, { revision, mime, uploadSha }, key(req), processed);

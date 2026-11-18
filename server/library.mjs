@@ -301,6 +301,10 @@ export async function getPortrait(ctx, userId, id, revision = null) {
     if (!r) throw new Refused("No such revision.", 404, "not-found");
     body = decodeBody(r.body);
   }
+  return portraitOf(ctx, userId, id, body);
+}
+/** The portrait a body points at (premade, or an asset of THIS document and owner), or null. */
+export async function portraitOf(ctx, userId, id, body) {
   const stock = body?.creation?.portrait?.stock;
   if (typeof stock === "string") return stockPortrait(stock);
   const assetId = body?.creation?.portrait?.assetId;
