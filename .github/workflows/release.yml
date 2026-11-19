@@ -19,8 +19,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with: { persist-credentials: false, fetch-depth: 0 }
-      - run: |
-          git fetch -q origin main
+      - run: |   # fetch-depth 0 already has origin/main; a second fetch would need the credentials we don't keep
           git merge-base --is-ancestor "$GITHUB_SHA" origin/main || { echo "::error::$GITHUB_REF_NAME is not on main"; exit 1; }
 
   ci:
