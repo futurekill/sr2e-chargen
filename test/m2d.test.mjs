@@ -133,6 +133,8 @@ test("server: the roll is the server's, a client roll is refused, a replay retur
   const call = (url, body, key = randomUUID()) => app.inject({ method: "POST", url, headers: { origin: ORIGIN, cookie, "x-csrf-token": csrf, "idempotency-key": key }, payload: body });
   const id = (await call("/api/documents/characters", { name: "Gang Kid" })).json().document.id;
   assert.equal((await call(`/api/documents/${id}/ops`, { revision: 1, ops: [{ op: "addExtra", kind: "gang", name: "Ancients", roll: 12 }] })).statusCode, 400, "no roll field");
+  assert.equal((await call(`/api/documents/${id}/ops`, { revision: 1, ops: [{ op: "addExtra", kind: "enemy", name: "Ancients" }] })).statusCode, 400, "kind at the door");
+  assert.equal((await call(`/api/documents/${id}/ops`, { revision: 1, ops: [{ op: "addExtra", kind: "gang", name: "x".repeat(61) }] })).statusCode, 400, "name at the door");
   const key = randomUUID(), body = { revision: 1, ops: [{ op: "addExtra", kind: "gang", name: "Ancients" }] };
   const first = (await call(`/api/documents/${id}/ops`, body, key)).json();
   const again = (await call(`/api/documents/${id}/ops`, body, key)).json();

@@ -23,8 +23,13 @@ const FIELD = { string: { type: "string", maxLength: 20000 }, boolean: { type: "
     additionalProperties: { anyOf: [{ type: "integer", minimum: 0, maximum: 1000 }, { type: "string", maxLength: 60 }] } },
   // Followers' five archetypes (docs/PLAN-M2d.md): at most five short names.
   archetypes: { type: "array", maxItems: 5, items: { type: "string", maxLength: 60 } } };
+/** Tighter bounds for some ops' fields (docs/PLAN-M2d.md Draft 2): refused at the door, checked again by the reducer. */
+const short = { type: "string", maxLength: 60 }, choice = (...v) => ({ enum: ["", ...v] });
+const BOUNDS = { addExtra: { kind: { enum: ["gang", "follower"] }, name: short },
+  setAllergy: { substance: short, rarity: choice("uncommon", "common"), severity: choice("nuisance", "mild", "moderate", "severe"),
+    rarityBonus: choice("attributes", "skills", "force", "nuyen"), severityBonus: choice("attributes", "skills", "force", "nuyen") } };
 const opSchema = { oneOf: Object.entries(OPS).map(([op, fields]) => ({ type: "object", additionalProperties: false, required: ["op", ...Object.keys(fields)],
-  properties: { op: { const: op }, ...Object.fromEntries(Object.entries(fields).map(([k, t]) => [k, FIELD[t]])) } })) };
+  properties: { op: { const: op }, ...Object.fromEntries(Object.entries(fields).map(([k, t]) => [k, BOUNDS[op]?.[k] ?? FIELD[t]])) } })) };
 const opsBody = { type: "object", additionalProperties: false, required: ["revision", "ops"],
   properties: { revision: { type: "integer", minimum: 1 }, ops: { type: "array", minItems: 1, maxItems: 50, items: opSchema } } };
 

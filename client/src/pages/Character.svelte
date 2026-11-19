@@ -114,8 +114,11 @@
     queue = queue.then(async () => {
       try { server = await mutate("POST", `/api/documents/${server.document.id}/ops`, { revision: server.document.revision, ops: [op] }); }
       catch (err) {
-        error = err.message;
-        if (err.code === "stale" || err.code === "network") { try { server = await get(`/api/documents/${server.document.id}`); } catch { /* keep the last answer */ } }
+        // As change(): edits queued behind this one were made on a copy that is now gone, so they are dropped (M2d code r1 #2).
+        epoch++; recovering = true;
+        error = err.code === "stale" ? "This character changed somewhere else. It now shows the saved version: redo your last changes." : err.message;
+        try { server = await get(`/api/documents/${server.document.id}`); } catch { /* keep the last answer */ }
+        body = server.body; recovering = false;
       }
       if (--sending === 0) body = server.body;
     });
@@ -124,7 +127,9 @@
   const ALLERGY_FIELDS = { rarity: ["uncommon", "common"], severity: ["nuisance", "mild", "moderate", "severe"], bonus: ["attributes", "skills", "force", "nuyen"] };
   const allergy = $derived(sys.chargen.allergy ?? { substance: "", rarity: "", severity: "", rarityBonus: "", severityBonus: "" });
   const setAllergy = (k, v) => change({ op: "setAllergy", ...allergy, [k]: v });
-  const contactPrice = (x) => ({ buddy: "10,000¥", gang: "50,000¥", follower: "200,000¥" })[x.r.choices.kind ?? x.r.snapshot.contactType] ?? "two free, then 5,000¥";
+  // Each contact row's charge (p.46): the first two ordinary contacts (in the order bought) are free.
+  const plainContacts = $derived(bought.filter(x => x.r.type === "contact" && (x.r.choices.kind ?? x.r.snapshot.contactType) === "contact").map(x => x.id));
+  const contactPrice = (x) => ({ buddy: "10,000¥", gang: "50,000¥", follower: "200,000¥" })[x.r.choices.kind ?? x.r.snapshot.contactType] ?? (plainContacts.indexOf(x.id) < 2 ? "free" : "5,000¥");
   const numberFrom = (ev) => Number.parseInt(ev.currentTarget.value, 10);
   // The printable sheet: paper and font remembered in this browser (a convenience; the server holds no preference yet).
   const pref = (k, d) => { try { return localStorage.getItem(k) ?? d; } catch { return d; } };
@@ -226,8 +231,8 @@
       {/if}
       <form class="stack wide" onsubmit={(ev) => { ev.preventDefault(); if (nameInput.trim() && nameInput.trim() !== body.name) change({ op: "setName", name: nameInput }); }}>
         <div class="row">
-          <label class="grow"><span>Street name</span><input bind:value={nameInput} maxlength="120" required disabled={finished}></label>
-          <button disabled={finished || !nameInput.trim() || nameInput.trim() === body.name}>Rename</button>
+          <label class="grow"><span>Street name</span><input bind:value={nameInput} maxlength="120" required></label>
+          <button disabled={!nameInput.trim() || nameInput.trim() === body.name}>Rename</button>
         </div>
       </form>
       <label class="notes"><span>Notes: who is this, and why do they run the shadows?</span>
