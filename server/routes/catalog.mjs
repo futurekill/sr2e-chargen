@@ -18,12 +18,12 @@ export default async function catalogRoutes(app) {
     reply.header("cache-control", "private, max-age=86400").header("x-content-type-options", "nosniff").type("image/webp");
     return webp;
   });
-  app.get("/", async (_req, reply) => (app.catalog ? { ...app.catalog.manifest } : none(reply)));
+  app.get("/", async (_req, reply) => (app.catalog ? { ...app.catalog.manifest, offers: app.catalog.offers ?? {} } : none(reply)));
   app.get("/entries", { schema: { querystring: { type: "object", additionalProperties: false, properties: {
-    book: list, type: list, q: { type: "string", maxLength: 64 },
+    book: list, type: list, q: { type: "string", maxLength: 64 }, offerable: { enum: ["creation", "play"] },
     offset: { type: "string", pattern: "^[0-9]{1,6}$" }, limit: { type: "string", pattern: "^([1-9][0-9]?|100)$" } } } } },
   async (req, reply) => (app.catalog ? searchCatalog(app.catalog, { books: many(req.query.book), types: many(req.query.type), q: req.query.q ?? "",
-    offset: Number(req.query.offset ?? 0), limit: Number(req.query.limit ?? 50) }) : none(reply)));
+    offset: Number(req.query.offset ?? 0), limit: Number(req.query.limit ?? 50), offerable: req.query.offerable ?? null }) : none(reply)));
   // The id is looked up in a Map: it is never a path, a pattern or part of a query.
   app.get("/entries/:id", { schema: { params: { type: "object", required: ["id"], properties: { id: { type: "string", pattern: "^[A-Za-z0-9._#-]{3,160}$" } } } } },
     async (req, reply) => {

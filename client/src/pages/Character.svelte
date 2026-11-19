@@ -7,7 +7,7 @@
   import { untrack, onDestroy } from "svelte";
   import { get, mutate, upload } from "../lib/api.js";
   import { derive } from "../../../shared/derive.mjs";
-  import { applyOp, validate, karmaOptions, undoable, surgeryPreview, PLAY_GEAR, cardIds, cardEligible, CARD_TYPES, CATEGORIES, CATEGORY_NAMES, LETTERS, METATYPES, MAGIC_TYPES, MAGIC_NAMES, TRADITIONS, ATTRIBUTES, ATTR_NAMES, CUSTOM_SKILL_CATEGORIES, totemNames } from "../../../shared/creation.mjs";
+  import { applyOp, validate, karmaOptions, undoable, surgeryPreview, booksOf, PLAY_GEAR, cardIds, cardEligible, CARD_TYPES, CATEGORIES, CATEGORY_NAMES, LETTERS, METATYPES, MAGIC_TYPES, MAGIC_NAMES, TRADITIONS, ATTRIBUTES, ATTR_NAMES, CUSTOM_SKILL_CATEGORIES, totemNames } from "../../../shared/creation.mjs";
   import { TABLES } from "../../../shared/rules.mjs";
   import { BUYABLE, choiceSpec, defaultChoices, project, price, essenceOf, isCybereye, smallWeapon } from "../../../shared/purchase.mjs";
   import { saleQuoteOf, streetPrice, ratedStreetIndex, FENCE_STEPS, totalWoundPenalty, woundLevel } from "../../../shared/rules.mjs";
@@ -32,6 +32,13 @@
   /** The full catalog entries this page fetched (the reducer copies an entry's data into the character). */
   const entries = new Map();
   const lookup = (id) => entries.get(id) ?? null;
+  // The catalog's sourcebooks (docs/PLAN-M5a.md): the reducer checks a character's list against them.
+  let catalogBookList = $state([]), bookOffers = $state({});
+  const catalogBooks = $derived(catalogBookList.map(x => x.key));
+  get("/api/catalog").then(m => { catalogBookList = m.books ?? []; bookOffers = m.offers ?? {}; }).catch(() => { /* no list: the books can't be changed, the rest works */ });
+  const bookAbbr = (k) => catalogBookList.find(x => x.key === k)?.abbr ?? k;
+  const sourcebooks = $derived(catalogBookList.filter(x => x.key !== "sr2"));
+  const setBooksTo = (list) => { change({ op: "setBooks", books: list }); searchShop(); searchPlay(); };   // the shops list what the books offer
   let coreSkills = $state([]), pickSkill = $state(""), customCategory = $state("knowledge"), customName = $state("");
   get("/api/catalog/entries?type=skill&book=sr2&limit=100").then(r => { coreSkills = r.entries; }).catch(() => { /* the add list stays empty; the page still works */ });
   const skills = $derived(body.actor.items.filter(i => i.type === "skill"));
@@ -50,7 +57,8 @@
     clearTimeout(shopTimer);
     const mine = ++shopSeq;   // only the latest search's answer is shown, even one still waiting to start (r1 #7, r2)
     shopTimer = setTimeout(async () => {
-      const p = new URLSearchParams({ book: "sr2", limit: "30" });
+      const p = new URLSearchParams({ limit: "30", offerable: "creation" });
+      for (const k of ["sr2", ...booksOf(body)]) p.append("book", k);
       for (const t of shopType ? [shopType] : SHOP_TYPES) p.append("type", t);
       if (shopQ.trim()) p.set("q", shopQ.trim());
       shopBusy = true;
@@ -110,7 +118,8 @@
     clearTimeout(playTimer);
     const mine = ++playSeq;   // only the latest search's answer is shown (as the Resources shop)
     playTimer = setTimeout(async () => {
-      const p = new URLSearchParams({ book: "sr2", limit: "20" });
+      const p = new URLSearchParams({ limit: "20", offerable: "play" });
+      for (const k of ["sr2", ...booksOf(body)]) p.append("book", k);
       for (const t of PLAY_GEAR) p.append("type", t);
       if (playQ.trim()) p.set("q", playQ.trim());
       try { const r = await get(`/api/catalog/entries?${p}`); if (!gone && mine === playSeq) playShop = r.entries; } catch (err) { if (!gone && mine === playSeq) error = err.message; }
@@ -151,7 +160,7 @@
   onDestroy(() => { gone = true; });
   function change(op) {
     if (recovering) return;   // nothing new on top of a copy that's about to be replaced (review r2)
-    try { body = applyOp(body, op, lookup, { saleMode }); } catch (err) { error = err.message; return; }
+    try { body = applyOp(body, op, lookup, { saleMode, catalogBooks }); } catch (err) { error = err.message; return; }
     error = ""; sending++;
     const mine = epoch;
     queue = queue.then(async () => {
@@ -371,7 +380,7 @@
         </form>
         <h3>Buy</h3>
         <label class="grow"><span>Search weapons, armor, gear, ammunition, cyberware, programs</span><input bind:value={playQ} oninput={searchPlay} maxlength="64"></label>
-        <ul class="shop">{#each playShop as e (e.id)}<li><span class="name">{e.name}</span><span class="muted small">{TYPE_NAME[e.type] ?? e.type}{e.cost ? ` · list ${nuyen(e.cost)}` : ""}</span><button type="button" class="quiet" onclick={() => startBuy(e.id)}>Buy…</button></li>{/each}</ul>
+        <ul class="shop">{#each playShop as e (e.id)}<li><span class="name">{e.name}</span><span class="muted small">{TYPE_NAME[e.type] ?? e.type}{e.cost ? ` · list ${nuyen(e.cost)}` : ""} · {bookAbbr(e.book ?? e.listBook)}{e.citation?.page ? ` p.${e.citation.page}` : ""}</span><button type="button" class="quiet" onclick={() => startBuy(e.id)}>Buy…</button></li>{/each}</ul>
         {#if buying}
           <div class="row adders">
             <strong>{buying.rec.name}</strong>
@@ -488,6 +497,17 @@
           <button disabled={!nameInput.trim() || nameInput.trim() === body.name}>Rename</button>
         </div>
       </form>
+      {#if sourcebooks.length}
+        <fieldset class="books">
+          <legend>Sourcebooks</legend>
+          <p class="muted small">The books your table uses. The core book is always on. From a sourcebook the app offers weapons, armor, ammunition, gear and spells for now; the rest of each book comes later.</p>
+          <label class="row inline"><input type="checkbox" class="check" checked={sourcebooks.every(x => booksOf(body).includes(x.key))} onchange={(ev) => setBooksTo(ev.currentTarget.checked ? sourcebooks.map(x => x.key) : [])}><span><strong>All</strong></span></label>
+          <label class="row inline"><input type="checkbox" class="check" checked disabled><span>{catalogBookList.find(x => x.key === "sr2")?.title ?? "Core book"}</span></label>
+          {#each sourcebooks as x (x.key)}
+            <label class="row inline"><input type="checkbox" class="check" checked={booksOf(body).includes(x.key)} onchange={(ev) => setBooksTo(ev.currentTarget.checked ? [...booksOf(body), x.key] : booksOf(body).filter(k => k !== x.key))}><span>{x.title} <span class="muted small">({x.abbr}{bookOffers[x.key] ? `: ${bookOffers[x.key].offered} offered now, ${bookOffers[x.key].later} later` : ""})</span></span></label>
+          {/each}
+        </fieldset>
+      {/if}
       <label class="notes"><span>Notes: who is this, and why do they run the shadows?</span>
         <textarea bind:value={notesInput} maxlength="20000" onchange={() => notesInput !== body.notes && change({ op: "setNotes", notes: notesInput })}></textarea></label>
 
@@ -669,12 +689,12 @@
       <p class="muted">Spend your nuyen on gear at list price; magicians (adepts too) spend Force Points on bonding foci, and full magicians on spells (Force up to 6); a physical adept uses only a weapon focus, and buys its powers here with power points (its Magic Rating). No starting gear above Rating 6. Cybereyes take up to .5 Essence of accessories for free. <span class="cite">SR2 p.46, p.124–126, p.137, p.247</span></p>
       {#if !finished}
         <div class="row adders">
-          <label class="grow"><span>Search the core book</span><input bind:value={shopQ} oninput={searchShop} maxlength="64" placeholder="Ares Predator, armor jacket, wired reflexes…"></label>
+          <label class="grow"><span>Search the core book{booksOf(body).length ? " and your sourcebooks" : ""}</span><input bind:value={shopQ} oninput={searchShop} maxlength="64" placeholder="Ares Predator, armor jacket, wired reflexes…"></label>
           <label><span>Type</span><select bind:value={shopType} onchange={searchShop}><option value="">Everything</option>{#each SHOP_TYPES as t}<option value={t}>{TYPE_NAME[t]}</option>{/each}</select></label>
         </div>
         <ul class="shop" aria-busy={shopBusy}>
           {#each shop as e (e.id)}
-            <li><span class="name">{e.name}</span><span class="muted small">{TYPE_NAME[e.type] ?? e.type}{e.cost ? ` · ${nuyen(e.cost)}` : ""}{e.citation?.page ? ` · p.${e.citation.page}` : ""}</span><button type="button" class="quiet" onclick={() => buy(e.id)}>Add</button></li>
+            <li><span class="name">{e.name}</span><span class="muted small">{TYPE_NAME[e.type] ?? e.type}{e.cost ? ` · ${nuyen(e.cost)}` : ""} · {bookAbbr(e.book ?? e.listBook)}{e.citation?.page ? ` p.${e.citation.page}` : ""}</span><button type="button" class="quiet" onclick={() => buy(e.id)}>Add</button></li>
           {:else}
             <li class="muted">{shopBusy ? "Searching…" : "Nothing matches."}</li>
           {/each}
@@ -856,6 +876,8 @@
   .box.hurt { background: var(--danger); border-color: var(--danger); }
   .surgery { list-style: none; padding: 0; display: grid; gap: 1rem; }
   .surgery li { display: grid; gap: .25rem; }
+  .books { border: 1px solid var(--line); padding: .75rem 1rem; margin-block: 1rem; display: grid; gap: .35rem; max-width: 40rem; }
+  .books legend { font-weight: 700; padding-inline: .25rem; }
   .danger-zone { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--line); display: grid; gap: .75rem; max-width: 36rem; }
   .danger-zone p { margin: 0; }
   .panel { border: 1px solid var(--line); background: var(--surface); padding: .9rem 1rem; }

@@ -131,7 +131,7 @@ export function createCharacter(ctx, userId, { name }, key) {
   });
 }
 /** Apply creation operations, in order, as ONE new revision; any refusal refuses them all. */
-export function applyOps(ctx, userId, id, { revision, ops }, key, lookup = () => null, by = "") {
+export function applyOps(ctx, userId, id, { revision, ops }, key, lookup = () => null, by = "", catalogBooks = []) {
   return idempotent(ctx, userId, key, fingerprint("POST", `/documents/${id}/ops`, { revision, ops }), async trx => {
     const doc = await current(trx, userId, id, revision, "character");
     let body = decodeBody(doc.body);
@@ -141,7 +141,7 @@ export function applyOps(ctx, userId, id, { revision, ops }, key, lookup = () =>
     const roll = (n) => Array.from({ length: n }, d6).reduce((t, x) => t + x, 0);
     // The GM's sale mode, read INSIDE this transaction (PLAN-M4b Draft 3, r2 #5): never a value the client sent.
     const saleMode = ops.some(o => o.op === "sellItem") ? await getSaleMode(trx) : "refund";
-    try { for (const op of ops) body = applyOp(body, op, lookup, { roll: diceFor(op) ? roll(diceFor(op)) : null, now: ctx.now(), saleMode, by }); } catch (e) { throw refusal(e); }
+    try { for (const op of ops) body = applyOp(body, op, lookup, { roll: diceFor(op) ? roll(diceFor(op)) : null, now: ctx.now(), saleMode, by, catalogBooks }); } catch (e) { throw refusal(e); }
     const text = encode(body);
     await bump(trx, ctx, userId, id, revision, { name: body.name, body: text, bytes: Buffer.byteLength(text) });
     await appendRevision(trx, ctx, { id, owner_id: userId }, revision + 1, body, ops.map(o => o.op).join(", ").slice(0, 200));

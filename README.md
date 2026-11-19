@@ -356,7 +356,11 @@ when one breaks a rule). The **Rules check** beside the tabs lists every problem
 remembers the tab you were on.
 
 1. **Concept**: name, notes, and a portrait: upload a JPEG, PNG or WebP (it is re-encoded and its location data
-   removed), or choose one of the premade portraits.
+   removed), or choose one of the premade portraits. **Sourcebooks**: tick the books your table uses (or **All**); the
+   core book is always on. The shops then also list those books' weapons, armor, ammunition, gear and spells — the
+   other parts of each book (metatypes, Edges and Flaws, cyberware, bioware…) come in later versions, and an entry with
+   special rules (a drug, a skillsoft, an item with active effects) isn't offered yet. A book can be turned on at any
+   time; it can be turned off once nothing on the character comes from it. Each shop row shows its book and page.
 2. **Priorities** (p.44): give each of Race, Magic, Attributes, Skills and Resources one letter, A to E, each letter
    once. Picking a letter that is in use swaps the two.
 3. **Metatype** (p.44): human, dwarf, elf, ork or troll. A metahuman needs Race A (or C with the GM's *More

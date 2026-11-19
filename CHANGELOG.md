@@ -6,6 +6,11 @@ notes come from it.
 ## Unreleased
 
 ### Added
+- **Sourcebooks** (roadmap item 5, first part): tick the books your table uses on the Concept tab. The creation shop
+  and the Nuyen shop then list those books' weapons, armor, ammunition, gear and spells (Street Samurai Catalog guns,
+  Grimoire spells, Fields of Fire gear…), with each row's book and page. Entries with rules the app doesn't compute
+  yet (drugs, skillsofts, items with active effects or special rules) aren't offered; metatypes, Edges and Flaws,
+  sourcebook cyberware and bioware come later. A Corporate Security maglock rated above 6 is bought after creation.
 - **Condition after creation** (core p.111, p.114; Cybertechnology p.53; RULINGS R8): a finished character has a
   **Condition** step. Record damage and healing on the Physical and Stun monitors (Stun rolls into Physical, Physical
   into the overflow; the page shows the wound level, the injury modifier, and unconscious/dying/dead); use rounds from

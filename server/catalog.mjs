@@ -5,6 +5,7 @@
 import { readFileSync, existsSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { join } from "node:path";
+import { offerReason } from "../shared/purchase.mjs";
 
 export class CatalogError extends Error {}
 
@@ -62,7 +63,7 @@ export function loadCatalog(dir, { pins = null } = {}) {
   // Search index: name and category, lower-cased once. Sorted by name for stable pages.
   const sorted = [...catalog.entries].sort((a, b) => a.name.localeCompare(b.name, "en") || (a.id < b.id ? -1 : 1));
   const index = sorted.map(e => ({ e, hay: `${e.name}\n${(e.category ?? []).join("\n")}`.toLowerCase() }));
-  return { manifest, byId, index, vehicles, size: catalog.entries.length };
+  return { manifest, byId, index, vehicles, size: catalog.entries.length, offers: bookOffers(catalog.entries, catalog.books.map(x => x.key)) };
 }
 
 /** One entry, as the routes and the ops reducer see it: a vehicle carries its complete actor source (S9). */
@@ -73,9 +74,33 @@ export function entryOf(catalog, id) {
   return src ? { ...e, actorSource: src } : e;
 }
 
+/**
+ * Whether a character with these books may buy the entry ("creation" | "play"), as the reducer decides: a vehicle by
+ * addVehicle (core, with a list price), a skill by addSkill (core), the rest by offerReason (code review M5a r1 #3).
+ */
+export function offeredBy(e, books, mode) {
+  const core = (e.book ?? e.listBook) === "sr2";
+  if (e.type === "vehicle") return core && mode === "creation" && Number(e.cost) > 0;
+  if (e.type === "skill") return core;
+  return offerReason(e, books, { inPlay: mode === "play" }) === null;
+}
+/** Per sourcebook, with every book on: how many entries are offered at creation now and how many wait (r1 #5). */
+function bookOffers(entries, books) {
+  const out = {};
+  for (const e of entries) {
+    const k = e.book ?? e.listBook;
+    if (!k || k === "sr2") continue;
+    const o = out[k] ??= { offered: 0, later: 0 };
+    if (offeredBy(e, books, "creation")) o.offered++; else o.later++;
+  }
+  return out;
+}
 /** A page of summaries. `books` / `types`: arrays (empty = all); `q`: a plain substring, case-insensitive. */
-export function searchCatalog(catalog, { books = [], types = [], q = "", offset = 0, limit = 50 } = {}) {
+export function searchCatalog(catalog, { books = [], types = [], q = "", offset = 0, limit = 50, offerable = null } = {}) {
   const needle = String(q).trim().toLowerCase(), bookSet = new Set(books), typeSet = new Set(types);
-  const hits = catalog.index.filter(({ e, hay }) => (!bookSet.size || bookSet.has(e.listBook)) && (!typeSet.size || typeSet.has(e.type)) && (!needle || hay.includes(needle)));
+  // `offerable` ("creation" | "play"): only what a character with exactly these books may buy (docs/PLAN-M5a.md).
+  // A vehicle is bought with addVehicle (S9), core only for now: offered when it is the core book's.
+  const offers = (e) => !offerable || offeredBy(e, books, offerable);
+  const hits = catalog.index.filter(({ e, hay }) => (!bookSet.size || bookSet.has(e.listBook)) && (!typeSet.size || typeSet.has(e.type)) && (!needle || hay.includes(needle)) && offers(e));
   return { total: hits.length, offset, entries: hits.slice(offset, offset + Math.min(100, Math.max(1, limit))).map(({ e }) => summary(e)) };
 }

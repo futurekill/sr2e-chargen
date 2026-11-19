@@ -49,7 +49,7 @@ export function defaultChoices(rec, opts) {
   const s = rec.snapshot, out = {};
   for (const [k, spec] of Object.entries(choiceSpec(rec, opts))) {
     if (spec.kind === "text") out[k] = "";
-    else if (k === "rating") out[k] = spec.kind === "oneOf" ? spec.values.find(v => v >= (s.rating || 1)) ?? spec.values[0] : Math.min(6, Math.max(1, s.rating || 1));
+    else if (k === "rating") out[k] = spec.kind === "oneOf" ? spec.values.find(v => v >= (s.rating || 1)) ?? spec.values[0] : Math.min(spec.hi, Math.max(spec.lo, s.rating || 1));
     else if (k === "force") out[k] = Math.max(1, s.force || 1);
     else if (k === "strengthMinimum") out[k] = Math.max(1, s.strengthMinimum || 1);
     else if (spec.kind === "oneOf") out[k] = spec.values[0];
@@ -88,6 +88,29 @@ export function refusalFor(entry) {
   const rec = { type: entry.type, name: entry.name, snapshot: entry.system, flags: entry.flags ?? {}, source: entry._stats?.compendiumSource ?? null };
   if (FIXED_PRICE.includes(entry.type) && price(rec, project(rec, defaultChoices(rec)), []) <= 0) return "This has no fixed price in the core book (it varies): not yet.";
   return null;
+}
+
+/**
+ * May this catalog entry be bought for a character with these sourcebooks (docs/PLAN-M5a.md Draft 2)? null, or why
+ * not. Core entries keep their own rules (`refusalFor`); a sourcebook's are offered only when the app holds them as
+ * plain data: weapons, armor, ammunition, gear and spells, with no Active Effect, special rule, drug or skillsoft.
+ */
+export const BOOK_TYPES = ["weapon", "armor", "ammo", "gear", "spell"];
+export const bookOf = (entry) => entry.book ?? entry.listBook ?? null;
+export function offerReason(entry, books = [], { inPlay = false } = {}) {
+  const book = bookOf(entry);
+  if (book !== "sr2") {
+    if (!books.includes(book)) return "That sourcebook isn't turned on for this character.";
+    if (!BOOK_TYPES.includes(entry.type)) return "From a sourcebook, only weapons, armor, ammunition, gear and spells for now.";
+    if (entry.effects?.length || entry.flags?.sr2e?.rule) return "It has special rules the app doesn't compute yet.";
+    if (entry.flags?.sr2e?.drug || entry.system?.drug || entry.system?.category === "skillsoft") return "Drugs and skillsofts need rules the app doesn't have yet.";
+  }
+  // Draft 3: where the rating is a CHOICE (capped at 6 at creation), an authored rating above 6 would be cut down to a
+  // different item (a Type IV maglock is Rating 10): it waits for after creation. A FIXED rating above 6 (the core
+  // Deluxe Improved Gyro Mount, a Tacticom) is bought and the rules check reports it (p.44), as every breakable rule is.
+  const s = entry.system ?? {}, rated = s.costPerRating > 0 || (s.ratingStats?.length ?? 0) > 1;
+  if (!inPlay && rated && Number(s.rating) > 6) return "Rated above 6: buy it after creation (p.44).";
+  return refusalFor(entry);
 }
 
 /** Which book power a record is (the system's adeptPowerKey, from its compendium source or name). */

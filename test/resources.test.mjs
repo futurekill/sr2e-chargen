@@ -96,7 +96,7 @@ test("refused at creation: no fixed price, limb options, vehicles, sourcebooks",
     assert.throws(() => start([{ op: "addItem", catalogId: e.id }]), Refusal, type);
   }
   const ssc = catalog.entries.find(x => x.book !== "sr2" && x.type === "weapon");
-  assert.throws(() => start([{ op: "addItem", catalogId: ssc.id }]), /core book/);
+  assert.throws(() => start([{ op: "addItem", catalogId: ssc.id }]), /sourcebook isn.t turned on/);
   assert.throws(() => start([{ op: "addItem", catalogId: core("Firearms") }]), /Skills step/);
 });
 

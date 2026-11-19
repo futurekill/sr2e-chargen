@@ -9,7 +9,7 @@
  * unchanged; the app's own record sits beside it (`creation`).
  */
 import { TABLES, chargenBudget, damageUpdateFor, surgeryCategory, surgeryEssencePct, surgeonTN, karmaTransition, advancementOptions, saleQuoteOf, streetPrice, ratedStreetIndex, startingMoney, startingKarmaPool, adeptPowerBudget, label, skillTiersFromAllocation, validateSkillAllocation } from "./rules.mjs";
-import { defaultChoices, checkChoices, refusalFor, project, price, eyeRow, essenceOf, isCybereye, powerKeyOf, sensesOf } from "./purchase.mjs";
+import { defaultChoices, checkChoices, offerReason, project, price, eyeRow, essenceOf, isCybereye, powerKeyOf, sensesOf } from "./purchase.mjs";
 
 export const SCHEMA = "sr2e-chargen-character", SCHEMA_VERSION = 1;
 export const CATEGORIES = ["race", "magic", "attributes", "skills", "resources"];
@@ -40,7 +40,7 @@ export function newCharacter(name) {
   const attrs = Object.fromEntries(ATTRIBUTES.map(a => [a, { base: 1 }]));
   return {
     schema: SCHEMA, schemaVersion: SCHEMA_VERSION, name: cleanName(name), notes: "",
-    creation: { method: "priority", options: { moreMetahumans: false }, finished: null, items: {}, nextItem: 1 },
+    creation: { method: "priority", options: { moreMetahumans: false, books: [] }, finished: null, items: {}, nextItem: 1 },
     actor: {
       name: cleanName(name), type: "character",
       system: { race: "human", magic: { type: "none", tradition: "none", totem: "" }, ...attrs, lifestyle: "streets",
@@ -62,6 +62,8 @@ export const OPS = Object.freeze({
   setName: { name: "string" },
   setNotes: { notes: "string" },
   setOption: { key: "string", value: "boolean" },
+  // Sourcebooks (docs/PLAN-M5a.md): what may be bought; metadata, allowed after finishing.
+  setBooks: { books: "books" },
   setPriority: { category: "string", letter: "string" },
   setMetatype: { race: "string" },
   setMagic: { type: "string" },
@@ -125,9 +127,9 @@ const OPTIONS = ["moreMetahumans"];
  * could have); rules a player may break while building are reported by `validate`, never refused. A finished
  * character takes no creation operation (changes after creation are milestone 4's).
  */
-export function applyOp(body, op, lookup = () => null, { roll = null, now = 0, saleMode = "refund", by = "" } = {}) {
+export function applyOp(body, op, lookup = () => null, { roll = null, now = 0, saleMode = "refund", by = "", catalogBooks = [] } = {}) {
   if (!op || typeof op !== "object" || typeof op.op !== "string" || !Object.hasOwn(OPS, op.op)) throw new Refusal("Unknown operation.");
-  if (body.creation.finished && !["setName", "setNotes", "setCard", ...PLAY_OPS].includes(op.op)) throw new Refusal("This character is finished: creation can't change it (use the Karma step).");
+  if (body.creation.finished && !["setName", "setNotes", "setCard", "setBooks", ...PLAY_OPS].includes(op.op)) throw new Refusal("This character is finished: creation can't change it (use the Karma step).");
   const b = structuredClone(body), sys = b.actor.system;
   if (PLAY_OPS.includes(op.op)) return playOp(b, op, lookup, now, saleMode, by);
   // Name and notes are metadata: they never rebuild the items, so a finished character's data stays as finished (M2d r1 #2).
@@ -146,6 +148,7 @@ export function applyOp(body, op, lookup = () => null, { roll = null, now = 0, s
     b.creation.card = [...now];
     return b;
   }
+  if (op.op === "setBooks") return setBooks(b, op, catalogBooks, lookup);   // metadata: never rebuilds the items (Draft 3)
   fillLegacyRecords(b);   // before the operation looks records up (r1 #2)
   switch (op.op) {
     case "setOption":
@@ -219,9 +222,8 @@ export function applyOp(body, op, lookup = () => null, { roll = null, now = 0, s
     case "addItem": {
       const e = lookup(op.catalogId);
       if (!e) throw new Refusal("That isn't in the catalog.");
-      if (e.book !== CORE) throw new Refusal("Only the core book's gear for now: sourcebooks arrive with the book toggles.");
       if (e.type === "skill") throw new Refusal("Add a skill in the Skills step.");
-      const why = refusalFor(e);
+      const why = offerReason(e, booksOf(b));
       if (why) throw new Refusal(why);
       const rec = recordOf(e);
       // One lifestyle (p.46): a new one replaces the old, in this one operation.
@@ -465,8 +467,8 @@ function moneyOp(b, op, lookup, now, saleMode) {
   }
   if (op.op === "buyItem") {   // p.184, R7: the street price shown; the price agreed entered by the player
     const e = lookup(op.catalogId);
-    if (!e || !PLAY_GEAR.includes(e.type) || e.book !== CORE) throw new Refusal("In play, money buys the core book's weapons, armor, gear, ammunition, cyberware and programs.");
-    const why = refusalFor(e);   // no fixed price, a cyberlimb option… refused as at creation (code review M4b r1 #1)
+    if (!e || !PLAY_GEAR.includes(e.type)) throw new Refusal("In play, money buys weapons, armor, gear, ammunition, cyberware and programs.");
+    const why = offerReason(e, booksOf(b), { inPlay: true });   // the books turned on; no fixed price… as at creation (M4b r1 #1)
     if (why) throw new Refusal(why);
     const rec = recordOf(e), checked = checkChoices(rec, { ...defaultChoices(rec, { inPlay: true }), ...(op.choices ?? {}) }, { inPlay: true });
     if (checked.reason) throw new Refusal(checked.reason);
@@ -516,12 +518,39 @@ function undoMoney(b, e, now) {
     sys.nuyen = have + r.price;
   } else {
     if (have < r.price) throw new Refusal("That money is already spent: undo the later change first.");
+    const book = r.source.system?.citation?.book;
+    if (book && book !== CORE && !booksOf(b).includes(book)) throw new Refusal("That item's sourcebook is turned off: turn it back on first.");   // M5a r1 #10
     const back = structuredClone(r.source);
     if (b.actor.items.some(i => i._id === back._id)) back._id = freshItemId(b);
     b.actor.items.push(back);
     sys.nuyen = have - r.price;
   }
   ledgerAdd(b, now, { kind: "revert", summary: `Undone: ${e.summary}`, record: { of: e.kind }, undoes: e.id });
+  return b;
+}
+
+/* ── Sourcebooks (docs/PLAN-M5a.md) ───────────────────────────────────────────────────────────────────────── */
+
+/** The sourcebooks turned on for this character (core is always on, never listed). */
+export const booksOf = (b) => b.creation.options.books ?? [];
+/** Every sourcebook something on the character comes from: creation records, items, vehicles. */
+function booksInUse(b, lookup) {
+  const used = new Set();
+  // After finishing the actor is the authority: a record whose item was sold no longer holds its book (code r1 #1).
+  if (!b.creation.finished) for (const r of Object.values(b.creation.items ?? {})) used.add(lookup(r.catalogId)?.book ?? r.snapshot?.citation?.book);
+  for (const i of b.actor.items ?? []) used.add(i.system?.citation?.book);
+  for (const v of Object.values(b.creation.vehicles ?? {})) used.add(v.source?.system?.citation?.book);
+  used.delete(CORE); used.delete(undefined); used.delete(null);
+  return used;
+}
+function setBooks(b, op, catalogBooks, lookup) {
+  const list = op.books;
+  if (!Array.isArray(list) || list.length > 20 || new Set(list).size !== list.length) throw new Refusal("A list of different sourcebooks.");
+  for (const k of list) if (typeof k !== "string" || k === CORE || !catalogBooks.includes(k)) throw new Refusal("That isn't a sourcebook in the catalog.");
+  const off = booksOf(b).filter(k => !list.includes(k)), used = booksInUse(b, lookup);
+  const busy = off.filter(k => used.has(k));
+  if (busy.length) throw new Refusal(`Something on the character comes from ${busy.join(", ")}: remove or sell it first.`);
+  b.creation.options.books = [...list].sort();
   return b;
 }
 

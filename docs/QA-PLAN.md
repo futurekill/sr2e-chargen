@@ -85,3 +85,14 @@ bonding (p.46, p.137), refusals.
   charges and wounds; 0 and 4 successes show 0.23 and 0.18; unticking fee/wound skips them; Undo restores exactly and
   is refused after healing; an install past 0 Essence is refused; an installed implant is not in the Sell list.
 - Essence parity: Muscle Replacement beside a full cyberarm costs 20% less, as in Foundry.
+
+## Sourcebooks (M5a)
+- Concept tab: the list shows every catalog book, core ticked and disabled; All ticks and unticks every sourcebook;
+  the choice survives a reload.
+- With the Grimoire on, the Resources shop finds Grimoire spells (each row "Grimoire p.N"); with it off they're gone
+  and adding one by id is refused. Turning a book off while one of its items is on the character is refused with the
+  book named.
+- No drug (Kamikaze), skillsoft, effect-bearing or special-rule entry is ever listed; Type III/IV maglocks are refused
+  at creation and bought at their own rating on the Nuyen step.
+- Finished character: turning a book on doesn't change any item; undoing a sale of a book item with its book off is
+  refused.
