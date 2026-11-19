@@ -53,7 +53,8 @@ export function loadCatalog(dir, { pins = null } = {}) {
     for (const [id, src] of Object.entries(JSON.parse(vbody.toString("utf8")))) {
       const e = byId.get(id);
       // The source must be THAT entry's (r1 #2): its type, its document id (the id's last part) and its name.
-      if (e?.type !== "vehicle" || src?.type !== "vehicle" || src._id !== id.split(".").pop() || src.name !== e.name)
+      const price = typeof src?.system?.cost === "number" ? src.system.cost : null;   // the price charged must be the catalog's
+      if (e?.type !== "vehicle" || src?.type !== "vehicle" || src._id !== id.split(".").pop() || src.name !== e.name || price !== e.cost)
         throw new CatalogError(`vehicles.json holds ${id}, which is not that catalog vehicle's source`);
       vehicles.set(id, src);
     }
