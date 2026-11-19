@@ -5,6 +5,9 @@ notes come from it.
 
 ## Unreleased
 
+### Changed
+- "Wrong origin" now says which address `BASE_URL` expects and which one the page was opened at (and the server
+  logs it), with a README troubleshooting section.
 ### Added
 - **Karma after creation** (core p.190–191): a finished character has a **Karma** step. Award Karma (one-tenth of
   Total, rounded up, is the Karma Pool; the rest Good Karma); raise an attribute (its new rating, double above the

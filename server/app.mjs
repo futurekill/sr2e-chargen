@@ -54,7 +54,12 @@ export async function buildApp({ ctx, config, logger, catalog = null }) {
 
   app.addHook("onRequest", async (req, reply) => {
     if (req.url.startsWith("/api/")) reply.header("cache-control", "no-store");
-    if (MUTATING.has(req.method) && req.headers.origin !== config.origin) return fail(reply, 403, "Wrong origin.", "origin");
+    if (MUTATING.has(req.method) && req.headers.origin !== config.origin) {
+      // Say what was expected and what came, so a BASE_URL that doesn't match the address in use is easy to see.
+      const got = typeof req.headers.origin === "string" ? req.headers.origin.slice(0, 100) : "(none)";
+      req.log.warn({ expected: config.origin, got }, "wrong origin: BASE_URL doesn't match the address the page was opened at");
+      return fail(reply, 403, `Wrong origin: this server's BASE_URL is ${config.origin}, but the page was opened at ${got}. Open the app at ${config.origin}, or set BASE_URL to the address you use.`, "origin");
+    }
   });
 
   /** preHandler: a live session, and on a state-changing request its CSRF token. */
