@@ -6,6 +6,11 @@ notes come from it.
 ## Unreleased
 
 ### Added
+- **Vehicles and drones at creation** (core p.46, p.264): search the Vehicle type and add one at its list price;
+  the character keeps the vehicle's complete data (for the Foundry connector) and Foundry's purchase receipt, so the
+  budget is the system's. A vehicle the book lists as "Restricted" can't be bought. The full sheet and the stat block
+  list each vehicle's Handling, Speed, Body, Armor, Signature and Pilot. The catalog build writes `vehicles.json`
+  (checked by its own checksum).
 - **Contacts, extras, lifestyle, allergy, programs and finishing** (core p.43–47): two free contacts, then
   5,000¥ each; one buddy (10,000¥); a gang or tribe (50,000¥, 2D6 members rolled by the server); followers (200,000¥,
   five different archetypes); a lifestyle with months paid ahead (none = the street); a metahuman's allergy and its

@@ -80,8 +80,12 @@ export const OPS = Object.freeze({
   addExtra: { kind: "string", name: "string" },
   setExtra: { itemId: "string", archetypes: "archetypes" },
   setAllergy: { substance: "string", rarity: "string", severity: "string", rarityBonus: "string", severityBonus: "string" },
-  finish: {}
+  finish: {},
+  // Vehicles (docs/PLAN-S9-vehicles.md): the catalog's complete source is kept; the actor gets the system's receipt.
+  addVehicle: { catalogId: "string" },
+  removeVehicle: { vehicleId: "string" }
 });
+const MAX_VEHICLES = 20;
 /** Ops the server must roll for (docs/PLAN-M2d.md Draft 2): how many D6, or 0. */
 export const diceFor = (op) => (op?.op === "finish" ? 3 : op?.op === "addExtra" && op.kind === "gang" ? 2 : 0);
 const ALLERGY = { rarity: ["uncommon", "common"], severity: ["nuisance", "mild", "moderate", "severe"], bonus: ["attributes", "skills", "force", "nuyen"] };
@@ -238,6 +242,25 @@ export function applyOp(body, op, lookup = () => null, { roll = null, now = 0 } 
       rec.choices = checked.choices;
       break;
     }
+    case "addVehicle": {   // p.46, p.264: bought at its list price; the whole source kept for the Foundry connector
+      const e = lookup(op.catalogId);
+      if (!e || e.type !== "vehicle") throw new Refusal("That isn't a vehicle in the catalog.");
+      if (e.book !== CORE) throw new Refusal("Only the core book's vehicles for now: sourcebooks arrive with the book toggles.");
+      if (!e.actorSource) throw new Refusal("This vehicle's full data isn't available on this server.");
+      if (!(Number(e.actorSource.system?.cost) > 0)) throw new Refusal(`${e.name} has no list price (the book prints “Restricted”): it can't be bought at creation.`, 264);
+      b.creation.vehicles ??= {};
+      if (Object.keys(b.creation.vehicles).length >= MAX_VEHICLES) throw new Refusal(`A character buys at most ${MAX_VEHICLES} vehicles here.`);
+      let n = b.creation.nextVehicle ?? 1;
+      while (Object.hasOwn(b.creation.vehicles, vehicleKey(n))) n++;
+      b.creation.vehicles[vehicleKey(n)] = { catalogId: e.id, uuid: e.uuid ?? "", source: structuredClone(e.actorSource) };
+      b.creation.nextVehicle = n + 1;
+      break;
+    }
+    case "removeVehicle": {
+      if (typeof op.vehicleId !== "string" || !Object.hasOwn(b.creation.vehicles ?? {}, op.vehicleId)) throw new Refusal("No such vehicle on this character.");
+      delete b.creation.vehicles[op.vehicleId];
+      break;
+    }
     case "addExtra": {   // a gang or tribe (p.44, members 2D6 rolled by the server) or followers (five archetypes)
       if (!["gang", "follower"].includes(op.kind)) throw new Refusal("An extra is a gang or tribe, or followers.", 44);
       const name = shortText(op.name, "A name");
@@ -300,6 +323,8 @@ const shortText = (v, what) => {
   if (t.length > 60) throw new Refusal(`${what} is at most 60 characters.`);
   return t;
 };
+/** A vehicle's key in `creation.vehicles`: fixed width, so the order survives a database that sorts JSON keys. */
+const vehicleKey = (n) => `v${n.toString(36).padStart(5, "0")}`;
 /** A Foundry-shaped id (16 letters and digits), the same on the server and in the browser: a counter, not a random. */
 const itemId = (n) => `cg${n.toString(36).padStart(14, "0")}`;
 /**
@@ -365,6 +390,11 @@ function rebuildItems(b) {
   // the rebuild never drops data it didn't make.
   const foreign = b.actor.items.filter(i => !Object.hasOwn(recs, i._id));
   b.actor.items = [...foreign, ...out];
+  // Vehicles bought here become the system's receipts (S9), in id order; a character the app didn't make keeps its own.
+  if (b.creation.vehicles) b.actor.system.chargen.vehicles = Object.keys(b.creation.vehicles).sort().map(k => {
+    const v = b.creation.vehicles[k];
+    return { name: v.source.name, source: v.source._stats?.compendiumSource || v.uuid, cost: Number(v.source.system?.cost) || 0 };
+  });
   // The lifestyle bought, or the street (p.46: no lifestyle bought = living on the street), never Foundry's "low".
   b.actor.system.lifestyle = b.actor.items.find(i => i.type === "lifestyle")?.system.level || "streets";
 }

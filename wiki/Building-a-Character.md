@@ -40,6 +40,8 @@ The links at the top of the character page jump between them.
      (10,000¥). Add a **gang or tribe** (50,000¥; the server rolls its 2D6 members once) or **followers** (200,000¥;
      name five different archetypes).
    - **Lifestyle** (p.46): pick one and the months paid ahead; with none, the character lives on the street.
+   - **Vehicles and drones** (p.264): choose the Vehicle type in the search and add one at its list price. The book's
+     "Restricted" vehicles have no price and can't be bought. The sheet lists their stats.
    - Metahumans may take an **allergy** in the Metatype step for extra points (p.46).
 8. **Finish** (p.47): when the rules check is clean, finish: unspent Resources become nuyen at 10:1, plus 3D6 ×
    1,000¥ rolled by the server. Creation then closes; name, notes and the table card can still change.
@@ -62,5 +64,5 @@ follows you to other devices, and is the sheets' default font.
 
 ## Not in this beta
 
-Vehicles and the
-sourcebooks follow. See the repository's CHANGELOG and `docs/ROADMAP.md`.
+The sourcebooks and character management in play
+follow. See the repository's CHANGELOG and `docs/ROADMAP.md`.

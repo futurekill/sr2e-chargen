@@ -292,7 +292,8 @@ export async function renderSheet(model, { paper = "letter", font = "standard", 
     ["Adept powers", model.powers, [0.35, 0.1, 0.4, 0.15]],
     ["Spells", model.spells, [0.4, 0.1, 0.3, 0.2]],
     ["Foci", model.foci, [0.4, 0.1, 0.3, 0.2]],
-    ["Gear", model.gear, [0.55, 0.12, 0.13, 0.2]]
+    ["Gear", model.gear, [0.55, 0.12, 0.13, 0.2]],
+    ["Vehicles", model.vehicles ?? [], [0.3, 0.25, 0.3, 0.15]]
   ].filter(([, rows]) => rows.length);
   // Page 1's fixed part must lie inside the page (an absurd imported name, say): refuse, never cut (card r1 #2).
   if (runs.some(r => r.page === 1 && r.y + r.h > BOTTOM + 0.5) || shapes.some(b => b.page === 1 && b.y + b.h > BOTTOM + 0.5))

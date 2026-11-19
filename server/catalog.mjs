@@ -35,16 +35,37 @@ export function loadCatalog(dir, { pins = null } = {}) {
   // The manifest is what the routes hand out: it must be exactly what the checked catalog body implies — never
   // trusted on its own (its checksum line only proves the BODY).
   const { entries, ...rest } = catalog, implied = { ...rest, entries: entries.length };
-  const claimed = { ...manifest }; delete claimed.sha256;
+  const claimed = { ...manifest }; delete claimed.sha256; delete claimed.vehiclesSha256;   // each file's checksum is checked on its own
   if (JSON.stringify(claimed) !== JSON.stringify(implied)) throw new CatalogError("the catalog's manifest doesn't describe its catalog");
   if (pins) {
     const key = (list) => JSON.stringify(list.map(p => [p.dir, p.tag, p.commit]));
     if (key(pins) !== key(catalog.pins)) throw new CatalogError("the catalog was built from other pins than content-pins.json (run: npm run build:catalog)");
   }
+  // Vehicles' complete sources (docs/PLAN-S9-vehicles.md Draft 4/5): checked against their own checksum; a catalog
+  // built without them (older builds, test fixtures) simply has none, and buying a vehicle is refused.
+  const vehicles = new Map();
+  if (manifest.vehiclesSha256) {
+    const vf = join(dir, "vehicles.json");
+    if (!existsSync(vf)) throw new CatalogError("the manifest names vehicles.json but it is missing");
+    const vbody = readFileSync(vf);
+    if (createHash("sha256").update(vbody).digest("hex") !== manifest.vehiclesSha256) throw new CatalogError("vehicles.json doesn't match its manifest's checksum");
+    for (const [id, src] of Object.entries(JSON.parse(vbody.toString("utf8")))) {
+      if (byId.get(id)?.type !== "vehicle" || src?.type !== "vehicle") throw new CatalogError(`vehicles.json holds ${id}, which is not a catalog vehicle`);
+      vehicles.set(id, src);
+    }
+  }
   // Search index: name and category, lower-cased once. Sorted by name for stable pages.
   const sorted = [...catalog.entries].sort((a, b) => a.name.localeCompare(b.name, "en") || (a.id < b.id ? -1 : 1));
   const index = sorted.map(e => ({ e, hay: `${e.name}\n${(e.category ?? []).join("\n")}`.toLowerCase() }));
-  return { manifest, byId, index, size: catalog.entries.length };
+  return { manifest, byId, index, vehicles, size: catalog.entries.length };
+}
+
+/** One entry, as the routes and the ops reducer see it: a vehicle carries its complete actor source (S9). */
+export function entryOf(catalog, id) {
+  const e = catalog?.byId.get(id);
+  if (!e) return null;
+  const src = e.type === "vehicle" ? catalog.vehicles?.get(id) : null;
+  return src ? { ...e, actorSource: src } : e;
 }
 
 /** A page of summaries. `books` / `types`: arrays (empty = all); `q`: a plain substring, case-insensitive. */

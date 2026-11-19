@@ -22,7 +22,7 @@ export function cardModel(body, chosen) {
   const m = sheetModel(body), keep = new Set(chosen);
   const pick = (k) => m[k].filter((_, i) => keep.has(m.rowIds[k][i]));
   return { ...m, card: true, attacks: pick("attacks"), skills: pick("skills").filter(r => r[3] === "active"), cyberware: pick("cyberware"),
-    spells: pick("spells"), powers: pick("powers"), gear: [], foci: [], notes: "" };
+    spells: pick("spells"), powers: pick("powers"), gear: [], foci: [], vehicles: [], notes: "" };
 }
 
 export function sheetModel(body) {
@@ -77,6 +77,9 @@ export function sheetModel(body) {
     spells: of("spell").map(i => [plain(i.name), `F${i.system.force}`, plain(`${cap(i.system.category ?? "")} · ${i.system.drainCode ?? ""}`, 80), cite(i.system)]),
     foci: of("focus").map(i => [plain(i.name), `F${i.system.force}`, i.system.boundSpellId ? plain(items.find(x => x._id === i.system.boundSpellId)?.name ?? "", 80) : "", cite(i.system)]),
     // The third column carries the power's choice: Improved Ability's skill, the senses named (p.125).
+    // Vehicles bought at creation (S9): the core stats from the kept source (Handling, Speed, Body, Armor, Signature, Pilot).
+    vehicles: Object.keys(body.creation?.vehicles ?? {}).sort().map(k => body.creation.vehicles[k].source).map(v => [plain(v.name),
+      `Hand ${v.system?.handling ?? "–"} · Speed ${v.system?.speed ?? "–"}`, `Body ${v.system?.body ?? "–"} · Armor ${v.system?.armor ?? "–"} · Sig ${v.system?.signature ?? "–"} · Pilot ${v.system?.pilot ?? "–"}`, cite(v.system)]),
     powers: of("adept_power").map(i => [plain(i.name), `L${i.system.level}`, plain(i.system.improvedSkill || (/^Senses: /.test(i.system.notes ?? "") ? i.system.notes.slice(8) : ""), 80), cite(i.system)]),
     notes: plain(body.notes),
     // Item ids parallel to the rows above (the table card filters by them).

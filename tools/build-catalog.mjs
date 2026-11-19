@@ -224,18 +224,36 @@ export function assemble(repos, books) {
   };
 }
 
+/**
+ * Vehicles' COMPLETE actor sources by catalog id (docs/PLAN-S9-vehicles.md Draft 4): a character that buys one keeps
+ * the whole source, so the Foundry connector recreates it whatever the destination world's compendium holds.
+ */
+export function vehicleSources({ pins, contentDir }) {
+  const out = {};
+  for (const pin of pins) {
+    const repo = shapeRepo(pin, readVendored(contentDir, pin));
+    for (const { pack, doc } of repo.docs) if (selected(doc, pack) === "actor" && doc.type === "vehicle") out[`${repo.id}.${pack}.${doc._id}`] = doc;
+  }
+  return Object.fromEntries(Object.entries(out).sort(([a], [b]) => (a < b ? -1 : 1)));   // byte-stable
+}
+
 /** The manifest a catalog implies: everything but the entries (their count instead). The server recomputes it. */
 export function manifestOf(catalog) {
   const { entries, ...rest } = catalog;
   return { ...rest, entries: entries.length };
 }
 
-/** Write {catalog.json, manifest.json} into `outDir`; the manifest carries the catalog file's SHA-256. */
-export function writeCatalog(catalog, outDir) {
+/** Write {catalog.json, manifest.json} (and vehicles.json when given) into `outDir`; the manifest carries each file's SHA-256. */
+export function writeCatalog(catalog, outDir, vehicles = null) {
   mkdirSync(outDir, { recursive: true });
   const body = JSON.stringify(catalog);
   writeFileSync(join(outDir, "catalog.json"), body);
   const manifest = { ...manifestOf(catalog), sha256: createHash("sha256").update(body).digest("hex") };
+  if (vehicles) {
+    const v = JSON.stringify(vehicles);
+    writeFileSync(join(outDir, "vehicles.json"), v);
+    manifest.vehiclesSha256 = createHash("sha256").update(v).digest("hex");
+  }
   writeFileSync(join(outDir, "manifest.json"), `${JSON.stringify(manifest, null, 2)}\n`);
   return manifest;
 }
@@ -244,7 +262,8 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   const pins = JSON.parse(readFileSync(join(ROOT, "content-pins.json"), "utf8")).content;
   try {
     const out = process.argv[2] ? resolve(process.argv[2]) : join(ROOT, "catalog");
-    const manifest = writeCatalog(buildCatalog({ pins, contentDir: join(ROOT, "content") }), out);
+    const contentDir = join(ROOT, "content");
+    const manifest = writeCatalog(buildCatalog({ pins, contentDir }), out, vehicleSources({ pins, contentDir }));
     console.log(`catalog: ${manifest.entries} entries from ${manifest.pins.length} packages, ${manifest.books.length} books — sha256 ${manifest.sha256.slice(0, 16)}…`);
     for (const b of manifest.books) console.log(`  ${b.abbr.padEnd(12)} ${String(b.count).padStart(5)}  ${b.title}`);
   } catch (err) { console.error(err.message); process.exitCode = 1; }

@@ -37,7 +37,8 @@
     change({ op: "setSkill", itemId: item._id, allocated: c.allocated, concentration: c.concentration, specialization: c.specialization, freeLanguage: c.freeLanguage, ...patch });
   }
   // Resources (docs/PLAN-M2c.md).
-  const TYPE_NAME = { weapon: "Weapon", armor: "Armor", gear: "Gear", ammo: "Ammunition", cyberware: "Cyberware", spell: "Spell", focus: "Focus", adept_power: "Adept power", program: "Program", contact: "Contact", lifestyle: "Lifestyle" };
+  const TYPE_NAME = { weapon: "Weapon", armor: "Armor", gear: "Gear", ammo: "Ammunition", cyberware: "Cyberware", spell: "Spell", focus: "Focus", adept_power: "Adept power", program: "Program", contact: "Contact", lifestyle: "Lifestyle", vehicle: "Vehicle" };
+  const SHOP_TYPES = [...BUYABLE, "vehicle"];   // a vehicle is an actor: addVehicle, not addItem (S9)
   const CHOICE_NAME = { quantity: "Qty", bundles: "Boxes", rating: "Rating", force: "Force", strengthMinimum: "Str Min", in: "In", spell: "Spell", skill: "Skill", weapon: "Weapon", level: "Level", senses: "Senses (comma-separated)", kind: "As", months: "Months" };
   let shopQ = $state(""), shopType = $state(""), shop = $state([]), shopBusy = $state(false);
   let shopTimer, shopSeq = 0;
@@ -46,7 +47,7 @@
     const mine = ++shopSeq;   // only the latest search's answer is shown, even one still waiting to start (r1 #7, r2)
     shopTimer = setTimeout(async () => {
       const p = new URLSearchParams({ book: "sr2", limit: "30" });
-      for (const t of shopType ? [shopType] : BUYABLE) p.append("type", t);
+      for (const t of shopType ? [shopType] : SHOP_TYPES) p.append("type", t);
       if (shopQ.trim()) p.set("q", shopQ.trim());
       shopBusy = true;
       try { const r = await get(`/api/catalog/entries?${p}`); if (!gone && mine === shopSeq) shop = r.entries; } catch (err) { if (!gone && mine === shopSeq) error = err.message; }
@@ -57,8 +58,9 @@
   async function buy(id) {
     try { if (!entries.has(id)) entries.set(id, await get(`/api/catalog/entries/${encodeURIComponent(id)}`)); }
     catch (err) { if (!gone) error = err.message; return; }
-    if (!gone) change({ op: "addItem", catalogId: id });
+    if (!gone) change(entries.get(id)?.type === "vehicle" ? { op: "addVehicle", catalogId: id } : { op: "addItem", catalogId: id });
   }
+  const vehicles = $derived(Object.keys(body.creation.vehicles ?? {}).sort().map(k => ({ id: k, v: body.creation.vehicles[k].source })));
   /** Every bought thing (eye accessories included), with what it costs and the Essence it takes. */
   const bought = $derived(Object.entries(body.creation.items).filter(([, r]) => r.type !== "skill").sort(([a], [b]) => (a < b ? -1 : 1)).map(([id, r]) => {
     const item = body.actor.items.find(i => i._id === id), projected = item ? { system: item.system, flags: item.flags } : project(r, r.choices, body.creation.items);
@@ -402,7 +404,7 @@
       {#if !finished}
         <div class="row adders">
           <label class="grow"><span>Search the core book</span><input bind:value={shopQ} oninput={searchShop} maxlength="64" placeholder="Ares Predator, armor jacket, wired reflexes…"></label>
-          <label><span>Type</span><select bind:value={shopType} onchange={searchShop}><option value="">Everything</option>{#each BUYABLE as t}<option value={t}>{TYPE_NAME[t]}</option>{/each}</select></label>
+          <label><span>Type</span><select bind:value={shopType} onchange={searchShop}><option value="">Everything</option>{#each SHOP_TYPES as t}<option value={t}>{TYPE_NAME[t]}</option>{/each}</select></label>
         </div>
         <ul class="shop" aria-busy={shopBusy}>
           {#each shop as e (e.id)}
@@ -456,6 +458,18 @@
         </table></div>
       {:else}
         <p class="muted">Nothing bought yet.</p>
+      {/if}
+      {#if vehicles.length}
+        <h3>Vehicles</h3>
+        <div class="scroll"><table class="grid bought">
+          <thead><tr><th scope="col">Vehicle</th><th scope="col">Handling · Speed · Body · Armor</th><th scope="col">Price</th><th scope="col"><span class="sr-only">Remove</span></th></tr></thead>
+          <tbody>
+            {#each vehicles as x (x.id)}
+              <tr><th scope="row">{x.v.name}</th><td>{x.v.system.handling} · {x.v.system.speed} · {x.v.system.body} · {x.v.system.armor}</td><td class="price">{nuyen(x.v.system.cost)}</td>
+                <td><button type="button" class="quiet" disabled={finished} aria-label={`Remove ${x.v.name}`} onclick={() => change({ op: "removeVehicle", vehicleId: x.id })}>✕</button></td></tr>
+            {/each}
+          </tbody>
+        </table></div>
       {/if}
       <datalist id="archetypes">{#each ARCHETYPES as a}<option value={a}></option>{/each}</datalist>
       {#if !finished}

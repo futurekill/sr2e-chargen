@@ -58,7 +58,8 @@ Links are shown ONCE and stored only as hashes: if one is lost, make another.
   `content-pins.json` together.
 - **Never edit `content/` by hand.** The catalog build refuses a changed, missing or extra file. CI also compares
   `content/` with the pinned commits on GitHub (`npm run content:verify`).
-- `npm run build:catalog` builds `catalog/` for a local server. The server reads it at start; a production server
+- `npm run build:catalog` builds `catalog/` for a local server (`catalog.json`, `vehicles.json` with the vehicles'
+  complete sources, and `manifest.json` with each file's checksum). The server reads it at start; a production server
   does not start without a valid one.
 
 ## Day to day

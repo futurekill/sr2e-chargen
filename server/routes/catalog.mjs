@@ -1,5 +1,5 @@
 /** The catalog's routes (docs/PLAN-catalog.md §6): signed-in users only, like everything else. Read-only. */
-import { searchCatalog } from "../catalog.mjs";
+import { searchCatalog, entryOf } from "../catalog.mjs";
 import { stockPortraits, stockPortrait } from "../portrait/stock.mjs";
 
 const KEY = "^[A-Za-z0-9_]{1,40}$";
@@ -28,7 +28,7 @@ export default async function catalogRoutes(app) {
   app.get("/entries/:id", { schema: { params: { type: "object", required: ["id"], properties: { id: { type: "string", pattern: "^[A-Za-z0-9._#-]{3,160}$" } } } } },
     async (req, reply) => {
       if (!app.catalog) return none(reply);
-      const entry = app.catalog.byId.get(req.params.id);
+      const entry = entryOf(app.catalog, req.params.id);
       return entry ?? reply.code(404).send({ error: "No such entry.", code: "not-found" });
     });
 }

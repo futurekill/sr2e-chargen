@@ -49,6 +49,8 @@ bonding (p.46, p.137), refusals.
    Contacts: add Fixer and Street Doc (free), a third (5,000¥), make one a buddy (10,000¥); add a gang (members
    rolled) and followers (five archetypes). Lifestyle: Low for 3 months — 3,000¥; remove it — "the street".
    Finish a clean character: 15,000¥ unspent → 1,500¥ + 3D6 × 1,000¥; afterwards only name, notes and the card change.
+   Vehicles: Type Vehicle, search "Scoot", Add — 2,000¥ on the Nuyen row, the sheet and stat block list it; a GMC
+   Banshee is refused (Restricted).
 9. Sheet: "Print sheet" on a character opens a PDF; try A4 and the readable font; print one page on paper and mark a
    condition box with a pencil. Download the Markdown stat block and open it in a Markdown viewer. On Account, turn
    on the readable font: the site changes at once, a second device shows it after sign-in, and "Print sheet" uses it. Look at `npm run sheet:snapshots`-style renders after any layout change.
