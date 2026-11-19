@@ -294,6 +294,7 @@ export async function renderSheet(model, { paper = "letter", font = "standard", 
     ["Adept powers", model.powers, [0.35, 0.1, 0.4, 0.15]],
     ["Spells", model.spells, [0.4, 0.1, 0.3, 0.2]],
     ["Foci", model.foci, [0.4, 0.1, 0.3, 0.2]],
+    ["Edges and Flaws", model.qualities ?? [], [0.4, 0.1, 0.3, 0.2]],
     ["Gear", model.gear, [0.55, 0.12, 0.13, 0.2]],
     ["Vehicles", model.vehicles ?? [], [0.3, 0.25, 0.3, 0.15]],
     ["History", model.history ?? [], [0.14, 0.56, 0.2, 0.1]]

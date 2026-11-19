@@ -6,6 +6,12 @@ notes come from it.
 ## Unreleased
 
 ### Added
+- **Edges and Flaws** (Shadowrun Companion p.22–35; RULINGS R11): with the Companion on, the Concept tab lists its 86
+  Edges and Flaws. Each takes a value from the book's table (the magically active values for Blind, Bio-Rejection and
+  Sensitive System), an attribute where needed and a detail; they must balance to 0. Bonus Attribute Point, Exceptional
+  Attribute, Bonus Skill Point, Bonus Force Point and Extra Contact change the creation budget; Lightning Reflexes and
+  Will to Live change Reaction and the overflow. The rules check cites the Companion's pages (shapeshifter problems
+  now do too), and the sheets list the Edges and Flaws.
 - **A favicon**: amber circuit-board traces on the terminal theme's dark background (SVG, with ICO and Apple touch
   icon fallbacks), so the app's tab is easy to find.
 - **Shapeshifter characters** (Shadowrun Companion p.36–38; RULINGS R10): with the Companion on, pick a species on

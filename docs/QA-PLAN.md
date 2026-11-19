@@ -115,3 +115,12 @@ bonding (p.46, p.137), refusals.
 - Attributes: a base of 7 is an error; human-form and animal-form columns (a bear's Body 6 → 7 human, 11 animal).
 - Contacts: the first one is 5,000¥; no "two free contacts" to-do. Cyberware can't be added; the allergy fieldset is
   hidden. Karma Pool 1. The sheet's header has the animal form and the silver line.
+
+## Edges and Flaws (M5d)
+- With the Companion on, the Concept tab's list groups Edges and Flaws with their values; adding shows the choices
+  (value, attribute, bonus, detail) and the running total; unbalanced is a Rules check error citing the Companion.
+- Bonus Attribute Point past the racial maximum costs 2 per point and needs Exceptional Attribute; Bonus Skill Point
+  raises the skill points; Bonus Force Point gives 2 Force Points per point to magicians only; Extra Contact asks for a
+  third free contact; Lightning Reflexes raises Reaction; Will to Live the overflow.
+- Blind is −6, or −2 for a magician or adept; a second copy is an error; the sheet's Edges and Flaws block.
+- Foundry: the creation panel shows the same audit (Quench sr2e.edge-effects).

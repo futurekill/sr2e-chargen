@@ -23,7 +23,7 @@ export function cardModel(body, chosen) {
   const m = sheetModel(body), keep = new Set(chosen);
   const pick = (k) => m[k].filter((_, i) => keep.has(m.rowIds[k][i]));
   return { ...m, card: true, attacks: pick("attacks"), skills: pick("skills").filter(r => r[3] === "active"), cyberware: pick("cyberware"),
-    spells: pick("spells"), powers: pick("powers"), gear: [], foci: [], vehicles: [], history: [], notes: "" };
+    spells: pick("spells"), powers: pick("powers"), gear: [], foci: [], vehicles: [], qualities: [], history: [], notes: "" };
 }
 
 export function sheetModel(body) {
@@ -88,6 +88,10 @@ export function sheetModel(body) {
       i.type === "ammo" ? `${i.system.quantity} rds` : i.system.quantity > 1 ? `×${i.system.quantity}` : i.system.rating ? `R${i.system.rating}` : "",
       i.type === "armor" ? `${i.system.ballistic}/${i.system.impact}` : "", cite(i.system)]),
     spells: of("spell").map(i => [plain(i.name), `F${i.system.force}`, plain(`${cap(i.system.category ?? "")} · ${i.system.drainCode ?? ""}`, 80), cite(i.system)]),
+    // Edges and Flaws (Companion p.22–35): name (and its attribute), value, the detail (unescaped from Foundry's notes).
+    qualities: of("quality").map(i => [plain(i.name) + (i.system.attribute ? ` (${ATTR_NAMES[i.system.attribute] ?? i.system.attribute}${i.system.attributeBonus ? ` +${i.system.attributeBonus}` : ""})` : ""),
+      (i.system.pointValue > 0 ? "+" : "") + String(i.system.pointValue ?? 0),
+      plain(String(i.system.notes ?? "").replace(/<[^>]*>/g, ""), 80), cite(i.system)]),
     foci: of("focus").map(i => [plain(i.name), `F${i.system.force}`, i.system.boundSpellId ? plain(items.find(x => x._id === i.system.boundSpellId)?.name ?? "", 80) : "", cite(i.system)]),
     // The third column carries the power's choice: Improved Ability's skill, the senses named (p.125).
     // Vehicles bought at creation (S9): the core stats from the kept source (Handling, Speed, Body, Armor, Signature, Pilot).

@@ -7,8 +7,8 @@
   import { untrack, onDestroy } from "svelte";
   import { get, mutate, upload } from "../lib/api.js";
   import { derive } from "../../../shared/derive.mjs";
-  import { applyOp, validate, karmaOptions, undoable, surgeryPreview, booksOf, priorityTable, freeContacts, withRacial, formMod, PLAY_GEAR, cardIds, cardEligible, CARD_TYPES, CATEGORIES, CATEGORY_NAMES, LETTERS, METATYPES, MAGIC_TYPES, MAGIC_NAMES, TRADITIONS, ATTRIBUTES, ATTR_NAMES, CUSTOM_SKILL_CATEGORIES, totemNames } from "../../../shared/creation.mjs";
-  import { TABLES, racialProfile, metavariantNotes, metavariantFrom, ONI_SOURCE } from "../../../shared/rules.mjs";
+  import { applyOp, validate, karmaOptions, undoable, surgeryPreview, booksOf, priorityTable, freeContacts, withRacial, formMod, edgeMax, PLAY_GEAR, cardIds, cardEligible, CARD_TYPES, CATEGORIES, CATEGORY_NAMES, LETTERS, METATYPES, MAGIC_TYPES, MAGIC_NAMES, TRADITIONS, ATTRIBUTES, ATTR_NAMES, CUSTOM_SKILL_CATEGORIES, totemNames } from "../../../shared/creation.mjs";
+  import { TABLES, racialProfile, metavariantNotes, metavariantFrom, ONI_SOURCE, qualityEffects } from "../../../shared/rules.mjs";
   import { BUYABLE, choiceSpec, defaultChoices, project, price, essenceOf, isCybereye, smallWeapon } from "../../../shared/purchase.mjs";
   import { saleQuoteOf, streetPrice, ratedStreetIndex, FENCE_STEPS, totalWoundPenalty, woundLevel } from "../../../shared/rules.mjs";
   let { doc: initial, onDeleted } = $props();
@@ -63,7 +63,7 @@
   // Resources (docs/PLAN-M2c.md).
   const TYPE_NAME = { weapon: "Weapon", armor: "Armor", gear: "Gear", ammo: "Ammunition", cyberware: "Cyberware", spell: "Spell", focus: "Focus", adept_power: "Adept power", program: "Program", contact: "Contact", lifestyle: "Lifestyle", vehicle: "Vehicle" };
   const SHOP_TYPES = [...BUYABLE, "vehicle"];   // a vehicle is an actor: addVehicle, not addItem (S9)
-  const CHOICE_NAME = { quantity: "Qty", bundles: "Boxes", rating: "Rating", force: "Force", strengthMinimum: "Str Min", in: "In", spell: "Spell", skill: "Skill", weapon: "Weapon", level: "Level", senses: "Senses (comma-separated)", kind: "As", months: "Months" };
+  const CHOICE_NAME = { points: "Value", gain: "Bonus +", attribute: "Attribute", detail: "Detail (skill, substance…)", quantity: "Qty", bundles: "Boxes", rating: "Rating", force: "Force", strengthMinimum: "Str Min", in: "In", spell: "Spell", skill: "Skill", weapon: "Weapon", level: "Level", senses: "Senses (comma-separated)", kind: "As", months: "Months" };
   let shopQ = $state(""), shopType = $state(""), shop = $state([]), shopBusy = $state(false);
   let shopTimer, shopSeq = 0;
   function searchShop() {
@@ -87,11 +87,26 @@
   }
   const vehicles = $derived(Object.keys(body.creation.vehicles ?? {}).sort().map(k => ({ id: k, v: body.creation.vehicles[k].source })));
   /** Every bought thing (eye accessories included), with what it costs and the Essence it takes. */
-  const bought = $derived(Object.entries(body.creation.items).filter(([, r]) => r.type !== "skill").sort(([a], [b]) => (a < b ? -1 : 1)).map(([id, r]) => {
+  const bought = $derived(Object.entries(body.creation.items).filter(([, r]) => r.type !== "skill" && r.type !== "quality").sort(([a], [b]) => (a < b ? -1 : 1)).map(([id, r]) => {
     const item = body.actor.items.find(i => i._id === id), projected = item ? { system: item.system, flags: item.flags } : project(r, r.choices, body.creation.items);
     return { id, r, spec: choiceSpec(r), price: price(r, projected, body.actor.items), essence: item && r.type === "cyberware" ? essenceOf(item, body.actor.items) : null };
   }));
   const eyes = $derived(bought.filter(x => isCybereye(x.r)));
+  /** A choice control's accessible name, distinct per row: the item, its detail or its place in the list, the choice. */
+  const ctlName = (x, k) => {
+    const same = Object.entries(body.creation.items).filter(([, r]) => r.name === x.r.name).map(([id]) => id).sort();
+    const which = (same.length > 1 ? ` ${same.indexOf(x.id) + 1}` : "") + (x.r.choices.detail ? ` (${x.r.choices.detail})` : "");
+    return `${x.r.name}${which}: ${CHOICE_NAME[k] ?? k}`;
+  };
+  // Edges and Flaws (Companion p.22–35; PLAN-M5d): their own list on the Concept tab, with the same choice controls.
+  const qualitiesBought = $derived(Object.entries(body.creation.items).filter(([, r]) => r.type === "quality").sort(([a], [b]) => (a < b ? -1 : 1))
+    .map(([id, r]) => ({ id, r, spec: choiceSpec(r), item: body.actor.items.find(i => i._id === id) })));
+  const qualityTotals = $derived(qualitiesBought.reduce((t, x) => { const v = Number(x.item?.system.pointValue) || 0; return v > 0 ? { ...t, edges: t.edges + v } : { ...t, flaws: t.flaws + v }; }, { edges: 0, flaws: 0 }));
+  let qualityList = $state([]), qualityPick = $state("");
+  $effect(() => {
+    if (!booksOf(body).includes("sc") || qualityList.length) return;
+    get("/api/catalog/entries?type=quality&book=sc&limit=100&offerable=creation").then(r => { if (!gone) qualityList = r.entries; }).catch(() => { /* the list stays empty */ });
+  });
   const spells = $derived(bought.filter(x => x.r.type === "spell"));
   const ownSkills = $derived(Object.entries(body.creation.items).filter(([, r]) => r.type === "skill").map(([id, r]) => ({ id, name: r.name })));
   const melee = $derived(bought.filter(x => x.r.type === "weapon" && x.r.snapshot.weaponType === "melee"));
@@ -215,7 +230,7 @@
   const setAllergy = (k, v) => change({ op: "setAllergy", ...allergy, [k]: v });
   // Each contact row's charge (p.46): the first two ordinary contacts (in the order bought) are free.
   const plainContacts = $derived(bought.filter(x => x.r.type === "contact" && (x.r.choices.kind ?? x.r.snapshot.contactType) === "contact").map(x => x.id));
-  const contactPrice = (x) => ({ buddy: "10,000¥", gang: "50,000¥", follower: "200,000¥" })[x.r.choices.kind ?? x.r.snapshot.contactType] ?? (plainContacts.indexOf(x.id) < freeContacts(sys) ? "free" : "5,000¥");
+  const contactPrice = (x) => ({ buddy: "10,000¥", gang: "50,000¥", follower: "200,000¥" })[x.r.choices.kind ?? x.r.snapshot.contactType] ?? (plainContacts.indexOf(x.id) < freeContacts(sys) + qualityEffects(body.actor.items).extraContacts ? "free" : "5,000¥");
   // The steps as tabs (one panel at a time; the Rules check stays beside them). The open tab is remembered per
   // character for this browser tab (sessionStorage): the address's fragment is reserved for one-time link secrets.
   const tabs = $derived(finished ? [["karma", "Karma"], ["nuyen", "Nuyen"], ["condition", "Condition"], ...STEPS] : STEPS);
@@ -485,6 +500,36 @@
       </section>
     {/if}
 
+    {#snippet choiceControls(x)}
+                      {#if x.r.type === "contact" && x.r.snapshot.contactType === "gang"}<span class="muted small">{x.r.snapshot.members} members (2D6, rolled once)</span>{/if}
+                      {#if x.r.type === "contact" && x.r.snapshot.contactType === "follower"}
+                        {#each [0, 1, 2, 3, 4] as n}
+                          <label class="choice"><span>Archetype {n + 1}</span><input list="archetypes" value={x.r.choices.archetypes?.[n] ?? ""} maxlength="60" disabled={finished} aria-label={ctlName(x, `Archetype ${n + 1}`)}
+                            onchange={(ev) => { const a = [0, 1, 2, 3, 4].map(i => x.r.choices.archetypes?.[i] ?? ""); a[n] = ev.currentTarget.value; change({ op: "setExtra", itemId: x.id, archetypes: a }); }}></label>
+                        {/each}
+                      {/if}
+                      {#each Object.entries(x.spec) as [k, sp] (k)}
+                        <label class="choice"><span>{CHOICE_NAME[k] ?? k}</span>
+                          {#if sp.kind === "int"}
+                            <input type="number" min={sp.lo} max={sp.hi} step="1" value={x.r.choices[k]} disabled={finished} aria-label={ctlName(x, k)}
+                              onchange={(ev) => { const n = numberFrom(ev); if (Number.isInteger(n) && n >= sp.lo && n <= sp.hi) setChoice(x.id, k, n); else ev.currentTarget.value = x.r.choices[k]; }}>
+                          {:else if sp.kind === "oneOf"}
+                            <select value={x.r.choices[k]} disabled={finished} aria-label={ctlName(x, k)} onchange={(ev) => setChoice(x.id, k, typeof sp.values[0] === "number" ? Number(ev.currentTarget.value) : ev.currentTarget.value)}>{#each sp.values as v}<option value={v}>{v}</option>{/each}</select>
+                          {:else if k === "in"}
+                            <select value={x.r.choices.in} disabled={finished} aria-label={ctlName(x, "in")} onchange={(ev) => setChoice(x.id, "in", ev.currentTarget.value)}><option value="">On its own</option>{#each eyes as e (e.id)}<option value={e.id}>{e.r.name}</option>{/each}</select>
+                          {:else if k === "spell"}
+                            <select value={x.r.choices.spell} disabled={finished} aria-label={ctlName(x, "spell")} onchange={(ev) => setChoice(x.id, "spell", ev.currentTarget.value)}><option value="">Choose…</option>{#each spells as sp2 (sp2.id)}<option value={sp2.id}>{sp2.r.name}</option>{/each}</select>
+                          {:else if k === "skill" && x.r.type === "adept_power"}
+                            <select value={x.r.choices.skill} disabled={finished} aria-label={ctlName(x, "skill")} onchange={(ev) => setChoice(x.id, "skill", ev.currentTarget.value)}><option value="">Choose…</option>{#each ownSkills as sk (sk.id)}<option value={sk.id}>{sk.name}</option>{/each}</select>
+                          {:else if k === "weapon"}
+                            <select value={x.r.choices.weapon} disabled={finished} aria-label={ctlName(x, "weapon")} onchange={(ev) => setChoice(x.id, "weapon", ev.currentTarget.value)}><option value="">Choose…</option>{#each melee as w (w.id)}<option value={w.id}>{w.r.name} (Reach {w.r.snapshot.reach ?? 0}, {smallWeapon(w.r.snapshot) ? "small" : "large"})</option>{/each}</select>
+                          {:else}
+                            <input value={x.r.choices[k]} maxlength="60" disabled={finished} aria-label={ctlName(x, k)} onchange={(ev) => setChoice(x.id, k, ev.currentTarget.value)}>
+                          {/if}
+                        </label>
+                      {/each}
+    {/snippet}
+
     <section id="step-concept" role="tabpanel" aria-labelledby="tab-concept" hidden={tab !== "concept"}>
       <h2>Concept</h2>
       <div class="row portrait">
@@ -519,6 +564,37 @@
           {#each sourcebooks as x (x.key)}
             <label class="row inline"><input type="checkbox" class="check" checked={booksOf(body).includes(x.key)} onchange={(ev) => setBooksTo(ev.currentTarget.checked ? [...booksOf(body), x.key] : booksOf(body).filter(k => k !== x.key))}><span>{x.title} <span class="muted small">({x.abbr}{bookOffers[x.key] ? `: ${bookOffers[x.key].offered} offered now, ${bookOffers[x.key].later} later` : ""})</span></span></label>
           {/each}
+        </fieldset>
+      {/if}
+      {#if booksOf(body).includes("sc")}
+        <fieldset class="stack quals"><legend>Edges and Flaws (Shadowrun Companion)</legend>
+          <p class="muted small">Optional, the GM's call: take any Edges and Flaws whose values add up to 0. A Bonus Attribute Point past the racial maximum costs 2. <span class="cite">Companion p.22–35</span></p>
+          <p>Edges <strong>+{qualityTotals.edges}</strong>, Flaws <strong>{qualityTotals.flaws}</strong>: {qualityTotals.edges + qualityTotals.flaws === 0 ? "balanced" : `${qualityTotals.edges + qualityTotals.flaws > 0 ? "+" : ""}${qualityTotals.edges + qualityTotals.flaws} to balance`}.</p>
+          {#if !finished}
+            <div class="row adders">
+              <label class="grow"><span>Add an Edge or Flaw</span>
+                <select bind:value={qualityPick}>
+                  <option value="">Choose…</option>
+                  {#each [["edge", "Edges"], ["flaw", "Flaws"]] as [k, label] (k)}
+                    <optgroup {label}>{#each qualityList.filter(e => e.quality?.kind === k) as e (e.id)}<option value={e.id}>{e.name} ({e.quality.value > 0 ? "+" : ""}{e.quality.value})</option>{/each}</optgroup>
+                  {/each}
+                </select></label>
+              <button type="button" disabled={!qualityPick} onclick={() => { buy(qualityPick); qualityPick = ""; }}>Add</button>
+            </div>
+          {/if}
+          {#if qualitiesBought.length}
+            <div class="scroll"><table class="grid bought">
+              <thead><tr><th scope="col">Edge or Flaw</th><th scope="col">Choices</th><th scope="col">Value</th><th scope="col"><span class="sr-only">Remove</span></th></tr></thead>
+              <tbody>
+                {#each qualitiesBought as x (x.id)}
+                  <tr><th scope="row">{x.r.name}<br><span class="muted small">Companion p.{x.r.snapshot.citation?.page}</span></th>
+                    <td class="choices">{@render choiceControls(x)}</td>
+                    <td class="price">{(x.item?.system.pointValue ?? 0) > 0 ? "+" : ""}{x.item?.system.pointValue ?? 0}</td>
+                    <td><button type="button" class="quiet" disabled={finished} aria-label={`Remove ${x.r.name}`} onclick={() => change({ op: "removeItem", itemId: x.id })}>✕</button></td></tr>
+                {/each}
+              </tbody>
+            </table></div>
+          {/if}
         </fieldset>
       {/if}
       <label class="notes"><span>Notes: who is this, and why do they run the shadows?</span>
@@ -653,8 +729,8 @@
         <tbody>
           {#each ATTRIBUTES as a}
             {@const mod = (profile.mods[a] ?? 0) + formMod(sys, a)}
-            {@const max = profile.maxes[a] ?? 6}
-            {@const rating = withRacial(sys, a)}
+            {@const max = (profile.maxes[a] ?? 6) + edgeMax(body.actor.items, a)}
+            {@const rating = withRacial(sys, a, body.actor.items)}
             <tr>
               <th scope="row">{ATTR_NAMES[a]}</th>
               <td><input type="number" min="1" max="12" step="1" value={sys[a].base} aria-label={`${ATTR_NAMES[a]} bought`} disabled={finished}
@@ -754,34 +830,7 @@
             {#each bought as x (x.id)}
               <tr>
                 <th scope="row">{x.r.name}<br><span class="muted small">{TYPE_NAME[x.r.type]}{x.essence != null ? ` · Essence ${x.essence}` : ""}{x.r.choices.in ? " · in cybereyes" : ""}</span></th>
-                <td class="choices">
-                  {#if x.r.type === "contact" && x.r.snapshot.contactType === "gang"}<span class="muted small">{x.r.snapshot.members} members (2D6, rolled once)</span>{/if}
-                  {#if x.r.type === "contact" && x.r.snapshot.contactType === "follower"}
-                    {#each [0, 1, 2, 3, 4] as n}
-                      <label class="choice"><span>Archetype {n + 1}</span><input list="archetypes" value={x.r.choices.archetypes?.[n] ?? ""} maxlength="60" disabled={finished}
-                        onchange={(ev) => { const a = [0, 1, 2, 3, 4].map(i => x.r.choices.archetypes?.[i] ?? ""); a[n] = ev.currentTarget.value; change({ op: "setExtra", itemId: x.id, archetypes: a }); }}></label>
-                    {/each}
-                  {/if}
-                  {#each Object.entries(x.spec) as [k, sp] (k)}
-                    <label class="choice"><span>{CHOICE_NAME[k] ?? k}</span>
-                      {#if sp.kind === "int"}
-                        <input type="number" min={sp.lo} max={sp.hi} step="1" value={x.r.choices[k]} disabled={finished}
-                          onchange={(ev) => { const n = numberFrom(ev); if (Number.isInteger(n) && n >= sp.lo && n <= sp.hi) setChoice(x.id, k, n); else ev.currentTarget.value = x.r.choices[k]; }}>
-                      {:else if sp.kind === "oneOf"}
-                        <select value={x.r.choices[k]} disabled={finished} onchange={(ev) => setChoice(x.id, k, typeof sp.values[0] === "number" ? Number(ev.currentTarget.value) : ev.currentTarget.value)}>{#each sp.values as v}<option value={v}>{v}</option>{/each}</select>
-                      {:else if k === "in"}
-                        <select value={x.r.choices.in} disabled={finished} onchange={(ev) => setChoice(x.id, "in", ev.currentTarget.value)}><option value="">On its own</option>{#each eyes as e (e.id)}<option value={e.id}>{e.r.name}</option>{/each}</select>
-                      {:else if k === "spell"}
-                        <select value={x.r.choices.spell} disabled={finished} onchange={(ev) => setChoice(x.id, "spell", ev.currentTarget.value)}><option value="">Choose…</option>{#each spells as sp2 (sp2.id)}<option value={sp2.id}>{sp2.r.name}</option>{/each}</select>
-                      {:else if k === "skill" && x.r.type === "adept_power"}
-                        <select value={x.r.choices.skill} disabled={finished} onchange={(ev) => setChoice(x.id, "skill", ev.currentTarget.value)}><option value="">Choose…</option>{#each ownSkills as sk (sk.id)}<option value={sk.id}>{sk.name}</option>{/each}</select>
-                      {:else if k === "weapon"}
-                        <select value={x.r.choices.weapon} disabled={finished} onchange={(ev) => setChoice(x.id, "weapon", ev.currentTarget.value)}><option value="">Choose…</option>{#each melee as w (w.id)}<option value={w.id}>{w.r.name} (Reach {w.r.snapshot.reach ?? 0}, {smallWeapon(w.r.snapshot) ? "small" : "large"})</option>{/each}</select>
-                      {:else}
-                        <input value={x.r.choices[k]} maxlength="60" disabled={finished} onchange={(ev) => setChoice(x.id, k, ev.currentTarget.value)}>
-                      {/if}
-                    </label>
-                  {/each}
+                <td class="choices">{@render choiceControls(x)}
                 </td>
                 <td class="price">{x.r.type === "contact" ? contactPrice(x) : x.r.type === "adept_power" ? `${check.budgets?.powerPoints?.costs[x.id] ?? "—"} PP` : x.r.type === "spell" ? `${x.r.choices.force} FP` : nuyen(x.price)}{#if x.r.choices.in}<br><span class="muted small">in the eyes' price</span>{/if}</td>
                 <td><button type="button" class="quiet" disabled={finished} aria-label={`Remove ${x.r.name}`} onclick={() => change({ op: "removeItem", itemId: x.id })}>✕</button></td>
@@ -888,7 +937,7 @@
     {:else}
       <ul class="problems">
         {#each check.problems as p, i (i)}
-          <li class={p.severity}><button type="button" class="plain" onclick={() => pick(TAB_OF[p.step] ?? p.step, true)} aria-label={`${p.severity === "error" ? "Rule" : p.severity === "todo" ? "To do" : "Note"}: open the ${p.step} step`}>{p.severity === "error" ? "Rule" : p.severity === "todo" ? "To do" : "Note"}</button> {p.text} <span class="cite">SR2 p.{p.cite.page}</span></li>
+          <li class={p.severity}><button type="button" class="plain" onclick={() => pick(TAB_OF[p.step] ?? p.step, true)} aria-label={`${p.severity === "error" ? "Rule" : p.severity === "todo" ? "To do" : "Note"}: open the ${p.step} step`}>{p.severity === "error" ? "Rule" : p.severity === "todo" ? "To do" : "Note"}</button> {p.text} <span class="cite">{p.cite.book === "sc" ? "Companion" : "SR2"} p.{p.cite.page}</span></li>
         {/each}
       </ul>
     {/if}

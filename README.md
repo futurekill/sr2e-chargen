@@ -361,6 +361,13 @@ remembers the tab you were on.
    other parts of each book (metatypes, Edges and Flaws, cyberware, bioware…) come in later versions, and an entry with
    special rules (a drug, a skillsoft, an item with active effects) isn't offered yet. A book can be turned on at any
    time; it can be turned off once nothing on the character comes from it. Each shop row shows its book and page.
+   With the Shadowrun Companion on, **Edges and Flaws** appear here too (p.22–35, the GM's optional rule): add them
+   from the list, choose a value where the book allows several, an attribute for Bonus Attribute Point or Exceptional
+   Attribute, and a detail (the skill, substance, phobia…). They must add up to 0. Some change creation: Bonus
+   Attribute Point (+1 per point, 2 points past the racial maximum), Exceptional Attribute (+1 maximum), Bonus Skill
+   Point (skill points), Bonus Force Point (2 Force Points per point, magicians only), Extra Contact (one more free
+   contact); Lightning Reflexes adds Reaction and Will to Live overflow boxes. The rest are played at the table.
+   Cyberpirates' and Rigger 2's Edges and Flaws come later.
 2. **Priorities** (p.44): give each of Race, Magic, Attributes, Skills and Resources one letter, A to E, each letter
    once. Picking a letter that is in use swaps the two.
 3. **Metatype** (p.44): human, dwarf, elf, ork or troll. A metahuman needs Race A (or C with the GM's *More

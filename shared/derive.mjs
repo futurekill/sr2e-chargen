@@ -5,7 +5,7 @@
  * character at creation can hold is composed here (no in-play state, no sourcebook ware); each step names the
  * CharacterData method it matches.
  */
-import { TABLES, combatSenseDice, karmaPoolCapacity, karmaPoolAvailable, reactionBase, wornArmorTotals, heavyArmorPoolPenalty, astralCombatPool, strengthMinWeaponStats, naturalAttribute, racialProfile, shapeshifterOf, formModifiers } from "./rules.mjs";
+import { TABLES, combatSenseDice, karmaPoolCapacity, karmaPoolAvailable, reactionBase, wornArmorTotals, heavyArmorPoolPenalty, astralCombatPool, strengthMinWeaponStats, naturalAttribute, racialProfile, shapeshifterOf, formModifiers, qualityEffects } from "./rules.mjs";
 import { essenceOf } from "./purchase.mjs";
 
 export const ATTRS = ["body", "quickness", "strength", "charisma", "intelligence", "willpower"];
@@ -42,7 +42,10 @@ export function derive({ actor, options = {} }) {
   // `_naturalAttribute`. The character's own values are its human form; `forms` gives both (PLAN-M5c Draft 2).
   const shifter = shapeshifterOf("character", sys), formOf = (form) => formModifiers(sys.shapeshifter?.species, form);
   const naturalIn = (a, form) => {
-    const n = naturalAttribute(num(sys[a]?.base), num(racial[a]), 0, maxes[a] ?? null), fm = shifter ? num(formOf(form).attrs[a]) : 0;
+    // The attribute Edges (Companion p.24): Bonus Attribute Point in the natural rating, Exceptional Attribute on the max.
+    const q = items.filter(i => i.type === "quality" && i.system?.attribute === a);
+    const eb = q.reduce((t, i) => t + num(i.system.attributeBonus), 0), em = q.reduce((t, i) => t + num(i.system.maximumBonus), 0);
+    const n = naturalAttribute(num(sys[a]?.base), num(racial[a]), eb, maxes[a] ?? null, em), fm = shifter ? num(formOf(form).attrs[a]) : 0;
     return fm ? Math.max(1, n + fm) : n;
   };
   for (const a of ATTRS) {
@@ -52,7 +55,7 @@ export function derive({ actor, options = {} }) {
   const forms = shifter ? Object.fromEntries(["human", "animal"].map(form => {
     const f = formOf(form), m = (k) => mods[k] - (form === "animal" ? adept[k] : 0);
     const at = Object.fromEntries(ATTRS.map(a => [a, Math.max(0, naturalIn(a, form) + m(a))]));
-    return [form, { attributes: at, reaction: Math.max(0, reactionBase(at.quickness, at.intelligence, exemptQuickness) + m("reaction")),
+    return [form, { attributes: at, reaction: Math.max(0, reactionBase(at.quickness, at.intelligence, exemptQuickness) + m("reaction") + qualityEffects(items).reaction),
       initiativeDice: Math.max(1, 1 + m("initiativeDice") + num(f.initDice)), reach: num(f.reach), dermalDice: num(f.dermalDice) }];
   })) : null;
 
@@ -61,7 +64,9 @@ export function derive({ actor, options = {} }) {
   const magic = mtype === "none" ? 0 : Math.max(0, Math.min(6, Math.floor(essence + 1e-9)));
 
   // Reaction (p.45) and Initiative: Muscle Replacement's Quickness never feeds Reaction (p.249).
-  const reaction = Math.max(0, reactionBase(attributes.quickness, attributes.intelligence, exemptQuickness) + mods.reaction);
+  // Lightning Reflexes +1 per 2 points; Will to Live +1 overflow box per point (Companion p.26–27; PLAN-M5d).
+  const edges = qualityEffects(items);
+  const reaction = Math.max(0, reactionBase(attributes.quickness, attributes.intelligence, exemptQuickness) + mods.reaction + edges.reaction);
   const initiativeDice = Math.max(1, 1 + mods.initiativeDice);
 
   // _calculateDicePools (p.84).
@@ -92,7 +97,7 @@ export function derive({ actor, options = {} }) {
 
   return {
     attributes, natural, reaction, initiativeDice, essence, magic, pools, armor, weapons, vcr, mpcp, forms,
-    monitors: { physical: 10, stun: 10, overflow: natural.body },   // p.112; overflow against NATURAL Body
+    monitors: { physical: 10, stun: 10, overflow: natural.body + edges.willToLive },   // p.112; overflow against NATURAL Body
     // The Karma Pool (p.191): the starting pool + one-tenth of Total Karma, less what is burned (PLAN-M4a Draft 2).
     karmaPool: karmaPoolCapacity(sys.karma?.total, sys.karma?.burned, sys.karma?.poolAdjust, race, !!options.moreMetahumans),
     karmaPoolAvailable: karmaPoolAvailable(karmaPoolCapacity(sys.karma?.total, sys.karma?.burned, sys.karma?.poolAdjust, race, !!options.moreMetahumans), sys.karma?.spent, sys.karma?.drawn),

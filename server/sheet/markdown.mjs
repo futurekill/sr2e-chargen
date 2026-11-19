@@ -29,7 +29,7 @@ export function statBlock(m) {
   out.push(sec("Attacks", tableOf(["Weapon", "Damage", "Skill"], m.attacks)));
   out.push(sec("Skills", tableOf(["Skill", "Rating", "Concentration / specialization", "Kind"], m.skills)));
   for (const [title, rows, head] of [["Cyberware", m.cyberware, ["Item", "Rating", "Essence", "Page"]], ["Adept powers", m.powers, ["Power", "Level", "For", "Page"]],
-    ["Spells", m.spells, ["Spell", "Force", "Category · drain", "Page"]], ["Foci", m.foci, ["Focus", "Force", "Bonded to", "Page"]], ["Gear", m.gear, ["Item", "Qty / rating", "Armor", "Page"]],
+    ["Spells", m.spells, ["Spell", "Force", "Category · drain", "Page"]], ["Foci", m.foci, ["Focus", "Force", "Bonded to", "Page"]], ["Edges and Flaws", m.qualities ?? [], ["Edge / Flaw", "Value", "Detail", "Page"]], ["Gear", m.gear, ["Item", "Qty / rating", "Armor", "Page"]],
     ["Vehicles", m.vehicles ?? [], ["Vehicle", "Handling · Speed", "Body · Armor · Signature · Pilot", "Page"]],
     ["History", m.history ?? [], ["Date", "What", "Who · note", ""]]])
     if (rows.length) out.push(sec(title, tableOf(head, rows)));

@@ -4,7 +4,7 @@
  * operation, so no price or rule field is ever stored as typed. Prices and Essence come from the system's own pure
  * functions (shared/rules.mjs), called with the same inputs Foundry's creation panel gives them.
  */
-import { chargenItemCost, weaponFocusCost, adeptPowerKey, ratedRow, wareCtx, eyeAccessoryKind, rowsListValue, wareEssence, muscleFactor } from "./rules.mjs";
+import { chargenItemCost, weaponFocusCost, adeptPowerKey, ratedRow, wareCtx, eyeAccessoryKind, rowsListValue, wareEssence, muscleFactor, QUALITY_VALUES, qualityRule } from "./rules.mjs";
 
 export const BUYABLE = ["weapon", "armor", "gear", "ammo", "cyberware", "spell", "focus", "adept_power", "program", "contact", "lifestyle"];
 const STRING_MAX = 60;
@@ -41,9 +41,19 @@ export function choiceSpec(rec, { inPlay = false } = {}) {
       const top = Number(s.maxLevel) || 1;
       return { ...(top > 1 ? { level: int(1, top) } : {}), ...(key === "improved_ability" ? { skill: text() } : {}) };
     }
+    case "quality": {   // Edges and Flaws (Companion p.22–35, PLAN-M5d): the table's values, an attribute, a detail
+      const v = QUALITY_VALUES[rec.source] ?? {}, rule = qualityRule(rec.snapshot?.rule, rec.source);
+      if (v.attribute) return { attribute: oneOf(QUALITY_ATTRS), gain: int(1, 5), detail: text() };
+      const values = v.variable ? (v.variable === "edge" ? [1, 2, 3, 4, 5, 6] : [-1, -2, -3, -4, -5, -6])
+        : [...new Set([...(v.values ?? []), ...(v.magicallyActive ?? [])])];
+      return { ...(rule === "exceptional-attribute" ? { attribute: oneOf(QUALITY_ATTRS) } : {}),
+        ...(values.length > 1 ? { points: oneOf(values) } : {}), detail: text() };
+    }
     default: return {};
   }
 }
+/** The attributes an attribute Edge may name (p.24: not Essence, Reaction or Magic). */
+export const QUALITY_ATTRS = ["body", "quickness", "strength", "charisma", "intelligence", "willpower"];
 /** A new purchase's choices: the entry's own values where it has them. */
 export function defaultChoices(rec, opts) {
   const s = rec.snapshot, out = {};
@@ -51,6 +61,8 @@ export function defaultChoices(rec, opts) {
     if (spec.kind === "text") out[k] = "";
     else if (k === "rating") out[k] = spec.kind === "oneOf" ? spec.values.find(v => v >= (s.rating || 1)) ?? spec.values[0] : Math.min(spec.hi, Math.max(spec.lo, s.rating || 1));
     else if (k === "force") out[k] = Math.max(1, s.force || 1);
+    else if (k === "points") out[k] = spec.values.includes(s.pointValue) ? s.pointValue : spec.values[0];
+    else if (k === "attribute" && rec.type === "quality") out[k] = spec.values.includes(s.attribute) ? s.attribute : spec.values[0];
     else if (k === "strengthMinimum") out[k] = Math.max(1, s.strengthMinimum || 1);
     else if (spec.kind === "oneOf") out[k] = spec.values[0];
     else out[k] = 1;
@@ -99,6 +111,12 @@ export const BOOK_TYPES = ["weapon", "armor", "ammo", "gear", "spell"];
 export const bookOf = (entry) => entry.book ?? entry.listBook ?? null;
 export function offerReason(entry, books = [], { inPlay = false } = {}) {
   const book = bookOf(entry);
+  if (entry.type === "quality") {   // Edges and Flaws (PLAN-M5d Draft 2): their own path, creation only
+    if (!books.includes(book)) return "That sourcebook isn't turned on for this character.";
+    if (inPlay) return "Edges and Flaws are chosen at creation (after that, they're the GM's, p.22).";
+    if (!QUALITY_VALUES[entry._stats?.compendiumSource ?? ""]) return "This book's Edges and Flaws come later: only the Shadowrun Companion's for now.";
+    return null;
+  }
   if (book !== "sr2") {
     if (!books.includes(book)) return "That sourcebook isn't turned on for this character.";
     if (!BOOK_TYPES.includes(entry.type)) return "From a sourcebook, only weapons, armor, ammunition, gear and spells for now.";
@@ -153,6 +171,14 @@ export function project(rec, c, recs = {}) {
     if (Array.isArray(c.archetypes)) s.archetypes = c.archetypes;
   }
   if (rec.type === "lifestyle" && "months" in c) s.monthsPaid = c.months;
+  if (rec.type === "quality") {   // PLAN-M5d: Foundry's own fields; a Bonus Attribute Point's price is set in rebuildItems
+    if ("points" in c) s.pointValue = c.points;
+    if ("attribute" in c) s.attribute = c.attribute;
+    if ("gain" in c) { s.attributeBonus = c.gain; s.pointValue = c.gain; }
+    if (qualityRule(s.rule, rec.source) === "exceptional-attribute") s.maximumBonus = 1;
+    // Plain text (code review r1): Foundry escapes the notes where it shows them; markup characters are dropped.
+    if ("detail" in c) s.notes = c.detail.replace(/[<>]/g, "");
+  }
   if (rec.type === "adept_power") {
     if ("level" in c) s.level = c.level;
     // Improved Ability: the system matches the skill by NAME, re-resolved on every rebuild ("" once the skill is gone).
