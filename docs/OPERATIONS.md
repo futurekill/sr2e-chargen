@@ -1,15 +1,19 @@
 # Running sr2e-chargen
-A development build (M3a): fine to try on your own machine or server; not released, no backups yet.
+The operator's reference. The step-by-step guide is the wiki: [Running the image](../wiki/Running-the-Image.md),
+[Databases](../wiki/Databases.md), [Backups and restore](../wiki/Backups-and-Restore.md).
 
 ## Start it
-1. Build the image from the repo root: `docker build -f docker/Dockerfile -t sr2e-chargen:dev .`
-   The image builds its own catalog from `content/`, this project's copy of the content. Nothing else is needed.
+1. Get the image: the released one, `docker login ghcr.io` (a token with `read:packages`) then
+   `docker pull ghcr.io/futurekill/sr2e-chargen:<tag>` (set `image:` in the compose file to it); or build your own
+   from the repo root: `docker build -f docker/Dockerfile -t sr2e-chargen:dev .` The image builds its own catalog
+   from `content/`, this project's copy of the content. Nothing else is needed.
 2. Copy `docker/compose.example.yml` to `compose.yml` and set `BASE_URL` to the address people will type
    (https, exactly). Set `TRUST_PROXY` to your reverse proxy's address or network.
 3. `docker compose up -d`
 4. Make the first admin: `docker compose exec chargen /nodejs/bin/node server/cli.mjs admin bootstrap` — it prints a
    link that works once. Open it, pick a handle and password.
-5. Point your reverse proxy (TLS) at `127.0.0.1:3000`.
+5. Point your reverse proxy (TLS) at `127.0.0.1:3000`. Allow request bodies of 8 MB (portrait uploads; nginx:
+   `client_max_body_size 8m;`). Bind mounts must be owned by uid 65532 (the image's non-root user).
 
 ## Settings (environment variables only)
 | Variable | Default | Meaning |
@@ -60,13 +64,19 @@ Links are shown ONCE and stored only as hashes: if one is lost, make another.
 ## Day to day
 - **Updating**: rebuild the image, `docker compose up -d`. Migrations run at start; an older build refuses to start
   against a newer database.
-- **Until backups land (M3b)**: stop writes (`maintenance on`), copy the `/data` volume, `maintenance off`.
+- **Before an update** (SQLite): `backup create`. Never copy `chargen.db` alone from a running server: the database
+  runs in WAL mode, so `chargen.db-wal` holds recent writes; `backup create` takes a consistent copy.
 - **Health**: `GET /healthz`; the container reports `healthy`.
 - **Limits per user**: 200 documents, 500 MB, 50 revisions per document; deleted documents are purged after 30 days.
 
-## Moving to Postgres or MySQL/MariaDB
-Set `DATABASE_URL` and start: an empty database is migrated on first start. Copying an existing SQLite library across
-(`db copy`) is M3b.
+## Databases
+SQLite is the default and the recommendation for a group: `sqlite:///data/chargen.db` (three slashes: an absolute
+path, in the `/data` volume), WAL mode, foreign keys on. Keep `/data` on a LOCAL file system (never NFS/SMB) and on one
+host; the built-in backups work only with SQLite. PostgreSQL (`postgres://…`) and MySQL/MariaDB (`mysql://…`,
+`mariadb://…`) are supported and tested in CI (PostgreSQL 18, MySQL 9, MariaDB 12): create an empty database (MySQL:
+`utf8mb4`) owned by the app's user, set `DATABASE_URL` and start; the app creates its tables. Copying an existing
+SQLite library to another database (`db copy`) is not built yet: choose before your group starts. Details:
+[wiki/Databases.md](../wiki/Databases.md).
 
 ## Portraits and memory
 Portraits are stored in the database (table `assets`), so a database backup holds them. Uploads are checked from

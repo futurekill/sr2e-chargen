@@ -7,14 +7,21 @@ nothing lost in either direction.
 
 Built for a small private group: invite-only accounts, one Docker container on your own server.
 
-> **Status: early development build.** The tool is **standalone first**: you can make and manage a character for a
-> physical table without Foundry ([docs/ROADMAP.md](docs/ROADMAP.md)). Done so far: the app skeleton (accounts,
-> library, Docker, CI), **milestone 1, the catalog** — 1,763 entries from the core book and 11 sourcebooks, each
-> with its page reference — and the first parts of **milestone 2, character creation**: priorities, metatype, magic,
-> attributes (M2a), skills (M2b) and resources (M2c), with a rules check that cites the page, and **a printable PDF
-> sheet** in three styles with a one-page table card and a Markdown stat block (milestone 3), whose numbers match
-> Foundry's. Next: adept powers, contacts, lifestyle and
-> finishing (after the next Foundry system release). Not released: no image is published.
+> **Status: beta, [v0.1.0-beta.1](https://github.com/futurekill/sr2e-chargen/releases/tag/v0.1.0-beta.1)** (a pre-release,
+> a signed private image on GHCR). The tool is **standalone first**: you can make a character for a physical table
+> without Foundry ([docs/ROADMAP.md](docs/ROADMAP.md)). In the beta: accounts and a library with revisions; **the
+> catalog** (1,763 entries from the core book and 11 sourcebooks, each with its page reference); **character
+> creation** through priorities, metatype, magic, attributes, skills and resources, with a rules check that cites the
+> page; **printable PDF sheets** in three styles, a one-page table card and a Markdown stat block, whose numbers
+> match Foundry's; portraits; nightly verified backups. Next: adept powers, contacts, lifestyle and finishing.
+
+## Run the released image
+
+The full guide is the wiki ([wiki/Running-the-Image.md](wiki/Running-the-Image.md)): pull
+`ghcr.io/futurekill/sr2e-chargen:v0.1.0-beta.1`, set `BASE_URL`, mount `/data`, run it behind your TLS proxy, then
+`admin bootstrap` for the first admin and invite your players. The database is **SQLite by default**
+(`sqlite:///data/chargen.db`, in the `/data` volume), with PostgreSQL and MySQL/MariaDB supported:
+[wiki/Databases.md](wiki/Databases.md).
 
 ## Run it locally (development)
 
@@ -56,7 +63,7 @@ sourcebook modules at the releases in `content-pins.json`). A daily workflow pro
 ## How it fits with Foundry
 
 The Foundry system is the source of truth for the rules. Its rules code is shared with this app, so a character is
-computed the same way in both places. Tests check that both give identical results. The Docker image will ship fully formed, with the catalog built in from pinned content versions.
+computed the same way in both places. Tests check that both give identical results. The Docker image ships fully formed, with the catalog built in from pinned content versions.
 
 ## Documents
 
@@ -70,7 +77,8 @@ computed the same way in both places. Tests check that both give identical resul
 | [docs/QA-PLAN.md](docs/QA-PLAN.md) | How a change is checked: the automatic checks and the manual walk-through |
 | [CHANGELOG.md](CHANGELOG.md) | What changed, release by release |
 | [docs/PLAN-M3.md](docs/PLAN-M3.md) | The app skeleton's plan (accounts, library, container), with its review log |
-| [docs/OPERATIONS.md](docs/OPERATIONS.md) | Running it: Docker, settings, the admin CLI |
+| [docs/OPERATIONS.md](docs/OPERATIONS.md) | Running it: Docker, settings, the admin CLI, backups, releases (the operator's reference) |
+| [wiki/](wiki/Home.md) | The user guide: building a character, running the image, databases, backups, admin commands |
 | [docs/THREAT-MODEL.md](docs/THREAT-MODEL.md) | What is protected, from whom, and where each defence lives |
 | [docs/DEPENDENCIES.md](docs/DEPENDENCIES.md) | Every dependency and why it is there |
 | [docs/RULES-CHARGEN.md](docs/RULES-CHARGEN.md) | The creation rules captured from the books, with page references (M0) |
@@ -86,19 +94,19 @@ The approved order is in [docs/ROADMAP.md](docs/ROADMAP.md) (standalone first, r
 | M0 | Capture the creation rules from the books | done |
 | — | App skeleton: Docker, accounts, library, one theme | done |
 | 1 | Catalog: browse and search every item, with page references | done |
-| 2 | Create a character, core book ([docs/PLAN-M2.md](docs/PLAN-M2.md), [docs/PLAN-M2c.md](docs/PLAN-M2c.md)) | M2a–M2c done; adept powers, then M2d |
-| 3 | Printable sheet ([docs/PLAN-sheet.md](docs/PLAN-sheet.md)) | Classic, Fohawk and ink-saver styles, Markdown stat block, table card done; portrait later (needs uploads) |
+| 2 | Create a character, core book ([docs/PLAN-M2.md](docs/PLAN-M2.md), [docs/PLAN-M2c.md](docs/PLAN-M2c.md)) | M2a–M2c done (in the beta); adept powers built, out with the next system release; then M2d |
+| 3 | Printable sheet ([docs/PLAN-sheet.md](docs/PLAN-sheet.md)) | done: Classic, Fohawk and ink-saver styles, Markdown stat block, table card, portraits |
 | 4 | Manage a character: Karma, nuyen, purchases, damage, history | |
 | 5 | Sourcebooks, alternate methods, Edges and Flaws | |
-| 6 | Release | |
+| 6 | Release ([docs/PLAN-release.md](docs/PLAN-release.md)) | done: backups, image scan, SBOM, signed image; first beta v0.1.0-beta.1 |
 | 7 | Foundry connector (optional) | |
 
 Each milestone goes plan → review → build → code review → release.
 
-## Planned stack
+## Stack
 
-Node (current LTS) with Fastify, Svelte with Vite, Kysely over SQLite (Postgres or MySQL later), delivered as one
-hardened Docker image. Security follows OWASP ASVS Level 2; dependencies are pinned and scanned.
+Node 26 with Fastify, Svelte 5 with Vite, Kysely over SQLite (node:sqlite), PostgreSQL or MySQL/MariaDB, delivered as
+one hardened distroless Docker image. Security follows OWASP ASVS Level 2; dependencies are pinned and scanned.
 
 ## Not affiliated
 

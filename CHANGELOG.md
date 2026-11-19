@@ -5,6 +5,11 @@ notes come from it.
 
 ## Unreleased
 
+### Documentation
+- A user guide in `wiki/` (published to the GitHub wiki): building a character, running the image (pull, settings,
+  compose, reverse proxy, first admin, updates), databases (SQLite in depth, PostgreSQL, MySQL/MariaDB), backups and
+  restore, admin commands. README and OPERATIONS updated for the beta.
+
 ## 0.1.0-beta.1 — 2026-11-18
 
 First beta, for a table demo. Character creation covers priorities, metatype, magic, attributes, skills and
