@@ -6,6 +6,8 @@ notes come from it.
 ## Unreleased
 
 ### Added
+- **A favicon**: an amber prompt and cyan cursor in the terminal theme's colors (SVG, with ICO and Apple touch icon
+  fallbacks), so the app's tab is easy to find.
 - **Shapeshifter characters** (Shadowrun Companion p.36–38; RULINGS R10): with the Companion on, pick a species on
   the Metatype step. The character uses the shapeshifter priority table (Race A; Magic B magician, C adept), buys base
   attributes up to 6 with the human-form modifiers on top, and shows both forms on the Attributes tab and the sheets
