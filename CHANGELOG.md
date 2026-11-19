@@ -6,6 +6,10 @@ notes come from it.
 ## Unreleased
 
 ### Added
+- **Metavariants** (Shadowrun Companion p.39–44; RULINGS R9): with the Companion turned on, the Metatype step lists
+  each metatype's variants with their modifiers and page. The character takes the variant's own racial modifiers
+  (a Cyclops +6 Strength) with the base metatype's priority and maximums; the sheets print "Troll (Cyclops)" and the
+  variant's notes. The GM's oni option allows Race B for a magical oni (p.42). Foundry applies the same variant data.
 - **Sourcebooks** (roadmap item 5, first part): tick the books your table uses on the Concept tab. The creation shop
   and the Nuyen shop then list those books' weapons, armor, ammunition, gear and spells (Street Samurai Catalog guns,
   Grimoire spells, Fields of Fire gear…), with each row's book and page. Entries with rules the app doesn't compute

@@ -8,7 +8,7 @@
  * A character is the Foundry system's own `character` source shapes (`actor`), so the system's functions read it
  * unchanged; the app's own record sits beside it (`creation`).
  */
-import { TABLES, chargenBudget, damageUpdateFor, surgeryCategory, surgeryEssencePct, surgeonTN, karmaTransition, advancementOptions, saleQuoteOf, streetPrice, ratedStreetIndex, startingMoney, startingKarmaPool, adeptPowerBudget, label, skillTiersFromAllocation, validateSkillAllocation } from "./rules.mjs";
+import { TABLES, racialProfile, metavariantFrom, isMetavariantItem, ONI_SOURCE, chargenBudget, damageUpdateFor, surgeryCategory, surgeryEssencePct, surgeonTN, karmaTransition, advancementOptions, saleQuoteOf, streetPrice, ratedStreetIndex, startingMoney, startingKarmaPool, adeptPowerBudget, label, skillTiersFromAllocation, validateSkillAllocation } from "./rules.mjs";
 import { defaultChoices, checkChoices, offerReason, project, price, eyeRow, essenceOf, isCybereye, powerKeyOf, sensesOf } from "./purchase.mjs";
 
 export const SCHEMA = "sr2e-chargen-character", SCHEMA_VERSION = 1;
@@ -65,7 +65,7 @@ export const OPS = Object.freeze({
   // Sourcebooks (docs/PLAN-M5a.md): what may be bought; metadata, allowed after finishing.
   setBooks: { books: "books" },
   setPriority: { category: "string", letter: "string" },
-  setMetatype: { race: "string" },
+  setMetatype: { race: "string", variant: "string" },   // variant: a catalog race id, or "" (Companion p.39–44)
   setMagic: { type: "string" },
   setTradition: { tradition: "string" },
   setTotem: { totem: "string" },
@@ -120,7 +120,7 @@ export function cardIds(body) {
   const chosen = body.creation.card;
   return Array.isArray(chosen) ? eligible.filter(id => chosen.includes(id)) : eligible;
 }
-const OPTIONS = ["moreMetahumans"];
+const OPTIONS = ["moreMetahumans", "oniPriority"];   // oniPriority: Companion p.42, the GM's call
 
 /**
  * Apply one operation. Refused only when it is impossible (an unknown value, a number outside what any character
@@ -162,11 +162,18 @@ export function applyOp(body, op, lookup = () => null, { roll = null, now = 0, s
       pr[op.category] = op.letter;
       break;
     }
-    case "setMetatype":
+    case "setMetatype": {
       if (!METATYPES.includes(op.race)) throw new Refusal("That isn't a core metatype.", 44);
+      // A metavariant (PLAN-M5b): a turned-on sourcebook's race entry of THIS metatype, written as Foundry's drop does.
+      const v = op.variant ? lookup(op.variant) : null;
+      if (op.variant && !(v && v.type === "race" && isMetavariantItem(v) && v.system.raceKey === op.race))
+        throw new Refusal(`That isn't a variant of the ${op.race}.`);
+      if (v && !booksOf(b).includes(v.system.citation.book)) throw new Refusal("That sourcebook isn't turned on for this character.");
+      sys.metavariant = metavariantFrom(v ?? {});
       sys.race = op.race;
       if (op.race === "human") sys.chargen.allergy = { ...NO_ALLERGY };   // an allergy is for metahumans only (p.46)
       break;
+    }
     case "setMagic":
       if (!MAGIC_TYPES.includes(op.type)) throw new Refusal("That isn't a core magic type.", 45);
       sys.magic.type = op.type;
@@ -358,7 +365,7 @@ function validateInPlay(body, add, problems) {
   const essence = Math.round((6 - items.filter(i => i.type === "cyberware" && i.system.installed !== false).reduce((t, i) => t + essenceOf(i, items), 0)) * 100) / 100;
   const magic = mtype === "none" ? 0 : Math.max(0, Math.min(6, Math.floor(essence + 1e-9)));
   if (essence < 0) add("resources", "error", `Essence is ${essence}.`, 46);
-  const max = TABLES.racialMaximums[sys.race] ?? TABLES.racialMaximums.human;
+  const max = racialProfile(sys, TABLES).maxes;
   for (const a of ATTRIBUTES) if (withRacial(sys, a) > 1.5 * max[a]) add("karma", "warning", `${ATTR_NAMES[a]} ${withRacial(sys, a)} is beyond 1.5 × the racial maximum: the book discourages it.`, 190);
   const budgets = {};
   if (mtype === "physical_adept") {   // a lost Magic point costs one point of improvements (p.126): still reported
@@ -373,7 +380,7 @@ function validateInPlay(body, add, problems) {
 
 /** The context the system's Karma transition prices with: bought + racial rating; after creation no clamp (p.192). */
 export function karmaContext(body) {
-  const sys = body.actor.system, max = TABLES.racialMaximums[sys.race] ?? TABLES.racialMaximums.human, attributes = {};
+  const sys = body.actor.system, max = racialProfile(sys, TABLES).maxes, attributes = {};
   for (const a of ATTRIBUTES) { const natural = withRacial(sys, a); attributes[a] = { natural, next: natural + 1, overMax: natural + 1 > max[a], stuck: false }; }
   return { moreMetahumans: !!body.creation.options.moreMetahumans, race: sys.race, attributes };
 }
@@ -540,6 +547,7 @@ function booksInUse(b, lookup) {
   if (!b.creation.finished) for (const r of Object.values(b.creation.items ?? {})) used.add(lookup(r.catalogId)?.book ?? r.snapshot?.citation?.book);
   for (const i of b.actor.items ?? []) used.add(i.system?.citation?.book);
   for (const v of Object.values(b.creation.vehicles ?? {})) used.add(v.source?.system?.citation?.book);
+  if (b.actor.system.metavariant?.name) used.add(b.actor.system.metavariant.book);   // PLAN-M5b r1 #6
   used.delete(CORE); used.delete(undefined); used.delete(null);
   return used;
 }
@@ -732,7 +740,7 @@ export const metatypeAllowed = (letter, race, moreMetahumans) =>
   race === "human" || (moreMetahumans ? ["A", "B", "C"].includes(letter) : letter === "A");
 
 /** The value an attribute has after racial modifiers (p.45: applied after allocation). */
-export const withRacial = (sys, attr) => (Number(sys[attr]?.base) || 0) + (TABLES.racialModifiers[sys.race]?.[attr] ?? 0);
+export const withRacial = (sys, attr) => (Number(sys[attr]?.base) || 0) + (racialProfile(sys, TABLES).mods[attr] ?? 0);
 
 /**
  * The budgets and every problem: `{ budgets, problems: [{ step, severity, text, cite }], finishable }`. `severity`:
@@ -753,7 +761,10 @@ export function validate(body) {
   for (const [l, cs] of Object.entries(seen)) if (cs.length > 1) add("priorities", "error", `Priority ${l} is used twice (${cs.map(c => CATEGORY_NAMES[c]).join(" and ")}): each letter once.`, 44);
 
   // Metatype (p.44, p.46).
-  if (pr.race && !metatypeAllowed(pr.race, sys.race, opts.moreMetahumans))
+  // A magical oni may take Race B with Resources A and Magic C (a metahuman adept), at the GM's discretion (Companion p.42).
+  const oniB = !!opts.oniPriority && pr.race === "B" && pr.resources === "A" && pr.magic === "C" && sys.magic.type === "physical_adept"
+    && racialProfile(sys, TABLES).source === ONI_SOURCE;
+  if (pr.race && !oniB && !metatypeAllowed(pr.race, sys.race, opts.moreMetahumans))
     add("metatype", "error", `${cap(aRace(sys.race))} needs Priority ${opts.moreMetahumans ? "C or better" : "A"} in Race.`, opts.moreMetahumans ? 46 : 44);
 
   // Magic (p.44–46).
@@ -768,7 +779,7 @@ export function validate(body) {
   if (mtype === "full_magician" && sys.magic.tradition === "shamanic" && !sys.magic.totem) add("magic", "todo", "A shaman chooses a totem.", 44);
 
   // Attributes (p.43, p.45).
-  const max = TABLES.racialMaximums[sys.race] ?? TABLES.racialMaximums.human;
+  const max = racialProfile(sys, TABLES).maxes;
   for (const a of ATTRIBUTES) {
     const base = Number(sys[a]?.base) || 0, v = withRacial(sys, a);
     if (base < 1) add("attributes", "error", `${ATTR_NAMES[a]} must be at least 1.`, 45);

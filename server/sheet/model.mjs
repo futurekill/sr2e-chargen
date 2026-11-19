@@ -5,6 +5,7 @@
 import { derive } from "../../shared/derive.mjs";
 import { validate, totemNames, CATEGORY_NAMES, ATTR_NAMES, MAGIC_NAMES } from "../../shared/creation.mjs";
 import { essenceOf } from "../../shared/purchase.mjs";
+import { TABLES, racialProfile, metavariantNotes } from "../../shared/rules.mjs";
 
 /** Plain, printable text: no control characters, no bidi overrides/isolates, single spaces. */
 export function plain(v, max = Infinity) {
@@ -29,6 +30,9 @@ export function sheetModel(body) {
   const actor = body.actor, sys = actor.system, items = actor.items ?? [];
   const d = derive({ actor, options: body.creation?.options ?? {} });
   const cm = actor.system.conditionMonitor;
+  // A metavariant (Companion p.39–44): "Troll (Cyclops)", its rules as a header line.
+  const variant = racialProfile(sys, TABLES).variant, raceName = cap(sys.race ?? "human") + (variant ? ` (${plain(variant)})` : "");
+  const variantNotes = metavariantNotes(sys, TABLES).join(" ");
   const check = validate(body);
   const pr = sys.chargen?.priorities ?? {};
   const magic = sys.magic ?? {};
@@ -41,7 +45,7 @@ export function sheetModel(body) {
     title: plain(body.name),
     draft: !body.creation?.finished,
     header: [
-      ["Metatype", cap(sys.race ?? "human")],
+      ["Metatype", raceName], ...(variantNotes ? [["Metatype notes", plain(variantNotes, 400)]] : []),
       ["Magic", magicLine],
       ["Priorities", Object.keys(CATEGORY_NAMES).map(c => `${CATEGORY_NAMES[c]} ${pr[c] || "–"}`).join(" · ")],
       ["Karma Pool", String(d.karmaPool)], ...(d.totalKarma > 0 ? [["Good Karma", String(d.goodKarma)], ["Total Karma", String(d.totalKarma)]] : []),
@@ -60,7 +64,7 @@ export function sheetModel(body) {
       ...[["Magic pool", d.pools.magic], ["Astral pool", d.pools.astral], ["Hacking pool", d.pools.hacking], ["Control pool", d.pools.control]].filter(([, v]) => v > 0).map(([k, v]) => [k, String(v)]),
       ["Karma pool", String(d.karmaPool)], ...(d.totalKarma > 0 ? [["Good Karma", String(d.goodKarma)], ["Total Karma", String(d.totalKarma)]] : []), ["Essence", num(d.essence)], ...(magic.type !== "none" ? [["Magic", String(d.magic)]] : []), ["Armor", `${d.armor.ballistic} / ${d.armor.impact}`]],
     priorities: Object.keys(CATEGORY_NAMES).map(c => [{ race: "RACE", magic: "MAGIC", attributes: "ATTR", skills: "SKILLS", resources: "RES" }[c], pr[c] || "–"]),
-    subtitle: [cap(sys.race ?? "human"), magicLine].join(" · "),
+    subtitle: [raceName, magicLine].join(" · "),
     pools: [["Combat", d.pools.combat], ["Magic", d.pools.magic], ["Astral", d.pools.astral], ["Hacking", d.pools.hacking], ["Control", d.pools.control]]
       .filter(([k, v]) => v > 0 || k === "Combat").map(([k, v]) => [k, String(v)]),
     armor: `${d.armor.ballistic} / ${d.armor.impact}`,

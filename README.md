@@ -364,7 +364,10 @@ remembers the tab you were on.
 2. **Priorities** (p.44): give each of Race, Magic, Attributes, Skills and Resources one letter, A to E, each letter
    once. Picking a letter that is in use swaps the two.
 3. **Metatype** (p.44): human, dwarf, elf, ork or troll. A metahuman needs Race A (or C with the GM's *More
-   Metahumans* option, p.46).
+   Metahumans* option, p.46). With the Shadowrun Companion turned on, a dwarf, elf, ork or troll can be a
+   **metavariant** (Cyclops, Gnome, Oni, Night One…, Companion p.39–44): its own racial modifiers, the base
+   metatype's priority and maximums, and its notes (every variant meets a Hostile reaction; a Cyclops takes +2 TN on
+   ranged attacks). For an Oni the GM may allow Race B with Resources A and Magic C (an adept, p.42).
 4. **Magic** (p.45): full magician (hermetic, or shamanic with a totem) or physical adept, as your Magic priority
    allows.
 5. **Attributes** (p.45): spend your Attribute Points; racial modifiers and maximums are applied for you.

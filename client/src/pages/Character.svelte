@@ -8,7 +8,7 @@
   import { get, mutate, upload } from "../lib/api.js";
   import { derive } from "../../../shared/derive.mjs";
   import { applyOp, validate, karmaOptions, undoable, surgeryPreview, booksOf, PLAY_GEAR, cardIds, cardEligible, CARD_TYPES, CATEGORIES, CATEGORY_NAMES, LETTERS, METATYPES, MAGIC_TYPES, MAGIC_NAMES, TRADITIONS, ATTRIBUTES, ATTR_NAMES, CUSTOM_SKILL_CATEGORIES, totemNames } from "../../../shared/creation.mjs";
-  import { TABLES } from "../../../shared/rules.mjs";
+  import { TABLES, racialProfile, metavariantNotes, metavariantFrom, ONI_SOURCE } from "../../../shared/rules.mjs";
   import { BUYABLE, choiceSpec, defaultChoices, project, price, essenceOf, isCybereye, smallWeapon } from "../../../shared/purchase.mjs";
   import { saleQuoteOf, streetPrice, ratedStreetIndex, FENCE_STEPS, totalWoundPenalty, woundLevel } from "../../../shared/rules.mjs";
   let { doc: initial, onDeleted } = $props();
@@ -38,6 +38,19 @@
   get("/api/catalog").then(m => { catalogBookList = m.books ?? []; bookOffers = m.offers ?? {}; }).catch(() => { /* no list: the books can't be changed, the rest works */ });
   const bookAbbr = (k) => catalogBookList.find(x => x.key === k)?.abbr ?? k;
   const sourcebooks = $derived(catalogBookList.filter(x => x.key !== "sr2"));
+  // Metavariants (docs/PLAN-M5b.md): the Companion's race entries, fetched whole (the reducer copies their data).
+  const profile = $derived(racialProfile(sys, TABLES));
+  let variants = $state([]);
+  $effect(() => {
+    if (!booksOf(body).includes("sc") || variants.length) return;
+    get("/api/catalog/entries?type=race&book=sc&limit=100").then(async (r) => {
+      const full = await Promise.all(r.entries.filter(e => e.book === "sc").map(e => get(`/api/catalog/entries/${encodeURIComponent(e.id)}`)));
+      for (const e of full) entries.set(e.id, e);
+      if (!gone) variants = full.filter(e => ["dwarf", "elf", "ork", "troll"].includes(e.system.raceKey));
+    }).catch(() => { /* no variants listed; the core metatypes still work */ });
+  });
+  const variantMods = (e) => Object.entries(e.system.attributeMods ?? {}).filter(([a, v]) => v !== (racialProfile({ race: e.system.raceKey }, TABLES).mods[a] ?? 0))
+    .map(([a, v]) => `${ATTR_NAMES[a]} ${v > 0 ? "+" : ""}${v}`).join(", ");
   const setBooksTo = (list) => { change({ op: "setBooks", books: list }); searchShop(); searchPlay(); };   // the shops list what the books offer
   let coreSkills = $state([]), pickSkill = $state(""), customCategory = $state("knowledge"), customName = $state("");
   get("/api/catalog/entries?type=skill&book=sr2&limit=100").then(r => { coreSkills = r.entries; }).catch(() => { /* the add list stays empty; the page still works */ });
@@ -564,6 +577,22 @@
         {/each}
       </div>
       <p class="muted">A metahuman needs Priority A in Race{opts.moreMetahumans ? " (C or better with More Metahumans)" : ""}. <span class="cite">SR2 p.44</span></p>
+      {#if booksOf(body).includes("sc") && sys.race !== "human" && variants.some(e => e.system.raceKey === sys.race)}
+        <fieldset class="stack"><legend>Metavariant (Shadowrun Companion)</legend>
+          <p class="muted">Variants use the base metatype's priority and maximums, with their own modifiers. Other metahumans treat them as freaks: a Hostile reaction in first social contacts. <span class="cite">Companion p.39</span></p>
+          <label class="row inline"><input type="radio" class="check" name="variant" checked={!profile.variant} disabled={finished} onchange={() => change({ op: "setMetatype", race: sys.race })}><span>None (standard {sys.race})</span></label>
+          {#each variants.filter(e => e.system.raceKey === sys.race) as e (e.id)}
+            <label class="row inline variant"><input type="radio" class="check" name="variant" checked={profile.variant === e.name} disabled={finished} onchange={() => change({ op: "setMetatype", race: sys.race, variant: e.id })}>
+              <span>{e.name} <span class="muted small">{variantMods(e) || "standard modifiers"} · Companion p.{e.system.citation?.page}</span>
+                {#each metavariantNotes({ race: e.system.raceKey, metavariant: metavariantFrom(e) }, TABLES).slice(1) as n}<span class="muted small note">{n}</span>{/each}</span></label>
+          {/each}
+        </fieldset>
+      {/if}
+      {#if booksOf(body).includes("sc") && profile.source === ONI_SOURCE}
+        <label class="row inline"><input type="checkbox" class="check" checked={!!opts.oniPriority} disabled={finished}
+          onchange={(ev) => change({ op: "setOption", key: "oniPriority", value: ev.currentTarget.checked })}>
+          <span>GM allows a magical oni Race B, with Resources A and Magic C (an adept) <span class="cite">Companion p.42</span></span></label>
+      {/if}
       {#if sys.race !== "human"}
         <fieldset class="stack"><legend>Allergy (optional)</legend>
           <p class="muted">A metahuman may take an allergy for extra points: one bonus for how common it is, one for its severity. <span class="cite">SR2 p.46, p.220</span></p>
@@ -610,8 +639,8 @@
         <thead><tr><th scope="col">Attribute</th><th scope="col">Bought</th><th scope="col">Racial</th><th scope="col">Rating</th><th scope="col">Max</th></tr></thead>
         <tbody>
           {#each ATTRIBUTES as a}
-            {@const mod = TABLES.racialModifiers[sys.race]?.[a] ?? 0}
-            {@const max = TABLES.racialMaximums[sys.race]?.[a] ?? 6}
+            {@const mod = profile.mods[a] ?? 0}
+            {@const max = profile.maxes[a] ?? 6}
             {@const rating = sys[a].base + mod}
             <tr>
               <th scope="row">{ATTR_NAMES[a]}</th>
@@ -876,6 +905,9 @@
   .box.hurt { background: var(--danger); border-color: var(--danger); }
   .surgery { list-style: none; padding: 0; display: grid; gap: 1rem; }
   .surgery li { display: grid; gap: .25rem; }
+  .variant { flex-wrap: nowrap; align-items: flex-start; }
+  .variant > span { flex: 1 1 auto; min-width: 0; }
+  .variant .note { display: block; }
   .books { border: 1px solid var(--line); padding: .75rem 1rem; margin-block: 1rem; display: grid; gap: .35rem; max-width: 40rem; }
   .books legend { font-weight: 700; padding-inline: .25rem; }
   .danger-zone { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--line); display: grid; gap: .75rem; max-width: 36rem; }

@@ -5,7 +5,7 @@
  * character at creation can hold is composed here (no in-play state, no sourcebook ware); each step names the
  * CharacterData method it matches.
  */
-import { TABLES, combatSenseDice, karmaPoolCapacity, karmaPoolAvailable, reactionBase, wornArmorTotals, heavyArmorPoolPenalty, astralCombatPool, strengthMinWeaponStats, naturalAttribute } from "./rules.mjs";
+import { TABLES, combatSenseDice, karmaPoolCapacity, karmaPoolAvailable, reactionBase, wornArmorTotals, heavyArmorPoolPenalty, astralCombatPool, strengthMinWeaponStats, naturalAttribute, racialProfile } from "./rules.mjs";
 import { essenceOf } from "./purchase.mjs";
 
 export const ATTRS = ["body", "quickness", "strength", "charisma", "intelligence", "willpower"];
@@ -14,7 +14,7 @@ const num = (v) => Number(v) || 0;
 /** @param {{ actor: object, options?: { moreMetahumans?: boolean } }} input */
 export function derive({ actor, options = {} }) {
   const sys = actor.system, items = actor.items ?? [];
-  const race = sys.race ?? "human", racial = TABLES.racialModifiers[race] ?? {};
+  const race = sys.race ?? "human", profile = racialProfile(sys, TABLES), racial = profile.mods;   // a metavariant's own (Companion p.39–44)
   const mtype = sys.magic?.type ?? "none";
   const installed = items.filter(i => i.type === "cyberware" && i.system.installed !== false);
 
@@ -34,7 +34,7 @@ export function derive({ actor, options = {} }) {
   // _calculateAttributeValues: the natural rating (base + racial, held at the racial maximum while creation is in
   // progress, as Foundry does) + mods.
   const attributes = {}, natural = {};
-  const maxes = sys.chargen?.inProgress === false ? {} : (TABLES.racialMaximums[race] ?? {});
+  const maxes = sys.chargen?.inProgress === false ? {} : profile.maxes;
   for (const a of ATTRS) {
     natural[a] = naturalAttribute(num(sys[a]?.base), num(racial[a]), 0, maxes[a] ?? null);
     attributes[a] = Math.max(0, natural[a] + mods[a]);

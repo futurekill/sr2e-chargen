@@ -96,3 +96,13 @@ bonding (p.46, p.137), refusals.
   at creation and bought at their own rating on the Nuyen step.
 - Finished character: turning a book on doesn't change any item; undoing a sale of a book item with its book off is
   refused.
+
+## Metavariants (M5b)
+- With the Companion on and a dwarf/elf/ork/troll chosen, the Metatype step lists that metatype's variants with the
+  modifiers that differ and the page; picking one changes the Attributes tab's Racial column; "None" or another
+  metatype clears it.
+- Cyclops: Strength racial +6, troll maxima; sheet "Troll (Cyclops)" + "No depth perception" note.
+- Oni: Race B is an error unless the GM option is on, Resources is A, Magic is C and the character is an adept.
+- The Companion can't be turned off while a variant is chosen.
+- Foundry (Quench sr2e.metavariant): dropping a Cyclops sets Strength racial +6 and no dermal die; a core Troll clears
+  it; a Cyclops' firearm attack card shows "no depth perception +2".
