@@ -425,10 +425,10 @@ export function validate(body) {
       if (key === "improved_ability" && !c.skill) add("magic", "todo", `${i.name}: choose the skill it improves.`, 125);
       else if (key === "improved_ability" && !i.system.improvedSkill) add("magic", "error", `${i.name}: its skill is no longer on this character.`, 125);
       if (key === "improved_senses") {   // p.125: each sense once (no package deals); nothing radio or technological
-        const list = sensesOf(c.senses), norm = list.map(x => x.toLowerCase());
+        const list = sensesOf(c.senses), norm = list.map(x => x.toLowerCase().replace(/[^a-z]/g, ""));   // "low-light" = "low light"
         if (!list.length) add("magic", "todo", `${i.name}: name the improvements (low-light vision, thermographic vision…).`, 125);
         if (new Set(norm).size < norm.length) add("magic", "error", `${i.name}: each improvement is named once.`, 125);
-        const tech = list.find(x => /radio|transmi|technolog/i.test(x));
+        const tech = list.find(x => /radio|transmi|technolog|camera|digital|electronic/i.test(x));   // shortcut: a keyword list; the GM judges the rest
         if (tech) add("magic", "error", `${i.name}: "${tech}" — nothing radio or technological can be improved by this power.`, 125);
       }
     }

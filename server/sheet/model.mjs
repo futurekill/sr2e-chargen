@@ -77,7 +77,7 @@ export function sheetModel(body) {
     spells: of("spell").map(i => [plain(i.name), `F${i.system.force}`, plain(`${cap(i.system.category ?? "")} · ${i.system.drainCode ?? ""}`, 80), cite(i.system)]),
     foci: of("focus").map(i => [plain(i.name), `F${i.system.force}`, i.system.boundSpellId ? plain(items.find(x => x._id === i.system.boundSpellId)?.name ?? "", 80) : "", cite(i.system)]),
     // The third column carries the power's choice: Improved Ability's skill, the senses named (p.125).
-    powers: of("adept_power").map(i => [plain(i.name), `L${i.system.level}`, plain(i.system.improvedSkill || String(i.system.notes ?? "").replace(/^Senses: /, ""), 80), cite(i.system)]),
+    powers: of("adept_power").map(i => [plain(i.name), `L${i.system.level}`, plain(i.system.improvedSkill || (/^Senses: /.test(i.system.notes ?? "") ? i.system.notes.slice(8) : ""), 80), cite(i.system)]),
     notes: plain(body.notes),
     // Item ids parallel to the rows above (the table card filters by them).
     rowIds: { attacks: of("weapon").map(i => i._id), skills: of("skill").map(i => i._id), cyberware: of("cyberware").map(i => i._id),
