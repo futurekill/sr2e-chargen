@@ -12,6 +12,11 @@ notes come from it.
   Perception). The rules check shows power points against the Magic Rating and reports what the book limits. Combat
   Sense adds its dice to the Combat Pool on the sheet.
 
+### Documentation
+- A user guide in `wiki/` (published to the GitHub wiki): building a character, running the image (pull, settings,
+  compose, reverse proxy, first admin, updates), databases (SQLite in depth, PostgreSQL, MySQL/MariaDB), backups and
+  restore, admin commands. README and OPERATIONS updated for the beta.
+
 ## 0.1.0-beta.1 — 2026-11-18
 
 First beta, for a table demo. Character creation covers priorities, metatype, magic, attributes, skills and
