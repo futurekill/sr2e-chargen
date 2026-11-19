@@ -9,7 +9,10 @@ import { randomUUID, randomInt } from "node:crypto";
 import { writeTx, changed } from "./db/fence.mjs";
 import { Refused } from "./auth/accounts.mjs";
 import { sha256 } from "./auth/tokens.mjs";
-import { newCharacter, applyOp, Refusal, diceFor } from "../shared/creation.mjs";
+import { newCharacter, applyOp, Refusal, diceFor, validate } from "../shared/creation.mjs";
+import { fromFoundryActor } from "../shared/foundry.mjs";
+import { derive } from "../shared/derive.mjs";
+import { sheetModel } from "./sheet/model.mjs";
 import { getSaleMode } from "./rules-settings.mjs";
 import { isStock, stockPortrait } from "./portrait/stock.mjs";
 
@@ -127,6 +130,27 @@ export function createCharacter(ctx, userId, { name }, key) {
     const doc = { id, owner_id: userId, kind: "character", name: body.name, revision: 1, body: text, bytes: Buffer.byteLength(text), created_at: now, updated_at: now, deleted_at: null };
     await trx.insertInto("documents").values(doc).execute();
     await appendRevision(trx, ctx, doc, 1, body, "created");
+    return { ...(await answer(trx, userId, id)), body };
+  });
+}
+/**
+ * A finished character from a Foundry actor file (docs/PLAN-M7.md): checked, read once by derive and validate (a
+ * throw refuses it: "can't be read"), then stored like a new character.
+ */
+export function importCharacter(ctx, userId, json, key, pinnedVersion) {
+  return idempotent(ctx, userId, key, fingerprint("POST", "/documents/characters/import", { file: sha256(JSON.stringify(json)) }), async trx => {
+    let body;
+    try { body = fromFoundryActor(json, { pinnedVersion, now: ctx.now() }); } catch (e) { throw refusal(e); }
+    let errors;   // derive, the rules check and the sheet all read it once; a throw refuses it (code review r1 #3)
+    try { derive({ actor: body.actor }); sheetModel(body); errors = validate(body).problems.filter(p => p.severity === "error"); }
+    catch { throw new Refused("This character can't be read by the app: export it again from Foundry, or build it here.", 422, "refused"); }
+    if (errors.length) throw new Refused(`It breaks the rules: ${errors[0].text}`, 422, "refused");   // code review r1 #4
+    const id = randomUUID(), now = ctx.now(), text = encode(body);
+    if (Buffer.byteLength(text) > MAX_BODY_BYTES) throw new Refused("That character is too big to store.", 413, "too-big");
+    await charge(trx, userId, { docs: 1 });
+    const doc = { id, owner_id: userId, kind: "character", name: body.name, revision: 1, body: text, bytes: Buffer.byteLength(text), created_at: now, updated_at: now, deleted_at: null };
+    await trx.insertInto("documents").values(doc).execute();
+    await appendRevision(trx, ctx, doc, 1, body, "imported from Foundry");
     return { ...(await answer(trx, userId, id)), body };
   });
 }

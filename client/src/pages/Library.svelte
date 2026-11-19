@@ -30,6 +30,19 @@
     }
     busy = false;
   }
+  /** A Foundry character file (its "Export Data"): read here, checked and stored by the server (docs/PLAN-M7.md). */
+  async function importFoundry(ev) {
+    const file = ev.currentTarget.files?.[0];
+    ev.currentTarget.value = "";
+    if (!file) return;
+    if (file.size > 2_500_000) { error = "That file is too big for a character."; return; }
+    let json;
+    try { json = JSON.parse(await file.text()); } catch { error = "That file isn't JSON: use Foundry's Export Data on a character."; return; }
+    busy = true;
+    try { const { document } = await mutate("POST", "/api/documents/characters/import", json); go(`/doc/${document.id}`); }
+    catch (err) { error = err.message; }
+    busy = false;
+  }
   async function restore(d) {
     try { await mutate("POST", `/api/documents/${d.id}/restore`, { revision: d.revision }); await load(); }
     catch (err) { await load(); error = err.message; }
@@ -50,6 +63,8 @@
   <label><span>Kind</span><select bind:value={kind}><option value="character">Character</option><option value="draft">Draft</option></select></label>
   <button disabled={busy || !name.trim()}>Start</button>
 </form>
+<p class="muted small"><label class="button quiet" aria-disabled={busy}>Import a character from Foundry…<input type="file" accept="application/json,.json" class="sr-only" disabled={busy} onchange={importFoundry}></label>
+  Use Foundry's <strong>Export Data</strong> on a finished character.</p>
 
 {#if docs === null}
   <p class="muted prompt">Loading…</p>

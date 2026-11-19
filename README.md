@@ -527,6 +527,16 @@ sourcebook modules at the releases in `content-pins.json`). A daily workflow pro
 The Foundry system is the source of truth for the rules. Its rules code is shared with this app, so a character is
 computed the same way in both places. Tests check that both give identical results. The Docker image ships fully formed, with the catalog built in from pinned content versions.
 
+**App → Foundry.** On a character's Print tab, "Foundry" downloads the character (and each vehicle bought at creation)
+as a Foundry actor file. In Foundry: create an Actor of type Character, right-click it in the sidebar, choose
+**Import Data** and pick the file. Set the portrait yourself: Foundry stores image paths, not images.
+
+**Foundry → App.** In Foundry, right-click a finished character and choose **Export Data**. In the app's library,
+choose "Import a character from Foundry…". The character arrives finished, ready for play (Karma, nuyen, condition).
+A character still in creation, from a newer system version than the app knows, or with bad numbers is refused with
+the reason. Effects, the portrait, and in-play state stay in Foundry. Foundry's Export Data leaves out each item's
+compendium source, so imported items show no source link.
+
 ## Documents
 
 | File | What it holds |
@@ -557,10 +567,10 @@ The approved order is in [docs/ROADMAP.md](docs/ROADMAP.md) (standalone first, r
 | 1 | Catalog: browse and search every item, with page references | done |
 | 2 | Create a character, core book ([docs/PLAN-M2.md](docs/PLAN-M2.md), [docs/PLAN-M2c.md](docs/PLAN-M2c.md)) | M2a–M2c done (in the beta); adept powers built, out with the next system release; then M2d |
 | 3 | Printable sheet ([docs/PLAN-sheet.md](docs/PLAN-sheet.md)) | done: Classic, Fohawk and ink-saver styles, Markdown stat block, table card, portraits |
-| 4 | Manage a character: Karma, nuyen, purchases, damage, history | |
-| 5 | Sourcebooks, alternate methods, Edges and Flaws | |
+| 4 | Manage a character: Karma, nuyen, purchases, damage, history | done (M4a–M4c) |
+| 5 | Sourcebooks, alternate methods, Edges and Flaws | done (M5a–M5h); rule-bearing ware and limbs wait |
 | 6 | Release ([docs/PLAN-release.md](docs/PLAN-release.md)) | done: backups, image scan, SBOM, signed image; first beta v0.1.0-beta.1 |
-| 7 | Foundry connector (optional) | |
+| 7 | Foundry connector (optional) ([docs/PLAN-M7.md](docs/PLAN-M7.md)) | simple form done: Foundry actor JSON both ways |
 
 Each milestone goes plan → review → build → code review → release.
 

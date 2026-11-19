@@ -6,6 +6,8 @@ notes come from it.
 ## Unreleased
 
 ### Added
+- **The Foundry connector** (docs/PLAN-M7.md): download a character, or a vehicle bought at creation, as a Foundry
+  actor file for Foundry's Import Data; import a finished character from Foundry's Export Data into the library.
 - **Sum-to-10 priorities** (Shadowrun Companion p.20): with the Companion on, the Priorities step offers the
   sum-to-10 method (A 4 … E 0, letters may repeat, at most 10 in all), stored where Foundry keeps it
   (`system.chargen.priorityMethod`).

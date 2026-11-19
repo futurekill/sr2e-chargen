@@ -112,7 +112,7 @@ test("someone else's document is a 404 on EVERY document route (admins included)
   const routes = app.routeList.filter(r => r.url.startsWith(`${D}/:id`));
   assert.ok(routes.length >= 8, "the route list is walked, not hand-written");
   for (const r of routes) {
-    const url = r.url.replace(":id", doc.id).replace(":n", "1") + (r.url.endsWith("/portrait") ? "?revision=1" : "");
+    const url = r.url.replace(":id", doc.id).replace(":n", "1").replace(":key", "v00001") + (r.url.endsWith("/portrait") ? "?revision=1" : "");
     const body = r.method === "GET" ? undefined : r.method === "PUT" ? { name: "Mine now", revision: 1 }
       : r.url.endsWith("/ops") ? { revision: 1, ops: [{ op: "setName", name: "Mine now" }] }
       : r.url.endsWith("/portrait/stock") ? { revision: 1, stock: "tiger" }

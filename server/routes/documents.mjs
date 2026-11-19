@@ -2,6 +2,7 @@
 import * as L from "../library.mjs";
 import { OPS, cardIds } from "../../shared/creation.mjs";
 import { entryOf } from "../catalog.mjs";
+import { toFoundryActor, vehicleToFoundry } from "../../shared/foundry.mjs";
 import { renderSheetPdf, processPortraitJob } from "../sheet/index.mjs";
 import { checkUpload, PortraitError, MAX_UPLOAD, TYPES } from "../portrait/check.mjs";
 import { Refused } from "../auth/accounts.mjs";
@@ -54,6 +55,10 @@ export default async function documentRoutes(app) {
   app.get("/", { schema: { querystring: { type: "object", additionalProperties: false, properties: { deleted: { enum: ["0", "1"] }, archived: { enum: ["0", "1"] }, limit: { type: "string", pattern: "^([1-9][0-9]?|100)$" }, offset: { type: "string", pattern: "^[0-9]{1,6}$" } } } } },
     async (req) => ({ documents: await L.listDocuments(req.ctx, me(req), { deleted: req.query.deleted === "1", archived: req.query.archived === "1", limit: Number(req.query.limit ?? 50), offset: Number(req.query.offset ?? 0) }) }));
   app.post("/", { ...BIG, schema: { headers: keyHeader, querystring: noQuery, body: L.DRAFT_SCHEMA } }, (req) => L.createDraft(req.ctx, me(req), req.body, key(req)));
+  // The Foundry connector (docs/PLAN-M7.md): Foundry's own actor JSON, both ways.
+  const pinned = () => app.catalog?.manifest?.pins?.find(p => p.id === "sr2e")?.version ?? null;
+  app.post("/characters/import", { ...BIG, schema: { headers: keyHeader, querystring: noQuery, body: { type: "object" } } },
+    (req) => L.importCharacter(req.ctx, me(req), req.body, key(req), pinned()));
   app.post("/characters", { schema: { headers: keyHeader, querystring: noQuery, body: characterBody } }, (req) => L.createCharacter(req.ctx, me(req), req.body, key(req)));
   app.post("/:id/ops", { schema: { params: idParams, headers: keyHeader, querystring: noQuery, body: opsBody } }, (req) => L.applyOps(req.ctx, me(req), req.params.id, req.body, key(req), (cid) => entryOf(app.catalog, cid), req.session.user.username, (app.catalog?.manifest?.books ?? []).map(x => x.key)));
   app.get("/:id", { schema: { params: idParams } }, (req) => L.getDocument(req.ctx, me(req), req.params.id));
@@ -149,6 +154,20 @@ export default async function documentRoutes(app) {
     if (document.kind !== "character") return reply.code(409).send({ error: "Only a character has a stat block.", code: "wrong-kind" });
     reply.header("content-disposition", `attachment; filename="statblock-${document.id}.md"`).type("text/markdown; charset=utf-8");
     return statBlock(sheetModel(body));
+  });
+  const fileName = (n) => String(n).replace(/[^A-Za-z0-9 _-]+/g, "").trim().replace(/\s+/g, "-").slice(0, 60) || "character";
+  app.get("/:id/foundry", { schema: { params: idParams } }, async (req, reply) => {
+    const { document, body } = await L.getDocument(req.ctx, me(req), req.params.id);
+    if (document.kind !== "character") return reply.code(404).send({ error: "Only a character exports to Foundry.", code: "not-found" });
+    reply.header("content-disposition", `attachment; filename="fvtt-Actor-${fileName(body.name)}.json"`).type("application/json");
+    return toFoundryActor(body, pinned());
+  });
+  app.get("/:id/foundry/vehicles/:key", { schema: { params: { type: "object", required: ["id", "key"], properties: { id: idParams.properties.id, key: { type: "string", pattern: "^v[0-9a-z]{5}$" } } } } }, async (req, reply) => {
+    const { document, body } = await L.getDocument(req.ctx, me(req), req.params.id);
+    const v = document.kind === "character" && Object.hasOwn(body.creation?.vehicles ?? {}, req.params.key) ? body.creation.vehicles[req.params.key] : null;
+    if (!v?.source) return reply.code(404).send({ error: "No such vehicle on this character.", code: "not-found" });
+    reply.header("content-disposition", `attachment; filename="fvtt-Actor-${fileName(v.source.name)}.json"`).type("application/json");
+    return vehicleToFoundry(v.source, pinned());
   });
   app.get("/:id/download", { schema: { params: idParams } }, async (req, reply) => {
     const { document, body } = await L.getDocument(req.ctx, me(req), req.params.id);

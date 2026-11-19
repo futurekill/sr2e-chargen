@@ -907,7 +907,9 @@
 
     <section id="step-finish" role="tabpanel" aria-labelledby="tab-finish" hidden={tab !== "finish"}>
       <h2>Finish</h2>
-      {#if finished}
+      {#if finished && body.creation.finished.imported}
+        <p>Imported from Foundry (system {body.creation.finished.imported.systemVersion}): {nuyen(sys.nuyen ?? 0)}, Good Karma {sys.karma?.current ?? 0}, Total Karma {sys.karma?.total ?? 0}. Its items are kept as Foundry had them; Karma, nuyen and condition work here. <span class="cite">SR2 p.47</span></p>
+      {:else if finished}
         <p>Finished. {nuyen(body.creation.finished.leftover)} unspent became {nuyen(Math.floor(body.creation.finished.leftover / 10))}, plus 3D6 = {body.creation.finished.roll} × 1,000¥: <strong>{nuyen(body.creation.finished.nuyen)}</strong> to start with. Karma Pool {body.creation.finished.karmaPool}. Name and notes can still change. <span class="cite">SR2 p.47</span></p>
       {:else if !check.finishable}
         <p class="muted">Finishing needs a clean rules check: no error and no to-do left.</p>
@@ -922,6 +924,16 @@
 
     <section id="step-card" role="tabpanel" aria-labelledby="tab-card" hidden={tab !== "card"}>
       <h2>Print and share</h2>
+      <h3>Foundry</h3>
+      <p class="muted small">To bring this character into Foundry: create an Actor of type Character, right-click it in the Actors directory, choose <strong>Import Data</strong> and pick the file. Set the portrait yourself. Vehicles bought here are their own actors: import each the same way.</p>
+      <div class="row">
+        <a class="button quiet" href={`/api/documents/${server.document.id}/foundry`} download>Download for Foundry</a>
+        {#each Object.keys(body.creation.vehicles ?? {}).sort() as k (k)}
+          <a class="button quiet" href={`/api/documents/${server.document.id}/foundry/vehicles/${k}`} download>{body.creation.vehicles[k].source?.name ?? "Vehicle"} for Foundry</a>
+        {/each}
+      </div>
+      {#if body.creation.finished?.imported && (sys.chargen?.vehicles ?? []).length}<p class="muted small">Its vehicles stayed in Foundry: they aren't part of this file.</p>{/if}
+      <h3>Paper</h3>
       <div class="print-options row">
         <label><span>Style</span><select bind:value={sheetStyle}><option value="classic">Classic</option><option value="fohawk">Fohawk</option><option value="fohawk-ink">Fohawk (ink-saver)</option></select></label>
         <label><span>Paper</span><select bind:value={paper}><option value="letter">US Letter</option><option value="a4">A4</option></select></label>

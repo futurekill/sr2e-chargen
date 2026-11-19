@@ -144,3 +144,13 @@ bonding (p.46, p.137), refusals.
 - With the Companion on, the Priorities step's Point-based method hides the letters and shows the allotment, the
   nuyen tier, the Force Point trade (magicians), the Edges/Flaws option and the running total with its parts; an
   overrun is an error; Foundry's creation panel shows the same Building Points row (Quench sr2e.chargen-budget).
+
+## Foundry connector (M7)
+- Print tab → Foundry: download the character. In a Foundry world with the pinned system, create a Character actor →
+  Import Data → the file. The sheet opens with no errors; items, nuyen, Essence and armor match the app.
+- A vehicle bought at creation downloads and imports the same way.
+- In Foundry, Export Data on a finished character; in the library, import it. It opens finished; the Finish tab says
+  "Imported from Foundry"; awarding Karma works. A retried import (the same request) makes one character; importing the file again on purpose makes a copy.
+- Refused with a reason: a character still in creation, a vehicle actor, a file from a newer system version, a
+  character that breaks the rules (Essence below 0), numbers the app can't use (a Karma or rating that isn't a whole number).
+- `test/fixtures/foundry-export-0.161.0.json` is a real Export Data file; replace it when the system's schema changes.
