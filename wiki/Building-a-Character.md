@@ -31,6 +31,9 @@ The links at the top of the character page jump between them.
    ratings and Force on each row.
    - Gear is bought at list price; nothing above Rating 6.
    - Cyberware takes Essence; cybereye accessories can go **In** the eyes (up to .5 Essence free, p.247).
+   - A physical adept buys its powers here too, in power points (its Magic Rating): Improved Ability names one of
+     your skills, Improved Physical Senses names its senses (each one is a level). Killing Hands levels can be held
+     together (p.126).
    - Magicians pay Force Points for spells (Force up to 6) and for bonding foci. A spell focus names its spell; a
      weapon focus names the melee weapon it is bonded to (its price follows the weapon's Reach, p.263).
 8. **Table card**: tick what goes on the one-page card for the table.
@@ -52,5 +55,5 @@ follows you to other devices, and is the sheets' default font.
 
 ## Not in this beta
 
-Adept powers, contacts, lifestyle and the finishing step (leftover nuyen, starting Karma) come next. Vehicles and the
+Contacts, lifestyle and the finishing step (leftover nuyen, starting Karma) come next. Vehicles and the
 sourcebooks follow. See the repository's CHANGELOG and `docs/ROADMAP.md`.
