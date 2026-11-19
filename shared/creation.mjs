@@ -8,7 +8,7 @@
  * A character is the Foundry system's own `character` source shapes (`actor`), so the system's functions read it
  * unchanged; the app's own record sits beside it (`creation`).
  */
-import { TABLES, BP_NUYEN_TIERS, SHAPESHIFTER_PRIORITIES, humanFormMod, shapeshifterOf, qualityAudit, qualityEffects, bonusAttributeCost, attributeEdgeViolations, qualityRule, bodyIndexTotal, overstressPenalty, racialProfile, metavariantFrom, isMetavariantItem, ONI_SOURCE, chargenBudget, damageUpdateFor, surgeryCategory, surgeryEssencePct, surgeonTN, karmaTransition, advancementOptions, saleQuoteOf, streetPrice, ratedStreetIndex, startingMoney, startingKarmaPool, adeptPowerBudget, label, skillTiersFromAllocation, validateSkillAllocation } from "./rules.mjs";
+import { TABLES, BP_NUYEN_TIERS, SHAPESHIFTER_PRIORITIES, humanFormMod, shapeshifterOf, qualityAudit, qualityEffects, bonusAttributeCost, attributeEdgeViolations, qualityRule, bodyIndexTotal, overstressPenalty, wareRule, racialProfile, metavariantFrom, isMetavariantItem, ONI_SOURCE, chargenBudget, damageUpdateFor, surgeryCategory, surgeryEssencePct, surgeonTN, karmaTransition, advancementOptions, saleQuoteOf, streetPrice, ratedStreetIndex, startingMoney, startingKarmaPool, adeptPowerBudget, label, skillTiersFromAllocation, validateSkillAllocation } from "./rules.mjs";
 import { defaultChoices, checkChoices, offerReason, RATING_UP_TO_BODY, project, price, eyeRow, essenceOf, isCybereye, powerKeyOf, sensesOf } from "./purchase.mjs";
 
 export const SCHEMA = "sr2e-chargen-character", SCHEMA_VERSION = 1;
@@ -397,6 +397,7 @@ function validateInPlay(body, add, problems) {
   const essence = Math.round((6 - items.filter(i => i.type === "cyberware" && i.system.installed !== false).reduce((t, i) => t + essenceOf(i, items), 0) - (mtype !== "none" ? bodyIndexOf(items) : 0)) * 1000) / 1000;
   const magic = mtype === "none" ? 0 : Math.max(0, Math.min(6, Math.floor(essence + 1e-9)));
   if (essence < 0) add("resources", "error", `Essence is ${essence}.`, 46);
+  wareWarnings(items, add);
   // Overstress stays a warning in play too (Shadowtech p.6; code review M5e r1 #2).
   const bodyMax = withRacial(sys, "body", items) + formMod(sys, "body"), over = overstressPenalty(bodyIndexOf(items), bodyMax);
   if (over) add("resources", "warning", `Body Index ${Math.round(bodyIndexOf(items) * 1000) / 1000} is over the Body of ${bodyMax}: overstress, +${over} to Body tests.`, 6, "st");
@@ -791,6 +792,26 @@ export function magicAllowed(letter, race, moreMetahumans) {
 export const metatypeAllowed = (letter, race, moreMetahumans) =>
   race === "shapeshifter" ? letter === "A" : race === "human" || (moreMetahumans ? ["A", "B", "C"].includes(letter) : letter === "A");
 
+/**
+ * Move-by-wire and the reflex enhancers (Cybertechnology p.38–39, p.56–57; PLAN-M5i): Foundry's own texts, read by
+ * `wareRule` as Foundry reads it (an implant with no rule key isn't counted there either).
+ */
+const REFLEX = /^(wired-reflexes|boosted-reflexes|reaction-enhancer|synaptic-accelerator|adrenal-pump|suprathyroid)(:|$)/;
+function wareWarnings(items, add) {
+  const ware = items.filter(i => (i.type === "cyberware" || i.type === "bioware") && i.system.installed !== false && !(i.type === "cyberware" && i.system.secondhandFailed))
+    .map(i => ({ i, rule: wareRule(i.flags, i._stats?.compendiumSource ?? null) ?? "" }));
+  const mbw = ware.filter(w => w.i.type === "cyberware" && /^move-by-wire:/.test(w.rule));
+  if (mbw.length > 1) add("resources", "error", "Only one move-by-wire system: Foundry counts the first.", 39, "ct");
+  if (mbw.length) for (const { i, rule } of ware) {
+    if (i === mbw[0].i || !REFLEX.test(rule)) continue;
+    const stop = rule === "adrenal-pump" || rule === "suprathyroid";
+    add("resources", "warning", stop ? `${i.name}: doesn't work with move-by-wire.`
+      : rule === "synaptic-accelerator" && (i.system.rating ?? 1) <= 1 ? `${i.name}: Level 1 combines with move-by-wire only at triple cost, implanted together.`
+      : `${i.name}: not compatible with move-by-wire; still counted, the GM's call.`, stop || rule === "synaptic-accelerator" ? 56 : 39, "ct");
+  }
+  const enh = ware.filter(w => w.i.type === "cyberware" && w.rule === "reaction-enhancer").reduce((t, w) => t + (Number(w.i.system.attributeMods?.reaction) || 0), 0);
+  if (enh > 6) add("resources", "warning", `Reaction Enhancers give +${enh}: +6 at most counts for a player character (+${enh - 6} lost).`, 38, "ct");
+}
 /** The bioware Body Index (Shadowtech p.6), unrounded as Foundry keeps it; the Awakened lose it in Essence too. */
 export const bodyIndexOf = (items) => bodyIndexTotal(items.filter(i => i.type === "bioware").map(i => ({ installed: i.system.installed !== false, bodyCost: i.system.bodyCost, grade: i.system.grade, bodySystem: i.system.bodySystem })));
 /** The value an attribute has after racial modifiers (p.45: applied after allocation). */
@@ -871,6 +892,7 @@ export function validate(body) {
   const essence = Math.round((6 - items.filter(i => i.type === "cyberware").reduce((t, i) => t + essenceOf(i, items), 0) - (mtype !== "none" ? bodyIndex : 0)) * 1000) / 1000;
   const magic = mtype === "none" ? 0 : Math.max(0, Math.min(6, Math.floor(essence + 1e-9)));
   if (essence < 0) add("resources", "error", `Essence is ${essence}: cyberware can't take it below 0.`, 46);
+  wareWarnings(items, add);
   // Cyberware grades (SSC p.98; PLAN-M5f): the book on; an accessory inside an eye takes the eye's grade.
   for (const [id, r] of Object.entries(body.creation.items)) {
     if (r.type !== "cyberware" || !r.choices?.grade || r.choices.grade === "standard") continue;

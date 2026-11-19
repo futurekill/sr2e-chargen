@@ -6,6 +6,13 @@ notes come from it.
 ## Unreleased
 
 ### Added
+- **Implants with their own rules** (docs/PLAN-M5i.md): with Cybertechnology on, the shop offers wired and boosted
+  reflexes, Reaction Enhancers (+6 at most counts, p.38), move-by-wire, the reflex trigger, muscle replacement, dermal
+  plating and sheathing, body plating, bone lacing (it raises the Unarmed Strike), datajacks, commlinks, cyberears,
+  cranial bombs and the eye laser designator. Their values match Foundry's (a parity fixture). The rules check warns
+  when move-by-wire meets a reflex enhancer. The sheet shows the Rigger 2 Control Pool beside the core one when they
+  differ (Rigger 2 is a Foundry world setting). Still waiting: cyberlimbs, Cybertechnology cybereyes, the encephalon
+  and rigger modules, the tactical computer, skillwires, the cranial deck.
 - **The Foundry connector** (docs/PLAN-M7.md): download a character, or a vehicle bought at creation, as a Foundry
   actor file for Foundry's Import Data; import a finished character from Foundry's Export Data into the library.
 - **Sum-to-10 priorities** (Shadowrun Companion p.20): with the Companion on, the Priorities step offers the
@@ -103,6 +110,11 @@ notes come from it.
 - A user guide in the README: building a character, running the image (pull, settings,
   compose, reverse proxy, first admin, updates), databases (SQLite in depth, PostgreSQL, MySQL/MariaDB), backups and
   restore, admin commands. README and OPERATIONS updated for the beta.
+
+### Fixed
+- **The fist survives the trip to Foundry**: Foundry's Import Data replaces a new actor's items, so a character
+  from the app arrived without the Unarmed Strike every Foundry character has. The export now carries one, and the
+  sheet shows it.
 
 ## 0.1.0-beta.1 — 2026-11-18
 

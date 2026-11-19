@@ -3,7 +3,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync, readdirSync } from "node:fs";
-import { derive } from "../shared/derive.mjs";
+import { derive, UNARMED_STRIKE } from "../shared/derive.mjs";
 
 const fixture = JSON.parse(readFileSync(new URL("fixtures/parity/runners-v0.161.0.json", import.meta.url), "utf8"));
 const dir = new URL("../content/sr2e-foundryvtt/packs-src/runners/", import.meta.url);
@@ -25,7 +25,7 @@ for (const want of fixture.actors) {
     assert.deepEqual(got.armor, want.armor, where("armor"));
     assert.deepEqual([got.monitors.physical, got.monitors.stun], [want.monitors.physical, want.monitors.stun], where("monitors"));
     assert.equal(got.karmaPool, want.karmaPool, where("karma pool"));
-    assert.deepEqual(got.weapons.map(w => [w.name, w.damageCode]), want.weapons, where("weapons"));
+    assert.deepEqual(got.weapons.filter(w => w.id !== UNARMED_STRIKE._id).map(w => [w.name, w.damageCode]), want.weapons, where("weapons"));   // the virtual fist: Foundry adds the real one at creation
   });
 }
 

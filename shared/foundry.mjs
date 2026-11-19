@@ -3,6 +3,7 @@
  * JSON — what the sidebar's "Import Data" reads and "Export Data" writes. No Foundry code is needed on either side.
  */
 import { newCharacter, Refusal, MAX_ITEMS } from "./creation.mjs";
+import { UNARMED_STRIKE } from "./derive.mjs";
 
 const FOUNDRY_ID = /^[A-Za-z0-9]{16}$/;
 /** "0.161.0" → [0, 161, 0]; anything else → null. */
@@ -16,9 +17,11 @@ const statsFor = (systemVersion) => ({ systemId: "sr2e", systemVersion,
 /** The character as a Foundry actor JSON. `pinnedVersion`: the system version the app's rules are. */
 export function toFoundryActor(body, pinnedVersion) {
   const a = body.actor, version = body.creation?.finished?.imported?.systemVersion ?? pinnedVersion;
+  // Foundry's Import Data REPLACES the new actor's items, its innate Unarmed Strike with them: carry one (M5i r1 #1).
+  const fist = (a.items ?? []).some(i => i.type === "weapon" && i.name === "Unarmed Strike") || (a.items ?? []).some(i => i._id === UNARMED_STRIKE._id) ? [] : [UNARMED_STRIKE];
   return {
     name: a.name, type: "character", system: structuredClone(a.system),
-    items: (a.items ?? []).map(i => ({ _id: i._id, name: i.name, type: i.type, img: i.img ?? null, system: structuredClone(i.system),
+    items: [...(a.items ?? []), ...fist].map(i => ({ _id: i._id, name: i.name, type: i.type, img: i.img ?? null, system: structuredClone(i.system),
       flags: structuredClone(i.flags ?? {}), effects: structuredClone(i.effects ?? []), _stats: { compendiumSource: i._stats?.compendiumSource ?? null } })),
     effects: [], flags: structuredClone(a.flags ?? {}),
     prototypeToken: { name: a.name, actorLink: true, lockRotation: true },

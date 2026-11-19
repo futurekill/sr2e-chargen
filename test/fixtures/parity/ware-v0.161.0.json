@@ -1,0 +1,1282 @@
+{
+ "$comment": "Foundry PREPARED values for four test characters holding rule-bearing Cybertechnology ware (docs/PLAN-M5i.md, Proof), exported 2026-11-19 from the local test world on release/0.161.0 (pinned locally as v0.160.99). Sources are the app catalog entries (the Cybertechnology module was off in that world; the wareRule reads flags and sources). Essence rounded to the thousandth (float noise). Foundry adds an Unarmed Strike to every new character; weapons list only the source items. (d) was prepared under vehicleRuleset rigger2. Regenerate when the pin moves.",
+ "version": "0.161.0",
+ "actors": [
+  {
+   "ruleset": "core",
+   "name": "Parity ware a",
+   "attributes": {
+    "body": 6,
+    "quickness": 6,
+    "strength": 5,
+    "charisma": 3,
+    "intelligence": 5,
+    "willpower": 4
+   },
+   "reaction": 13,
+   "initiativeDice": 2,
+   "essence": 0.1,
+   "pools": {
+    "combat": 7,
+    "magic": 0,
+    "astral": 0,
+    "control": 0,
+    "hacking": 0
+   },
+   "armor": {
+    "ballistic": 0,
+    "impact": 1
+   },
+   "monitors": {
+    "physical": 10,
+    "stun": 10
+   },
+   "weapons": [],
+   "mbw": {
+    "level": 0,
+    "enhancerExcess": 1,
+    "conflicts": []
+   },
+   "source": {
+    "name": "Parity ware a",
+    "type": "character",
+    "system": {
+     "race": "human",
+     "magic": {
+      "type": "none"
+     },
+     "body": {
+      "base": 4
+     },
+     "quickness": {
+      "base": 5
+     },
+     "strength": {
+      "base": 4
+     },
+     "charisma": {
+      "base": 3
+     },
+     "intelligence": {
+      "base": 5
+     },
+     "willpower": {
+      "base": 4
+     },
+     "chargen": {
+      "inProgress": false
+     }
+    },
+    "items": [
+     {
+      "_id": "fx00000000000001",
+      "name": "Reaction Enhancer +6",
+      "type": "cyberware",
+      "img": "modules/sr2e-cybertechnology/assets/item_icons/cyberware/reaction-enhancer-6.webp",
+      "system": {
+       "location": "bodyware",
+       "grade": "standard",
+       "essenceCost": 1.8,
+       "rating": 1,
+       "cost": 360000,
+       "availability": "6/7 days",
+       "streetIndex": "2",
+       "legality": "6P-CC",
+       "installed": true,
+       "attributeMods": {
+        "body": 0,
+        "quickness": 0,
+        "strength": 0,
+        "charisma": 0,
+        "intelligence": 0,
+        "willpower": 0,
+        "reaction": 6,
+        "initiativeDice": 0
+       },
+       "ratingStats": [],
+       "capacity": 0,
+       "modules": [],
+       "citation": {
+        "book": "ct",
+        "page": "38"
+       }
+      },
+      "flags": {
+       "sr2e": {
+        "source": {
+         "book": "Cybertechnology",
+         "code": "FASA7119",
+         "page": 99
+        },
+        "rule": "reaction-enhancer"
+       }
+      },
+      "effects": [],
+      "_stats": {
+       "compendiumSource": "Compendium.sr2e-cybertechnology.ct-bodyware.Item.76be59d59c773191"
+      }
+     },
+     {
+      "_id": "fx00000000000002",
+      "name": "Reaction Enhancer +1",
+      "type": "cyberware",
+      "img": "modules/sr2e-cybertechnology/assets/item_icons/cyberware/reaction-enhancer-1.webp",
+      "system": {
+       "location": "bodyware",
+       "grade": "standard",
+       "essenceCost": 0.3,
+       "rating": 1,
+       "cost": 60000,
+       "availability": "6/7 days",
+       "streetIndex": "2",
+       "legality": "6P-CC",
+       "installed": true,
+       "attributeMods": {
+        "body": 0,
+        "quickness": 0,
+        "strength": 0,
+        "charisma": 0,
+        "intelligence": 0,
+        "willpower": 0,
+        "reaction": 1,
+        "initiativeDice": 0
+       },
+       "ratingStats": [],
+       "capacity": 0,
+       "modules": [],
+       "citation": {
+        "book": "ct",
+        "page": "38"
+       }
+      },
+      "flags": {
+       "sr2e": {
+        "source": {
+         "book": "Cybertechnology",
+         "code": "FASA7119",
+         "page": 99
+        },
+        "rule": "reaction-enhancer"
+       }
+      },
+      "effects": [],
+      "_stats": {
+       "compendiumSource": "Compendium.sr2e-cybertechnology.ct-bodyware.Item.7938a1eefbb4eac5"
+      }
+     },
+     {
+      "_id": "fx00000000000003",
+      "name": "Wired Reflexes (Level 1)",
+      "type": "cyberware",
+      "img": "modules/sr2e-cybertechnology/assets/item_icons/cyberware/wired-reflexes-level-1.webp",
+      "system": {
+       "location": "bodyware",
+       "grade": "standard",
+       "essenceCost": 2,
+       "rating": 1,
+       "cost": 55000,
+       "availability": "4/8 days",
+       "streetIndex": "1",
+       "legality": "5P-CB",
+       "installed": true,
+       "attributeMods": {
+        "body": 0,
+        "quickness": 0,
+        "strength": 0,
+        "charisma": 0,
+        "intelligence": 0,
+        "willpower": 0,
+        "reaction": 2,
+        "initiativeDice": 1
+       },
+       "ratingStats": [],
+       "capacity": 0,
+       "modules": [],
+       "citation": {
+        "book": "ct",
+        "page": "99"
+       }
+      },
+      "flags": {
+       "sr2e": {
+        "source": {
+         "book": "Cybertechnology",
+         "code": "FASA7119",
+         "page": 99
+        },
+        "rule": "wired-reflexes:1"
+       }
+      },
+      "effects": [],
+      "_stats": {
+       "compendiumSource": "Compendium.sr2e-cybertechnology.ct-bodyware.Item.b4388b270f126750"
+      }
+     },
+     {
+      "_id": "fx00000000000004",
+      "name": "Muscle Replacement (Rating 1)",
+      "type": "cyberware",
+      "img": "modules/sr2e-cybertechnology/assets/item_icons/cyberware/muscle-replacement-rating-1.webp",
+      "system": {
+       "location": "bodyware",
+       "grade": "standard",
+       "essenceCost": 1,
+       "rating": 1,
+       "cost": 20000,
+       "availability": "4/4 days",
+       "streetIndex": "1",
+       "legality": "5P-CB",
+       "installed": true,
+       "attributeMods": {
+        "body": 0,
+        "quickness": 1,
+        "strength": 1,
+        "charisma": 0,
+        "intelligence": 0,
+        "willpower": 0,
+        "reaction": 0,
+        "initiativeDice": 0
+       },
+       "ratingStats": [],
+       "capacity": 0,
+       "modules": [],
+       "noReactionBonus": true,
+       "citation": {
+        "book": "ct",
+        "page": "97"
+       }
+      },
+      "flags": {
+       "sr2e": {
+        "source": {
+         "book": "Cybertechnology",
+         "code": "FASA7119",
+         "page": 97
+        }
+       }
+      },
+      "effects": [],
+      "_stats": {
+       "compendiumSource": "Compendium.sr2e-cybertechnology.ct-bodyware.Item.eaf2a954ca2065bc"
+      }
+     },
+     {
+      "_id": "fx00000000000005",
+      "name": "Dermal Sheath (Level 1)",
+      "type": "cyberware",
+      "img": "modules/sr2e-cybertechnology/assets/item_icons/cyberware/dermal-sheath-level-1.webp",
+      "system": {
+       "location": "bodyware",
+       "grade": "standard",
+       "essenceCost": 0.7,
+       "rating": 1,
+       "cost": 24000,
+       "availability": "6/14 days",
+       "streetIndex": "1.5",
+       "legality": "6P-CA",
+       "installed": true,
+       "attributeMods": {
+        "body": 2,
+        "quickness": 0,
+        "strength": 0,
+        "charisma": 0,
+        "intelligence": 0,
+        "willpower": 0,
+        "reaction": 0,
+        "initiativeDice": 0
+       },
+       "ratingStats": [],
+       "capacity": 0,
+       "modules": [],
+       "armorImpact": 1,
+       "citation": {
+        "book": "ct",
+        "page": "28"
+       }
+      },
+      "flags": {
+       "sr2e": {
+        "source": {
+         "book": "Cybertechnology",
+         "code": "FASA7119",
+         "page": 99
+        },
+        "rule": "dermal-sheath"
+       }
+      },
+      "effects": [],
+      "_stats": {
+       "compendiumSource": "Compendium.sr2e-cybertechnology.ct-bodyware.Item.629349eb62019172"
+      }
+     },
+     {
+      "_id": "fx00000000000006",
+      "name": "Datajack (Improved)",
+      "type": "cyberware",
+      "img": "modules/sr2e-cybertechnology/assets/item_icons/cyberware/datajack-improved.webp",
+      "system": {
+       "location": "headware",
+       "grade": "standard",
+       "essenceCost": 0.1,
+       "rating": 1,
+       "cost": 500,
+       "availability": "Always",
+       "streetIndex": "0.9",
+       "legality": "Legal",
+       "installed": true,
+       "attributeMods": {
+        "body": 0,
+        "quickness": 0,
+        "strength": 0,
+        "charisma": 0,
+        "intelligence": 0,
+        "willpower": 0,
+        "reaction": 0,
+        "initiativeDice": 0
+       },
+       "ratingStats": [
+        {
+         "rating": 1,
+         "essenceCost": 0.1,
+         "cost": 500,
+         "availability": "Always",
+         "streetIndex": 0.9
+        },
+        {
+         "rating": 2,
+         "essenceCost": 0.15,
+         "cost": 1000,
+         "availability": "Always",
+         "streetIndex": 0.9
+        },
+        {
+         "rating": 3,
+         "essenceCost": 0.2,
+         "cost": 2000,
+         "availability": "Always",
+         "streetIndex": 0.9
+        },
+        {
+         "rating": 4,
+         "essenceCost": 0.25,
+         "cost": 4000,
+         "availability": "Always",
+         "streetIndex": 0.9
+        }
+       ],
+       "capacity": 0,
+       "modules": [],
+       "citation": {
+        "book": "ct",
+        "page": "94"
+       }
+      },
+      "flags": {
+       "sr2e": {
+        "source": {
+         "book": "Cybertechnology",
+         "code": "FASA7119",
+         "page": 94
+        },
+        "rule": "improved-datajack"
+       }
+      },
+      "effects": [],
+      "_stats": {
+       "compendiumSource": "Compendium.sr2e-cybertechnology.ct-matrixware.Item.2298c394b579eb3f"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "ruleset": "core",
+   "name": "Parity ware b",
+   "attributes": {
+    "body": 5,
+    "quickness": 6,
+    "strength": 4,
+    "charisma": 3,
+    "intelligence": 5,
+    "willpower": 4
+   },
+   "reaction": 9,
+   "initiativeDice": 2,
+   "essence": 2.4,
+   "pools": {
+    "combat": 7,
+    "magic": 0,
+    "astral": 0,
+    "control": 0,
+    "hacking": 0
+   },
+   "armor": {
+    "ballistic": 2,
+    "impact": 2
+   },
+   "monitors": {
+    "physical": 10,
+    "stun": 10
+   },
+   "weapons": [
+    [
+     "Unarmed Strike",
+     "(Str+1)M"
+    ]
+   ],
+   "mbw": {
+    "level": 1,
+    "enhancerExcess": 0,
+    "conflicts": [
+     "Reaction Enhancer +2: not compatible with move-by-wire (p.39); still counted, the GM's call"
+    ]
+   },
+   "source": {
+    "name": "Parity ware b",
+    "type": "character",
+    "system": {
+     "race": "human",
+     "magic": {
+      "type": "none"
+     },
+     "body": {
+      "base": 4
+     },
+     "quickness": {
+      "base": 5
+     },
+     "strength": {
+      "base": 4
+     },
+     "charisma": {
+      "base": 3
+     },
+     "intelligence": {
+      "base": 5
+     },
+     "willpower": {
+      "base": 4
+     },
+     "chargen": {
+      "inProgress": false
+     }
+    },
+    "items": [
+     {
+      "_id": "fx00000000000007",
+      "name": "Move-by-Wire System (Level 1)",
+      "type": "cyberware",
+      "img": "modules/sr2e-cybertechnology/assets/item_icons/cyberware/move-by-wire-system-level-1.webp",
+      "system": {
+       "location": "bodyware",
+       "grade": "standard",
+       "essenceCost": 2.5,
+       "rating": 1,
+       "cost": 250000,
+       "availability": "8/10 days",
+       "streetIndex": "2.5",
+       "legality": "3P-CC",
+       "installed": true,
+       "attributeMods": {
+        "body": 0,
+        "quickness": 1,
+        "strength": 0,
+        "charisma": 0,
+        "intelligence": 0,
+        "willpower": 0,
+        "reaction": 2,
+        "initiativeDice": 1
+       },
+       "ratingStats": [],
+       "capacity": 0,
+       "modules": [],
+       "citation": {
+        "book": "ct",
+        "page": "39"
+       }
+      },
+      "flags": {
+       "sr2e": {
+        "source": {
+         "book": "Cybertechnology",
+         "code": "FASA7119",
+         "page": 98
+        },
+        "rule": "move-by-wire:1",
+        "provisional": {
+         "rule": "move-by-wire",
+         "fields": {
+          "attributeMods.quickness": 1,
+          "attributeMods.reaction": 2,
+          "attributeMods.initiativeDice": 1
+         }
+        }
+       }
+      },
+      "effects": [],
+      "_stats": {
+       "compendiumSource": "Compendium.sr2e-cybertechnology.ct-bodyware.Item.09f502715bf8112c"
+      }
+     },
+     {
+      "_id": "fx00000000000008",
+      "name": "Reaction Enhancer +2",
+      "type": "cyberware",
+      "img": "modules/sr2e-cybertechnology/assets/item_icons/cyberware/reaction-enhancer-2.webp",
+      "system": {
+       "location": "bodyware",
+       "grade": "standard",
+       "essenceCost": 0.6,
+       "rating": 1,
+       "cost": 120000,
+       "availability": "6/7 days",
+       "streetIndex": "2",
+       "legality": "6P-CC",
+       "installed": true,
+       "attributeMods": {
+        "body": 0,
+        "quickness": 0,
+        "strength": 0,
+        "charisma": 0,
+        "intelligence": 0,
+        "willpower": 0,
+        "reaction": 2,
+        "initiativeDice": 0
+       },
+       "ratingStats": [],
+       "capacity": 0,
+       "modules": [],
+       "citation": {
+        "book": "ct",
+        "page": "38"
+       }
+      },
+      "flags": {
+       "sr2e": {
+        "source": {
+         "book": "Cybertechnology",
+         "code": "FASA7119",
+         "page": 99
+        },
+        "rule": "reaction-enhancer"
+       }
+      },
+      "effects": [],
+      "_stats": {
+       "compendiumSource": "Compendium.sr2e-cybertechnology.ct-bodyware.Item.6e7a191801f69c4b"
+      }
+     },
+     {
+      "_id": "fx00000000000009",
+      "name": "Bone Lacing (Plastic)",
+      "type": "cyberware",
+      "img": "modules/sr2e-cybertechnology/assets/item_icons/cyberware/bone-lacing-plastic.webp",
+      "system": {
+       "location": "bodyware",
+       "grade": "standard",
+       "essenceCost": 0.5,
+       "rating": 1,
+       "cost": 7500,
+       "availability": "5/14 days",
+       "streetIndex": "1.5",
+       "legality": "6P-CA",
+       "installed": true,
+       "attributeMods": {
+        "body": 1,
+        "quickness": 0,
+        "strength": 0,
+        "charisma": 0,
+        "intelligence": 0,
+        "willpower": 0,
+        "reaction": 0,
+        "initiativeDice": 0
+       },
+       "ratingStats": [],
+       "capacity": 0,
+       "modules": [],
+       "unarmedPowerBonus": 1,
+       "citation": {
+        "book": "ct",
+        "page": "96"
+       }
+      },
+      "flags": {
+       "sr2e": {
+        "source": {
+         "book": "Cybertechnology",
+         "code": "FASA7119",
+         "page": 96
+        }
+       }
+      },
+      "effects": [],
+      "_stats": {
+       "compendiumSource": "Compendium.sr2e-cybertechnology.ct-bodyware.Item.37c5825987f7e3be"
+      }
+     },
+     {
+      "_id": "fx00000000000010",
+      "name": "Body Plating (Hard Armor, Level 2)",
+      "type": "cyberware",
+      "img": "modules/sr2e-cybertechnology/assets/item_icons/cyberware/body-plating-hard-armor-level-2.webp",
+      "system": {
+       "location": "bodyware",
+       "grade": "standard",
+       "essenceCost": 0,
+       "rating": 1,
+       "cost": 50000,
+       "availability": "14/3 weeks",
+       "streetIndex": "2",
+       "legality": "5P-CA",
+       "installed": true,
+       "attributeMods": {
+        "body": 0,
+        "quickness": 0,
+        "strength": 0,
+        "charisma": 0,
+        "intelligence": 0,
+        "willpower": 0,
+        "reaction": 0,
+        "initiativeDice": 0
+       },
+       "ratingStats": [],
+       "capacity": 0,
+       "modules": [],
+       "armorBallistic": 2,
+       "armorImpact": 2,
+       "citation": {
+        "book": "ct",
+        "page": "37"
+       }
+      },
+      "flags": {
+       "sr2e": {
+        "source": {
+         "book": "Cybertechnology",
+         "code": "FASA7119",
+         "page": 96
+        },
+        "rule": "body-plating-hardened"
+       }
+      },
+      "effects": [],
+      "_stats": {
+       "compendiumSource": "Compendium.sr2e-cybertechnology.ct-bodyware.Item.d3a4d80e62a58b25"
+      }
+     },
+     {
+      "_id": "fx00000000000011",
+      "name": "Unarmed Strike",
+      "type": "weapon",
+      "img": "systems/sr2e/assets/item_icons/weapons/unarmed-strike.webp",
+      "system": {
+       "weaponType": "melee",
+       "skill": "unarmed_combat",
+       "damageCode": "(Str)M",
+       "damageType": "stun",
+       "concealability": 0,
+       "reach": 0,
+       "cost": 0,
+       "citation": {
+        "book": "sr2",
+        "page": "255"
+       }
+      },
+      "flags": {},
+      "effects": [],
+      "_stats": {
+       "compendiumSource": "Compendium.sr2e.weapons.Item.f5a6b7c8d9e00b53"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "ruleset": "core",
+   "name": "Parity ware c",
+   "attributes": {
+    "body": 4,
+    "quickness": 5,
+    "strength": 4,
+    "charisma": 3,
+    "intelligence": 5,
+    "willpower": 4
+   },
+   "reaction": 9,
+   "initiativeDice": 2,
+   "essence": 1.45,
+   "pools": {
+    "combat": 7,
+    "magic": 0,
+    "astral": 0,
+    "control": 0,
+    "hacking": 0
+   },
+   "armor": {
+    "ballistic": 0,
+    "impact": 0
+   },
+   "monitors": {
+    "physical": 10,
+    "stun": 10
+   },
+   "weapons": [],
+   "mbw": {
+    "level": 0,
+    "enhancerExcess": 0,
+    "conflicts": []
+   },
+   "source": {
+    "name": "Parity ware c",
+    "type": "character",
+    "system": {
+     "race": "human",
+     "magic": {
+      "type": "none"
+     },
+     "body": {
+      "base": 4
+     },
+     "quickness": {
+      "base": 5
+     },
+     "strength": {
+      "base": 4
+     },
+     "charisma": {
+      "base": 3
+     },
+     "intelligence": {
+      "base": 5
+     },
+     "willpower": {
+      "base": 4
+     },
+     "chargen": {
+      "inProgress": false
+     }
+    },
+    "items": [
+     {
+      "_id": "fx00000000000012",
+      "name": "Boosted Reflexes 2",
+      "type": "cyberware",
+      "img": "modules/sr2e-cybertechnology/assets/item_icons/cyberware/boosted-reflexes-2.webp",
+      "system": {
+       "location": "bodyware",
+       "grade": "standard",
+       "essenceCost": 1.25,
+       "rating": 1,
+       "cost": 40000,
+       "availability": "3/24 hrs",
+       "streetIndex": "1.25",
+       "legality": "6P-CB",
+       "installed": true,
+       "attributeMods": {
+        "body": 0,
+        "quickness": 0,
+        "strength": 0,
+        "charisma": 0,
+        "intelligence": 0,
+        "willpower": 0,
+        "reaction": 2,
+        "initiativeDice": 0
+       },
+       "ratingStats": [],
+       "capacity": 0,
+       "modules": [],
+       "citation": {
+        "book": "ct",
+        "page": "99"
+       }
+      },
+      "flags": {
+       "sr2e": {
+        "source": {
+         "book": "Cybertechnology",
+         "code": "FASA7119",
+         "page": 99
+        }
+       }
+      },
+      "effects": [],
+      "_stats": {
+       "compendiumSource": "Compendium.sr2e-cybertechnology.ct-bodyware.Item.ff4e73ebf199c7c8"
+      }
+     },
+     {
+      "_id": "fx00000000000013",
+      "name": "Wired Reflexes (Level 1)",
+      "type": "cyberware",
+      "img": "modules/sr2e-cybertechnology/assets/item_icons/cyberware/wired-reflexes-level-1.webp",
+      "system": {
+       "location": "bodyware",
+       "grade": "standard",
+       "essenceCost": 2,
+       "rating": 1,
+       "cost": 55000,
+       "availability": "4/8 days",
+       "streetIndex": "1",
+       "legality": "5P-CB",
+       "installed": true,
+       "attributeMods": {
+        "body": 0,
+        "quickness": 0,
+        "strength": 0,
+        "charisma": 0,
+        "intelligence": 0,
+        "willpower": 0,
+        "reaction": 2,
+        "initiativeDice": 1
+       },
+       "ratingStats": [],
+       "capacity": 0,
+       "modules": [],
+       "citation": {
+        "book": "ct",
+        "page": "99"
+       }
+      },
+      "flags": {
+       "sr2e": {
+        "source": {
+         "book": "Cybertechnology",
+         "code": "FASA7119",
+         "page": 99
+        },
+        "rule": "wired-reflexes:1"
+       }
+      },
+      "effects": [],
+      "_stats": {
+       "compendiumSource": "Compendium.sr2e-cybertechnology.ct-bodyware.Item.b4388b270f126750"
+      }
+     },
+     {
+      "_id": "fx00000000000014",
+      "name": "Reflex Trigger",
+      "type": "cyberware",
+      "img": "modules/sr2e-cybertechnology/assets/item_icons/cyberware/reflex-trigger.webp",
+      "system": {
+       "location": "bodyware",
+       "grade": "standard",
+       "essenceCost": 0.2,
+       "rating": 1,
+       "cost": 13000,
+       "availability": "As wired reflexes",
+       "streetIndex": "As wired reflexes",
+       "legality": "4P-CB",
+       "installed": true,
+       "attributeMods": {
+        "body": 0,
+        "quickness": 0,
+        "strength": 0,
+        "charisma": 0,
+        "intelligence": 0,
+        "willpower": 0,
+        "reaction": 0,
+        "initiativeDice": 0
+       },
+       "ratingStats": [],
+       "capacity": 0,
+       "modules": [],
+       "citation": {
+        "book": "ct",
+        "page": "38"
+       }
+      },
+      "flags": {
+       "sr2e": {
+        "source": {
+         "book": "Cybertechnology",
+         "code": "FASA7119",
+         "page": 99
+        },
+        "rule": "reflex-trigger"
+       }
+      },
+      "effects": [],
+      "_stats": {
+       "compendiumSource": "Compendium.sr2e-cybertechnology.ct-bodyware.Item.fc742150bd197ebd"
+      }
+     },
+     {
+      "_id": "fx00000000000015",
+      "name": "Commlink IV",
+      "type": "cyberware",
+      "img": "modules/sr2e-cybertechnology/assets/item_icons/cyberware/commlink-iv.webp",
+      "system": {
+       "location": "headware",
+       "grade": "standard",
+       "essenceCost": 0.3,
+       "rating": 1,
+       "cost": 18000,
+       "availability": "3/48 hrs",
+       "streetIndex": "1.25",
+       "legality": "Legal",
+       "installed": true,
+       "attributeMods": {
+        "body": 0,
+        "quickness": 0,
+        "strength": 0,
+        "charisma": 0,
+        "intelligence": 0,
+        "willpower": 0,
+        "reaction": 0,
+        "initiativeDice": 0
+       },
+       "ratingStats": [],
+       "capacity": 0,
+       "modules": [],
+       "citation": {
+        "book": "ct",
+        "page": "95"
+       }
+      },
+      "flags": {
+       "sr2e": {
+        "source": {
+         "book": "Cybertechnology",
+         "code": "FASA7119",
+         "page": 95
+        }
+       }
+      },
+      "effects": [],
+      "_stats": {
+       "compendiumSource": "Compendium.sr2e-cybertechnology.ct-headware.Item.0e2a4d29461c41a8"
+      }
+     },
+     {
+      "_id": "fx00000000000016",
+      "name": "Cranial Bomb: Kink Bomb",
+      "type": "cyberware",
+      "img": "modules/sr2e-cybertechnology/assets/item_icons/cyberware/cranial-bomb-kink-bomb.webp",
+      "system": {
+       "location": "headware",
+       "grade": "standard",
+       "essenceCost": 0,
+       "rating": 1,
+       "cost": 28000,
+       "availability": "12/14 days",
+       "streetIndex": "1.5",
+       "legality": "2-CC",
+       "installed": true,
+       "attributeMods": {
+        "body": 0,
+        "quickness": 0,
+        "strength": 0,
+        "charisma": 0,
+        "intelligence": 0,
+        "willpower": 0,
+        "reaction": 0,
+        "initiativeDice": 0
+       },
+       "ratingStats": [],
+       "capacity": 0,
+       "modules": [],
+       "citation": {
+        "book": "ct",
+        "page": "27"
+       }
+      },
+      "flags": {
+       "sr2e": {
+        "source": {
+         "book": "Cybertechnology",
+         "code": "FASA7119",
+         "page": 94
+        },
+        "rule": "cranial-bomb"
+       }
+      },
+      "effects": [],
+      "_stats": {
+       "compendiumSource": "Compendium.sr2e-cybertechnology.ct-headware.Item.ba448fd5c58b85ac"
+      }
+     },
+     {
+      "_id": "fx00000000000017",
+      "name": "Cyberear Replacement",
+      "type": "cyberware",
+      "img": "modules/sr2e-cybertechnology/assets/item_icons/cyberware/cyberear-replacement.webp",
+      "system": {
+       "location": "headware",
+       "grade": "standard",
+       "essenceCost": 0.3,
+       "rating": 1,
+       "cost": 4000,
+       "availability": "2/24 hrs",
+       "streetIndex": "0.75",
+       "legality": "Legal",
+       "installed": true,
+       "attributeMods": {
+        "body": 0,
+        "quickness": 0,
+        "strength": 0,
+        "charisma": 0,
+        "intelligence": 0,
+        "willpower": 0,
+        "reaction": 0,
+        "initiativeDice": 0
+       },
+       "ratingStats": [],
+       "capacity": 0,
+       "modules": [],
+       "citation": {
+        "book": "ct",
+        "page": "95"
+       }
+      },
+      "flags": {
+       "sr2e": {
+        "source": {
+         "book": "Cybertechnology",
+         "code": "FASA7119",
+         "page": 95
+        },
+        "rule": "cyberear"
+       }
+      },
+      "effects": [],
+      "_stats": {
+       "compendiumSource": "Compendium.sr2e-cybertechnology.ct-headware.Item.c57d42ead6f96e31"
+      }
+     },
+     {
+      "_id": "fx00000000000018",
+      "name": "Eye Laser Designator",
+      "type": "cyberware",
+      "img": "modules/sr2e-cybertechnology/assets/item_icons/cyberware/eye-laser-designator.webp",
+      "system": {
+       "location": "headware",
+       "grade": "standard",
+       "essenceCost": 0.5,
+       "rating": 1,
+       "cost": 12000,
+       "availability": "12/1 month",
+       "streetIndex": "3",
+       "legality": "5P-CC",
+       "installed": true,
+       "attributeMods": {
+        "body": 0,
+        "quickness": 0,
+        "strength": 0,
+        "charisma": 0,
+        "intelligence": 0,
+        "willpower": 0,
+        "reaction": 0,
+        "initiativeDice": 0
+       },
+       "ratingStats": [],
+       "capacity": 0,
+       "modules": [],
+       "citation": {
+        "book": "ct",
+        "page": "23"
+       }
+      },
+      "flags": {
+       "sr2e": {
+        "source": {
+         "book": "Cybertechnology",
+         "code": "FASA7119",
+         "page": 96
+        },
+        "rule": "designator-laser"
+       }
+      },
+      "effects": [],
+      "_stats": {
+       "compendiumSource": "Compendium.sr2e-cybertechnology.ct-headware.Item.b4873d563d15db53"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "ruleset": "rigger2",
+   "name": "Parity ware d",
+   "attributes": {
+    "body": 4,
+    "quickness": 6,
+    "strength": 4,
+    "charisma": 3,
+    "intelligence": 5,
+    "willpower": 4
+   },
+   "reaction": 7,
+   "initiativeDice": 2,
+   "essence": 1.5,
+   "pools": {
+    "combat": 7,
+    "magic": 0,
+    "astral": 0,
+    "control": 6,
+    "hacking": 0
+   },
+   "armor": {
+    "ballistic": 0,
+    "impact": 0
+   },
+   "monitors": {
+    "physical": 10,
+    "stun": 10
+   },
+   "weapons": [],
+   "mbw": {
+    "level": 1,
+    "enhancerExcess": 0,
+    "conflicts": []
+   },
+   "source": {
+    "name": "Parity ware d",
+    "type": "character",
+    "system": {
+     "race": "human",
+     "magic": {
+      "type": "none"
+     },
+     "body": {
+      "base": 4
+     },
+     "quickness": {
+      "base": 5
+     },
+     "strength": {
+      "base": 4
+     },
+     "charisma": {
+      "base": 3
+     },
+     "intelligence": {
+      "base": 5
+     },
+     "willpower": {
+      "base": 4
+     },
+     "chargen": {
+      "inProgress": false
+     }
+    },
+    "items": [
+     {
+      "_id": "fx00000000000019",
+      "name": "Move-by-Wire System (Level 1)",
+      "type": "cyberware",
+      "img": "modules/sr2e-cybertechnology/assets/item_icons/cyberware/move-by-wire-system-level-1.webp",
+      "system": {
+       "location": "bodyware",
+       "grade": "standard",
+       "essenceCost": 2.5,
+       "rating": 1,
+       "cost": 250000,
+       "availability": "8/10 days",
+       "streetIndex": "2.5",
+       "legality": "3P-CC",
+       "installed": true,
+       "attributeMods": {
+        "body": 0,
+        "quickness": 1,
+        "strength": 0,
+        "charisma": 0,
+        "intelligence": 0,
+        "willpower": 0,
+        "reaction": 2,
+        "initiativeDice": 1
+       },
+       "ratingStats": [],
+       "capacity": 0,
+       "modules": [],
+       "citation": {
+        "book": "ct",
+        "page": "39"
+       }
+      },
+      "flags": {
+       "sr2e": {
+        "source": {
+         "book": "Cybertechnology",
+         "code": "FASA7119",
+         "page": 98
+        },
+        "rule": "move-by-wire:1",
+        "provisional": {
+         "rule": "move-by-wire",
+         "fields": {
+          "attributeMods.quickness": 1,
+          "attributeMods.reaction": 2,
+          "attributeMods.initiativeDice": 1
+         }
+        }
+       }
+      },
+      "effects": [],
+      "_stats": {
+       "compendiumSource": "Compendium.sr2e-cybertechnology.ct-bodyware.Item.09f502715bf8112c"
+      }
+     },
+     {
+      "_id": "fx00000000000020",
+      "name": "Vehicle Control Rig",
+      "type": "cyberware",
+      "img": "systems/sr2e/assets/item_icons/cyberware/vehicle-control-rig.webp",
+      "system": {
+       "location": "bodyware",
+       "grade": "standard",
+       "essenceCost": 2,
+       "rating": 1,
+       "cost": 12000,
+       "availability": "6/48 hrs",
+       "legality": "Restricted",
+       "installed": true,
+       "attributeMods": {
+        "body": 0,
+        "quickness": 0,
+        "strength": 0,
+        "charisma": 0,
+        "intelligence": 0,
+        "willpower": 0,
+        "reaction": 0,
+        "initiativeDice": 0
+       },
+       "ratingStats": [
+        {
+         "rating": 1,
+         "essenceCost": 2,
+         "cost": 12000,
+         "availability": "6/48 hrs",
+         "streetIndex": ""
+        },
+        {
+         "rating": 2,
+         "essenceCost": 3,
+         "cost": 60000,
+         "availability": "8/48 hrs",
+         "streetIndex": ""
+        },
+        {
+         "rating": 3,
+         "essenceCost": 5,
+         "cost": 300000,
+         "availability": "8/48 hrs",
+         "streetIndex": ""
+        }
+       ],
+       "isVcr": true,
+       "citation": {
+        "book": "sr2",
+        "page": "261"
+       }
+      },
+      "flags": {},
+      "effects": [],
+      "_stats": {
+       "compendiumSource": "Compendium.sr2e.cyberware.Item.1c6jtaztn4kz6186"
+      }
+     }
+    ]
+   }
+  }
+ ]
+}

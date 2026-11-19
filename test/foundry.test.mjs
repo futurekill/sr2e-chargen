@@ -24,11 +24,13 @@ function finished() {
 test("export: Foundry's actor shape, the pinned version, items with their ids and sources, no img; the round trip keeps system and items", () => {
   const b = finished(), f = toFoundryActor(b, V);
   assert.deepEqual([f.type, f._stats.systemId, f._stats.systemVersion, f.img, f.prototypeToken.actorLink], ["character", "sr2e", V, undefined, true]);
-  assert.deepEqual(f.items.map(i => i._id), b.actor.items.map(i => i._id));
-  assert.ok(f.items.every(i => i._stats.compendiumSource));
+  // Import Data replaces the new actor's items, its innate fist with them: the export carries one (M5i r1 #1).
+  assert.deepEqual(f.items.map(i => i._id), [...b.actor.items.map(i => i._id), "unarmedStrike000"]);
+  assert.ok(f.items.slice(0, -1).every(i => i._stats.compendiumSource));
   const back = fromFoundryActor(JSON.parse(JSON.stringify(f)), { pinnedVersion: V, now: 9 });
   assert.deepEqual(back.actor.system, b.actor.system);
-  assert.deepEqual(back.actor.items.map(i => [i._id, i.name, i.type]), b.actor.items.map(i => [i._id, i.name, i.type]));
+  assert.deepEqual(back.actor.items.map(i => [i._id, i.name, i.type]), [...b.actor.items.map(i => [i._id, i.name, i.type]), ["unarmedStrike000", "Unarmed Strike", "weapon"]]);
+  assert.equal(toFoundryActor(back, V).items.filter(i => i.name === "Unarmed Strike").length, 1, "one fist, not two");
   assert.deepEqual(back.creation.finished, { at: 9, imported: { from: "foundry", systemVersion: V } });
   assert.equal(toFoundryActor(back, "0.170.0")._stats.systemVersion, V, "an imported character keeps its own version stamp");
 });

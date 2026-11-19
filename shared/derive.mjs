@@ -5,9 +5,14 @@
  * character at creation can hold is composed here (no in-play state, no sourcebook ware); each step names the
  * CharacterData method it matches.
  */
-import { TABLES, combatSenseDice, karmaPoolCapacity, karmaPoolAvailable, reactionBase, wornArmorTotals, heavyArmorPoolPenalty, astralCombatPool, strengthMinWeaponStats, naturalAttribute, racialProfile, shapeshifterOf, formModifiers, qualityEffects, bodyIndexTotal } from "./rules.mjs";
+import { TABLES, combatSenseDice, karmaPoolCapacity, karmaPoolAvailable, reactionBase, wornArmorTotals, heavyArmorPoolPenalty, astralCombatPool, strengthMinWeaponStats, naturalAttribute, racialProfile, shapeshifterOf, formModifiers, qualityEffects, bodyIndexTotal, wareRule, rigBonuses, unarmedDamageCode, secondhandDead } from "./rules.mjs";
 import { essenceOf } from "./purchase.mjs";
 
+/** Foundry's UNARMED_STRIKE_DATA (module/migrations.mjs): every character's fist, (Str)M Stun (p.255, p.100–101). */
+export const UNARMED_STRIKE = Object.freeze({ _id: "unarmedStrike000", name: "Unarmed Strike", type: "weapon", img: "icons/skills/melee/unarmed-punch-fist.webp",
+  system: Object.freeze({ weaponType: "melee", skill: "unarmed_combat", damageCode: "(Str)M", damageType: "stun", concealability: 0, reach: 0, cost: 0,
+    notes: "SR2E Melee Weapons table (p.255), p.100–101: unarmed attacks do (Str)M Stun, resolved as opposed melee with the Unarmed Combat skill." }),
+  flags: Object.freeze({}), effects: Object.freeze([]) });
 export const ATTRS = ["body", "quickness", "strength", "charisma", "intelligence", "willpower"];
 const num = (v) => Number(v) || 0;
 
@@ -17,15 +22,24 @@ export function derive({ actor, options = {} }) {
   const race = sys.race ?? "human", profile = racialProfile(sys, TABLES), racial = profile.mods;   // a metavariant's own (Companion p.39–44)
   const mtype = sys.magic?.type ?? "none";
   const installed = items.filter(i => i.type === "cyberware" && i.system.installed !== false);
+  // A failed second-hand part (SSC p.100) still costs Essence; nothing else of it works (Foundry's secondhandDead).
+  const working = installed.filter(i => !secondhandDead(i));
 
   // _collectItemModifiers: installed cyberware mods (absolute), physical adept powers' mods × level.
   const mods = Object.fromEntries([...ATTRS, "reaction", "initiativeDice"].map(k => [k, 0]));
-  let exemptQuickness = 0, vcr = 0;
-  for (const i of installed) {
+  let exemptQuickness = 0, vcr = 0, enhancer = 0, mbwLevel = 0, lacing = 0;
+  for (const i of working) {
     for (const [k, v] of Object.entries(i.system.attributeMods ?? {})) if (k in mods) mods[k] += num(v);
     if (i.system.noReactionBonus || /muscle (replacement|augmentation)/i.test(i.name)) exemptQuickness += num(i.system.attributeMods?.quickness);
     if (i.system.isVcr) vcr = Math.max(vcr, num(i.system.rating) || 1);
+    const rule = wareRule(i.flags, i._stats?.compendiumSource ?? null) ?? "";
+    if (rule === "reaction-enhancer") enhancer += num(i.system.attributeMods?.reaction);
+    if (/^move-by-wire:/.test(rule) && !mbwLevel) mbwLevel = Number(rule.split(":")[1]) || 0;   // Foundry counts the first
+    lacing = Math.max(lacing, num(i.system.unarmedPowerBonus));
   }
+  // Reaction Enhancers: +6 at most for player characters (Cybertechnology p.38), as _collectItemModifiers.
+  const enhancerExcess = Math.max(0, enhancer - 6);
+  mods.reaction -= enhancerExcess;
   // Adept powers are kept apart too: they work only in human form (Companion p.36), so a shapeshifter's animal form
   // leaves them out (code review M5c r1 #1).
   const adept = Object.fromEntries(Object.keys(mods).map(k => [k, 0]));
@@ -90,22 +104,29 @@ export function derive({ actor, options = {} }) {
       : 0,
     astral: mtype !== "none" ? astralCombatPool({ intelligence: attributes.intelligence, willpower: attributes.willpower, charisma: attributes.charisma }) : 0,
     control: vcr > 0 ? Math.floor((attributes.quickness + attributes.intelligence) / 2) + 2 * vcr : 0,   // core rules (not Rigger 2)
+    // Rigger 2 (p.16–18) is Foundry's WORLD setting, which the app can't know: both are given (PLAN-M5i Draft 3).
+    controlRigger2: rigBonuses({ vcr, mbw: mbwLevel, reaction: reactionBase(natural.quickness, attributes.intelligence, 0) }).controlPool,
     hacking: mpcp > 0 ? skill("computer") + reaction : 0
   };
 
   // _calculateArmor: worn (highest + layered) plus implant armor.
   const wornT = wornArmorTotals(worn);
-  const armor = { ballistic: wornT.ballistic + installed.reduce((t, i) => t + num(i.system.armorBallistic), 0),
-    impact: wornT.impact + installed.reduce((t, i) => t + num(i.system.armorImpact), 0) };
+  const armor = { ballistic: wornT.ballistic + working.reduce((t, i) => t + num(i.system.armorBallistic), 0),
+    impact: wornT.impact + working.reduce((t, i) => t + num(i.system.armorImpact), 0) };
 
   // Attacks: the weapon's damage as Foundry prepares it (bows by Strength Minimum, p.96).
   // Cyber weapons (installed isWeapon cyberware) are weapons too, as Foundry treats them (PLAN-M5f Draft 2).
-  const weapons = items.filter(i => i.type === "weapon" || (i.type === "cyberware" && i.system.isWeapon && i.system.installed !== false)).map(i => ({ id: i._id, name: i.name,
-    damageCode: strengthMinWeaponStats(i.system)?.damageCode ?? i.system.damageCode ?? "", skill: i.system.skill ?? "",
+  // Every Foundry character has an innate Unarmed Strike (sr2e.mjs preCreate, UNARMED_STRIKE_DATA); the app's export
+  // carries one when the character has none (shared/foundry.mjs), so the sheet shows it too (code review M5i r1 #1).
+  const withFist = items.some(i => i.type === "weapon" && i.name === "Unarmed Strike") ? items : [...items, UNARMED_STRIKE];
+  const weapons = withFist.filter(i => i.type === "weapon" || (i.type === "cyberware" && i.system.isWeapon && i.system.installed !== false && !secondhandDead(i))).map(i => ({ id: i._id, name: i.name,
+    // Bone lacing (Shadowtech p.42) raises the Unarmed Strike from its authored code, as _applyUnarmedPower.
+    damageCode: i.type === "weapon" && i.name === "Unarmed Strike" ? unarmedDamageCode(i.system.damageCode, lacing)
+      : strengthMinWeaponStats(i.system)?.damageCode ?? i.system.damageCode ?? "", skill: i.system.skill ?? "",
     concealability: i.system.concealability ?? null, reach: i.system.reach ?? 0 }));
 
   return {
-    attributes, natural, reaction, initiativeDice, essence, magic, pools, armor, weapons, vcr, mpcp, forms,
+    attributes, natural, reaction, initiativeDice, essence, magic, pools, armor, weapons, vcr, mpcp, forms, enhancerExcess, mbwLevel,
     bodyIndex: { value: Math.round(bodyIndex * 1000) / 1000, max: natural.body, raw: bodyIndex },
     monitors: { physical: 10, stun: 10, overflow: natural.body + edges.willToLive },   // p.112; overflow against NATURAL Body
     // The Karma Pool (p.191): the starting pool + one-tenth of Total Karma, less what is burned (PLAN-M4a Draft 2).

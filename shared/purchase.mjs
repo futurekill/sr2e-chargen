@@ -123,6 +123,13 @@ const BIOWARE_WAITS = new Set([ST("6fac01c3ca92526c"), ST("9f7e371475559ce1")]);
 /** Rated at most the unaugmented Body (their entries; PLAN-M5e Draft 2): Toxin Extractor, Pathogenic Defense, Mnemonic Enhancer. */
 /** Cyberware Foundry derives skills from (Skillwires, Cybertechnology): waits (PLAN-M5f Draft 2). */
 const CYBER_WAITS = new Set(["Compendium.sr2e-cybertechnology.ct-bodyware.Item.92554f491ab51021", "Compendium.sr2e-cybertechnology.ct-bodyware.Item.b888f9b91a131c29"]);
+/**
+ * Ware rules whose creation values `derive` computes as Foundry does (docs/PLAN-M5i.md): an ALLOW list, so a new rule
+ * key waits until it is checked. Play-time effects run in Foundry on the exported character (Draft 2).
+ */
+export const WARE_RULES_OFFERED = new Set(["wired-reflexes", "boosted-reflexes", "reaction-enhancer", "move-by-wire", "reflex-trigger",
+  "muscle-replacement", "dermal-plating", "dermal-sheath", "body-plating", "body-plating-hardened",
+  "datajack", "improved-datajack", "comm-headware", "cyberear", "cranial-bomb", "designator-laser"]);
 export const RATING_UP_TO_BODY = new Set([ST("40958403d94eeef2"), ST("64b5f0dc8dc701c3"), ST("f3dc18a732f084d2")]);
 export const bookOf = (entry) => entry.book ?? entry.listBook ?? null;
 export function offerReason(entry, books = [], { inPlay = false } = {}) {
@@ -142,12 +149,13 @@ export function offerReason(entry, books = [], { inPlay = false } = {}) {
       return "This bioware has its own rules the app doesn't compute yet.";
     return refusalFor(entry);
   }
-  if (entry.type === "cyberware" && book !== "sr2") {   // book cyberware (PLAN-M5f): plain implants only
+  if (entry.type === "cyberware" && book !== "sr2") {   // book cyberware (PLAN-M5f, M5i): plain implants and the allowed rules
     if (!books.includes(book)) return "That sourcebook isn't turned on for this character.";
-    const s = entry.system ?? {}, src = entry._stats?.compendiumSource ?? null;
-    if (wareRule(entry.flags, src) || limbRole(s, entry.flags ?? {}, src) || s.cranialDeck || entry.effects?.length || s.capacity > 0
+    const s = entry.system ?? {}, src = entry._stats?.compendiumSource ?? null, rule = wareRule(entry.flags, src);
+    if (rule === "ims" || rule === "auto-medication") return "It comes with a cybermantic operation (Cybertechnology p.80), not bought.";
+    if ((rule && !WARE_RULES_OFFERED.has(rule.split(":")[0])) || limbRole(s, entry.flags ?? {}, src) || s.cranialDeck || entry.effects?.length || s.capacity > 0
       // Skillwires of any kind: Foundry knows them by name and grants slotted skills from them (code review M5f r1 #1).
-      || s.unarmedPowerBonus || s.isTacticalComputer || s.skillwirePlus || s.accessPorts || CYBER_WAITS.has(src) || /skillwire/i.test(entry.name ?? ""))
+      || s.isTacticalComputer || s.skillwirePlus || s.accessPorts || CYBER_WAITS.has(src) || /skillwire/i.test(entry.name ?? ""))
       return "This cyberware has its own rules the app doesn't compute yet.";
     return refusalFor(entry);
   }

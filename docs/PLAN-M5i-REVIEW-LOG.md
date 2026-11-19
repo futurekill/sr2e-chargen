@@ -1,0 +1,27 @@
+# Plan review log: M5i
+
+## Round 1 — Codex (gpt-6-sol, high)
+**Findings**
+
+1. **Move-by-wire does more than add modifiers.** Foundry prepares complication dice and TN, changes Reaction, Initiative, and Control Pool when rigging under Rigger 2, and adds Athletics and Stealth dice during tests. The proposed `derive` steps and fixture omit those paths ([plan](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/docs/PLAN-M5i.md:15), [Foundry preparation](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-foundryvtt/module/data/actor-data.mjs:476), [app derive](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/shared/derive.mjs:85)). **Fix:** Model and test these effects, or keep `move-by-wire:*` refused.
+
+2. **Hard body plating is flattened into ordinary armor.** Its catalog text explicitly grants *hardened* armor, while the proposed parity values compare only Ballistic and Impact ratings; equal ratings cannot prove the book effect ([item](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/content/sr2e-cybertechnology/packs-src/ct-bodyware/Body_Plating_Hard_Armor_Level_2_d3a4d80e62a58b25.json), [plan](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/docs/PLAN-M5i.md:17)). **Fix:** Keep `body-plating-hardened` refused until hardened protection is represented and tested.
+
+3. **Several “no derived effect” entries have live rules.** Foundry grants improved-datajack Perception dice while rigging and uses `designator-laser` for indirect fire; IMS and automatic medication belong to cybermancy operations ([plan](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/docs/PLAN-M5i.md:19), [datajack](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-foundryvtt/module/documents/actor.mjs:510), [designator](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-foundryvtt/module/vehicle-indirect.mjs:5), [cybermancy](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-foundryvtt/module/cybermancy.mjs:21)). **Fix:** Refuse these four keys until the relevant play rules and installation constraints are in scope.
+
+4. **The offered list misses existing rule bearing items outside its key check.** The purchase gate currently admits cyberware with `isVcr` when it has no `wareRule`; Foundry gives a VCR separate rigging and pool behavior. Street Samurai Catalog Boosted Reflexes also lack a mapped rule key, so the proposed key based conflict warning will miss them ([gate](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/shared/purchase.mjs:148), [Foundry VCR path](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-foundryvtt/module/data/actor-data.mjs:1195), [rule sources](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-foundryvtt/module/rules/ware-rules.mjs:24)). **Fix:** Audit every offered cyberware entry by source and behavior, then gate or model these cases explicitly.
+
+5. **Bone lacing’s attack proof is incomplete.** Foundry prepares both the raised Unarmed Strike damage code and a lacing marker that enables the book’s reduced Power physical attack option; the plan tests only the code ([plan](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/docs/PLAN-M5i.md:30), [Foundry preparation](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-foundryvtt/module/data/actor-data.mjs:805)). **Fix:** Include and test the physical attack option, or leave bone lacing refused.
+
+6. **The proposed fixtures cannot establish creation parity.** Builds (a) and (b) exceed 6 Essence before all listed implants are added, so creation validation rejects them; automatic medication has zero purchase price and is rejected by the fixed price gate. Fixture (c) also places a Reflex Trigger without the wired reflexes it must accompany ([fixtures](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/docs/PLAN-M5i.md:43), [validator](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/shared/creation.mjs:868), [gate](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/shared/purchase.mjs:104)). **Fix:** Use legal, actually offerable builds and add per-rule cases that compare every claimed prepared field and relevant interaction.
+
+VERDICT: REVISE
+## Round 2 — Codex (gpt-6-sol, high)
+**Finding (round 1 #1 and #6):** Draft 2 still misses a creation time value. A legal character can install Move-by-Wire 1 (2.5 Essence) and a Level 1 Vehicle Control Rig (2 Essence). With Rigger 2 enabled, Foundry reduces the prepared Control Pool for move-by-wire; the app’s [derive.mjs](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/shared/derive.mjs:92) uses the core formula and does not. Foundry applies the reduction in [actor-data.mjs](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-foundryvtt/module/data/actor-data.mjs:1639). None of Draft 2’s fixtures pairs move-by-wire with a VCR, so its parity proof cannot catch this. Model and test that combination, or keep it outside the offered combinations.
+
+VERDICT: REVISE
+## Round 3 — Codex (gpt-6-sol, high)
+**Finding:** Draft 3 computes the Rigger 2 Control Pool, but the sheet shows it only when the character has the Rigger 2 book turned on ([PLAN-M5i.md](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/docs/PLAN-M5i.md:92)). Foundry chooses the rule through an independent world setting. A character with a VCR in a Rigger 2 world can therefore see only the wrong core pool. Show both values whenever they differ, or add an explicit ruleset choice; the proposed fixture checks the calculation but would not catch the display gap.
+
+VERDICT: REVISE
+Responses: Draft 2, Draft 3 and the round-3 line in docs/PLAN-M5i.md.

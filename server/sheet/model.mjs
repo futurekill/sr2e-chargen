@@ -29,6 +29,8 @@ export function cardModel(body, chosen) {
 export function sheetModel(body) {
   const actor = body.actor, sys = actor.system, items = actor.items ?? [];
   const d = derive({ actor, options: body.creation?.options ?? {} });
+  // Rigger 2 is Foundry's world setting: both Control Pools when they differ (PLAN-M5i Draft 3, r3 #1).
+  const control = d.pools.controlRigger2 !== d.pools.control && d.pools.control > 0 ? `${d.pools.control} (Rigger 2 rules: ${d.pools.controlRigger2})` : String(d.pools.control);
   const cm = actor.system.conditionMonitor;
   // A metavariant (Companion p.39–44): "Troll (Cyclops)", its rules as a header line.
   const variant = racialProfile(sys, TABLES).variant, raceName = cap(sys.race ?? "human") + (variant ? ` (${plain(variant)})` : "");
@@ -70,12 +72,12 @@ export function sheetModel(body) {
     // The big attribute row and the stat strip of the Fohawk style (the same values as `attributes`/`pools`).
     attrRow: Object.keys(ATTR_NAMES).map(a => ({ abbr: ATTR_NAMES[a].slice(0, 3).toUpperCase(), value: String(d.attributes[a]), natural: d.attributes[a] !== d.natural[a] ? String(d.natural[a]) : "" })),
     stats: [["Reaction", String(d.reaction)], ["Initiative", `${d.reaction} + ${d.initiativeDice}D6`], ["Combat pool", String(d.pools.combat)],
-      ...[["Magic pool", d.pools.magic], ["Astral pool", d.pools.astral], ["Hacking pool", d.pools.hacking], ["Control pool", d.pools.control]].filter(([, v]) => v > 0).map(([k, v]) => [k, String(v)]),
+      ...[["Magic pool", d.pools.magic], ["Astral pool", d.pools.astral], ["Hacking pool", d.pools.hacking], ["Control pool", d.pools.control]].filter(([, v]) => v > 0).map(([k, v]) => [k, k === "Control pool" ? control : String(v)]),
       ["Karma pool", String(d.karmaPool)], ...(d.totalKarma > 0 ? [["Good Karma", String(d.goodKarma)], ["Total Karma", String(d.totalKarma)]] : []), ["Essence", num(d.essence)], ...(magic.type !== "none" ? [["Magic", String(d.magic)]] : []), ["Armor", `${d.armor.ballistic} / ${d.armor.impact}`]],
     priorities: sys.chargen?.priorityMethod === "points" ? [] : Object.keys(CATEGORY_NAMES).map(c => [{ race: "RACE", magic: "MAGIC", attributes: "ATTR", skills: "SKILLS", resources: "RES" }[c], pr[c] || "–"]),
     subtitle: [raceName, magicLine].join(" · "),
     pools: [["Combat", d.pools.combat], ["Magic", d.pools.magic], ["Astral", d.pools.astral], ["Hacking", d.pools.hacking], ["Control", d.pools.control]]
-      .filter(([k, v]) => v > 0 || k === "Combat").map(([k, v]) => [k, String(v)]),
+      .filter(([k, v]) => v > 0 || k === "Combat").map(([k, v]) => [k, k === "Control" ? control : String(v)]),
     armor: `${d.armor.ballistic} / ${d.armor.impact}`,
     monitors: { physical: d.monitors.physical, stun: d.monitors.stun, overflow: d.monitors.overflow,
       // The wounds carried (PLAN-M4c): boxes filled, from Foundry's stored monitor (none before finishing).

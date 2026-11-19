@@ -154,3 +154,12 @@ bonding (p.46, p.137), refusals.
 - Refused with a reason: a character still in creation, a vehicle actor, a file from a newer system version, a
   character that breaks the rules (Essence below 0), numbers the app can't use (a Karma or rating that isn't a whole number).
 - `test/fixtures/foundry-export-0.161.0.json` is a real Export Data file; replace it when the system's schema changes.
+
+## Implants with their own rules (M5i)
+- With Cybertechnology on, buy Wired Reflexes 2 and a Reaction Enhancer +6 and +1: Reaction counts +6 from the
+  enhancers; the rules check warns "+1 lost".
+- Buy Move-by-Wire 1 with Wired Reflexes: a warning "not compatible with move-by-wire". A second move-by-wire is an error.
+- Bone lacing with an Unarmed Strike: the sheet's attack shows (Str+N).
+- A VCR with move-by-wire or muscle replacement: the sheet shows "Control Pool X (Rigger 2 rules: Y)".
+- Invoked Memory Stimulator and Automatic-Medication are refused ("comes with a cybermantic operation").
+- `test/fixtures/parity/ware-v0.161.0.json` is Foundry's prepared values; regenerate it when the pin moves.

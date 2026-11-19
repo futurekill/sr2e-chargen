@@ -568,7 +568,7 @@ The approved order is in [docs/ROADMAP.md](docs/ROADMAP.md) (standalone first, r
 | 2 | Create a character, core book ([docs/PLAN-M2.md](docs/PLAN-M2.md), [docs/PLAN-M2c.md](docs/PLAN-M2c.md)) | M2a–M2c done (in the beta); adept powers built, out with the next system release; then M2d |
 | 3 | Printable sheet ([docs/PLAN-sheet.md](docs/PLAN-sheet.md)) | done: Classic, Fohawk and ink-saver styles, Markdown stat block, table card, portraits |
 | 4 | Manage a character: Karma, nuyen, purchases, damage, history | done (M4a–M4c) |
-| 5 | Sourcebooks, alternate methods, Edges and Flaws | done (M5a–M5h); rule-bearing ware and limbs wait |
+| 5 | Sourcebooks, alternate methods, Edges and Flaws | done (M5a–M5i); cyberlimbs wait |
 | 6 | Release ([docs/PLAN-release.md](docs/PLAN-release.md)) | done: backups, image scan, SBOM, signed image; first beta v0.1.0-beta.1 |
 | 7 | Foundry connector (optional) ([docs/PLAN-M7.md](docs/PLAN-M7.md)) | simple form done: Foundry actor JSON both ways |
 
