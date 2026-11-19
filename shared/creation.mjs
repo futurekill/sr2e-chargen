@@ -188,9 +188,11 @@ export function applyOp(body, op, lookup = () => null) {
       const why = refusalFor(e);
       if (why) throw new Refusal(why);
       const rec = recordOf(e);
-      // A power is bought once (Improved Ability once per skill, chosen after; p.124–126).
+      // A power is bought once: Improved Ability once per skill (chosen after), Killing Hands once per level — an adept
+      // may hold (Str)L and (Str)D (p.126).
+      const once = (r) => (powerKeyOf(r) === "killing_hands" ? r.catalogId : powerKeyOf(r));
       if (rec.type === "adept_power" && powerKeyOf(rec) !== "improved_ability"
-        && Object.values(b.creation.items).some(r => r.type === "adept_power" && powerKeyOf(r) === powerKeyOf(rec)))
+        && Object.values(b.creation.items).some(r => r.type === "adept_power" && once(r) === once(rec)))
         throw new Refusal(`${rec.name} is already bought: raise its level instead.`, 125);
       addRecord(b, { ...rec, choices: defaultChoices(rec) });
       break;
@@ -422,7 +424,13 @@ export function validate(body) {
       if (mtype !== "physical_adept") add("magic", "error", `${i.name}: only a physical adept has powers.`, 124);
       if (key === "improved_ability" && !c.skill) add("magic", "todo", `${i.name}: choose the skill it improves.`, 125);
       else if (key === "improved_ability" && !i.system.improvedSkill) add("magic", "error", `${i.name}: its skill is no longer on this character.`, 125);
-      if (key === "improved_senses" && !sensesOf(c.senses).length) add("magic", "todo", `${i.name}: name the improvements (low-light vision, thermographic vision…).`, 126);
+      if (key === "improved_senses") {   // p.125: each sense once (no package deals); nothing radio or technological
+        const list = sensesOf(c.senses), norm = list.map(x => x.toLowerCase());
+        if (!list.length) add("magic", "todo", `${i.name}: name the improvements (low-light vision, thermographic vision…).`, 125);
+        if (new Set(norm).size < norm.length) add("magic", "error", `${i.name}: each improvement is named once.`, 125);
+        const tech = list.find(x => /radio|transmi|technolog/i.test(x));
+        if (tech) add("magic", "error", `${i.name}: "${tech}" — nothing radio or technological can be improved by this power.`, 125);
+      }
     }
     if (["gear", "cyberware", "weapon", "armor"].includes(i.type) && Number(i.system.rating) > 6) add("resources", "error", `${i.name} is Rating ${i.system.rating}: no starting gear above 6.`, 44);
     if (i.type === "gear" && i.system.category === "skillsoft" && !c.skill) add("resources", "todo", `${i.name}: name the skill on the chip.`, 243);

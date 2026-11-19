@@ -64,3 +64,16 @@ test("powers on a non-adept are errors; Combat Sense adds Combat Pool dice (p.12
   assert.equal(derive({ actor: b.actor }).pools.combat, pool + 1);
   assert.match(texts(applyOp(b, { op: "setMagic", type: "none" }, lookup)), /error: Combat Sense: only a physical adept has powers/);
 });
+
+test("code review r1: Killing Hands L and D together (p.126); senses once each, nothing radio (p.125); the sheet prints the choice", async () => {
+  let b = adept("human", buy("Killing Hands (L)", "Killing Hands (D)", "Improved Physical Senses", "Improved Ability"));
+  assert.throws(() => run(b, buy("Killing Hands (L)")), /already bought/);
+  b = set(b, "Improved Physical Senses", { senses: "Low-light vision, low-light vision, radio reception" });
+  assert.match(texts(b), /error: Improved Physical Senses: each improvement is named once/);
+  assert.match(texts(b), /error: Improved Physical Senses: "radio reception" — nothing radio or technological/);
+  b = run(b, [{ op: "addSkill", catalogId: core("Firearms", "skill") }]);
+  b = set(b, "Improved Ability", { skill: idOf(b, "Firearms") });
+  const { sheetModel } = await import("../server/sheet/model.mjs");
+  const rows = sheetModel(b).powers.map(r => r.slice(0, 3));
+  assert.deepEqual(rows.filter(r => r[0] !== "Killing Hands (L)" && r[0] !== "Killing Hands (D)").sort(), [["Improved Ability", "L1", "Firearms"], ["Improved Physical Senses", "L3", "Low-light vision, low-light vision, radio reception"]]);
+});
