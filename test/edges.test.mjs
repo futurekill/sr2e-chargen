@@ -83,3 +83,17 @@ test("Cyberpirates and Rigger 2 Edges and Flaws, from their own pages: Connected
   assert.deepEqual(concept(b), []);
   assert.throws(() => run(b, [{ op: "setItem", itemId: rec(b, "Connected"), choices: { ...b.creation.items[rec(b, "Connected")].choices, points: 4 } }]), /points is one of 3, 5/);
 });
+
+test("sum-to-10 (Companion p.20): letters repeat without swapping; the levels add up to at most 10; not for a shapeshifter", () => {
+  assert.throws(() => run(newCharacter("No book"), [{ op: "setMethod", method: "sumto10" }]), /turn it on/);
+  let b = run(newCharacter("Sum"), [{ op: "setBooks", books: ["sc"] }, { op: "setMethod", method: "sumto10" },
+    ...[["race", "C"], ["magic", "C"], ["attributes", "C"], ["skills", "C"], ["resources", "C"]].map(([category, letter]) => ({ op: "setPriority", category, letter }))]);
+  assert.deepEqual(Object.values(b.actor.system.chargen.priorities), ["C", "C", "C", "C", "C"]);
+  assert.ok(!validate(b).problems.some(p => p.step === "priorities" && p.severity === "error"), "2 × 5 = 10");
+  b = run(b, [{ op: "setPriority", category: "race", letter: "A" }]);
+  assert.match(validate(b).problems.filter(p => p.step === "priorities").map(p => p.text).join(), /add up to 12/);
+  assert.throws(() => run(b, [{ op: "setBooks", books: [] }]), /comes from sc/);
+  b = run(b, [{ op: "setMethod", method: "standard" }]);
+  assert.match(validate(b).problems.filter(p => p.step === "priorities").map(p => p.text).join(), /used twice/);
+  assert.throws(() => run(b, [{ op: "setMethod", method: "points" }]), /Standard or sum-to-10/);
+});

@@ -65,6 +65,7 @@ export const OPS = Object.freeze({
   // Sourcebooks (docs/PLAN-M5a.md): what may be bought; metadata, allowed after finishing.
   setBooks: { books: "books" },
   setPriority: { category: "string", letter: "string" },
+  setMethod: { method: "string" },   // Companion p.20: "standard" or "sumto10" (Foundry's system.chargen.priorityMethod)
   setMetatype: { race: "string", variant: "string" },   // variant: a catalog race id, or "" (Companion p.39–44)
   setMagic: { type: "string" },
   setTradition: { tradition: "string" },
@@ -154,10 +155,16 @@ export function applyOp(body, op, lookup = () => null, { roll = null, now = 0, s
     case "setOption":
       if (!OPTIONS.includes(op.key) || typeof op.value !== "boolean") throw new Refusal("Unknown option.");
       b.creation.options[op.key] = op.value; break;
+    case "setMethod":
+      if (!["standard", "sumto10"].includes(op.method)) throw new Refusal("Standard or sum-to-10.", 20);
+      if (op.method === "sumto10" && !booksOf(b).includes("sc")) throw new Refusal("Sum-to-10 is the Shadowrun Companion's: turn it on first.", 20);
+      sys.chargen.priorityMethod = op.method;
+      break;
     case "setPriority": {
       if (!CATEGORIES.includes(op.category) || !["", ...LETTERS].includes(op.letter)) throw new Refusal("Unknown priority.", 44);
       // Each letter once (p.44): taking a letter another category holds SWAPS the two, so the table stays whole.
-      const pr = sys.chargen.priorities, holder = CATEGORIES.find(c => c !== op.category && op.letter && pr[c] === op.letter);
+      // Under sum-to-10 letters may repeat (Companion p.20): no swap.
+      const pr = sys.chargen.priorities, holder = sys.chargen.priorityMethod === "sumto10" ? null : CATEGORIES.find(c => c !== op.category && op.letter && pr[c] === op.letter);
       if (holder) pr[holder] = pr[op.category];
       pr[op.category] = op.letter;
       break;
@@ -565,6 +572,7 @@ function booksInUse(b, lookup) {
   for (const v of Object.values(b.creation.vehicles ?? {})) used.add(v.source?.system?.citation?.book);
   if (b.actor.system.metavariant?.name) used.add(b.actor.system.metavariant.book);   // PLAN-M5b r1 #6
   if (b.actor.system.race === "shapeshifter") used.add("sc");   // PLAN-M5c r1 #5
+  if (b.actor.system.chargen?.priorityMethod === "sumto10") used.add("sc");   // sum-to-10 is the Companion's (M5g)
   // A graded implant keeps the Street Samurai Catalog in use (PLAN-M5f Draft 2).
   const graded = b.creation.finished ? (b.actor.items ?? []).filter(i => i.type === "cyberware").map(i => i.system?.grade)
     : Object.values(b.creation.items ?? {}).filter(r => r.type === "cyberware").map(r => r.choices?.grade);
@@ -803,11 +811,15 @@ export function validate(body) {
   if (missing.length) add("priorities", "todo", `Choose a priority for ${missing.map(c => CATEGORY_NAMES[c]).join(", ")}.`, 44);
   const seen = {};
   for (const c of CATEGORIES) if (pr[c]) (seen[pr[c]] ??= []).push(c);
-  for (const [l, cs] of Object.entries(seen)) if (cs.length > 1) add("priorities", "error", `Priority ${l} is used twice (${cs.map(c => CATEGORY_NAMES[c]).join(" and ")}): each letter once.`, 44);
+  if (sys.chargen.priorityMethod === "sumto10") {   // Companion p.20: A 4, B 3, C 2, D 1, E 0; at most 10 in all
+    const sum = CATEGORIES.reduce((t, c) => t + ({ A: 4, B: 3, C: 2, D: 1, E: 0 }[pr[c]] ?? 0), 0);
+    if (sum > 10) add("priorities", "error", `The priority levels add up to ${sum}: at most 10 under sum-to-10.`, 20, "sc");
+    if (sys.race === "shapeshifter") add("priorities", "error", "The shapeshifter's table has no sum-to-10 option: use standard priorities.", 36, "sc");
+  } else for (const [l, cs] of Object.entries(seen)) if (cs.length > 1) add("priorities", "error", `Priority ${l} is used twice (${cs.map(c => CATEGORY_NAMES[c]).join(" and ")}): each letter once.`, 44);
 
   // Metatype (p.44, p.46).
   // A magical oni may take Race B with Resources A and Magic C (a metahuman adept), at the GM's discretion (Companion p.42).
-  const oniB = !!opts.oniPriority && pr.race === "B" && pr.resources === "A" && pr.magic === "C" && sys.magic.type === "physical_adept"
+  const oniB = !!opts.oniPriority && sys.chargen.priorityMethod !== "sumto10" && pr.race === "B" && pr.resources === "A" && pr.magic === "C" && sys.magic.type === "physical_adept"
     && racialProfile(sys, TABLES).source === ONI_SOURCE;
   if (shifter) {
     if (!shapeshifterOf("character", sys)) add("metatype", "todo", "Choose the shapeshifter's species.", 36, "sc");

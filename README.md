@@ -375,7 +375,8 @@ remembers the tab you were on.
    rules. With the **Street Samurai Catalog** on, every cyberware purchase can be **alpha** (Essence ×0.8, price ×3) or
    **beta** (×0.6, ×7) (p.98); an accessory inside a cybereye takes the eye's grade.
 2. **Priorities** (p.44): give each of Race, Magic, Attributes, Skills and Resources one letter, A to E, each letter
-   once. Picking a letter that is in use swaps the two.
+   once. Picking a letter that is in use swaps the two. With the Shadowrun Companion on you can choose **Sum-to-10**
+   instead (p.20): A counts 4, B 3, C 2, D 1, E 0, letters may repeat, and the five add up to at most 10.
 3. **Metatype** (p.44): human, dwarf, elf, ork or troll. A metahuman needs Race A (or C with the GM's *More
    Metahumans* option, p.46). With the Shadowrun Companion turned on, a dwarf, elf, ork or troll can be a
    **metavariant** (Cyclops, Gnome, Oni, Night One…, Companion p.39–44): its own racial modifiers, the base

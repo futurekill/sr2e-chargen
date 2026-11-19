@@ -134,3 +134,8 @@ bonding (p.46, p.137), refusals.
 - A Grade choice on cyberware rows; alpha/beta without the SSC is an error; with it, Essence and price follow; the SSC
   can't be turned off with a graded item. Cyberlimbs, Skillwires and ruled ware aren't offered. Hand Razors show in
   the attacks.
+
+## Sum-to-10 (M5g)
+- With the Companion on, the Priorities step has Standard / Sum-to-10; under sum-to-10 picking a used letter doesn't
+  swap; the running sum shows, over 10 is an error; a shapeshifter can't use it; back to standard, a repeated letter is
+  the "used twice" error.

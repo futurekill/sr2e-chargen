@@ -6,6 +6,9 @@ notes come from it.
 ## Unreleased
 
 ### Added
+- **Sum-to-10 priorities** (Shadowrun Companion p.20): with the Companion on, the Priorities step offers the
+  sum-to-10 method (A 4 … E 0, letters may repeat, at most 10 in all), stored where Foundry keeps it
+  (`system.chargen.priorityMethod`). Point-based design comes next.
 - **Sourcebook cyberware and grades** (docs/PLAN-M5f.md): with their books on, the shop offers plain cyberware from
   Cybertechnology, the Street Samurai Catalog, Cyberpirates, Rigger 2, Corporate Security and Shadowtech (limbs and
   implants with their own rules wait). With the SSC on, cyberware can be alpha or beta grade (SSC p.98: Essence ×0.8

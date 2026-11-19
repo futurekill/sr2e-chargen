@@ -626,7 +626,18 @@
 
     <section id="step-priorities" role="tabpanel" aria-labelledby="tab-priorities" hidden={tab !== "priorities"}>
       <h2>Priorities</h2>
-      <p class="muted">Give each of the five categories one letter, A to E. Each letter once: picking a letter another category has swaps the two. <span class="cite">SR2 p.44</span></p>
+      {#if booksOf(body).includes("sc")}
+        <div class="row" role="radiogroup" aria-label="Priority method">
+          <label class="row inline"><input type="radio" class="check" name="pmethod" checked={(sys.chargen.priorityMethod ?? "standard") === "standard"} disabled={finished} onchange={() => change({ op: "setMethod", method: "standard" })}><span>Standard (each letter once)</span></label>
+          <label class="row inline"><input type="radio" class="check" name="pmethod" checked={sys.chargen.priorityMethod === "sumto10"} disabled={finished} onchange={() => change({ op: "setMethod", method: "sumto10" })}><span>Sum-to-10 <span class="cite">Companion p.20</span></span></label>
+        </div>
+      {/if}
+      {#if sys.chargen.priorityMethod === "sumto10"}
+        {@const sum = CATEGORIES.reduce((t, c) => t + ({ A: 4, B: 3, C: 2, D: 1, E: 0 }[sys.chargen.priorities[c]] ?? 0), 0)}
+        <p class="muted">Sum-to-10: A counts 4, B 3, C 2, D 1, E 0. Letters may repeat; the five levels add up to at most 10. Now: <strong class:bad={sum > 10}>{sum}</strong> of 10.</p>
+      {:else}
+        <p class="muted">Give each of the five categories one letter, A to E. Each letter once: picking a letter another category has swaps the two. <span class="cite">SR2 p.44</span></p>
+      {/if}
       <div class="scroll"><table class="grid">
         <thead><tr><th scope="col">Category</th>{#each LETTERS as l}<th scope="col">{l}</th>{/each}</tr></thead>
         <tbody>
