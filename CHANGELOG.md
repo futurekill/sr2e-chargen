@@ -6,6 +6,14 @@ notes come from it.
 ## Unreleased
 
 ### Changed
+- **The character page is tabbed**: each step is a tab (Karma and Nuyen first once a character is finished), with a
+  count of what's left to do on each; the Rules check stays beside them and opens the tab of any problem you click.
+  Printing (style, paper, font, the full sheet, the stat block and the table card) moved to a **Print** tab, so the
+  page header is just the name. The open tab is remembered per character.
+- **Deleting a character asks you to type its name** first (it was one click), and says it can be restored from the
+  Library's Deleted list for 30 days.
+
+### Changed
 - "Wrong origin" now says which address `BASE_URL` expects and which one the page was opened at (and the server
   logs it), with a README troubleshooting section.
 ### Added

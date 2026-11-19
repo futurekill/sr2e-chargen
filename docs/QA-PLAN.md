@@ -64,3 +64,10 @@ bonding (p.46, p.137), refusals.
     card is off; Print card opens a one-page PDF in each style.
 12. Phone width (375 px): no page-wide sideways scroll; the rules check is below the steps.
 13. History: each change is a revision named after its operation.
+
+## Character page layout (tabs)
+- The tabs show every step (they wrap on a wide screen; on a phone the row scrolls and the open tab stays in view); the
+  counts match the Rules check; clicking a problem opens its tab; arrow keys, Home and End move between tabs; the tab is
+  remembered after a reload.
+- Delete: the button stays disabled until the exact name is typed; the character appears under Deleted in the
+  Library and Restore brings it back.

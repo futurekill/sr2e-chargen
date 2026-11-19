@@ -22,7 +22,9 @@
   const sys = $derived(body.actor.system), pr = $derived(sys.chargen.priorities), opts = $derived(body.creation.options);
   const finished = $derived(!!body.creation.finished);
   const TOTEMS = Object.entries(totemNames()).sort((a, b) => a[1].localeCompare(b[1]));
-  const STEPS = [["concept", "Concept"], ["priorities", "Priorities"], ["metatype", "Metatype"], ["magic", "Magic"], ["attributes", "Attributes"], ["skills", "Skills"], ["resources", "Resources"], ["card", "Table card"], ["finish", "Finish"]];
+  const STEPS = [["concept", "Concept"], ["priorities", "Priorities"], ["metatype", "Metatype"], ["magic", "Magic"], ["attributes", "Attributes"], ["skills", "Skills"], ["resources", "Resources"], ["finish", "Finish"], ["card", "Print"]];
+  // Problems whose step has no tab of its own open the tab that holds them.
+  const TAB_OF = { contacts: "resources" };
   // The core book's archetypes (p.50–65): suggestions for followers, never a limit (docs/PLAN-M2d.md Draft 3).
   const ARCHETYPES = ["Bodyguard", "Combat Mage", "Decker", "Detective", "Dwarf Mercenary", "Elven Decker", "Former Company Man", "Former Wage Mage",
     "Gang Member", "Mercenary", "Rigger", "Shaman", "Street Mage", "Street Samurai", "Street Shaman", "Tribesman"];
@@ -192,6 +194,35 @@
   // Each contact row's charge (p.46): the first two ordinary contacts (in the order bought) are free.
   const plainContacts = $derived(bought.filter(x => x.r.type === "contact" && (x.r.choices.kind ?? x.r.snapshot.contactType) === "contact").map(x => x.id));
   const contactPrice = (x) => ({ buddy: "10,000¥", gang: "50,000¥", follower: "200,000¥" })[x.r.choices.kind ?? x.r.snapshot.contactType] ?? (plainContacts.indexOf(x.id) < 2 ? "free" : "5,000¥");
+  // The steps as tabs (one panel at a time; the Rules check stays beside them). The open tab is remembered per
+  // character for this browser tab (sessionStorage): the address's fragment is reserved for one-time link secrets.
+  const tabs = $derived(finished ? [["karma", "Karma"], ["nuyen", "Nuyen"], ...STEPS] : STEPS);
+  const tabKeyName = `chargen.tab.${untrack(() => server.document.id)}`;
+  const savedTab = (() => { try { return sessionStorage.getItem(tabKeyName); } catch { return null; } })();
+  let tab = $state(savedTab ?? (untrack(() => finished) ? "karma" : "concept"));
+  $effect(() => { if (!tabs.some(([id]) => id === tab)) tab = tabs[0][0]; });
+  // On a phone the tab row scrolls sideways: keep the open tab in sight.
+  $effect(() => { document.getElementById(`tab-${tab}`)?.scrollIntoView({ block: "nearest", inline: "nearest" }); });
+  function pick(id, focus = false) {
+    tab = id;
+    try { sessionStorage.setItem(tabKeyName, id); } catch { /* private mode: the tab just isn't remembered */ }
+    if (focus) document.getElementById(`tab-${id}`)?.focus();
+  }
+  /** WAI-ARIA tabs: arrows move between tabs, Home and End jump to the ends. */
+  function tabKey(ev) {
+    const ids = tabs.map(([id]) => id), i = ids.indexOf(tab);
+    const to = { ArrowRight: i + 1, ArrowLeft: i - 1, Home: 0, End: ids.length - 1 }[ev.key];
+    if (to == null) return;
+    ev.preventDefault();
+    pick(ids[(to + ids.length) % ids.length], true);
+  }
+  /** Each tab's open problems (errors and to-dos), so the bar shows where work is left. */
+  const tabProblems = $derived(Object.fromEntries(tabs.map(([id]) => {
+    const own = check.problems.filter(p => p.severity !== "warning" && (TAB_OF[p.step] ?? p.step) === id);
+    return [id, { count: own.length, error: own.some(p => p.severity === "error") }];
+  })));
+  // Deleting: typed confirmation, inline (a soft delete: the Library's Deleted list keeps it 30 days).
+  let deleteOpen = $state(false), deleteTyped = $state("");
   const numberFrom = (ev) => Number.parseInt(ev.currentTarget.value, 10);
   // The printable sheet: paper and font remembered in this browser (a convenience; the server holds no preference yet).
   const pref = (k, d) => { try { return localStorage.getItem(k) ?? d; } catch { return d; } };
@@ -261,19 +292,17 @@
     <header>
       <h1>{body.name}</h1>
       <p class="muted">character · revision {server.document.revision} · {sending ? "saving…" : "saved"}{finished ? " · finished" : ""}</p>
-      <div class="row print">
-        <a class="button quiet" href={sheetHref} target="_blank" rel="noopener">Print sheet</a>
-        <a class="button quiet" href={`/api/documents/${server.document.id}/statblock.md`} download>Stat block (Markdown)</a>
-        <label class="row inline"><span class="sr-only">Style</span><select bind:value={sheetStyle} aria-label="Sheet style"><option value="classic">Classic</option><option value="fohawk">Fohawk</option><option value="fohawk-ink">Fohawk (ink-saver)</option></select></label>
-        <label class="row inline"><span class="sr-only">Paper</span><select bind:value={paper} aria-label="Paper"><option value="letter">US Letter</option><option value="a4">A4</option></select></label>
-        <label class="row inline"><span class="sr-only">Font</span><select bind:value={sheetFont} aria-label="Sheet font"><option value="">My account's font</option><option value="standard">Standard font</option><option value="readable">Readable font</option></select></label>
+      <div class="tabs" role="tablist" aria-label="Character steps" tabindex="-1" onkeydown={tabKey}>
+        {#each tabs as [id, title] (id)}
+          <button type="button" role="tab" id={`tab-${id}`} aria-selected={tab === id} aria-controls={`step-${id}`} tabindex={tab === id ? 0 : -1}
+            onclick={() => pick(id)}>{title}{#if tabProblems[id]?.count}<span class="count" class:error={tabProblems[id].error} aria-label={`${tabProblems[id].count} open`}>{tabProblems[id].count}</span>{/if}</button>
+        {/each}
       </div>
-      <nav aria-label="Steps" class="row">{#each finished ? [["karma", "Karma"], ["nuyen", "Nuyen"], ...STEPS] : STEPS as [id, title]}<a href={`#step-${id}`}>{title}</a>{/each}</nav>
     </header>
     {#if error}<p class="notice bad" role="alert">{error}</p>{/if}
 
     {#if finished}
-      <section id="step-karma">
+      <section id="step-karma" role="tabpanel" aria-labelledby="tab-karma" hidden={tab !== "karma"}>
         <h2>Karma</h2>
         <p class="muted">Good Karma {sys.karma?.current ?? 0} · Total {sys.karma?.total ?? 0} · Karma Pool {derived.karmaPool}. An award adds to Total; one-tenth of Total (rounded up) is the Karma Pool, the rest Good Karma to spend. <span class="cite">SR2 p.190–191</span></p>
         <form class="row adders" onsubmit={(ev) => { ev.preventDefault(); if (Number.isInteger(awardAmount) && awardAmount >= 1 && awardAmount <= 200) { change({ op: "awardKarma", amount: awardAmount, note: awardNote }); awardNote = ""; } }}>
@@ -318,7 +347,7 @@
     {/if}
 
     {#if finished}
-      <section id="step-nuyen">
+      <section id="step-nuyen" role="tabpanel" aria-labelledby="tab-nuyen" hidden={tab !== "nuyen"}>
         <h2>Nuyen</h2>
         <p class="muted">{nuyen(sys.nuyen ?? 0)} to spend. Buying: the street price is shown (list × Street Index); enter the price you agreed. Selling: {saleMode === "fence" ? "through a fence — 30% of the list value, 5% more or less per extra Negotiation success, 10–50%" : "what was paid comes back"}. <span class="cite">SR2 p.184, p.188</span></p>
         <form class="row adders" onsubmit={(ev) => { ev.preventDefault(); const n = Number(cashAmount); if (Number.isInteger(n) && n > 0) { change({ op: "nuyen", amount: cashDir === "in" ? n : -n, note: cashNote }); cashNote = ""; cashAmount = 0; } }}>
@@ -361,7 +390,7 @@
       </section>
     {/if}
 
-    <section id="step-concept">
+    <section id="step-concept" role="tabpanel" aria-labelledby="tab-concept" hidden={tab !== "concept"}>
       <h2>Concept</h2>
       <div class="row portrait">
         {#if hasPortrait}<img src={`/api/documents/${server.document.id}/portrait?revision=${server.document.revision}`} alt={`Portrait of ${body.name}`} width="120" height="120">{:else}<div class="nopic muted">No portrait</div>{/if}
@@ -388,9 +417,22 @@
       </form>
       <label class="notes"><span>Notes: who is this, and why do they run the shadows?</span>
         <textarea bind:value={notesInput} maxlength="20000" onchange={() => notesInput !== body.notes && change({ op: "setNotes", notes: notesInput })}></textarea></label>
+
+      <div class="danger-zone">
+        {#if !deleteOpen}
+          <button type="button" class="danger" onclick={() => { deleteOpen = true; deleteTyped = ""; }}>Delete character…</button>
+        {:else}
+          <p><strong>Delete {body.name}?</strong> It moves to <em>Deleted</em> in your Library, where you can restore it for 30 days; after that it is gone for good.</p>
+          <label class="grow"><span>Type the character's name to confirm</span><input bind:value={deleteTyped} autocomplete="off" spellcheck="false" maxlength="120"></label>
+          <div class="row">
+            <button type="button" class="danger" disabled={deleteTyped.trim() !== body.name.trim()} onclick={onDeleted}>Delete {body.name}</button>
+            <button type="button" class="quiet" onclick={() => { deleteOpen = false; }}>Keep it</button>
+          </div>
+        {/if}
+      </div>
     </section>
 
-    <section id="step-priorities">
+    <section id="step-priorities" role="tabpanel" aria-labelledby="tab-priorities" hidden={tab !== "priorities"}>
       <h2>Priorities</h2>
       <p class="muted">Give each of the five categories one letter, A to E. Each letter once: picking a letter another category has swaps the two. <span class="cite">SR2 p.44</span></p>
       <div class="scroll"><table class="grid">
@@ -417,7 +459,7 @@
       </dl>
     </section>
 
-    <section id="step-metatype">
+    <section id="step-metatype" role="tabpanel" aria-labelledby="tab-metatype" hidden={tab !== "metatype"}>
       <h2>Metatype</h2>
       <div class="row" role="radiogroup" aria-label="Metatype">
         {#each METATYPES as m}
@@ -440,7 +482,7 @@
       {/if}
     </section>
 
-    <section id="step-magic">
+    <section id="step-magic" role="tabpanel" aria-labelledby="tab-magic" hidden={tab !== "magic"}>
       <h2>Magic</h2>
       <div class="row">
         <label><span>Magic</span>
@@ -464,7 +506,7 @@
       </div>
     </section>
 
-    <section id="step-attributes">
+    <section id="step-attributes" role="tabpanel" aria-labelledby="tab-attributes" hidden={tab !== "attributes"}>
       <h2>Attributes</h2>
       <p class="muted">Buy each attribute from 1; racial modifiers apply after. <span class="cite">SR2 p.45</span></p>
       <div class="scroll"><table class="grid attrs">
@@ -488,7 +530,7 @@
     </section>
 
 
-    <section id="step-skills">
+    <section id="step-skills" role="tabpanel" aria-labelledby="tab-skills" hidden={tab !== "skills"}>
       <h2>Skills</h2>
       <p class="muted">Put Skill Points into each skill; no skill rating may start above 6. A concentration takes 1 from the skill and gives +1 in the narrow field; a specialization takes 2 and gives +2 (Firearms 5 → Firearms 3, Pistols 5, Ares Predator 7), and only those may start above 6. Your native language is free at Intelligence + 2. <span class="cite">SR2 p.45, p.70, p.74</span></p>
       {#if !finished}
@@ -545,7 +587,7 @@
       {/if}
     </section>
 
-    <section id="step-resources">
+    <section id="step-resources" role="tabpanel" aria-labelledby="tab-resources" hidden={tab !== "resources"}>
       <h2>Resources</h2>
       <p class="muted">Spend your nuyen on gear at list price; magicians (adepts too) spend Force Points on bonding foci, and full magicians on spells (Force up to 6); a physical adept uses only a weapon focus, and buys its powers here with power points (its Magic Rating). No starting gear above Rating 6. Cybereyes take up to .5 Essence of accessories for free. <span class="cite">SR2 p.46, p.124–126, p.137, p.247</span></p>
       {#if !finished}
@@ -630,7 +672,7 @@
       {/if}
     </section>
 
-    <section id="step-finish">
+    <section id="step-finish" role="tabpanel" aria-labelledby="tab-finish" hidden={tab !== "finish"}>
       <h2>Finish</h2>
       {#if finished}
         <p>Finished. {nuyen(body.creation.finished.leftover)} unspent became {nuyen(Math.floor(body.creation.finished.leftover / 10))}, plus 3D6 = {body.creation.finished.roll} × 1,000¥: <strong>{nuyen(body.creation.finished.nuyen)}</strong> to start with. Karma Pool {body.creation.finished.karmaPool}. Name and notes can still change. <span class="cite">SR2 p.47</span></p>
@@ -645,8 +687,17 @@
       {/if}
     </section>
 
-    <section id="step-card">
-      <h2>Table card</h2>
+    <section id="step-card" role="tabpanel" aria-labelledby="tab-card" hidden={tab !== "card"}>
+      <h2>Print and share</h2>
+      <div class="print-options row">
+        <label><span>Style</span><select bind:value={sheetStyle}><option value="classic">Classic</option><option value="fohawk">Fohawk</option><option value="fohawk-ink">Fohawk (ink-saver)</option></select></label>
+        <label><span>Paper</span><select bind:value={paper}><option value="letter">US Letter</option><option value="a4">A4</option></select></label>
+        <label><span>Font</span><select bind:value={sheetFont}><option value="">My account's font</option><option value="standard">Standard</option><option value="readable">Readable</option></select></label>
+      </div>
+      <h3>Full sheet</h3>
+      <p class="row"><a class="button" href={sheetHref} target="_blank" rel="noopener">Print sheet</a>
+        <a class="button quiet" href={`/api/documents/${server.document.id}/statblock.md`} download>Stat block (Markdown)</a></p>
+      <h3>Table card</h3>
       <p class="muted">One page for the table: attributes, pools, monitors, and the rows you tick below. Everything stays on the full sheet.</p>
       {#each cardRows as [title, list] (title)}
         <fieldset class="books"><legend>{title}</legend>
@@ -665,7 +716,6 @@
       </p>
     </section>
 
-    <p class="row later"><button type="button" class="danger" onclick={onDeleted}>Delete character</button></p>
   </div>
 
   <aside class="panel" aria-label="Rules check">
@@ -694,7 +744,7 @@
     {:else}
       <ul class="problems">
         {#each check.problems as p, i (i)}
-          <li class={p.severity}><a href={`#step-${p.step}`}>{p.severity === "error" ? "Rule" : p.severity === "todo" ? "To do" : "Note"}</a> {p.text} <span class="cite">SR2 p.{p.cite.page}</span></li>
+          <li class={p.severity}><button type="button" class="plain" onclick={() => pick(TAB_OF[p.step] ?? p.step, true)} aria-label={`${p.severity === "error" ? "Rule" : p.severity === "todo" ? "To do" : "Note"}: open the ${p.step} step`}>{p.severity === "error" ? "Rule" : p.severity === "todo" ? "To do" : "Note"}</button> {p.text} <span class="cite">SR2 p.{p.cite.page}</span></li>
         {/each}
       </ul>
     {/if}
@@ -705,11 +755,29 @@
   .sheet { display: grid; gap: 1.5rem; grid-template-columns: minmax(0, 1fr); }
   @media (min-width: 60rem) { .sheet { grid-template-columns: minmax(0, 1fr) 19rem; align-items: start; } .panel { position: sticky; top: 1rem; } }
   section { scroll-margin-top: 1rem; }
+  section[hidden] { display: none; }
+  /* The step tabs: they wrap onto a second row rather than hide (every step stays in sight); on a phone, one row that
+     scrolls sideways. The open tab is the one with the accent frame. */
+  .tabs { display: flex; flex-wrap: wrap; gap: .4rem; margin: 1rem 0 0; padding-bottom: .9rem; border-bottom: 1px solid var(--line); }
+  @media (max-width: 40rem) { .tabs { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: thin; } }
+  .tabs [role="tab"] { flex: none; display: inline-flex; align-items: center; gap: .4rem; background: transparent; color: var(--muted);
+    border: 1px solid var(--line); border-radius: var(--radius); padding: .4rem .7rem; font-weight: 700; }
+  .tabs [role="tab"]:hover { color: var(--ink); background: var(--surface); }
+  .tabs [role="tab"][aria-selected="true"] { color: var(--ink); background: var(--surface); border-color: var(--accent); }
+  /* The tab already names the panel: its first heading stays for screen readers only. */
+  [role="tabpanel"] > h2:first-child { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .tabs .count { min-width: 1.35rem; padding: 0 .3rem; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); color: var(--ink); font-size: .8rem; line-height: 1.25rem; text-align: center; }
+  .tabs .count.error { border-color: var(--danger); color: var(--danger); }
+  [role="tabpanel"] { padding-top: 1.1rem; }
+  .print-options { gap: .75rem; align-items: end; margin-bottom: .25rem; }
+  .print-options label { display: grid; gap: .25rem; }
+  .danger-zone { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--line); display: grid; gap: .75rem; max-width: 36rem; }
+  .danger-zone p { margin: 0; }
   .panel { border: 1px solid var(--line); background: var(--surface); padding: .9rem 1rem; }
   .panel h2 { margin-top: 0; }
   .problems { list-style: none; margin: .8rem 0 0; padding: 0; display: grid; gap: .55rem; font-size: .95rem; }
-  .problems a { font-weight: 700; margin-right: .25rem; }
-  .problems li.error a { color: var(--danger); }
+  .problems button.plain { margin-right: .25rem; }
+  .problems li.error button.plain { color: var(--danger); }
   .problems li.warning { color: var(--muted); }
   .good { color: var(--ok); margin: .8rem 0 0; }
   .bad { color: var(--danger); font-weight: 700; }
@@ -724,7 +792,6 @@
   label.notes { margin-top: 1rem; }
   .table-rows { margin-bottom: .5rem; font-size: .9rem; }
   .later { margin-top: 2.5rem; }
-  .print { margin: 0 0 .75rem; }
   .portrait { margin: 0 0 1rem; align-items: center; }
   .portrait img, .nopic { width: 120px; height: 120px; object-fit: cover; border: 1px solid var(--line); }
   .nopic { display: grid; place-items: center; font-size: .85rem; }
@@ -735,7 +802,6 @@
   .pick.chosen img { outline: 2px solid var(--accent); outline-offset: 2px; }
   .good-text { color: var(--ok); }
   a.disabled { opacity: .55; pointer-events: none; }
-  .print label.inline { margin: 0; }
   .adders { margin: 0 0 .9rem; align-items: end; }
   table.skills input:not([type="number"]) { width: 9rem; padding: .3rem .45rem; }
   table.skills input[type="number"] { width: 3.75rem; text-align: right; padding: .3rem .45rem; }

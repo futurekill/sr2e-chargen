@@ -351,7 +351,9 @@ where **Restore** brings it back.
 
 ### The steps
 
-The links at the top of the character page jump between them.
+Each step is a **tab** at the top of the character page; a tab with a number has that many things left to do (red
+when one breaks a rule). The **Rules check** beside the tabs lists every problem: click one to open its tab. The page
+remembers the tab you were on.
 
 1. **Concept**: name, notes, and a portrait: upload a JPEG, PNG or WebP (it is re-encoded and its location data
    removed), or choose one of the premade portraits.
@@ -410,11 +412,17 @@ The **Nuyen** step (finished characters):
 - Every change is in the history (the Karma step) with **Undo** on the newest one, and the printed sheet and the stat
   block include the history, so the GM can check it.
 
+### Deleting a character
+
+On the **Concept** tab, **Delete character…** asks you to type the character's name before it deletes. A deleted
+character moves to **Deleted** in your Library, where **Restore** brings it back for 30 days; after that it is gone.
+
 ### Print and share
 
+On the **Print** tab, choose the style, paper and font, then:
 - **Print sheet**: the full character sheet as a PDF, in the **Classic**, **Fohawk** or **Fohawk (ink saver)** style,
   on US Letter or A4, in your account's font or the readable font.
-- **Print card**: the one-page table card. The page says whether it fits on one page, and which rows run over.
+- **Print card**: the one-page table card (tick its rows on the same tab). The page says whether it fits on one page, and which rows run over.
 - **Stat block (Markdown)**: the character as text, for a forum post or your notes.
 
 ### Your account
