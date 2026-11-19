@@ -5,6 +5,11 @@ notes come from it.
 
 ## Unreleased
 
+## 0.1.0-beta.1 — 2026-11-18
+
+First beta, for a table demo. Character creation covers priorities, metatype, magic, attributes, skills and
+Resources (gear, cyberware, spells, foci); adept powers, contacts, lifestyle and the finish step come next.
+
 ### Fixed
 - Physical adepts get the Resources priority's Force Points and can bond a weapon focus at creation: an adept is a magician (p.124, p.46). Other foci and spells stay refused for them.
 - The 30-day purge of deleted documents could remove a document restored at the same moment; it now checks again.

@@ -107,4 +107,5 @@ jobs:
           awk -v v="$v" '$1 == "##" && $2 == v {on=1; next} on && $1 == "##" {exit} on {print}' CHANGELOG.md > notes.md
           [ -s notes.md ] || { echo "::error::CHANGELOG.md has no section for $v"; exit 1; }
           echo "" >> notes.md; echo "Image: \`$IMAGE@$DIGEST\` (private; verify with cosign, docs/OPERATIONS.md)" >> notes.md
-          gh release create "$TAG" sbom.spdx.json --verify-tag --title "$TAG" --notes-file notes.md
+          pre=(); [[ "$TAG" == *-* ]] && pre=(--prerelease)   # v0.1.0-beta.1 is a pre-release
+          gh release create "$TAG" sbom.spdx.json --verify-tag --title "$TAG" --notes-file notes.md "${pre[@]}"
