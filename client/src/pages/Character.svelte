@@ -6,7 +6,8 @@
    */
   import { untrack, onDestroy } from "svelte";
   import { get, mutate, upload } from "../lib/api.js";
-  import { applyOp, validate, cardIds, cardEligible, CARD_TYPES, CATEGORIES, CATEGORY_NAMES, LETTERS, METATYPES, MAGIC_TYPES, MAGIC_NAMES, TRADITIONS, ATTRIBUTES, ATTR_NAMES, CUSTOM_SKILL_CATEGORIES, totemNames } from "../../../shared/creation.mjs";
+  import { derive } from "../../../shared/derive.mjs";
+  import { applyOp, validate, karmaOptions, undoable, cardIds, cardEligible, CARD_TYPES, CATEGORIES, CATEGORY_NAMES, LETTERS, METATYPES, MAGIC_TYPES, MAGIC_NAMES, TRADITIONS, ATTRIBUTES, ATTR_NAMES, CUSTOM_SKILL_CATEGORIES, totemNames } from "../../../shared/creation.mjs";
   import { TABLES } from "../../../shared/rules.mjs";
   import { BUYABLE, choiceSpec, project, price, essenceOf, isCybereye, smallWeapon } from "../../../shared/purchase.mjs";
   let { doc: initial, onDeleted } = $props();
@@ -72,6 +73,25 @@
   const melee = $derived(bought.filter(x => x.r.type === "weapon" && x.r.snapshot.weaponType === "melee"));
   const setChoice = (id, key, value) => change({ op: "setItem", itemId: id, choices: { [key]: value } });
 
+  // After creation (docs/PLAN-M4a.md): Karma awards, advancement, the history and undo.
+  const derived = $derived(derive({ actor: body.actor, options: { moreMetahumans: !!body.creation.options.moreMetahumans } }));
+  const advOptions = $derived(finished ? karmaOptions(body) : []);
+  const lastUndoable = $derived(finished ? undoable(body) : null);
+  let awardAmount = $state(5), awardNote = $state(""), advPick = $state(""), gmApproved = $state(false), libraryConfirmed = $state(false);
+  let addTo = $state(""), addKind = $state("newConcentration"), addName = $state(""), learnSkill = $state(""), learnCategory = $state("knowledge"), learnName = $state("");
+  function raise() {
+    const o = advOptions[Number(advPick)];
+    if (!o) return;
+    change({ op: "spendKarma", target: { ...o.target, ...(o.needs.includes("gmApproved") ? { gmApproved } : {}), ...(o.needs.includes("libraryConfirmed") ? { libraryConfirmed } : {}) } });
+    advPick = ""; gmApproved = false; libraryConfirmed = false;
+  }
+  async function learn() {
+    const id = learnSkill; if (!id) return;
+    learnSkill = "";
+    try { if (!entries.has(id)) entries.set(id, await get(`/api/catalog/entries/${encodeURIComponent(id)}`)); }
+    catch (err) { if (!gone) error = err.message; return; }
+    if (!gone) change({ op: "spendKarma", target: { newSkill: id } });
+  }
   async function addCoreSkill() {
     const id = pickSkill;   // read once: the list can change while the entry is on its way
     if (!id) return;
@@ -210,9 +230,54 @@
         <label class="row inline"><span class="sr-only">Paper</span><select bind:value={paper} aria-label="Paper"><option value="letter">US Letter</option><option value="a4">A4</option></select></label>
         <label class="row inline"><span class="sr-only">Font</span><select bind:value={sheetFont} aria-label="Sheet font"><option value="">My account's font</option><option value="standard">Standard font</option><option value="readable">Readable font</option></select></label>
       </div>
-      <nav aria-label="Steps" class="row">{#each STEPS as [id, title]}<a href={`#step-${id}`}>{title}</a>{/each}</nav>
+      <nav aria-label="Steps" class="row">{#each finished ? [["karma", "Karma"], ...STEPS] : STEPS as [id, title]}<a href={`#step-${id}`}>{title}</a>{/each}</nav>
     </header>
     {#if error}<p class="notice bad" role="alert">{error}</p>{/if}
+
+    {#if finished}
+      <section id="step-karma">
+        <h2>Karma</h2>
+        <p class="muted">Good Karma {sys.karma?.current ?? 0} · Total {sys.karma?.total ?? 0} · Karma Pool {derived.karmaPool}. An award adds to Total; one-tenth of Total (rounded up) is the Karma Pool, the rest Good Karma to spend. <span class="cite">SR2 p.190–191</span></p>
+        <form class="row adders" onsubmit={(ev) => { ev.preventDefault(); if (Number.isInteger(awardAmount) && awardAmount >= 1) { change({ op: "awardKarma", amount: awardAmount, note: awardNote }); awardNote = ""; } }}>
+          <label><span>Award</span><input type="number" min="1" max="1000" step="1" bind:value={awardAmount}></label>
+          <label class="grow"><span>For (optional)</span><input bind:value={awardNote} maxlength="120" placeholder="the run, a good scene…"></label>
+          <button>Award Karma</button>
+        </form>
+        <h3>Raise</h3>
+        <div class="row adders">
+          <label class="grow"><span>Attribute or skill</span><select bind:value={advPick}><option value="">Choose…</option>
+            {#each advOptions as o, i}<option value={String(i)} disabled={o.cost > (sys.karma?.current ?? 0)}>{o.label} — {o.cost} Karma{o.needs.includes("gmApproved") ? " (above the racial maximum: double, GM approval)" : ""}{o.needs.includes("libraryConfirmed") ? " (needs a sorcery library)" : ""}</option>{/each}</select></label>
+          {#if advOptions[Number(advPick)]?.needs.includes("gmApproved")}<label class="row inline"><input type="checkbox" class="check" bind:checked={gmApproved}><span>The GM approves</span></label>{/if}
+          {#if advOptions[Number(advPick)]?.needs.includes("libraryConfirmed")}<label class="row inline"><input type="checkbox" class="check" bind:checked={libraryConfirmed}><span>A sorcery library rated at least the new rating</span></label>{/if}
+          <button type="button" disabled={advPick === ""} onclick={raise}>Raise</button>
+        </div>
+        <div class="row adders">
+          <label><span>Add to</span><select bind:value={addTo}><option value="">Skill…</option>{#each body.actor.items.filter(i => i.type === "skill") as sk (sk._id)}<option value={sk._id}>{sk.name}</option>{/each}</select></label>
+          <label><span>A new</span><select bind:value={addKind}><option value="newConcentration">Concentration</option><option value="newSpecialization">Specialization</option></select></label>
+          <label class="grow"><span>Named</span><input bind:value={addName} maxlength="60"></label>
+          <button type="button" class="quiet" disabled={!addTo || !addName.trim()} onclick={() => { change({ op: "spendKarma", target: { itemId: addTo, [addKind]: addName } }); addName = ""; }}>Add</button>
+        </div>
+        <div class="row adders">
+          <label class="grow"><span>Learn a skill (1 Karma)</span><select bind:value={learnSkill}><option value="">Core skill…</option>{#each coreSkills.filter(e => !body.actor.items.some(i => i.type === "skill" && i.name === e.name)) as e (e.id)}<option value={e.id}>{e.name}</option>{/each}</select></label>
+          <button type="button" class="quiet" disabled={!learnSkill} onclick={learn}>Learn</button>
+          <label><span>or your own</span><select bind:value={learnCategory}>{#each CUSTOM_SKILL_CATEGORIES as c}<option value={c}>{SKILL_CATEGORY[c]}</option>{/each}</select></label>
+          <label class="grow"><span>Named</span><input bind:value={learnName} maxlength="60"></label>
+          <button type="button" class="quiet" disabled={!learnName.trim()} onclick={() => { change({ op: "spendKarma", target: { newCustomSkill: { category: learnCategory, name: learnName } } }); learnName = ""; }}>Learn</button>
+        </div>
+        <p class="muted">Costs: an attribute, its new rating (double above the racial maximum); a skill, 2 × the new rating (a language 1 ×); a Concentration 1.5 ×, a Specialization 1 ×; a new skill 1. Reaction, Essence and Magic are never raised with Karma. <span class="cite">SR2 p.190–191</span></p>
+        <h3>History</h3>
+        {#if body.ledger?.length}
+          <ol class="ledger" reversed>
+            {#each [...body.ledger].reverse() as e (e.id)}
+              <li class:muted={e.undoneBy}><span>{e.summary}{e.note ? ` — ${e.note}` : ""}{e.undoneBy ? " (undone)" : ""}</span>
+                {#if lastUndoable?.id === e.id}<button type="button" class="quiet" onclick={() => change({ op: "undoKarma", entryId: e.id })}>Undo</button>{/if}</li>
+            {/each}
+          </ol>
+        {:else}
+          <p class="muted">No Karma yet.</p>
+        {/if}
+      </section>
+    {/if}
 
     <section id="step-concept">
       <h2>Concept</h2>
@@ -450,7 +515,7 @@
                     </label>
                   {/each}
                 </td>
-                <td class="price">{x.r.type === "contact" ? contactPrice(x) : x.r.type === "adept_power" ? `${check.budgets.powerPoints?.costs[x.id] ?? "—"} PP` : x.r.type === "spell" ? `${x.r.choices.force} FP` : nuyen(x.price)}{#if x.r.choices.in}<br><span class="muted small">in the eyes' price</span>{/if}</td>
+                <td class="price">{x.r.type === "contact" ? contactPrice(x) : x.r.type === "adept_power" ? `${check.budgets?.powerPoints?.costs[x.id] ?? "—"} PP` : x.r.type === "spell" ? `${x.r.choices.force} FP` : nuyen(x.price)}{#if x.r.choices.in}<br><span class="muted small">in the eyes' price</span>{/if}</td>
                 <td><button type="button" class="quiet" disabled={finished} aria-label={`Remove ${x.r.name}`} onclick={() => change({ op: "removeItem", itemId: x.id })}>✕</button></td>
               </tr>
             {/each}
@@ -524,11 +589,19 @@
   <aside class="panel" aria-label="Rules check">
     <h2>Rules check</h2>
     <dl>
+      {#if finished}
+        <div><dt>Good Karma</dt><dd>{sys.karma?.current ?? 0}</dd></div>
+        <div><dt>Total Karma</dt><dd>{sys.karma?.total ?? 0}</dd></div>
+        <div><dt>Karma Pool</dt><dd>{derived.karmaPoolAvailable} / {derived.karmaPool}</dd></div>
+        {#if sys.magic.type === "physical_adept"}<div><dt>Power points</dt><dd class:bad={check.budgets?.powerPoints?.over}>{check.budgets?.powerPoints?.spent ?? 0} / {check.budgets?.powerPoints?.total ?? 0}</dd></div>{/if}
+        <div><dt>Nuyen</dt><dd>{nuyen(sys.nuyen ?? 0)}</dd></div>
+      {:else}
       <div><dt>Attribute points</dt><dd class:bad={pr.attributes && check.budgets.attributes.over}>{check.budgets.attributes.spent} / {pr.attributes ? check.budgets.attributes.total : "—"}</dd></div>
       <div><dt>Skill points</dt><dd class:bad={pr.skills && check.budgets.skills.over}>{check.budgets.skills.spent} / {pr.skills ? check.budgets.skills.total : "—"}</dd></div>
       {#if sys.magic.type === "physical_adept"}<div><dt>Power points</dt><dd class:bad={check.budgets.powerPoints?.over}>{check.budgets.powerPoints?.spent ?? 0} / {check.budgets.powerPoints?.total ?? 0}</dd></div>{/if}
       {#if sys.magic.type !== "none" || check.budgets.forcePoints.spent}<div><dt>Force Points</dt><dd class:bad={check.budgets.forcePoints.over}>{check.budgets.forcePoints.spent} / {check.budgets.forcePoints.total}</dd></div>{/if}
       <div><dt>Nuyen</dt><dd class:bad={pr.resources && check.budgets.resources.over}>{nuyen(check.budgets.resources.spent)} / {pr.resources ? nuyen(check.budgets.resources.total) : "—"}</dd></div>
+      {/if}
       <div><dt>Essence</dt><dd class:bad={check.essence < 0}>{check.essence}</dd></div>
       {#if sys.magic.type !== "none"}<div><dt>Magic</dt><dd class:bad={check.magic < 1}>{check.magic}</dd></div>{/if}
     </dl>

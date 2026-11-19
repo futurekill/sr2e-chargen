@@ -8,7 +8,7 @@
  * A character is the Foundry system's own `character` source shapes (`actor`), so the system's functions read it
  * unchanged; the app's own record sits beside it (`creation`).
  */
-import { TABLES, chargenBudget, startingMoney, startingKarmaPool, adeptPowerBudget, label, skillTiersFromAllocation, validateSkillAllocation } from "./rules.mjs";
+import { TABLES, chargenBudget, karmaTransition, advancementOptions, startingMoney, startingKarmaPool, adeptPowerBudget, label, skillTiersFromAllocation, validateSkillAllocation } from "./rules.mjs";
 import { defaultChoices, checkChoices, refusalFor, project, eyeRow, essenceOf, isCybereye, powerKeyOf, sensesOf } from "./purchase.mjs";
 
 export const SCHEMA = "sr2e-chargen-character", SCHEMA_VERSION = 1;
@@ -83,8 +83,14 @@ export const OPS = Object.freeze({
   finish: {},
   // Vehicles (docs/PLAN-S9-vehicles.md): the catalog's complete source is kept; the actor gets the system's receipt.
   addVehicle: { catalogId: "string" },
-  removeVehicle: { vehicleId: "string" }
+  removeVehicle: { vehicleId: "string" },
+  // After creation (docs/PLAN-M4a.md): Karma, through the system's karmaTransition; every change is a ledger entry.
+  awardKarma: { amount: "integer", note: "string" },
+  spendKarma: { target: "karmaTarget" },
+  undoKarma: { entryId: "string" }
 });
+/** The ops a FINISHED character takes (besides name, notes, card). */
+const PLAY_OPS = ["awardKarma", "spendKarma", "undoKarma"];
 const MAX_VEHICLES = 20;
 /** Ops the server must roll for (docs/PLAN-M2d.md Draft 2): how many D6, or 0. */
 export const diceFor = (op) => (op?.op === "finish" ? 3 : op?.op === "addExtra" && op.kind === "gang" ? 2 : 0);
@@ -109,8 +115,9 @@ const OPTIONS = ["moreMetahumans"];
  */
 export function applyOp(body, op, lookup = () => null, { roll = null, now = 0 } = {}) {
   if (!op || typeof op !== "object" || typeof op.op !== "string" || !Object.hasOwn(OPS, op.op)) throw new Refusal("Unknown operation.");
-  if (body.creation.finished && !["setName", "setNotes", "setCard"].includes(op.op)) throw new Refusal("This character is finished: creation can't change it (changes after creation come with character management).");
+  if (body.creation.finished && !["setName", "setNotes", "setCard", ...PLAY_OPS].includes(op.op)) throw new Refusal("This character is finished: creation can't change it (use the Karma step).");
   const b = structuredClone(body), sys = b.actor.system;
+  if (PLAY_OPS.includes(op.op)) return playOp(b, op, lookup, now);
   // Name and notes are metadata: they never rebuild the items, so a finished character's data stays as finished (M2d r1 #2).
   if (op.op === "setName") { b.name = b.actor.name = cleanName(op.name); return b; }
   if (op.op === "setNotes") {
@@ -298,6 +305,8 @@ export function applyOp(body, op, lookup = () => null, { roll = null, now = 0 } 
       const leftover = Math.max(0, v.budgets.resources.remaining);
       sys.nuyen = startingMoney(leftover, dice);
       sys.chargen.inProgress = false;
+      // The ratings stay as finished: Foundry stops deriving them from the creation points (finalizePendingSkills).
+      for (const i of b.actor.items) if (i.type === "skill") i.system.ratingsFinalized = true;
       b.actor.flags = { ...(b.actor.flags ?? {}), sr2e: { ...(b.actor.flags?.sr2e ?? {}), startingMoneyGranted: true } };   // Foundry never offers it again
       b.creation.finished = { at: now, leftover, roll: dice, nuyen: sys.nuyen, karmaPool: startingKarmaPool(sys.race, !!b.creation.options.moreMetahumans) };
       return b;
@@ -323,6 +332,90 @@ const shortText = (v, what) => {
   if (t.length > 60) throw new Refusal(`${what} is at most 60 characters.`);
   return t;
 };
+/**
+ * A finished character (PLAN-M4a Draft 2, r1 #4): the creation checks (budgets, the racial maximum, the skill cap) no
+ * longer apply. What stays true in play: Essence ≥ 0; an attribute above 1.5 × the racial maximum is discouraged
+ * (p.190, a warning).
+ */
+function validateInPlay(body, add, problems) {
+  const sys = body.actor.system, items = body.actor.items, mtype = sys.magic.type;
+  const essence = Math.round((6 - items.filter(i => i.type === "cyberware").reduce((t, i) => t + essenceOf(i, items), 0)) * 100) / 100;
+  const magic = mtype === "none" ? 0 : Math.max(0, Math.min(6, Math.floor(essence + 1e-9)));
+  if (essence < 0) add("resources", "error", `Essence is ${essence}.`, 46);
+  const max = TABLES.racialMaximums[sys.race] ?? TABLES.racialMaximums.human;
+  for (const a of ATTRIBUTES) if (withRacial(sys, a) > 1.5 * max[a]) add("karma", "warning", `${ATTR_NAMES[a]} ${withRacial(sys, a)} is beyond 1.5 × the racial maximum: the book discourages it.`, 190);
+  const budgets = {};
+  if (mtype === "physical_adept") {   // a lost Magic point costs one point of improvements (p.126): still reported
+    const pb = adeptPowerBudget({ items, maxes: max, natural: Object.fromEntries(["body", "quickness", "strength"].map(a => [a, withRacial(sys, a)])), magic });
+    budgets.powerPoints = { spent: pb.used, total: magic, over: pb.used > magic, costs: pb.costs };
+    if (pb.used > magic) add("magic", "error", `${pb.used} power points used; the Magic Rating gives ${magic}: give up improvements to match.`, 126);
+  }
+  return { budgets, essence, magic, problems, finishable: false };
+}
+
+/* ── After creation: Karma (docs/PLAN-M4a.md) ───────────────────────────────────────────────────────────────── */
+
+/** The context the system's Karma transition prices with: bought + racial rating; after creation no clamp (p.192). */
+export function karmaContext(body) {
+  const sys = body.actor.system, max = TABLES.racialMaximums[sys.race] ?? TABLES.racialMaximums.human, attributes = {};
+  for (const a of ATTRIBUTES) { const natural = withRacial(sys, a); attributes[a] = { natural, next: natural + 1, overMax: natural + 1 > max[a], stuck: false }; }
+  return { moreMetahumans: !!body.creation.options.moreMetahumans, race: sys.race, attributes };
+}
+/** The actor as the transition reads it. */
+export const karmaSource = (body) => ({ system: body.actor.system, items: body.actor.items });
+/** Every advancement this character can buy now, with its price (the system's own list). */
+export const karmaOptions = (body) => advancementOptions(karmaSource(body), karmaContext(body));
+const setPath = (obj, path, v) => { const ks = path.split("."); let o = obj; for (const k of ks.slice(0, -1)) o = o[k] ??= {}; o[ks.at(-1)] = v; };
+/** The latest entry that can be undone: an ORIGINAL (not an undo) not yet undone (PLAN-M4a Draft 3). */
+export const undoable = (body) => [...(body.ledger ?? [])].reverse().find(e => !e.undoes && !e.undoneBy) ?? null;
+
+function playOp(b, op, lookup, now) {
+  if (!b.creation.finished) throw new Refusal("Karma is spent after the character is finished.", 190);
+  const source = karmaSource(b), ctx = karmaContext(b);
+  let action, note = "", undoes = null;
+  if (op.op === "awardKarma") { action = { award: op.amount }; note = shortText(op.note ?? "", "A note"); }
+  else if (op.op === "undoKarma") {
+    const e = undoable(b);
+    if (!e || e.id !== op.entryId) throw new Refusal("Only the latest change that isn't undone can be undone.");
+    action = { revert: e.record }; undoes = e.id;
+  } else {
+    const t = op.target && typeof op.target === "object" ? { ...op.target } : {};
+    if (typeof t.newSkill === "string") {   // a core skill from the catalog, or a named Knowledge/Language skill
+      const e = lookup(t.newSkill);
+      if (!e || e.type !== "skill" || e.book !== CORE) throw new Refusal("That isn't a core skill.");
+      t.newSkill = { type: "skill", name: e.name, img: e.img ?? null, system: structuredClone(e.system), flags: {}, effects: [], _stats: { compendiumSource: e._stats?.compendiumSource ?? null } };
+    } else if (t.newCustomSkill) {
+      const { category, name } = t.newCustomSkill;
+      if (!CUSTOM_SKILL_CATEGORIES.includes(category)) throw new Refusal("Name a Knowledge, Language or Build/Repair skill.", 66);
+      const n = shortText(name, "A skill's name");
+      if (!n) throw new Refusal("A skill needs a name.");
+      t.newSkill = { type: "skill", name: n, img: null, flags: {}, effects: [], _stats: { compendiumSource: null },
+        system: { category, linkedAttribute: "intelligence", rating: 0, concentration: { name: "", rating: 0 }, specialization: { name: "", rating: 0 }, isMagical: false, notes: "" } };
+      delete t.newCustomSkill;
+    }
+    if (t.newSkill) {   // a fresh id that no item (ours or a foreign one) holds
+      const taken = new Set(b.actor.items.map(i => i._id));
+      let n = b.creation.nextItem ?? 1;
+      while (taken.has(itemId(n)) || Object.hasOwn(b.creation.items, itemId(n))) n++;
+      t.newId = itemId(n); b.creation.nextItem = n + 1;
+    }
+    action = { advance: t };
+  }
+  const r = karmaTransition(source, action, ctx);
+  if (!r.ok) throw new Refusal(r.reason, 190);
+  const rec = r.record;
+  // Apply the AFTER values (an undo's record is already inverted).
+  for (const [path, [, after]] of Object.entries(rec.actor)) setPath(b.actor, path, after);
+  for (const it of rec.items) { const item = b.actor.items.find(i => i._id === it._id); for (const [path, [, after]] of Object.entries(it.set)) setPath(item, path, after); }
+  if (rec.create) b.actor.items.push({ effects: [], flags: {}, ...rec.create });
+  if (rec.remove) b.actor.items = b.actor.items.filter(i => i._id !== rec.remove);
+  b.ledger ??= [];
+  const id = `k${String(b.ledger.length + 1).padStart(5, "0")}`;
+  b.ledger.push({ id, at: now, kind: rec.kind, summary: rec.summary, note, record: rec, ...(undoes ? { undoes } : {}) });
+  if (undoes) b.ledger.find(e => e.id === undoes).undoneBy = id;
+  return b;
+}
+
 /** A vehicle's key in `creation.vehicles`: fixed width, so the order survives a database that sorts JSON keys. */
 const vehicleKey = (n) => `v${n.toString(36).padStart(5, "0")}`;
 /** A Foundry-shaped id (16 letters and digits), the same on the server and in the browser: a counter, not a random. */
@@ -425,6 +518,7 @@ export const withRacial = (sys, attr) => (Number(sys[attr]?.base) || 0) + (TABLE
 export function validate(body) {
   const sys = body.actor.system, pr = sys.chargen.priorities, opts = body.creation.options, problems = [];
   const add = (step, severity, text, page) => problems.push({ step, severity, text, cite: cite(page) });
+  if (body.creation.finished) return validateInPlay(body, add, problems);
   const table = TABLES.priorities;
 
   // Priorities (p.44): every category, each letter once.

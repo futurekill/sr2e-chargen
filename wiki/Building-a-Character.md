@@ -50,6 +50,16 @@ The links at the top of the character page jump between them.
 The house rulings the app follows where the book is unclear are in the repository's `docs/RULINGS.md` (for example:
 a weapon with Concealability above 5 makes a small weapon focus).
 
+## After creation: Karma
+
+A finished character gets a **Karma** step at the top of its page (p.190–191):
+- **Award Karma** after a run: it adds to Total Karma; one-tenth of Total (rounded up) is the Karma Pool, the rest
+  is Good Karma to spend.
+- **Raise** an attribute (its new rating; double above the racial maximum, with the GM's approval) or a skill
+  (2 × the new rating; a language 1 ×; a Concentration 1.5 ×; a Specialization 1 ×), **add** a named Concentration
+  or Specialization, or **learn** a new skill (1 Good Karma). Reaction, Essence and Magic are never raised with Karma.
+- **History** lists every change; **Undo** reverses the newest one.
+
 ## Print and share
 
 - **Print sheet**: the full character sheet as a PDF, in the **Classic**, **Fohawk** or **Fohawk (ink saver)** style,

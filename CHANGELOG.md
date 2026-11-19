@@ -6,6 +6,12 @@ notes come from it.
 ## Unreleased
 
 ### Added
+- **Karma after creation** (core p.190–191): a finished character has a **Karma** step. Award Karma (one-tenth of
+  Total, rounded up, is the Karma Pool; the rest Good Karma); raise an attribute (its new rating, double above the
+  racial maximum with the GM's approval), a skill (2 ×, a language 1 ×), a Concentration (1.5 ×) or Specialization
+  (1 ×), add a named one, or learn a new skill (1). Every change is in the character's history, and the latest can be
+  undone. Prices come from the Foundry system's own function, so both agree. Finishing now freezes skill ratings as
+  Foundry does, and the sheets show Good and Total Karma.
 - **Vehicles and drones at creation** (core p.46, p.264): search the Vehicle type and add one at its list price;
   the character keeps the vehicle's complete data (for the Foundry connector) and Foundry's purchase receipt, so the
   budget is the system's. A vehicle the book lists as "Restricted" can't be bought. The full sheet and the stat block

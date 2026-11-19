@@ -51,6 +51,8 @@ bonding (p.46, p.137), refusals.
    Finish a clean character: 15,000¥ unspent → 1,500¥ + 3D6 × 1,000¥; afterwards only name, notes and the card change.
    Vehicles: Type Vehicle, search "Scoot", Add — 2,000¥ on the Nuyen row, the sheet and stat block list it; a GMC
    Banshee is refused (Restricted).
+   Karma (a finished character): award 40 — Good 36, Pool 5; raise Firearms 6 → 7 — 14; add a Concentration;
+   learn a skill — 1; Undo twice returns to the start; Strength 6 → 7 needs the GM tick and costs 14.
 9. Sheet: "Print sheet" on a character opens a PDF; try A4 and the readable font; print one page on paper and mark a
    condition box with a pencil. Download the Markdown stat block and open it in a Markdown viewer. On Account, turn
    on the readable font: the site changes at once, a second device shows it after sign-in, and "Print sheet" uses it. Look at `npm run sheet:snapshots`-style renders after any layout change.

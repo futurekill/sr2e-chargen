@@ -5,7 +5,7 @@
  * character at creation can hold is composed here (no in-play state, no sourcebook ware); each step names the
  * CharacterData method it matches.
  */
-import { TABLES, combatSenseDice, reactionBase, wornArmorTotals, heavyArmorPoolPenalty, astralCombatPool, startingKarmaPool, strengthMinWeaponStats, naturalAttribute } from "./rules.mjs";
+import { TABLES, combatSenseDice, karmaPoolCapacity, karmaPoolAvailable, reactionBase, wornArmorTotals, heavyArmorPoolPenalty, astralCombatPool, strengthMinWeaponStats, naturalAttribute } from "./rules.mjs";
 import { essenceOf } from "./purchase.mjs";
 
 export const ATTRS = ["body", "quickness", "strength", "charisma", "intelligence", "willpower"];
@@ -77,6 +77,9 @@ export function derive({ actor, options = {} }) {
   return {
     attributes, natural, reaction, initiativeDice, essence, magic, pools, armor, weapons, vcr, mpcp,
     monitors: { physical: 10, stun: 10, overflow: natural.body },   // p.112; overflow against NATURAL Body
-    karmaPool: startingKarmaPool(race, !!options.moreMetahumans)
+    // The Karma Pool (p.191): the starting pool + one-tenth of Total Karma, less what is burned (PLAN-M4a Draft 2).
+    karmaPool: karmaPoolCapacity(sys.karma?.total, sys.karma?.burned, sys.karma?.poolAdjust, race, !!options.moreMetahumans),
+    karmaPoolAvailable: karmaPoolAvailable(karmaPoolCapacity(sys.karma?.total, sys.karma?.burned, sys.karma?.poolAdjust, race, !!options.moreMetahumans), sys.karma?.spent, sys.karma?.drawn),
+    goodKarma: Number(sys.karma?.current) || 0, totalKarma: Number(sys.karma?.total) || 0
   };
 }

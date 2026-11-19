@@ -23,10 +23,16 @@ const FIELD = { string: { type: "string", maxLength: 20000 }, boolean: { type: "
   choices: { type: "object", maxProperties: 4, propertyNames: { pattern: "^[a-zA-Z]{1,20}$" },
     additionalProperties: { anyOf: [{ type: "integer", minimum: 0, maximum: 1000 }, { type: "string", maxLength: 60 }] } },
   // Followers' five archetypes (docs/PLAN-M2d.md): at most five short names.
-  archetypes: { type: "array", maxItems: 5, items: { type: "string", maxLength: 60 } } };
+  archetypes: { type: "array", maxItems: 5, items: { type: "string", maxLength: 60 } },
+  // A Karma advancement's target (docs/PLAN-M4a.md): one of its forms; the system's karmaTransition checks the rest.
+  karmaTarget: { type: "object", additionalProperties: false, maxProperties: 4, properties: {
+    attribute: { type: "string", maxLength: 20 }, itemId: { type: "string", maxLength: 16 }, tier: { enum: ["general", "concentration", "specialization"] },
+    newConcentration: { type: "string", maxLength: 60 }, newSpecialization: { type: "string", maxLength: 60 }, newSkill: { type: "string", maxLength: 160 },
+    newCustomSkill: { type: "object", additionalProperties: false, required: ["category", "name"], properties: { category: { type: "string", maxLength: 20 }, name: { type: "string", maxLength: 60 } } },
+    gmApproved: { type: "boolean" }, libraryConfirmed: { type: "boolean" } } } };
 /** Tighter bounds for some ops' fields (docs/PLAN-M2d.md Draft 2): refused at the door, checked again by the reducer. */
 const short = { type: "string", maxLength: 60 }, choice = (...v) => ({ enum: ["", ...v] });
-const BOUNDS = { addExtra: { kind: { enum: ["gang", "follower"] }, name: short },
+const BOUNDS = { awardKarma: { amount: { type: "integer", minimum: 1, maximum: 1000 }, note: { type: "string", maxLength: 120 } }, addExtra: { kind: { enum: ["gang", "follower"] }, name: short },
   setAllergy: { substance: short, rarity: choice("uncommon", "common"), severity: choice("nuisance", "mild", "moderate", "severe"),
     rarityBonus: choice("attributes", "skills", "force", "nuyen"), severityBonus: choice("attributes", "skills", "force", "nuyen") } };
 const opSchema = { oneOf: Object.entries(OPS).map(([op, fields]) => ({ type: "object", additionalProperties: false, required: ["op", ...Object.keys(fields)],

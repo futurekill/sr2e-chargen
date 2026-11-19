@@ -1,5 +1,5 @@
 # Plan: milestone 4a — Karma after creation (awards, advancement, history and undo)
-_Draft 3 (2026-11-19), after Codex plan rounds 1–2 (10 + 6 + 3 findings, all accepted, round 3 folded into Draft 3; docs/PLAN-M4a-REVIEW-LOG.md; the "Draft 2" and "Draft 3" sections at the end win). The first slice of milestone 4 ("Manage a character", docs/ROADMAP.md item 4; docs/PLAN.md
+_Draft 3 (2026-11-19), BUILT on the local branches (system release/0.161.0 7907ad57, app chargen/on-0.161), after Codex plan rounds 1–2 (10 + 6 + 3 findings, all accepted, round 3 folded into Draft 3; docs/PLAN-M4a-REVIEW-LOG.md; the "Draft 2" and "Draft 3" sections at the end win). The first slice of milestone 4 ("Manage a character", docs/ROADMAP.md item 4; docs/PLAN.md
 "Manager"). Rules: core p.190–191 (docs/RULES-CHARGEN.md "After creation"), read on the page. Built on the local app
 branch `chargen/on-0.161` and the system's `release/0.161.0` until that release; later slices: nuyen and purchases
 (M4b), damage and ammo (M4c)._
