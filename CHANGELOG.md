@@ -6,7 +6,7 @@ notes come from it.
 ## Unreleased
 
 ### Documentation
-- A user guide in `wiki/` (published to the GitHub wiki): building a character, running the image (pull, settings,
+- A user guide in the README: building a character, running the image (pull, settings,
   compose, reverse proxy, first admin, updates), databases (SQLite in depth, PostgreSQL, MySQL/MariaDB), backups and
   restore, admin commands. README and OPERATIONS updated for the beta.
 
