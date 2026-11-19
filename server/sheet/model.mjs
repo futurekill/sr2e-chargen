@@ -105,7 +105,8 @@ export function sheetModel(body) {
     history: (body.ledger ?? []).map(e => [e.at ? new Date(e.at).toISOString().slice(0, 10) : "", plain(e.summary, 160), plain([e.by, e.note].filter(Boolean).join(" · "), 120), e.undoneBy ? "undone" : ""]),
     notes: plain(body.notes),
     // Item ids parallel to the rows above (the table card filters by them).
-    rowIds: { attacks: of("weapon").map(i => i._id), skills: of("skill").map(i => i._id), cyberware: of("cyberware").map(i => i._id),
+    // attacks: the same list and order as the attack rows (cyber weapons too).
+    rowIds: { attacks: d.weapons.map(w => w.id), skills: of("skill").map(i => i._id), cyberware: of("cyberware").map(i => i._id),
       spells: of("spell").map(i => i._id), powers: of("adept_power").map(i => i._id) }
   };
 }

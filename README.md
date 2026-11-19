@@ -370,7 +370,10 @@ remembers the tab you were on.
    Cyberpirates' and Rigger 2's Edges and Flaws appear too when their books are on. With Shadowtech on, the shop offers **bioware**:
    choose the rating and grade (cultured: ×0.75 Body Cost, ×4 price; neural bioware is always cultured already). The
    Body Index is shown; an Awakened character pays it in Essence too; going over Body is overstress (a warning).
-   Bioware with its own rules (Adrenal Pump, Pain Editor, Orthoskin, Muscle Augmentation…) comes later.
+   Bioware with its own rules (Adrenal Pump, Pain Editor, Orthoskin, Muscle Augmentation…) comes later. Book
+   **cyberware** (Cybertechnology, Street Samurai Catalog…) is offered too, except limbs and implants with their own
+   rules. With the **Street Samurai Catalog** on, every cyberware purchase can be **alpha** (Essence ×0.8, price ×3) or
+   **beta** (×0.6, ×7) (p.98); an accessory inside a cybereye takes the eye's grade.
 2. **Priorities** (p.44): give each of Race, Magic, Attributes, Skills and Resources one letter, A to E, each letter
    once. Picking a letter that is in use swaps the two.
 3. **Metatype** (p.44): human, dwarf, elf, ork or troll. A metahuman needs Race A (or C with the GM's *More

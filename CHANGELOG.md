@@ -6,6 +6,10 @@ notes come from it.
 ## Unreleased
 
 ### Added
+- **Sourcebook cyberware and grades** (docs/PLAN-M5f.md): with their books on, the shop offers plain cyberware from
+  Cybertechnology, the Street Samurai Catalog, Cyberpirates, Rigger 2, Corporate Security and Shadowtech (limbs and
+  implants with their own rules wait). With the SSC on, cyberware can be alpha or beta grade (SSC p.98: Essence ×0.8
+  / ×0.6, price ×3 / ×7; not Shadowtech's, p.40). Cyber weapons now show in the attacks.
 - **Bioware** (Shadowtech; docs/PLAN-M5e.md): with Shadowtech on, the creation shop offers the bioware whose effects
   the app computes as Foundry does (Tailored Pheromones, filters, Symbiotes, Synthacardium…), with its rating and grade
   (cultured ×0.75 Body Cost, ×4 price; neural always cultured). The Body Index is derived and printed; the Awakened pay

@@ -99,7 +99,8 @@ export function derive({ actor, options = {} }) {
     impact: wornT.impact + installed.reduce((t, i) => t + num(i.system.armorImpact), 0) };
 
   // Attacks: the weapon's damage as Foundry prepares it (bows by Strength Minimum, p.96).
-  const weapons = items.filter(i => i.type === "weapon").map(i => ({ name: i.name,
+  // Cyber weapons (installed isWeapon cyberware) are weapons too, as Foundry treats them (PLAN-M5f Draft 2).
+  const weapons = items.filter(i => i.type === "weapon" || (i.type === "cyberware" && i.system.isWeapon && i.system.installed !== false)).map(i => ({ id: i._id, name: i.name,
     damageCode: strengthMinWeaponStats(i.system)?.damageCode ?? i.system.damageCode ?? "", skill: i.system.skill ?? "",
     concealability: i.system.concealability ?? null, reach: i.system.reach ?? 0 }));
 

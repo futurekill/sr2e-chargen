@@ -129,3 +129,8 @@ bonding (p.46, p.137), refusals.
 - With Shadowtech on, the shop lists plain bioware (no Adrenal Pump, Pain Editor, Orthoskin…); rating and grade
   choices (no grade for neural); Body Cost in the row; the Rules check warns on overstress; the sheet's Bioware block
   and Body Index line; a magician's Essence drops by the Body Index.
+
+## Book cyberware and grades (M5f)
+- A Grade choice on cyberware rows; alpha/beta without the SSC is an error; with it, Essence and price follow; the SSC
+  can't be turned off with a graded item. Cyberlimbs, Skillwires and ruled ware aren't offered. Hand Razors show in
+  the attacks.

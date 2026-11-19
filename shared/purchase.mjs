@@ -4,7 +4,7 @@
  * operation, so no price or rule field is ever stored as typed. Prices and Essence come from the system's own pure
  * functions (shared/rules.mjs), called with the same inputs Foundry's creation panel gives them.
  */
-import { chargenItemCost, weaponFocusCost, adeptPowerKey, ratedRow, wareCtx, eyeAccessoryKind, rowsListValue, wareEssence, muscleFactor, QUALITY_VALUES, qualityRule, wareRule } from "./rules.mjs";
+import { chargenItemCost, weaponFocusCost, adeptPowerKey, ratedRow, wareCtx, eyeAccessoryKind, rowsListValue, wareEssence, muscleFactor, QUALITY_VALUES, qualityRule, wareRule, limbRole } from "./rules.mjs";
 
 export const BUYABLE = ["weapon", "armor", "gear", "ammo", "cyberware", "bioware", "spell", "focus", "adept_power", "program", "contact", "lifestyle"];
 const STRING_MAX = 60;
@@ -28,7 +28,9 @@ export function choiceSpec(rec, { inPlay = false } = {}) {
       if (s.category === "skillsoft") return { quantity: int(1, 1000), rating: int(1, top), skill: text() };
       return { quantity: int(1, 1000), ...(s.costPerRating > 0 ? { rating: int(1, top) } : rows.length > 1 ? { rating: oneOf(rows) } : {}) };
     case "ammo": return { bundles: int(1, 100) };
-    case "cyberware": return { ...(rows.length > 1 ? { rating: oneOf(rows) } : {}), ...(!inPlay && isEyeAccessory(rec) ? { in: text() } : {}) };
+    // Grades (SSC p.98; PLAN-M5f): at creation only, never for Shadowtech's cyberware (p.40); the SSC must be on (validate).
+    case "cyberware": return { ...(rows.length > 1 ? { rating: oneOf(rows) } : {}), ...(!inPlay && isEyeAccessory(rec) ? { in: text() } : {}),
+      ...(!inPlay && !String(rec.source ?? "").includes("sr2e-shadowtech") ? { grade: oneOf(CYBER_GRADES) } : {}) };
     case "spell": return { force: int(1, 6) };   // "no starting spell can have a Force greater than 6" (p.46)
     case "focus": return { ...(s.focusType === "spell_lock" ? {} : { force: int(1, 6) }), ...(s.focusType === "spell" ? { spell: text() } : {}),
       ...(s.focusType === "weapon" ? { weapon: text() } : {}) };
@@ -56,6 +58,8 @@ export function choiceSpec(rec, { inPlay = false } = {}) {
     default: return {};
   }
 }
+/** Cyberware grades the app offers at creation (SSC p.98): delta waits for its own page. */
+export const CYBER_GRADES = ["standard", "alpha", "beta"];
 /** The attributes an attribute Edge may name (p.24: not Essence, Reaction or Magic). */
 export const QUALITY_ATTRS = ["body", "quickness", "strength", "charisma", "intelligence", "willpower"];
 /** A new purchase's choices: the entry's own values where it has them. */
@@ -79,7 +83,8 @@ export function checkChoices(rec, choices, opts) {
   const spec = choiceSpec(rec, opts), out = {};
   for (const k of Object.keys(choices)) if (!Object.hasOwn(spec, k)) return { reason: `${rec.name} has no choice "${k}".` };
   for (const [k, sp] of Object.entries(spec)) {
-    const v = Object.hasOwn(choices, k) ? choices[k] : rec.choices?.[k];
+    // A record made before a choice existed takes its default (cyberware bought before grades: standard).
+    const v = Object.hasOwn(choices, k) ? choices[k] : rec.choices?.[k] ?? (k === "grade" ? "standard" : undefined);
     if (sp.kind === "int" && !(Number.isInteger(v) && v >= sp.lo && v <= sp.hi)) return { reason: `${rec.name}: ${k} is a whole number from ${sp.lo} to ${sp.hi}.` };
     if (sp.kind === "oneOf" && !sp.values.includes(v)) return { reason: `${rec.name}: ${k} is one of ${sp.values.join(", ")}${opts?.inPlay ? "" : " (no starting gear above 6, p.44)"}.` };
     if (sp.kind === "text") {
@@ -116,6 +121,8 @@ const ST = (id) => `Compendium.sr2e-shadowtech.st-bioware.Item.${id}`;
 /** Bioware that needs a choice the app doesn't record yet (PLAN-M5e Draft 2): Reflex Recorder's skill, Toxin Exhaler's toxin. */
 const BIOWARE_WAITS = new Set([ST("6fac01c3ca92526c"), ST("9f7e371475559ce1")]);
 /** Rated at most the unaugmented Body (their entries; PLAN-M5e Draft 2): Toxin Extractor, Pathogenic Defense, Mnemonic Enhancer. */
+/** Cyberware Foundry derives skills from (Skillwires, Cybertechnology): waits (PLAN-M5f Draft 2). */
+const CYBER_WAITS = new Set(["Compendium.sr2e-cybertechnology.ct-bodyware.Item.92554f491ab51021", "Compendium.sr2e-cybertechnology.ct-bodyware.Item.b888f9b91a131c29"]);
 export const RATING_UP_TO_BODY = new Set([ST("40958403d94eeef2"), ST("64b5f0dc8dc701c3"), ST("f3dc18a732f084d2")]);
 export const bookOf = (entry) => entry.book ?? entry.listBook ?? null;
 export function offerReason(entry, books = [], { inPlay = false } = {}) {
@@ -133,6 +140,15 @@ export function offerReason(entry, books = [], { inPlay = false } = {}) {
     if (wareRule(entry.flags, entry._stats?.compendiumSource ?? null) || s.triggered || s.damageCompensator || s.ignoresStunPenalty || s.activeSkillDice
       || s.armorBallistic || s.armorImpact || (s.ratingStats ?? []).some(r => r.armorBallistic || r.armorImpact) || BIOWARE_WAITS.has(entry._stats?.compendiumSource))
       return "This bioware has its own rules the app doesn't compute yet.";
+    return refusalFor(entry);
+  }
+  if (entry.type === "cyberware" && book !== "sr2") {   // book cyberware (PLAN-M5f): plain implants only
+    if (!books.includes(book)) return "That sourcebook isn't turned on for this character.";
+    const s = entry.system ?? {}, src = entry._stats?.compendiumSource ?? null;
+    if (wareRule(entry.flags, src) || limbRole(s, entry.flags ?? {}, src) || s.cranialDeck || entry.effects?.length || s.capacity > 0
+      // Skillwires of any kind: Foundry knows them by name and grants slotted skills from them (code review M5f r1 #1).
+      || s.unarmedPowerBonus || s.isTacticalComputer || s.skillwirePlus || s.accessPorts || CYBER_WAITS.has(src) || /skillwire/i.test(entry.name ?? ""))
+      return "This cyberware has its own rules the app doesn't compute yet.";
     return refusalFor(entry);
   }
   if (book !== "sr2") {
@@ -181,7 +197,7 @@ export function project(rec, c, recs = {}) {
   if (rec.type === "cyberware") {
     const row = ratedRow(s.ratingStats, s.rating);
     if (row && typeof row.essenceCost === "number") s.essenceCost = row.essenceCost;
-    s.grade = "standard";
+    s.grade = c.grade ?? "standard";
   }
   if (rec.type === "bioware") {   // BiowareData's preparation: the rating row's stats; installed (PLAN-M5e)
     const row = ratedRow(s.ratingStats, s.rating);

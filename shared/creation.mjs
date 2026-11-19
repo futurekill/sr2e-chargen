@@ -565,6 +565,10 @@ function booksInUse(b, lookup) {
   for (const v of Object.values(b.creation.vehicles ?? {})) used.add(v.source?.system?.citation?.book);
   if (b.actor.system.metavariant?.name) used.add(b.actor.system.metavariant.book);   // PLAN-M5b r1 #6
   if (b.actor.system.race === "shapeshifter") used.add("sc");   // PLAN-M5c r1 #5
+  // A graded implant keeps the Street Samurai Catalog in use (PLAN-M5f Draft 2).
+  const graded = b.creation.finished ? (b.actor.items ?? []).filter(i => i.type === "cyberware").map(i => i.system?.grade)
+    : Object.values(b.creation.items ?? {}).filter(r => r.type === "cyberware").map(r => r.choices?.grade);
+  if (graded.some(g => g && g !== "standard")) used.add("ssc");
   used.delete(CORE); used.delete(undefined); used.delete(null);
   return used;
 }
@@ -841,6 +845,13 @@ export function validate(body) {
   const essence = Math.round((6 - items.filter(i => i.type === "cyberware").reduce((t, i) => t + essenceOf(i, items), 0) - (mtype !== "none" ? bodyIndex : 0)) * 1000) / 1000;
   const magic = mtype === "none" ? 0 : Math.max(0, Math.min(6, Math.floor(essence + 1e-9)));
   if (essence < 0) add("resources", "error", `Essence is ${essence}: cyberware can't take it below 0.`, 46);
+  // Cyberware grades (SSC p.98; PLAN-M5f): the book on; an accessory inside an eye takes the eye's grade.
+  for (const [id, r] of Object.entries(body.creation.items)) {
+    if (r.type !== "cyberware" || !r.choices?.grade || r.choices.grade === "standard") continue;
+    if (!(opts.books ?? []).includes("ssc")) add("resources", "error", `${r.name} is ${r.choices.grade}: alpha and beta grades come from the Street Samurai Catalog — turn it on.`, 98, "ssc");
+    if (r.choices.in) add("resources", "error", `${r.name} is inside a cybereye: it takes the eye's grade, not its own.`, 98, "ssc");
+    void id;
+  }
   // Body Index over the natural Body: overstress, shown not refused, as Foundry (Shadowtech p.6).
   const bodyMax = withRacial(sys, "body", items) + formMod(sys, "body"), over = overstressPenalty(bodyIndex, bodyMax);
   if (over) add("resources", "warning", `Body Index ${Math.round(bodyIndex * 1000) / 1000} is over the Body of ${bodyMax}: overstress, +${over} to Body tests.`, 6, "st");
