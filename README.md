@@ -15,13 +15,370 @@ Built for a small private group: invite-only accounts, one Docker container on y
 > page; **printable PDF sheets** in three styles, a one-page table card and a Markdown stat block, whose numbers
 > match Foundry's; portraits; nightly verified backups. Next: adept powers, contacts, lifestyle and finishing.
 
-## Run the released image
+## Contents
+- [Running the image](#running-the-image): pull, settings, compose, reverse proxy, the first admin, updates
+- [Databases](#databases): SQLite (the default and the recommendation), PostgreSQL, MySQL/MariaDB
+- [Backups and restore](#backups-and-restore)
+- [Admin commands](#admin-commands)
+- [Building a character](#building-a-character): the player's guide
+- [Run it locally (development)](#run-it-locally-development)
 
-The full guide is the wiki ([wiki/Running-the-Image.md](wiki/Running-the-Image.md)): pull
-`ghcr.io/futurekill/sr2e-chargen:v0.1.0-beta.1`, set `BASE_URL`, mount `/data`, run it behind your TLS proxy, then
-`admin bootstrap` for the first admin and invite your players. The database is **SQLite by default**
-(`sqlite:///data/chargen.db`, in the `/data` volume), with PostgreSQL and MySQL/MariaDB supported:
-[wiki/Databases.md](wiki/Databases.md).
+## Running the image
+
+The app ships as one hardened container image: Node on distroless (no shell), read-only root file system, non-root
+user (uid **65532**), port **3000**, its own health check. The catalog is built into the image, so it needs nothing at
+run time except its settings and a place for the database.
+
+### 1. Get the image
+
+The image is a **private** package on GitHub's registry. Log in once on each host, with a personal access token that
+has only the `read:packages` scope:
+
+```bash
+echo "$GHCR_TOKEN" | docker login ghcr.io -u <your-github-user> --password-stdin
+```
+
+Pull by tag, or better by digest (the release notes print the digest):
+
+```bash
+docker pull ghcr.io/futurekill/sr2e-chargen:v0.1.0-beta.1
+```
+
+Optional, recommended: check the signature before you run it (needs [cosign](https://docs.sigstore.dev/)):
+
+```bash
+cosign verify ghcr.io/futurekill/sr2e-chargen@sha256:<digest> \
+  --certificate-identity https://github.com/futurekill/sr2e-chargen/.github/workflows/release.yml@refs/tags/v0.1.0-beta.1 \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com
+```
+
+### 2. Settings
+
+Environment variables only. `BASE_URL` is the one you must set.
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `BASE_URL` | required | The address people type, exactly (scheme, host, port). It must be **https**; plain `http` is accepted only for `localhost`. It is the only Origin the app accepts, so a mismatch makes every form fail. |
+| `DATABASE_URL` | `sqlite:///data/chargen.db` | Where the data lives. See [Databases](#databases). |
+| `TRUST_PROXY` | none | Comma-separated addresses or CIDRs of your reverse proxy. Only their `X-Forwarded-*` headers are believed (client IPs for rate limits and logs). |
+| `PORT`, `HOST` | `3000`, `0.0.0.0` | Where it listens inside the container. |
+| `LOG_LEVEL` | `info` | `warn` is quieter. Logs go to stdout as JSON. |
+| `BACKUP_DIR` | unset | SQLite only: turns on the nightly verified backup into this directory. See [Backups and restore](#backups-and-restore). |
+| `BACKUP_KEEP` | `7` | How many nightly backups to keep. |
+
+### 3. Compose
+
+`docker/compose.example.yml` in the repository is the reference. The short form:
+
+```yaml
+services:
+  chargen:
+    image: ghcr.io/futurekill/sr2e-chargen:v0.1.0-beta.1   # or @sha256:<digest>
+    restart: unless-stopped
+    environment:
+      BASE_URL: https://chargen.example.net
+      TRUST_PROXY: 172.16.0.0/12
+      BACKUP_DIR: /backups
+    ports:
+      - "127.0.0.1:3000:3000"      # only the proxy reaches it
+    volumes:
+      - chargen-data:/data          # the SQLite database (characters and portraits)
+      - chargen-backups:/backups    # nightly backups: a separate volume, ideally another disk
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    tmpfs: ["/tmp"]
+    mem_limit: 1g                   # the memory bound for PDF rendering and portrait decoding: keep it
+volumes:
+  chargen-data:
+  chargen-backups:
+```
+
+```bash
+docker compose up -d
+```
+
+**Bind mounts instead of volumes:** the container runs as uid 65532, so give that user the directories first:
+
+```bash
+sudo install -d -o 65532 -g 65532 -m 0700 /srv/chargen/data /srv/chargen/backups
+```
+
+### 4. The reverse proxy
+
+TLS ends at your proxy; the app speaks plain HTTP on `127.0.0.1:3000`.
+- Forward `Host` and `X-Forwarded-For` / `X-Forwarded-Proto`, and list the proxy in `TRUST_PROXY`.
+- **Allow request bodies of at least 8 MB** (portrait uploads). nginx's default is 1 MB: `client_max_body_size 8m;`.
+- The app sets its own security headers (CSP, HSTS and so on); the proxy doesn't need to add them.
+
+### 5. The first admin, then invites
+
+There is no anonymous mode: every player has an account, and accounts come only from invites.
+
+```bash
+docker compose exec chargen /nodejs/bin/node server/cli.mjs admin bootstrap
+```
+
+It prints a setup link that works once (only while no enabled admin exists). Open it, pick a handle and a password
+(12 characters or more). Then make an invite link for each player, either on the Admin page in the app or:
+
+```bash
+docker compose exec chargen /nodejs/bin/node server/cli.mjs admin invite
+```
+
+Links are shown once and stored only as hashes; if one is lost, make another. All admin commands:
+[Admin commands](#admin-commands).
+
+### 6. Check it
+
+- `docker compose ps` shows `healthy` (the image's health check calls `/healthz`).
+- `curl -fsS http://127.0.0.1:3000/healthz` answers `{"ok":true}`.
+
+### Updating
+
+Pull the new tag (or digest), change `image:`, `docker compose up -d`. Database migrations run at start; an older image
+refuses to start against a database a newer one migrated, so read the release notes before going back a version.
+With SQLite, take a backup first (`backup create`, see [Backups and restore](#backups-and-restore)).
+
+### Platform
+
+linux/amd64 only for now (the portrait library ships a prebuilt libvips for that platform).
+
+## Databases
+
+One setting picks the database: `DATABASE_URL`. Everything the app keeps is in it: accounts, characters with every
+revision, and portraits (as binary rows in the `assets` table). There are no other files to back up.
+
+| Database | `DATABASE_URL` | Tested in CI |
+|---|---|---|
+| **SQLite** (default) | `sqlite:///data/chargen.db` | yes, every push |
+| PostgreSQL | `postgres://user:pass@host:5432/chargen` (`postgresql://` too) | PostgreSQL 18 |
+| MySQL | `mysql://user:pass@host:3306/chargen` | MySQL 9 |
+| MariaDB | `mariadb://user:pass@host:3306/chargen` | MariaDB 12 |
+
+The schema is created and upgraded by the app itself: migrations run at start (`db status` / `db migrate` in the
+[admin commands](#admin-commands) show and run them by hand). An image refuses to start against a database that a newer
+image has migrated.
+
+### SQLite: the default, and the right choice for a group
+
+For a gaming group, SQLite is the recommended database: nothing else to run, and the app's backups (nightly,
+verified, one command to restore) work only with SQLite.
+
+- **The URL is a file path.** Three slashes for an absolute path: `sqlite:///data/chargen.db` is `/data/chargen.db`
+  inside the container (the image's `/data` volume). Two slashes and a dot for a relative path, as in development:
+  `sqlite://./data/dev.db`.
+- **Keep `/data` on a volume** (or a bind mount owned by uid 65532). The container's root file system is read-only;
+  without a volume the database dies with the container.
+- **WAL mode.** The app opens the database in SQLite's write-ahead-log mode, with foreign keys on and a 5-second busy
+  timeout. So next to `chargen.db` you will see `chargen.db-wal` and `chargen.db-shm` while it runs: they are part of
+  the database. **Never copy only `chargen.db` from a running server**: use `backup create` (below), which takes a
+  consistent copy without stopping anyone.
+- **Local disk only.** WAL needs shared memory between processes on one machine: put `/data` on a local file system,
+  never on NFS, SMB/CIFS or other network shares.
+- **One host.** Several app processes on the same host may share the file (one of them takes the nightly backup);
+  two hosts may not. If you need more than one host, use PostgreSQL or MySQL.
+- **Size.** Each user is limited to 200 documents and 500 MB; a group's database stays small (portraits are
+  re-encoded to WebP, the newest five per character kept).
+- **Backups and restore**: [Backups and restore](#backups-and-restore).
+
+Looking inside (read-only, from the host, while it runs):
+
+```bash
+sqlite3 -readonly /var/lib/docker/volumes/<project>_chargen-data/_data/chargen.db '.tables'
+```
+
+### PostgreSQL
+
+- Create an empty database and a user that owns it (the app creates its tables):
+
+  ```sql
+  CREATE USER chargen WITH PASSWORD '…';
+  CREATE DATABASE chargen OWNER chargen;
+  ```
+
+- `DATABASE_URL=postgres://chargen:…@db.internal:5432/chargen`. TLS and other connection options go in the URL as the
+  `pg` driver reads them, for example `?sslmode=require`.
+- Each app process opens at most 10 connections.
+
+### MySQL / MariaDB
+
+- Create the database with the `utf8mb4` character set (the server's default on MySQL 8+ and MariaDB 11+; set it if
+  your server is configured otherwise), and a user with all privileges on it:
+
+  ```sql
+  CREATE DATABASE chargen CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+  CREATE USER 'chargen'@'%' IDENTIFIED BY '…';
+  GRANT ALL PRIVILEGES ON chargen.* TO 'chargen'@'%';
+  ```
+
+- `DATABASE_URL=mysql://chargen:…@db.internal:3306/chargen` (or `mariadb://…`, the same driver).
+- Each app process opens at most 10 connections. Portraits are stored as `LONGBLOB`.
+
+### Backups for PostgreSQL and MySQL
+
+The app does not dump server databases itself: use the database's own tool, on a schedule, from a sidecar container
+(the official database image). See [Backups and restore](#backups-and-restore). After restoring a dump, run
+`backup sanitize` and `backup verify` on it before starting the app.
+
+### Changing database later
+
+Moving an existing library from SQLite to PostgreSQL or MySQL (`db copy`) is not built yet. Choose before your group
+starts: a new PostgreSQL or MySQL database is set up on first start, but nothing is carried over from SQLite.
+
+## Backups and restore
+
+A backup is the whole database: accounts, characters, revisions and portraits. It holds password hashes and every
+player's private characters: keep it where only you can read it, and encrypt any copy that leaves the machine (for
+example with `age`).
+
+### SQLite: built in
+
+Set `BACKUP_DIR` (and mount a volume there, separate from `/data`, ideally on another disk). Then:
+
+- **Every night**, one app process copies the database with SQLite's own `VACUUM INTO` (writers are not blocked),
+  checks the copy (integrity, schema, foreign keys, every portrait's checksum, every user's counters) and keeps the
+  newest `BACKUP_KEEP` (default 7). An old backup is removed only after a new one has been checked. Files are named
+  `chargen-<time>.db`, readable by their owner only.
+- **Now**, by hand (before an update, say):
+
+  ```bash
+  docker compose exec chargen /nodejs/bin/node server/cli.mjs backup create
+  ```
+
+- **Check a file**:
+
+  ```bash
+  docker compose exec chargen /nodejs/bin/node server/cli.mjs backup verify /backups/chargen-<time>.db
+  ```
+
+#### Restore (SQLite)
+
+The server must be stopped: the restore refuses while one is running.
+
+```bash
+docker compose stop chargen
+```
+```bash
+docker compose run --rm chargen server/cli.mjs backup restore /backups/chargen-<time>.db
+```
+```bash
+docker compose start chargen
+```
+
+The restore copies the backup beside the database, signs everyone out, cancels unused invite, setup and reset links,
+checks it, and only then swaps it in. A bad file changes nothing.
+
+**Drill**: once a month, restore last night's backup into a scratch copy of the compose project and open it.
+
+### PostgreSQL and MySQL/MariaDB: the database's own tools
+
+Run the dump on a schedule from a sidecar container (the official database image), into the backup volume, writing a
+`.partial` file and renaming it only when the dump succeeded:
+
+```bash
+pg_dump -Fc -f /backups/chargen.dump.partial "$DATABASE_URL" && sync && mv /backups/chargen.dump.partial /backups/chargen-$(date +%F).dump
+```
+
+MySQL/MariaDB: `mysqldump --single-transaction --routines …` the same way. Stop the sidecar while you update the app
+(updates migrate the schema).
+
+To restore: load the dump with `pg_restore` or `mysql`, then, BEFORE starting the app:
+
+```bash
+docker compose run --rm chargen server/cli.mjs backup sanitize --database-url "<url>"
+```
+```bash
+docker compose run --rm chargen server/cli.mjs backup verify --database-url "<url>"
+```
+
+## Admin commands
+
+The image has no shell. Run commands through Node in the running container:
+
+```bash
+docker compose exec chargen /nodejs/bin/node server/cli.mjs <command>
+```
+
+or, when the server is stopped (restore), in a one-off container: `docker compose run --rm chargen server/cli.mjs <command>`.
+With no command it lists them all.
+
+| Command | Does |
+|---|---|
+| `admin bootstrap` | The first admin's setup link. Works only while no enabled admin exists (also the way back in if every admin is lost). |
+| `admin invite [--role admin]` | A one-time invite link, valid 7 days. |
+| `admin invites` / `admin revoke-invite <id>` | The open invites / cancel one. |
+| `admin users` | Everyone, with role and state. |
+| `admin disable <user>` / `admin enable <user>` | Disabling signs that user out everywhere. The last admin can't be disabled. |
+| `admin reset-link <user>` | A one-time password reset link, valid 24 hours. There is no email: hand it over yourself. |
+| `db status` / `db migrate` | Migration state / run pending migrations (the server also migrates at start). |
+| `maintenance on` / `off` / `status` | Stop every write (reads go on) / resume. |
+| `backup create` | A verified SQLite backup now, into `BACKUP_DIR`. |
+| `backup verify <file>` / `backup verify --database-url <url>` | Check a SQLite backup file / a restored server database. |
+| `backup restore <file>` | SQLite, server stopped: restore a backup (see [Backups and restore](#backups-and-restore)). |
+| `backup sanitize --database-url <url>` | After restoring a PostgreSQL/MySQL dump: sign everyone out, cancel unused links. |
+
+Links are printed once and stored only as hashes. If one is lost, make another.
+
+The Admin page in the app does the everyday part too: invites (user or admin), the user list, disabling and
+re-enabling, and reset links.
+
+## Building a character
+
+**Hoi chummer!** builds a Shadowrun, Second Edition character the way the core book does it, one step at a time.
+The **Rules check** panel beside every step shows your budgets and anything still to do or against the rules, each
+with its page reference (`SR2 p.44`). Nothing stops you from saving a half-finished character: the check tells you
+what is left.
+
+### Start
+
+On **Library**, type a street name, keep **Character** as the kind, and **Start**. (A *draft* is a free-text note,
+for ideas.) Every change saves itself and keeps a revision. A deleted character stays under **Deleted** for 30 days,
+where **Restore** brings it back.
+
+### The steps
+
+The links at the top of the character page jump between them.
+
+1. **Concept**: name, notes, and a portrait: upload a JPEG, PNG or WebP (it is re-encoded and its location data
+   removed), or choose one of the premade portraits.
+2. **Priorities** (p.44): give each of Race, Magic, Attributes, Skills and Resources one letter, A to E, each letter
+   once. Picking a letter that is in use swaps the two.
+3. **Metatype** (p.44): human, dwarf, elf, ork or troll. A metahuman needs Race A (or C with the GM's *More
+   Metahumans* option, p.46).
+4. **Magic** (p.45): full magician (hermetic, or shamanic with a totem) or physical adept, as your Magic priority
+   allows.
+5. **Attributes** (p.45): spend your Attribute Points; racial modifiers and maximums are applied for you.
+6. **Skills** (p.45, p.70, p.74): add skills from the book, or your own Knowledge skills; set points, a concentration
+   and a specialization. Mark your native language free (Intelligence + 2) and, with a Street lifestyle, one local
+   dialect.
+7. **Resources** (p.46): search the core book's gear, cyberware, spells and foci and **Add**; set quantities,
+   ratings and Force on each row.
+   - Gear is bought at list price; nothing above Rating 6.
+   - Cyberware takes Essence; cybereye accessories can go **In** the eyes (up to .5 Essence free, p.247).
+   - Magicians pay Force Points for spells (Force up to 6) and for bonding foci. A spell focus names its spell; a
+     weapon focus names the melee weapon it is bonded to (its price follows the weapon's Reach, p.263).
+8. **Table card**: tick what goes on the one-page card for the table.
+
+The house rulings the app follows where the book is unclear are in the repository's `docs/RULINGS.md` (for example:
+a weapon with Concealability above 5 makes a small weapon focus).
+
+### Print and share
+
+- **Print sheet**: the full character sheet as a PDF, in the **Classic**, **Fohawk** or **Fohawk (ink saver)** style,
+  on US Letter or A4, in your account's font or the readable font.
+- **Print card**: the one-page table card. The page says whether it fits on one page, and which rows run over.
+- **Stat block (Markdown)**: the character as text, for a forum post or your notes.
+
+### Your account
+
+**Account** holds your password and the **readable font** option (Atkinson Hyperlegible): it changes the site at once,
+follows you to other devices, and is the sheets' default font.
+
+### Not in this beta
+
+Adept powers, contacts, lifestyle and the finishing step (leftover nuyen, starting Karma) come next. Vehicles and the
+sourcebooks follow. See the repository's CHANGELOG and `docs/ROADMAP.md`.
 
 ## Run it locally (development)
 
@@ -77,8 +434,7 @@ computed the same way in both places. Tests check that both give identical resul
 | [docs/QA-PLAN.md](docs/QA-PLAN.md) | How a change is checked: the automatic checks and the manual walk-through |
 | [CHANGELOG.md](CHANGELOG.md) | What changed, release by release |
 | [docs/PLAN-M3.md](docs/PLAN-M3.md) | The app skeleton's plan (accounts, library, container), with its review log |
-| [docs/OPERATIONS.md](docs/OPERATIONS.md) | Running it: Docker, settings, the admin CLI, backups, releases (the operator's reference) |
-| [wiki/](wiki/Home.md) | The user guide: building a character, running the image, databases, backups, admin commands |
+| [docs/OPERATIONS.md](docs/OPERATIONS.md) | The operator's reference: content and catalog updates, releases, the first-release checklist (the guide is this README) |
 | [docs/THREAT-MODEL.md](docs/THREAT-MODEL.md) | What is protected, from whom, and where each defence lives |
 | [docs/DEPENDENCIES.md](docs/DEPENDENCIES.md) | Every dependency and why it is there |
 | [docs/RULES-CHARGEN.md](docs/RULES-CHARGEN.md) | The creation rules captured from the books, with page references (M0) |

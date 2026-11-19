@@ -1,6 +1,6 @@
 # Running sr2e-chargen
-The operator's reference. The step-by-step guide is the wiki: [Running the image](../wiki/Running-the-Image.md),
-[Databases](../wiki/Databases.md), [Backups and restore](../wiki/Backups-and-Restore.md).
+The operator's reference. The step-by-step guide is in the README: [Running the image](../README.md#running-the-image),
+[Databases](../README.md#databases), [Backups and restore](../README.md#backups-and-restore).
 
 ## Start it
 1. Get the image: the released one, `docker login ghcr.io` (a token with `read:packages`) then
@@ -77,7 +77,7 @@ host; the built-in backups work only with SQLite. PostgreSQL (`postgres://…`) 
 `mariadb://…`) are supported and tested in CI (PostgreSQL 18, MySQL 9, MariaDB 12): create an empty database (MySQL:
 `utf8mb4`) owned by the app's user, set `DATABASE_URL` and start; the app creates its tables. Copying an existing
 SQLite library to another database (`db copy`) is not built yet: choose before your group starts. Details:
-[wiki/Databases.md](../wiki/Databases.md).
+[the README's Databases section](../README.md#databases).
 
 ## Portraits and memory
 Portraits are stored in the database (table `assets`), so a database backup holds them. Uploads are checked from
