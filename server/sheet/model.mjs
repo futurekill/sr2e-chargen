@@ -53,7 +53,9 @@ export function sheetModel(body) {
       ...(variantNotes ? [["Metatype notes", plain(variantNotes, 400)]] : []),
       ...(animalLine ? [["Animal form", animalLine], ["Shapeshifter", "Severe allergy and vulnerability to silver; regenerates; rejects cyberware (Companion p.38)."]] : []),
       ["Magic", magicLine],
-      ["Priorities", Object.keys(CATEGORY_NAMES).map(c => `${CATEGORY_NAMES[c]} ${pr[c] || "–"}`).join(" · ")],
+      sys.chargen?.priorityMethod === "points"   // point-based design (Companion p.20–21)
+        ? ["Creation", `Point-based, ${check.budgets?.buildingPoints?.spent ?? body.creation?.finished?.buildingPoints ?? "?"} of ${sys.chargen.buildingPoints ?? 100} Building Points`]
+        : ["Priorities", Object.keys(CATEGORY_NAMES).map(c => `${CATEGORY_NAMES[c]} ${pr[c] || "–"}`).join(" · ") + (sys.chargen?.priorityMethod === "sumto10" ? " (sum-to-10)" : "")],
       ...(d.bodyIndex?.raw ? [["Body Index", `${d.bodyIndex.value} / ${d.bodyIndex.max}`]] : []),
       ["Karma Pool", String(d.karmaPool)], ...(d.totalKarma > 0 ? [["Good Karma", String(d.goodKarma)], ["Total Karma", String(d.totalKarma)]] : []),
       ["Resources left", body.creation?.finished ? "" : nuyen(Math.max(0, check.budgets.resources.remaining))]
@@ -70,7 +72,7 @@ export function sheetModel(body) {
     stats: [["Reaction", String(d.reaction)], ["Initiative", `${d.reaction} + ${d.initiativeDice}D6`], ["Combat pool", String(d.pools.combat)],
       ...[["Magic pool", d.pools.magic], ["Astral pool", d.pools.astral], ["Hacking pool", d.pools.hacking], ["Control pool", d.pools.control]].filter(([, v]) => v > 0).map(([k, v]) => [k, String(v)]),
       ["Karma pool", String(d.karmaPool)], ...(d.totalKarma > 0 ? [["Good Karma", String(d.goodKarma)], ["Total Karma", String(d.totalKarma)]] : []), ["Essence", num(d.essence)], ...(magic.type !== "none" ? [["Magic", String(d.magic)]] : []), ["Armor", `${d.armor.ballistic} / ${d.armor.impact}`]],
-    priorities: Object.keys(CATEGORY_NAMES).map(c => [{ race: "RACE", magic: "MAGIC", attributes: "ATTR", skills: "SKILLS", resources: "RES" }[c], pr[c] || "–"]),
+    priorities: sys.chargen?.priorityMethod === "points" ? [] : Object.keys(CATEGORY_NAMES).map(c => [{ race: "RACE", magic: "MAGIC", attributes: "ATTR", skills: "SKILLS", resources: "RES" }[c], pr[c] || "–"]),
     subtitle: [raceName, magicLine].join(" · "),
     pools: [["Combat", d.pools.combat], ["Magic", d.pools.magic], ["Astral", d.pools.astral], ["Hacking", d.pools.hacking], ["Control", d.pools.control]]
       .filter(([k, v]) => v > 0 || k === "Combat").map(([k, v]) => [k, String(v)]),

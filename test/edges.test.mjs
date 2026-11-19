@@ -95,5 +95,22 @@ test("sum-to-10 (Companion p.20): letters repeat without swapping; the levels ad
   assert.throws(() => run(b, [{ op: "setBooks", books: [] }]), /comes from sc/);
   b = run(b, [{ op: "setMethod", method: "standard" }]);
   assert.match(validate(b).problems.filter(p => p.step === "priorities").map(p => p.text).join(), /used twice/);
-  assert.throws(() => run(b, [{ op: "setMethod", method: "points" }]), /Standard or sum-to-10/);
+  assert.throws(() => run(b, [{ op: "setMethod", method: "lottery" }]), /Standard, sum-to-10 or point-based/);
+});
+
+test("point-based design (Companion p.20–21): Building Points price every part; an overrun can't finish; the choices are bounded", async () => {
+  let b = run(newCharacter("Points"), [{ op: "setBooks", books: ["sc"] }, { op: "setMethod", method: "points" },
+    { op: "setPoints", buildingPoints: 100, nuyenTier: 400000, forcePointTrade: 0, qualitiesUseBP: false },
+    ...["body", "quickness", "strength", "charisma", "intelligence", "willpower"].map(attr => ({ op: "setAttribute", attr, base: 4 }))]);
+  const v = validate(b);
+  assert.deepEqual([v.budgets.buildingPoints.parts.attributes, v.budgets.buildingPoints.parts.resources, v.budgets.resources.total], [48, 20, 400000]);
+  assert.ok(!v.problems.some(p => p.step === "priorities" && p.severity !== "warning"), "no letters to choose");
+  b = run(b, [{ op: "setMetatype", race: "troll" }, { op: "setMagic", type: "full_magician" }, { op: "setPoints", buildingPoints: 100, nuyenTier: 1000000, forcePointTrade: 5, qualitiesUseBP: false }]);
+  const over = validate(b);
+  assert.match(over.problems.map(p => p.text).join(), /113 Building Points spent; the allotment is 100/, "troll 10 + magician 20 + attributes 48 + 1,000,000¥ 30 + 5 traded = 113");
+  assert.equal(over.finishable, false);
+  assert.throws(() => run(b, [{ op: "setPoints", buildingPoints: 100, nuyenTier: 123, forcePointTrade: 0, qualitiesUseBP: false }]), /nuyen tier/);
+  assert.throws(() => run(b, [{ op: "setPoints", buildingPoints: 100, nuyenTier: 500, forcePointTrade: -16, qualitiesUseBP: false }]), /−15 to 500/);
+  const { sheetModel } = await import("../server/sheet/model.mjs");
+  assert.match(Object.fromEntries(sheetModel(b).header).Creation, /Point-based, 1\d\d of 100 Building Points/);
 });

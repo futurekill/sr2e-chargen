@@ -8,7 +8,7 @@
  * A character is the Foundry system's own `character` source shapes (`actor`), so the system's functions read it
  * unchanged; the app's own record sits beside it (`creation`).
  */
-import { TABLES, SHAPESHIFTER_PRIORITIES, humanFormMod, shapeshifterOf, qualityAudit, qualityEffects, bonusAttributeCost, attributeEdgeViolations, qualityRule, bodyIndexTotal, overstressPenalty, racialProfile, metavariantFrom, isMetavariantItem, ONI_SOURCE, chargenBudget, damageUpdateFor, surgeryCategory, surgeryEssencePct, surgeonTN, karmaTransition, advancementOptions, saleQuoteOf, streetPrice, ratedStreetIndex, startingMoney, startingKarmaPool, adeptPowerBudget, label, skillTiersFromAllocation, validateSkillAllocation } from "./rules.mjs";
+import { TABLES, BP_NUYEN_TIERS, SHAPESHIFTER_PRIORITIES, humanFormMod, shapeshifterOf, qualityAudit, qualityEffects, bonusAttributeCost, attributeEdgeViolations, qualityRule, bodyIndexTotal, overstressPenalty, racialProfile, metavariantFrom, isMetavariantItem, ONI_SOURCE, chargenBudget, damageUpdateFor, surgeryCategory, surgeryEssencePct, surgeonTN, karmaTransition, advancementOptions, saleQuoteOf, streetPrice, ratedStreetIndex, startingMoney, startingKarmaPool, adeptPowerBudget, label, skillTiersFromAllocation, validateSkillAllocation } from "./rules.mjs";
 import { defaultChoices, checkChoices, offerReason, RATING_UP_TO_BODY, project, price, eyeRow, essenceOf, isCybereye, powerKeyOf, sensesOf } from "./purchase.mjs";
 
 export const SCHEMA = "sr2e-chargen-character", SCHEMA_VERSION = 1;
@@ -65,7 +65,8 @@ export const OPS = Object.freeze({
   // Sourcebooks (docs/PLAN-M5a.md): what may be bought; metadata, allowed after finishing.
   setBooks: { books: "books" },
   setPriority: { category: "string", letter: "string" },
-  setMethod: { method: "string" },   // Companion p.20: "standard" or "sumto10" (Foundry's system.chargen.priorityMethod)
+  setMethod: { method: "string" },
+  setPoints: { buildingPoints: "integer", nuyenTier: "money", forcePointTrade: "integer", qualitiesUseBP: "boolean" },   // Companion p.20: "standard" or "sumto10" (Foundry's system.chargen.priorityMethod)
   setMetatype: { race: "string", variant: "string" },   // variant: a catalog race id, or "" (Companion p.39–44)
   setMagic: { type: "string" },
   setTradition: { tradition: "string" },
@@ -156,10 +157,19 @@ export function applyOp(body, op, lookup = () => null, { roll = null, now = 0, s
       if (!OPTIONS.includes(op.key) || typeof op.value !== "boolean") throw new Refusal("Unknown option.");
       b.creation.options[op.key] = op.value; break;
     case "setMethod":
-      if (!["standard", "sumto10"].includes(op.method)) throw new Refusal("Standard or sum-to-10.", 20);
-      if (op.method === "sumto10" && !booksOf(b).includes("sc")) throw new Refusal("Sum-to-10 is the Shadowrun Companion's: turn it on first.", 20);
+      if (!["standard", "sumto10", "points"].includes(op.method)) throw new Refusal("Standard, sum-to-10 or point-based.", 20);
+      if (op.method !== "standard" && !booksOf(b).includes("sc")) throw new Refusal("That method is the Shadowrun Companion's: turn it on first.", 20);
       sys.chargen.priorityMethod = op.method;
       break;
+    case "setPoints": {   // point-based design's choices (Companion p.20–21; PLAN-M5h)
+      const ch = sys.chargen, int = (v, lo, hi) => Number.isInteger(v) && v >= lo && v <= hi;
+      if (!int(op.buildingPoints, 1, 1000)) throw new Refusal("The allotment is 1 to 1,000 Building Points.", 20);
+      if (!Object.hasOwn(BP_NUYEN_TIERS, String(op.nuyenTier))) throw new Refusal("A nuyen tier from the Building Points Table.", 20);
+      if (!int(op.forcePointTrade, -15, 500)) throw new Refusal("Force Points traded: −15 to 500 Building Points.", 21);
+      if (typeof op.qualitiesUseBP !== "boolean") throw new Refusal("On or off.");
+      Object.assign(ch, { buildingPoints: op.buildingPoints, nuyenTier: op.nuyenTier, forcePointTrade: op.forcePointTrade, qualitiesUseBP: op.qualitiesUseBP });
+      break;
+    }
     case "setPriority": {
       if (!CATEGORIES.includes(op.category) || !["", ...LETTERS].includes(op.letter)) throw new Refusal("Unknown priority.", 44);
       // Each letter once (p.44): taking a letter another category holds SWAPS the two, so the table stays whole.
@@ -197,6 +207,7 @@ export function applyOp(body, op, lookup = () => null, { roll = null, now = 0, s
       if (!MAGIC_TYPES.includes(op.type)) throw new Refusal("That isn't a core magic type.", 45);
       sys.magic.type = op.type;
       if (op.type !== "full_magician") { sys.magic.tradition = "none"; sys.magic.totem = ""; }   // only a magician has a tradition (p.44–45)
+      if (op.type !== "full_magician" && sys.chargen.forcePointTrade) sys.chargen.forcePointTrade = 0;   // only a magician trades Force Points (M5h)
       break;
     case "setTradition":
       if (!["none", ...TRADITIONS].includes(op.tradition)) throw new Refusal("That isn't a tradition.", 44);
@@ -350,7 +361,8 @@ export function applyOp(body, op, lookup = () => null, { roll = null, now = 0, s
       for (const i of b.actor.items) if (i.type === "skill") i.system.ratingsFinalized = true;
       b.actor.flags = { ...(b.actor.flags ?? {}), sr2e: { ...(b.actor.flags?.sr2e ?? {}), startingMoneyGranted: true } };   // Foundry never offers it again
       monitorOf(b);   // unwounded (PLAN-M4c Draft 2)
-      b.creation.finished = { at: now, leftover, roll: dice, nuyen: sys.nuyen, karmaPool: startingKarmaPool(sys.race, !!b.creation.options.moreMetahumans) };
+      b.creation.finished = { at: now, leftover, roll: dice, nuyen: sys.nuyen, karmaPool: startingKarmaPool(sys.race, !!b.creation.options.moreMetahumans),
+        ...(v.budgets.buildingPoints ? { buildingPoints: v.budgets.buildingPoints.spent } : {}) };   // the sheet prints it after finishing
       return b;
     }
     case "removeItem": {
@@ -572,7 +584,7 @@ function booksInUse(b, lookup) {
   for (const v of Object.values(b.creation.vehicles ?? {})) used.add(v.source?.system?.citation?.book);
   if (b.actor.system.metavariant?.name) used.add(b.actor.system.metavariant.book);   // PLAN-M5b r1 #6
   if (b.actor.system.race === "shapeshifter") used.add("sc");   // PLAN-M5c r1 #5
-  if (b.actor.system.chargen?.priorityMethod === "sumto10") used.add("sc");   // sum-to-10 is the Companion's (M5g)
+  if (["sumto10", "points"].includes(b.actor.system.chargen?.priorityMethod)) used.add("sc");   // sum-to-10 is the Companion's (M5g)
   // A graded implant keeps the Street Samurai Catalog in use (PLAN-M5f Draft 2).
   const graded = b.creation.finished ? (b.actor.items ?? []).filter(i => i.type === "cyberware").map(i => i.system?.grade)
     : Object.values(b.creation.items ?? {}).filter(r => r.type === "cyberware").map(r => r.choices?.grade);
@@ -805,13 +817,15 @@ export function validate(body) {
   const add = (step, severity, text, page, book = CORE) => problems.push({ step, severity, text, cite: { book, page: String(page) } });
   if (body.creation.finished) return validateInPlay(body, add, problems);
   const table = priorityTable(sys), shifter = sys.race === "shapeshifter";
+  // Point-based design (Companion p.20–21; PLAN-M5h): no priority letters — the Building Points buy every part.
+  const points = sys.chargen.priorityMethod === "points";
 
   // Priorities (p.44): every category, each letter once.
   const missing = CATEGORIES.filter(c => !pr[c]);
-  if (missing.length) add("priorities", "todo", `Choose a priority for ${missing.map(c => CATEGORY_NAMES[c]).join(", ")}.`, 44);
+  if (missing.length && !points) add("priorities", "todo", `Choose a priority for ${missing.map(c => CATEGORY_NAMES[c]).join(", ")}.`, 44);
   const seen = {};
   for (const c of CATEGORIES) if (pr[c]) (seen[pr[c]] ??= []).push(c);
-  if (sys.chargen.priorityMethod === "sumto10") {   // Companion p.20: A 4, B 3, C 2, D 1, E 0; at most 10 in all
+  if (points) { /* no letters */ } else if (sys.chargen.priorityMethod === "sumto10") {   // Companion p.20: A 4, B 3, C 2, D 1, E 0; at most 10 in all
     const sum = CATEGORIES.reduce((t, c) => t + ({ A: 4, B: 3, C: 2, D: 1, E: 0 }[pr[c]] ?? 0), 0);
     if (sum > 10) add("priorities", "error", `The priority levels add up to ${sum}: at most 10 under sum-to-10.`, 20, "sc");
     if (sys.race === "shapeshifter") add("priorities", "error", "The shapeshifter's table has no sum-to-10 option: use standard priorities.", 36, "sc");
@@ -819,9 +833,9 @@ export function validate(body) {
 
   // Metatype (p.44, p.46).
   // A magical oni may take Race B with Resources A and Magic C (a metahuman adept), at the GM's discretion (Companion p.42).
-  const oniB = !!opts.oniPriority && sys.chargen.priorityMethod !== "sumto10" && pr.race === "B" && pr.resources === "A" && pr.magic === "C" && sys.magic.type === "physical_adept"
+  const oniB = !!opts.oniPriority && !points && sys.chargen.priorityMethod !== "sumto10" && pr.race === "B" && pr.resources === "A" && pr.magic === "C" && sys.magic.type === "physical_adept"
     && racialProfile(sys, TABLES).source === ONI_SOURCE;
-  if (shifter) {
+  if (points) { /* the Building Points price the metatype */ } else if (shifter) {
     if (!shapeshifterOf("character", sys)) add("metatype", "todo", "Choose the shapeshifter's species.", 36, "sc");
     if (pr.race && pr.race !== "A") add("metatype", "error", "A shapeshifter needs Priority A in Race.", 36, "sc");
   } else if (pr.race && !oniB && !metatypeAllowed(pr.race, sys.race, opts.moreMetahumans))
@@ -829,7 +843,7 @@ export function validate(body) {
 
   // Magic (p.44–46).
   const mtype = sys.magic.type;
-  if (pr.magic) {
+  if (pr.magic && !points) {
     const allowed = magicAllowed(pr.magic, sys.race, opts.moreMetahumans);
     if (mtype !== "none" && !allowed.includes(mtype))
       add("magic", "error", `Priority ${pr.magic} in Magic doesn't buy a ${MAGIC_NAMES[mtype]} for ${aRace(sys.race)}.`, opts.moreMetahumans ? 46 : 45);
@@ -958,10 +972,16 @@ export function validate(body) {
   // Budgets: the system's own chargenBudget, the call Foundry's panel makes (core p.44–46; M2d §1).
   const spend = chargenBudget({ system: sys, items, table });
   for (const p of spend.resources.vehicleProblems ?? []) add("resources", "error", p, 264);
-  if (pr.resources && spend.resources.over) add("resources", "error", `${spend.resources.spent.toLocaleString("en-US")}¥ spent; Priority ${pr.resources} gives ${spend.resources.total.toLocaleString("en-US")}¥.`, 46);
-  if (mtype !== "none" && pr.resources && spend.forcePoints.remaining > 0)
+  if ((points || pr.resources) && spend.resources.over) add("resources", "error", `${spend.resources.spent.toLocaleString("en-US")}¥ spent; ${points ? "the nuyen tier" : `Priority ${pr.resources}`} gives ${spend.resources.total.toLocaleString("en-US")}¥.`, 46);
+  if (points && spend.buildingPoints) {   // the overrun blocks finishing (PLAN-M5h r1 #4)
+    const bp = spend.buildingPoints;
+    if (bp.over) add("priorities", "error", `${bp.spent} Building Points spent; the allotment is ${bp.total}.`, 20, "sc");
+    else if (bp.remaining > 0) add("priorities", "warning", `${bp.remaining} Building Point${bp.remaining === 1 ? "" : "s"} unspent.`, 20, "sc");
+    for (const t of bp.problems) add("priorities", "error", t, 20, "sc");
+  }
+  if (mtype !== "none" && (points || pr.resources) && spend.forcePoints.remaining > 0)
     add("resources", "warning", `${spend.forcePoints.remaining} Force Points unspent: only unspent nuyen carries into play.`, 47);
-  if (spend.forcePoints.over) add("resources", "error", `${spend.forcePoints.spent} Force Points spent (spells' Force and foci bonding); ${mtype !== "none" ? `Priority ${pr.resources || "—"} gives ${spend.forcePoints.total}` : "only magicians receive Force Points"}.`, 46);
+  if (spend.forcePoints.over) add("resources", "error", `${spend.forcePoints.spent} Force Points spent (spells' Force and foci bonding); ${mtype !== "none" ? `${points ? "The Building Points give" : `Priority ${pr.resources || "—"} gives`} ${spend.forcePoints.total}` : "only magicians receive Force Points"}.`, 46);
   if (pr.attributes) {
     if (spend.attributes.over) add("attributes", "error", `${spend.attributes.spent} Attribute Points spent; Priority ${pr.attributes} gives ${spend.attributes.total}.`, 45);
     else if (spend.attributes.remaining > 0) add("attributes", "todo", `${spend.attributes.remaining} Attribute Point${spend.attributes.remaining === 1 ? "" : "s"} left to spend.`, 47);

@@ -139,3 +139,8 @@ bonding (p.46, p.137), refusals.
 - With the Companion on, the Priorities step has Standard / Sum-to-10; under sum-to-10 picking a used letter doesn't
   swap; the running sum shows, over 10 is an error; a shapeshifter can't use it; back to standard, a repeated letter is
   the "used twice" error.
+
+## Point-based design (M5h)
+- With the Companion on, the Priorities step's Point-based method hides the letters and shows the allotment, the
+  nuyen tier, the Force Point trade (magicians), the Edges/Flaws option and the running total with its parts; an
+  overrun is an error; Foundry's creation panel shows the same Building Points row (Quench sr2e.chargen-budget).

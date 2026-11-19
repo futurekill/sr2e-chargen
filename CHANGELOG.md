@@ -8,7 +8,11 @@ notes come from it.
 ### Added
 - **Sum-to-10 priorities** (Shadowrun Companion p.20): with the Companion on, the Priorities step offers the
   sum-to-10 method (A 4 … E 0, letters may repeat, at most 10 in all), stored where Foundry keeps it
-  (`system.chargen.priorityMethod`). Point-based design comes next.
+  (`system.chargen.priorityMethod`).
+- **Point-based design** (Companion p.20–21; RULINGS R12): the Priorities step's third method. The GM's Building
+  Points buy the metatype, magic, attributes (2 per point), skills (1 per point), a nuyen tier and traded Force Points;
+  the total and each part show; an overrun is an error; Edges and Flaws can be priced in Building Points (GM option).
+  The same budget runs in Foundry's creation panel.
 - **Sourcebook cyberware and grades** (docs/PLAN-M5f.md): with their books on, the shop offers plain cyberware from
   Cybertechnology, the Street Samurai Catalog, Cyberpirates, Rigger 2, Corporate Security and Shadowtech (limbs and
   implants with their own rules wait). With the SSC on, cyberware can be alpha or beta grade (SSC p.98: Essence ×0.8

@@ -8,7 +8,7 @@
   import { get, mutate, upload } from "../lib/api.js";
   import { derive } from "../../../shared/derive.mjs";
   import { applyOp, validate, karmaOptions, undoable, surgeryPreview, booksOf, priorityTable, freeContacts, withRacial, formMod, edgeMax, PLAY_GEAR, cardIds, cardEligible, CARD_TYPES, CATEGORIES, CATEGORY_NAMES, LETTERS, METATYPES, MAGIC_TYPES, MAGIC_NAMES, TRADITIONS, ATTRIBUTES, ATTR_NAMES, CUSTOM_SKILL_CATEGORIES, totemNames } from "../../../shared/creation.mjs";
-  import { TABLES, racialProfile, metavariantNotes, metavariantFrom, ONI_SOURCE, qualityEffects, effectiveBodyCost } from "../../../shared/rules.mjs";
+  import { TABLES, racialProfile, metavariantNotes, metavariantFrom, ONI_SOURCE, qualityEffects, effectiveBodyCost, BP_NUYEN_TIERS } from "../../../shared/rules.mjs";
   import { BUYABLE, choiceSpec, defaultChoices, project, price, essenceOf, isCybereye, smallWeapon } from "../../../shared/purchase.mjs";
   import { saleQuoteOf, streetPrice, ratedStreetIndex, FENCE_STEPS, totalWoundPenalty, woundLevel } from "../../../shared/rules.mjs";
   let { doc: initial, onDeleted } = $props();
@@ -630,14 +630,36 @@
         <div class="row" role="radiogroup" aria-label="Priority method">
           <label class="row inline"><input type="radio" class="check" name="pmethod" checked={(sys.chargen.priorityMethod ?? "standard") === "standard"} disabled={finished} onchange={() => change({ op: "setMethod", method: "standard" })}><span>Standard (each letter once)</span></label>
           <label class="row inline"><input type="radio" class="check" name="pmethod" checked={sys.chargen.priorityMethod === "sumto10"} disabled={finished} onchange={() => change({ op: "setMethod", method: "sumto10" })}><span>Sum-to-10 <span class="cite">Companion p.20</span></span></label>
+          <label class="row inline"><input type="radio" class="check" name="pmethod" checked={sys.chargen.priorityMethod === "points"} disabled={finished} onchange={() => change({ op: "setMethod", method: "points" })}><span>Point-based <span class="cite">Companion p.20–21</span></span></label>
         </div>
       {/if}
-      {#if sys.chargen.priorityMethod === "sumto10"}
+      {#if sys.chargen.priorityMethod === "points"}
+        {@const ch = sys.chargen}
+        {@const bp = check.budgets?.buildingPoints}
+        {@const setPts = (patch) => change({ op: "setPoints", buildingPoints: ch.buildingPoints ?? 100, nuyenTier: ch.nuyenTier ?? 500, forcePointTrade: ch.forcePointTrade ?? 0, qualitiesUseBP: !!ch.qualitiesUseBP, ...patch })}
+        <p class="muted">Point-based design: spend the GM's Building Points on every part — metahuman 10, magician 20 (with 30 Force Points), physical adept 15, 2 per Attribute Point, 1 per Skill Point, and a nuyen tier. <span class="cite">Companion p.20–21</span></p>
+        <div class="row adders">
+          <label><span>Building Points</span><input type="number" min="1" max="1000" step="1" value={ch.buildingPoints ?? 100} disabled={finished}
+            onchange={(ev) => { const n = numberFrom(ev); if (Number.isInteger(n) && n >= 1 && n <= 1000) setPts({ buildingPoints: n }); else ev.currentTarget.value = ch.buildingPoints ?? 100; }}></label>
+          <label><span>Nuyen</span><select value={ch.nuyenTier ?? 500} disabled={finished} onchange={(ev) => setPts({ nuyenTier: Number(ev.currentTarget.value) })}>
+            {#each Object.entries(BP_NUYEN_TIERS) as [v, cost] (v)}<option value={Number(v)}>{nuyen(Number(v))} ({cost > 0 ? "+" : ""}{cost} BP)</option>{/each}</select></label>
+          {#if sys.magic.type === "full_magician"}
+            <label><span>Force Points traded (BP; −15 to sell all 30)</span><input type="number" min="-15" max="500" step="1" value={ch.forcePointTrade ?? 0} disabled={finished}
+              onchange={(ev) => { const n = numberFrom(ev); if (Number.isInteger(n) && n >= -15 && n <= 500) setPts({ forcePointTrade: n }); else ev.currentTarget.value = ch.forcePointTrade ?? 0; }}></label>
+          {/if}
+        </div>
+        <label class="row inline"><input type="checkbox" class="check" checked={!!ch.qualitiesUseBP} disabled={finished} onchange={(ev) => setPts({ qualitiesUseBP: ev.currentTarget.checked })}>
+          <span>The GM lets Edges cost Building Points and Flaws add them (instead of balancing to 0) <span class="cite">Companion p.22–23</span></span></label>
+        {#if bp}
+          <p>Building Points <strong class:bad={bp.over}>{bp.spent}</strong> of {bp.total}: race {bp.parts.race}, magic {bp.parts.magic}, attributes {bp.parts.attributes}, skills {bp.parts.skills}, nuyen {bp.parts.resources}{bp.parts.forcePoints ? `, Force Points ${bp.parts.forcePoints}` : ""}{bp.parts.qualities ? `, Edges/Flaws ${bp.parts.qualities}` : ""}.</p>
+        {/if}
+      {:else if sys.chargen.priorityMethod === "sumto10"}
         {@const sum = CATEGORIES.reduce((t, c) => t + ({ A: 4, B: 3, C: 2, D: 1, E: 0 }[sys.chargen.priorities[c]] ?? 0), 0)}
         <p class="muted">Sum-to-10: A counts 4, B 3, C 2, D 1, E 0. Letters may repeat; the five levels add up to at most 10. Now: <strong class:bad={sum > 10}>{sum}</strong> of 10.</p>
       {:else}
         <p class="muted">Give each of the five categories one letter, A to E. Each letter once: picking a letter another category has swaps the two. <span class="cite">SR2 p.44</span></p>
       {/if}
+      {#if sys.chargen.priorityMethod !== "points"}
       <div class="scroll"><table class="grid">
         <thead><tr><th scope="col">Category</th>{#each LETTERS as l}<th scope="col">{l}</th>{/each}</tr></thead>
         <tbody>
@@ -662,6 +684,7 @@
           <div><dt>{l}</dt><dd>{row.race === "shapeshifter" ? "Race: the shapeshifter (nothing else)" : `${row.attributes} attribute pts · ${row.skills} skill pts · ${nuyen(row.resources)}`}</dd></div>
         {/each}
       </dl>
+      {/if}
     </section>
 
     <section id="step-metatype" role="tabpanel" aria-labelledby="tab-metatype" hidden={tab !== "metatype"}>
@@ -938,11 +961,17 @@
         {#if sys.magic.type === "physical_adept"}<div><dt>Power points</dt><dd class:bad={check.budgets?.powerPoints?.over}>{check.budgets?.powerPoints?.spent ?? 0} / {check.budgets?.powerPoints?.total ?? 0}</dd></div>{/if}
         <div><dt>Nuyen</dt><dd>{nuyen(sys.nuyen ?? 0)}</dd></div>
       {:else}
+      {#if check.budgets.buildingPoints}
+      <div><dt>Building Points</dt><dd class:bad={check.budgets.buildingPoints.over}>{check.budgets.buildingPoints.spent} / {check.budgets.buildingPoints.total}</dd></div>
+      <div><dt>Attribute points</dt><dd>{check.budgets.attributes.spent}</dd></div>
+      <div><dt>Skill points</dt><dd>{check.budgets.skills.spent}</dd></div>
+      {:else}
       <div><dt>Attribute points</dt><dd class:bad={pr.attributes && check.budgets.attributes.over}>{check.budgets.attributes.spent} / {pr.attributes ? check.budgets.attributes.total : "—"}</dd></div>
       <div><dt>Skill points</dt><dd class:bad={pr.skills && check.budgets.skills.over}>{check.budgets.skills.spent} / {pr.skills ? check.budgets.skills.total : "—"}</dd></div>
+      {/if}
       {#if sys.magic.type === "physical_adept"}<div><dt>Power points</dt><dd class:bad={check.budgets.powerPoints?.over}>{check.budgets.powerPoints?.spent ?? 0} / {check.budgets.powerPoints?.total ?? 0}</dd></div>{/if}
       {#if sys.magic.type !== "none" || check.budgets.forcePoints.spent}<div><dt>Force Points</dt><dd class:bad={check.budgets.forcePoints.over}>{check.budgets.forcePoints.spent} / {check.budgets.forcePoints.total}</dd></div>{/if}
-      <div><dt>Nuyen</dt><dd class:bad={pr.resources && check.budgets.resources.over}>{nuyen(check.budgets.resources.spent)} / {pr.resources ? nuyen(check.budgets.resources.total) : "—"}</dd></div>
+      <div><dt>Nuyen</dt><dd class:bad={(pr.resources || check.budgets.buildingPoints) && check.budgets.resources.over}>{nuyen(check.budgets.resources.spent)} / {pr.resources || check.budgets.buildingPoints ? nuyen(check.budgets.resources.total) : "—"}</dd></div>
       {/if}
       <div><dt>Essence</dt><dd class:bad={check.essence < 0}>{check.essence}</dd></div>
       {#if sys.magic.type !== "none"}<div><dt>Magic</dt><dd class:bad={check.magic < 1}>{check.magic}</dd></div>{/if}

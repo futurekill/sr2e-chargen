@@ -35,7 +35,8 @@ const FIELD = { books: { type: "array", maxItems: 20, uniqueItems: true, items: 
 /** Tighter bounds for some ops' fields (docs/PLAN-M2d.md Draft 2): refused at the door, checked again by the reducer. */
 const short = { type: "string", maxLength: 60 }, choice = (...v) => ({ enum: ["", ...v] });
 const box = { type: "integer", minimum: 1, maximum: 20 }, track = { enum: ["physical", "stun"] };
-const BOUNDS = { setMethod: { method: { enum: ["standard", "sumto10"] } }, setMetatype: { variant: { type: "string", maxLength: 200 } }, damage: { track, boxes: box }, heal: { track, boxes: box }, useAmmo: { rounds: { type: "integer", minimum: 1, maximum: 1000 } },
+const BOUNDS = { setMethod: { method: { enum: ["standard", "sumto10", "points"] } },
+  setPoints: { buildingPoints: { type: "integer", minimum: 1, maximum: 1000 }, nuyenTier: { enum: [0, 500, 5000, 90000, 200000, 400000, 650000, 1000000] }, forcePointTrade: { type: "integer", minimum: -15, maximum: 500 } }, setMetatype: { variant: { type: "string", maxLength: 200 } }, damage: { track, boxes: box }, heal: { track, boxes: box }, useAmmo: { rounds: { type: "integer", minimum: 1, maximum: 1000 } },
   installWare: { successes: { type: "integer", minimum: 0, maximum: 30 } }, sellItem: { pct: { enum: [10, 15, 20, 25, 30, 35, 40, 45, 50] }, shownMode: { enum: ["refund", "fence"] } }, nuyen: { note: { type: "string", maxLength: 120 } }, awardKarma: { amount: { type: "integer", minimum: 1, maximum: 200 }, note: { type: "string", maxLength: 120 } }, addExtra: { kind: { enum: ["gang", "follower"] }, name: short },
   setAllergy: { substance: short, rarity: choice("uncommon", "common"), severity: choice("nuisance", "mild", "moderate", "severe"),
     rarityBonus: choice("attributes", "skills", "force", "nuyen"), severityBonus: choice("attributes", "skills", "force", "nuyen") } };
