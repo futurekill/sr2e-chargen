@@ -180,10 +180,11 @@ export async function renderSheet(model, { paper = "letter", font = "standard", 
   newPage();
   const L = MARGIN, R = W - MARGIN, CW = R - L, colW = (CW - 18) / 2, X2 = L + colW + 18, BOTTOM = H - MARGIN - 14;
   const active = model.skills.filter(s => s[3] === "active").map(([n, r, sub]) => [n, r, sub]);
+  const overflowText = () => `Physical overflow: ${model.monitors.filled.overflow ? `${model.monitors.filled.overflow} of ` : "up to "}${model.monitors.overflow} boxes (Body)`;
   /** Condition monitors: pencil boxes; Fohawk marks the wound levels (L 1, M 3, S 6, D 10 boxes, p.112). */
   const monitors = (x, y0, w) => {
     let yy = y0;
-    for (const [name, n] of [["Physical", model.monitors.physical], ["Stun", model.monitors.stun]]) {
+    for (const [name, n, hurt] of [["Physical", model.monitors.physical, model.monitors.filled.physical], ["Stun", model.monitors.stun, model.monitors.filled.stun]]) {
       block(fohawk ? name.toUpperCase() : name, x, yy, w, { size: fohawk ? 8 : 9, weight: 700, maxLines: 1, color: fohawk ? MUTED : "#000" });
       yy += 12;
       // As many boxes per row as fit with a 2 pt gap at least; more wrap to a next row (never overlap, r1 #5).
@@ -195,17 +196,18 @@ export async function renderSheet(model, { paper = "letter", font = "standard", 
         const bx = x + (i % per) * (BOX + gap), by = yy + Math.floor(i / per) * rowH;
         doc.save().lineWidth(lvl ? 1.6 : 0.8).rect(bx, by, BOX, BOX).stroke(fohawk && !lvl ? "#888" : "#000").restore();
         shapes.push({ kind: "box", page, x: bx, y: by, w: BOX, h: BOX });
+        if (i < hurt) doc.save().lineWidth(1.2).moveTo(bx + 2, by + 2).lineTo(bx + BOX - 2, by + BOX - 2).moveTo(bx + BOX - 2, by + 2).lineTo(bx + 2, by + BOX - 2).stroke("#000").restore();   // a wound carried
         if (lvl) block(lvl, bx + BOX / 2 - 3, by + BOX + 1, 10, { size: 6.5, floor: 6.5, weight: 700, maxLines: 1, color: MUTED });
       }
       yy += Math.ceil(n / per) * rowH;
     }
-    return yy + block(`Physical overflow: up to ${model.monitors.overflow} boxes (Body)`, x, yy, w, { size: 8.5, floor: FLOOR }) + 8;
+    return yy + block(overflowText(), x, yy, w, { size: 8.5, floor: FLOOR }) + 8;
   };
   /** The monitors' height in a column of width w, computed exactly as monitors() lays them out. */
   const monitorsHeight = (w) => {
     const per = Math.max(1, Math.floor((w + 2) / (BOX + 2))), rowH = BOX + (fohawk ? 13 : 6);
     const rows = [model.monitors.physical, model.monitors.stun].reduce((t, n) => t + 12 + Math.ceil(n / Math.max(1, Math.min(n, per))) * rowH, 0);
-    return rows + wrap(`Physical overflow: up to ${model.monitors.overflow} boxes (Body)`, 8.5, w, 400).length * 8.5 * LINE + 8;
+    return rows + wrap(overflowText(), 8.5, w, 400).length * 8.5 * LINE + 8;
   };
   let y = MARGIN;
   let attacks, act;

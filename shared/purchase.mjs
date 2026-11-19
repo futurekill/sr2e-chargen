@@ -4,7 +4,7 @@
  * operation, so no price or rule field is ever stored as typed. Prices and Essence come from the system's own pure
  * functions (shared/rules.mjs), called with the same inputs Foundry's creation panel gives them.
  */
-import { chargenItemCost, weaponFocusCost, adeptPowerKey, ratedRow, wareCtx, containerEssence, eyeAccessoryKind, rowsListValue } from "./rules.mjs";
+import { chargenItemCost, weaponFocusCost, adeptPowerKey, ratedRow, wareCtx, eyeAccessoryKind, rowsListValue, wareEssence, muscleFactor } from "./rules.mjs";
 
 export const BUYABLE = ["weapon", "armor", "gear", "ammo", "cyberware", "spell", "focus", "adept_power", "program", "contact", "lifestyle"];
 const STRING_MAX = 60;
@@ -177,12 +177,15 @@ export function eyeRow(id, rec, projected) {
     cost: s.cost ?? 0, rating: s.rating ?? 0, combatTnMod: s.combatTnMod ?? 0, active: true, notes: "", paid: 0, listValue: s.cost ?? 0 };
 }
 
-/** One cyberware item's Essence: its own, plus the part of its accessories beyond the eye's free allowance. */
+/**
+ * One cyberware item's Essence: the system's own `wareEssence` (Foundry's `actualEssenceCost`, S5), given the markers
+ * Foundry's preparation sets — the eye's module total, the ware rule, and muscle's discount beside full cyberlimbs
+ * (Cybertechnology p.57). The surgeon's `surgeryEssencePct` applies (PLAN-M4c Draft 2). No limb options: no `limbEssence`.
+ */
 export function essenceOf(item, items) {
-  const s = item.system, base = Number(s.essenceCost) || 0;
-  const rows = (s.modules ?? []).reduce((t, r) => t + (Number(r.essenceCost) || 0), 0);
-  if (!(s.capacity > 0)) return base;
-  const ctx = ctxOf(items, item);
-  return containerEssence({ base, rows, capacity: s.capacity, eyes: s.eyes ?? "pair", isEye: ctx.wareRule === "cybereye-pair", graded: false }, (e) => e);
+  const s = item.system, ctx = ctxOf(items, item);
+  const capacityUsed = Math.round((s.modules ?? []).reduce((t, r) => t + (Number(r.essenceCost) || 0), 0) * 100) / 100;
+  return wareEssence({ ...s, capacityUsed, wareRule: ctx.wareRule, limbEssence: undefined,
+    limbDiscount: ctx.fullCyberlimbs > 0 ? muscleFactor(ctx.fullCyberlimbs) : undefined });
 }
 export { isCybereye, isEyeAccessory };

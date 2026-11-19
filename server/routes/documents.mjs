@@ -34,11 +34,13 @@ const FIELD = { string: { type: "string", maxLength: 20000 }, boolean: { type: "
     gmApproved: { type: "boolean" }, libraryConfirmed: { type: "boolean" } } } };
 /** Tighter bounds for some ops' fields (docs/PLAN-M2d.md Draft 2): refused at the door, checked again by the reducer. */
 const short = { type: "string", maxLength: 60 }, choice = (...v) => ({ enum: ["", ...v] });
-const BOUNDS = { sellItem: { pct: { enum: [10, 15, 20, 25, 30, 35, 40, 45, 50] }, shownMode: { enum: ["refund", "fence"] } }, nuyen: { note: { type: "string", maxLength: 120 } }, awardKarma: { amount: { type: "integer", minimum: 1, maximum: 200 }, note: { type: "string", maxLength: 120 } }, addExtra: { kind: { enum: ["gang", "follower"] }, name: short },
+const box = { type: "integer", minimum: 1, maximum: 20 }, track = { enum: ["physical", "stun"] };
+const BOUNDS = { damage: { track, boxes: box }, heal: { track, boxes: box }, useAmmo: { rounds: { type: "integer", minimum: 1, maximum: 1000 } },
+  installWare: { successes: { type: "integer", minimum: 0, maximum: 30 } }, sellItem: { pct: { enum: [10, 15, 20, 25, 30, 35, 40, 45, 50] }, shownMode: { enum: ["refund", "fence"] } }, nuyen: { note: { type: "string", maxLength: 120 } }, awardKarma: { amount: { type: "integer", minimum: 1, maximum: 200 }, note: { type: "string", maxLength: 120 } }, addExtra: { kind: { enum: ["gang", "follower"] }, name: short },
   setAllergy: { substance: short, rarity: choice("uncommon", "common"), severity: choice("nuisance", "mild", "moderate", "severe"),
     rarityBonus: choice("attributes", "skills", "force", "nuyen"), severityBonus: choice("attributes", "skills", "force", "nuyen") } };
 /** Fields an op may leave out (the reducer decides when they are needed): a refund sale has no percentage. */
-const OPTIONAL = { sellItem: ["pct"] };
+const OPTIONAL = { sellItem: ["pct"], installWare: ["fee", "wound"] };
 const opSchema = { oneOf: Object.entries(OPS).map(([op, fields]) => ({ type: "object", additionalProperties: false, required: ["op", ...Object.keys(fields).filter(k => !OPTIONAL[op]?.includes(k))],
   properties: { op: { const: op }, ...Object.fromEntries(Object.entries(fields).map(([k, t]) => [k, BOUNDS[op]?.[k] ?? FIELD[t]])) } })) };
 const opsBody = { type: "object", additionalProperties: false, required: ["revision", "ops"],

@@ -6,11 +6,19 @@ notes come from it.
 ## Unreleased
 
 ### Added
+- **Condition after creation** (core p.111, p.114; Cybertechnology p.53; RULINGS R8): a finished character has a
+  **Condition** step. Record damage and healing on the Physical and Stun monitors (Stun rolls into Physical, Physical
+  into the overflow; the page shows the wound level, the injury modifier, and unconscious/dying/dead); use rounds from
+  a box of ammunition; install spare cyberware by surgery — the surgeon's successes change the implant's Essence, the
+  procedure's category sets the fee and the wound (each can be left off), and the surgery can be undone. The printed
+  sheet and the stat block mark the wounds. Installed cyberware can no longer be sold.
 - **Archive a character**: hide it from the Library's main list without deleting it (an **Archive** button on each
   Library row and on the Concept tab). It moves to an **Archived** list, stays editable, is never purged, and
   **Unarchive** brings it back. Database migration `004-archive` adds a column; it runs on start.
 
 ### Changed
+- Cyberware Essence is now the Foundry system's own calculation: Muscle Replacement beside full cyberlimbs costs 20%
+  less Essence per limb (Cybertechnology p.57), as Foundry already counted it.
 - **The character page is tabbed**: each step is a tab (Karma and Nuyen first once a character is finished), with a
   count of what's left to do on each; the Rules check stays beside them and opens the tab of any problem you click.
   Printing (style, paper, font, the full sheet, the stat block and the table card) moved to a **Print** tab, so the

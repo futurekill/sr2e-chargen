@@ -405,12 +405,27 @@ A finished character gets a **Karma** step at the top of its page (p.190–191):
 The **Nuyen** step (finished characters):
 - **Record** money received (a run's pay) or paid (rent, a bribe); the balance can't go below 0.
 - **Buy** weapons, armor, gear, ammunition, cyberware and programs: the street price is shown (list × Street Index,
-  p.184); enter the price you agreed after any negotiation. Cyberware bought now is a spare: installing it is surgery
-  (coming with damage and healing).
+  p.184); enter the price you agreed after any negotiation. Cyberware bought now is a spare: install it with surgery on
+  the **Condition** step.
 - **Sell** what you own. How selling pays is the GM's setting (Admin → Rules, R6): a refund of what was paid, or a
   fence — 30% of the list value, 5% more or less per extra Negotiation success, between 10% and 50% (p.188).
 - Every change is in the history (the Karma step) with **Undo** on the newest one, and the printed sheet and the stat
-  block include the history, so the GM can check it.
+  block include the history, so the GM can check it. Installed cyberware can't be sold: it comes out by surgery (not in
+  the app yet).
+
+### After creation: Condition
+
+The **Condition** step (finished characters) records what happened at the table; the app rolls nothing here.
+- **Wounds** (p.111): pick Physical or Stun and a number of boxes, then **Take damage** or **Heal**. Stun past 10 boxes
+  rolls into Physical, Physical past 10 into the overflow; healing takes the overflow first (R8). The page shows the
+  wound level, the injury modifier (+TN and −Initiative), and when the character is unconscious, dying or dead. The
+  printed sheet marks the boxes.
+- **Ammunition**: **Use** takes rounds off a box of ammunition. Buy more on the Nuyen step.
+- **Surgery** installs a spare implant. Enter the surgeon's successes (the TN is shown): 0 successes adds 15% to the
+  implant's Essence, 2–3 change nothing, 4–5 take 10% off, 6 or more 20% (Cybertechnology p.53). The procedure's
+  category (core p.114) sets the fee and the wound; untick either if your table handles it another way. A surgery that
+  would take Essence below 0 is refused. It goes in the history and can be undone while the implant and the wounds are
+  as it left them.
 
 ### Archiving a character
 

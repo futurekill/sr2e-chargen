@@ -28,6 +28,7 @@ export function cardModel(body, chosen) {
 export function sheetModel(body) {
   const actor = body.actor, sys = actor.system, items = actor.items ?? [];
   const d = derive({ actor, options: body.creation?.options ?? {} });
+  const cm = actor.system.conditionMonitor;
   const check = validate(body);
   const pr = sys.chargen?.priorities ?? {};
   const magic = sys.magic ?? {};
@@ -63,7 +64,9 @@ export function sheetModel(body) {
     pools: [["Combat", d.pools.combat], ["Magic", d.pools.magic], ["Astral", d.pools.astral], ["Hacking", d.pools.hacking], ["Control", d.pools.control]]
       .filter(([k, v]) => v > 0 || k === "Combat").map(([k, v]) => [k, String(v)]),
     armor: `${d.armor.ballistic} / ${d.armor.impact}`,
-    monitors: { physical: d.monitors.physical, stun: d.monitors.stun, overflow: d.monitors.overflow },
+    monitors: { physical: d.monitors.physical, stun: d.monitors.stun, overflow: d.monitors.overflow,
+      // The wounds carried (PLAN-M4c): boxes filled, from Foundry's stored monitor (none before finishing).
+      filled: { physical: cm?.physical?.value ?? 0, stun: cm?.stun?.value ?? 0, overflow: cm?.overflow ?? 0 } },
     attacks: d.weapons.map(w => [plain(w.name), plain(w.damageCode, 20), cap(String(w.skill).replace(/_/g, " "))]),
     skills: of("skill").map(i => {
       const s = i.system, sub = [s.concentration?.name && `${s.concentration.name} ${s.concentration.rating}`, s.specialization?.name && `${s.specialization.name} ${s.specialization.rating}`].filter(Boolean);

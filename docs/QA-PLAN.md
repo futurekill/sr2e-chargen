@@ -75,3 +75,13 @@ bonding (p.46, p.137), refusals.
   Unarchive returns it; the Concept tab button flips between Archive and Unarchive; a deleted character can't be
   archived (404); archiving needs no revision, so an open character page never goes stale. Migration 004 on all four
   databases (CI).
+
+## Condition after creation (M4c)
+- Damage: Stun 12 → Stun 10 and Physical 2; Physical past 10 fills the overflow; heal takes the overflow first; the
+  wound level, injury modifier and unconscious/dying/dead lines match p.111; the PDF crosses the filled boxes and the
+  Markdown block lists them.
+- Ammunition: Use takes rounds off; more than are left is refused.
+- Surgery: a spare Datajack at 2 successes shows Minor Invasive, 5,000¥, an M wound, TN 3 (at 6 Essence); Install
+  charges and wounds; 0 and 4 successes show 0.23 and 0.18; unticking fee/wound skips them; Undo restores exactly and
+  is refused after healing; an install past 0 Essence is refused; an installed implant is not in the Sell list.
+- Essence parity: Muscle Replacement beside a full cyberarm costs 20% less, as in Foundry.

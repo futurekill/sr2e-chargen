@@ -7,10 +7,10 @@
   import { untrack, onDestroy } from "svelte";
   import { get, mutate, upload } from "../lib/api.js";
   import { derive } from "../../../shared/derive.mjs";
-  import { applyOp, validate, karmaOptions, undoable, PLAY_GEAR, cardIds, cardEligible, CARD_TYPES, CATEGORIES, CATEGORY_NAMES, LETTERS, METATYPES, MAGIC_TYPES, MAGIC_NAMES, TRADITIONS, ATTRIBUTES, ATTR_NAMES, CUSTOM_SKILL_CATEGORIES, totemNames } from "../../../shared/creation.mjs";
+  import { applyOp, validate, karmaOptions, undoable, surgeryPreview, PLAY_GEAR, cardIds, cardEligible, CARD_TYPES, CATEGORIES, CATEGORY_NAMES, LETTERS, METATYPES, MAGIC_TYPES, MAGIC_NAMES, TRADITIONS, ATTRIBUTES, ATTR_NAMES, CUSTOM_SKILL_CATEGORIES, totemNames } from "../../../shared/creation.mjs";
   import { TABLES } from "../../../shared/rules.mjs";
   import { BUYABLE, choiceSpec, defaultChoices, project, price, essenceOf, isCybereye, smallWeapon } from "../../../shared/purchase.mjs";
-  import { saleQuoteOf, streetPrice, ratedStreetIndex, FENCE_STEPS } from "../../../shared/rules.mjs";
+  import { saleQuoteOf, streetPrice, ratedStreetIndex, FENCE_STEPS, totalWoundPenalty, woundLevel } from "../../../shared/rules.mjs";
   let { doc: initial, onDeleted } = $props();
 
   // Plain objects, not reactive proxies: the reducer clones them (structuredClone can't clone a proxy).
@@ -196,7 +196,12 @@
   const contactPrice = (x) => ({ buddy: "10,000¥", gang: "50,000¥", follower: "200,000¥" })[x.r.choices.kind ?? x.r.snapshot.contactType] ?? (plainContacts.indexOf(x.id) < 2 ? "free" : "5,000¥");
   // The steps as tabs (one panel at a time; the Rules check stays beside them). The open tab is remembered per
   // character for this browser tab (sessionStorage): the address's fragment is reserved for one-time link secrets.
-  const tabs = $derived(finished ? [["karma", "Karma"], ["nuyen", "Nuyen"], ...STEPS] : STEPS);
+  const tabs = $derived(finished ? [["karma", "Karma"], ["nuyen", "Nuyen"], ["condition", "Condition"], ...STEPS] : STEPS);
+  // Condition (docs/PLAN-M4c.md): wounds, ammunition and surgery after creation.
+  const cm = $derived(sys.conditionMonitor ?? { physical: { value: 0 }, stun: { value: 0 }, overflow: 0 });
+  let hurtTrack = $state("physical"), hurtBoxes = $state(1), ammoUse = $state({}), surgery = $state({});
+  const surgeryOf = (id) => surgery[id] ?? { successes: 2, fee: true, wound: true };
+  const setSurgery = (id, k, v) => { surgery = { ...surgery, [id]: { ...surgeryOf(id), [k]: v } }; };
   const tabKeyName = `chargen.tab.${untrack(() => server.document.id)}`;
   const savedTab = (() => { try { return sessionStorage.getItem(tabKeyName); } catch { return null; } })();
   let tab = $state(savedTab ?? (untrack(() => finished) ? "karma" : "concept"));
@@ -381,12 +386,12 @@
             <button type="button" onclick={() => { change({ op: "buyItem", catalogId: buying.id, choices: $state.snapshot(buying.choices), price: Number(buying.price) }); buying = null; }}>Buy</button>
             <button type="button" class="quiet" onclick={() => { buying = null; }}>Cancel</button>
           </div>
-          {#if buying.rec.type === "cyberware"}<p class="muted small">Cyberware bought now is a spare: installing it is surgery (coming next).</p>{/if}
+          {#if buying.rec.type === "cyberware"}<p class="muted small">Cyberware bought now is a spare: install it with surgery on the Condition step.</p>{/if}
         {/if}
         <h3>Sell</h3>
-        {#if body.actor.items.some(i => PLAY_GEAR.includes(i.type))}
+        {#if body.actor.items.some(i => PLAY_GEAR.includes(i.type) && !(i.type === "cyberware" && i.system.installed !== false))}
           <ul class="shop">
-            {#each body.actor.items.filter(i => PLAY_GEAR.includes(i.type)) as it (it._id)}
+            {#each body.actor.items.filter(i => PLAY_GEAR.includes(i.type) && !(i.type === "cyberware" && i.system.installed !== false)) as it (it._id)}
               <li><span class="name">{it.name}{it.type === "cyberware" && it.system.installed === false ? " (spare)" : ""}</span>
                 {#if saleMode === "fence"}<select aria-label={`${it.name}: agreed percentage`} value={sellPct[it._id] ?? 30} onchange={(ev) => { sellPct = { ...sellPct, [it._id]: Number(ev.currentTarget.value) }; }}>{#each FENCE_STEPS as p}<option value={p}>{p}%</option>{/each}</select>{/if}
                 <span class="muted small">{nuyen(quoteFor(it).price ?? 0)}</span>
@@ -394,7 +399,67 @@
             {/each}
           </ul>
         {:else}<p class="muted">Nothing to sell.</p>{/if}
-        <p class="muted small">The history (with Undo) is in the Karma step.</p>
+        <p class="muted small">The history (with Undo) is in the Karma step. Installed cyberware isn't sold: it comes out by surgery.</p>
+      </section>
+
+      <section id="step-condition" role="tabpanel" aria-labelledby="tab-condition" hidden={tab !== "condition"}>
+        <h2>Condition</h2>
+        <p class="muted">Record the wounds the character carries after a run; the dice stay at the table. <span class="cite">SR2 p.111</span></p>
+        <div class="monitors">
+          {#each [["physical", "Physical"], ["stun", "Stun"]] as [k, name] (k)}
+            <div class="monitor"><span class="label">{name}</span>
+              <span class="boxes" role="img" aria-label={`${name}: ${cm[k].value} of 10 boxes filled`}>{#each Array(10) as _, i (i)}<span class="box" class:hurt={i < cm[k].value}></span>{/each}</span>
+              <span class="muted small">{woundLevel(cm[k].value)}</span></div>
+          {/each}
+          <p>Overflow: <strong>{cm.overflow}</strong> of {derived.monitors.overflow} (Body).
+            {#if cm.overflow > derived.monitors.overflow}<strong class="bad">Dead: the overflow is past the Body Rating.</strong>
+            {:else if cm.overflow > 0}<strong class="bad">Dying: an extra box every 10 minutes without medical help (p.111).</strong>
+            {:else if cm.stun.value >= 10 || cm.physical.value >= 10}<strong class="bad">Unconscious.</strong>{/if}</p>
+          {#if totalWoundPenalty(cm.physical.value, cm.stun.value)}<p>Injury: +{totalWoundPenalty(cm.physical.value, cm.stun.value)} to target numbers, −{totalWoundPenalty(cm.physical.value, cm.stun.value)} Initiative.</p>{/if}
+        </div>
+        <form class="row adders" onsubmit={(ev) => ev.preventDefault()}>
+          <label><span>Monitor</span><select bind:value={hurtTrack}><option value="physical">Physical</option><option value="stun">Stun</option></select></label>
+          <label><span>Boxes</span><input type="number" min="1" max="20" step="1" bind:value={hurtBoxes}></label>
+          <button type="button" onclick={() => change({ op: "damage", track: hurtTrack, boxes: Number(hurtBoxes) })}>Take damage</button>
+          <button type="button" class="quiet" onclick={() => change({ op: "heal", track: hurtTrack, boxes: Number(hurtBoxes) })}>Heal</button>
+        </form>
+        <p class="muted small">Stun past 10 boxes rolls into Physical; Physical past 10 into the overflow. Healing takes the overflow first.</p>
+
+        <h3>Ammunition</h3>
+        {#if body.actor.items.some(i => i.type === "ammo")}
+          <ul class="shop">
+            {#each body.actor.items.filter(i => i.type === "ammo") as it (it._id)}
+              <li><span class="name">{it.name}</span><span class="muted small">{it.system.quantity ?? 0} left</span>
+                <input type="number" min="1" max="1000" step="1" aria-label={`${it.name}: rounds used`} value={ammoUse[it._id] ?? 1} onchange={(ev) => { ammoUse = { ...ammoUse, [it._id]: Number(ev.currentTarget.value) }; }}>
+                <button type="button" class="quiet" disabled={!(it.system.quantity > 0)} onclick={() => change({ op: "useAmmo", itemId: it._id, rounds: ammoUse[it._id] ?? 1 })}>Use</button></li>
+            {/each}
+          </ul>
+        {:else}<p class="muted">No ammunition. Buy some on the Nuyen step.</p>{/if}
+
+        <h3>Surgery</h3>
+        {#if body.actor.items.some(i => i.type === "cyberware" && i.system.installed === false)}
+          <p class="muted small">Enter the surgeon's successes (TN shown, intensive care included): 0 adds 15% to the implant's Essence, 4–5 take 10% off, 6+ take 20% off. <span class="cite">Cybertechnology p.53, SR2 p.114</span></p>
+          <ul class="surgery">
+            {#each body.actor.items.filter(i => i.type === "cyberware" && i.system.installed === false) as it (it._id)}
+              {@const o = surgeryOf(it._id)}
+              {@const pv = surgeryPreview(body, it._id, o.successes ?? 2)}
+              <li>
+                <strong>{it.name}</strong>
+                <span class="muted small">{pv.category.label}: Essence {pv.cost}{pv.pct ? ` (${pv.pct > 0 ? "+" : ""}${pv.pct}%)` : ""}, ends at {pv.end}; surgeon's TN {pv.tn}</span>
+                <div class="row adders">
+                  <label><span>Successes</span><input type="number" min="0" max="30" step="1" value={o.successes ?? ""} aria-invalid={o.successes == null} oninput={(ev) => { const v = ev.currentTarget.value.trim(), n = Number(v); setSurgery(it._id, "successes", /^\d+$/.test(v) && n <= 30 ? n : null); }}></label>
+                  <label class="row inline"><input type="checkbox" class="check" checked={o.fee} onchange={(ev) => setSurgery(it._id, "fee", ev.currentTarget.checked)}><span>Pay the fee ({nuyen(pv.category.fee)})</span></label>
+                  <label class="row inline"><input type="checkbox" class="check" checked={o.wound} onchange={(ev) => setSurgery(it._id, "wound", ev.currentTarget.checked)}><span>Take the wound ({pv.category.wound}, {pv.category.boxes} {pv.category.boxes === 1 ? "box" : "boxes"})</span></label>
+                  <button type="button" disabled={pv.end < 0 || o.successes == null} onclick={() => change({ op: "installWare", itemId: it._id, successes: o.successes, fee: o.fee, wound: o.wound })}>Install</button>
+                </div>
+                {#if o.successes == null}<p class="bad small">Enter the surgeon's successes: a whole number from 0 to 30.</p>{/if}
+                {#if pv.end < 0}<p class="bad small">Not enough Essence: the surgery would be aborted.</p>{/if}
+                {#if pv.category.key === "drastic" && sys.magic?.type && sys.magic.type !== "none"}<p class="muted small">Drastic surgery: a magician checks for Magic loss after healing (p.114).</p>{/if}
+              </li>
+            {/each}
+          </ul>
+        {:else}<p class="muted">No spare cyberware. Cyberware bought on the Nuyen step arrives as a spare.</p>{/if}
+        <p class="muted small">A surgery is in the history (Karma step) and can be undone while the implant and the wounds are as it left them.</p>
       </section>
     {/if}
 
@@ -783,6 +848,14 @@
   [role="tabpanel"] { padding-top: 1.1rem; }
   .print-options { gap: .75rem; align-items: end; margin-bottom: .25rem; }
   .print-options label { display: grid; gap: .25rem; }
+  .monitors { display: grid; gap: .5rem; margin-block: 1rem; }
+  .monitor { display: flex; align-items: center; gap: .75rem; flex-wrap: wrap; }
+  .monitor .label { min-width: 5rem; font-weight: 700; }
+  .boxes { display: inline-flex; gap: 3px; }
+  .box { width: 1.1rem; height: 1.1rem; border: 1px solid var(--line); }
+  .box.hurt { background: var(--danger); border-color: var(--danger); }
+  .surgery { list-style: none; padding: 0; display: grid; gap: 1rem; }
+  .surgery li { display: grid; gap: .25rem; }
   .danger-zone { margin-top: 2.5rem; padding-top: 1rem; border-top: 1px solid var(--line); display: grid; gap: .75rem; max-width: 36rem; }
   .danger-zone p { margin: 0; }
   .panel { border: 1px solid var(--line); background: var(--surface); padding: .9rem 1rem; }

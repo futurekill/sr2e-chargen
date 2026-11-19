@@ -8,7 +8,7 @@
  * A character is the Foundry system's own `character` source shapes (`actor`), so the system's functions read it
  * unchanged; the app's own record sits beside it (`creation`).
  */
-import { TABLES, chargenBudget, karmaTransition, advancementOptions, saleQuoteOf, streetPrice, ratedStreetIndex, startingMoney, startingKarmaPool, adeptPowerBudget, label, skillTiersFromAllocation, validateSkillAllocation } from "./rules.mjs";
+import { TABLES, chargenBudget, damageUpdateFor, surgeryCategory, surgeryEssencePct, surgeonTN, karmaTransition, advancementOptions, saleQuoteOf, streetPrice, ratedStreetIndex, startingMoney, startingKarmaPool, adeptPowerBudget, label, skillTiersFromAllocation, validateSkillAllocation } from "./rules.mjs";
 import { defaultChoices, checkChoices, refusalFor, project, price, eyeRow, essenceOf, isCybereye, powerKeyOf, sensesOf } from "./purchase.mjs";
 
 export const SCHEMA = "sr2e-chargen-character", SCHEMA_VERSION = 1;
@@ -91,10 +91,15 @@ export const OPS = Object.freeze({
   // Nuyen after creation (docs/PLAN-M4b.md): buy, sell (the server's sale mode), income and expenses.
   buyItem: { catalogId: "string", choices: "choices", price: "money" },
   sellItem: { itemId: "string", pct: "integer", shownMode: "string", quoted: "money" },
-  nuyen: { amount: "signedMoney", note: "string" }
+  nuyen: { amount: "signedMoney", note: "string" },
+  // Damage, ammunition and cybersurgery (docs/PLAN-M4c.md): wounds and rounds aren't ledger entries; surgery is.
+  damage: { track: "string", boxes: "integer" },
+  heal: { track: "string", boxes: "integer" },
+  useAmmo: { itemId: "string", rounds: "integer" },
+  installWare: { itemId: "string", successes: "integer", fee: "boolean", wound: "boolean" }
 });
 /** The ops a FINISHED character takes (besides name, notes, card). */
-const PLAY_OPS = ["awardKarma", "spendKarma", "undo", "buyItem", "sellItem", "nuyen"];
+const PLAY_OPS = ["awardKarma", "spendKarma", "undo", "buyItem", "sellItem", "nuyen", "damage", "heal", "useAmmo", "installWare"];
 /** What money buys and sells in play (PLAN-M4b Draft 2, r1 #3): property, not spells, foci, powers, contacts or homes. */
 export const PLAY_GEAR = ["weapon", "armor", "gear", "ammo", "cyberware", "program"];
 const MAX_MONEY = 10_000_000;
@@ -315,6 +320,7 @@ export function applyOp(body, op, lookup = () => null, { roll = null, now = 0, s
       // The ratings stay as finished: Foundry stops deriving them from the creation points (finalizePendingSkills).
       for (const i of b.actor.items) if (i.type === "skill") i.system.ratingsFinalized = true;
       b.actor.flags = { ...(b.actor.flags ?? {}), sr2e: { ...(b.actor.flags?.sr2e ?? {}), startingMoneyGranted: true } };   // Foundry never offers it again
+      monitorOf(b);   // unwounded (PLAN-M4c Draft 2)
       b.creation.finished = { at: now, leftover, roll: dice, nuyen: sys.nuyen, karmaPool: startingKarmaPool(sys.race, !!b.creation.options.moreMetahumans) };
       return b;
     }
@@ -402,10 +408,14 @@ function playOp(b, op, lookup, now, saleMode, by = "") {
   LEDGER_BY.value = typeof by === "string" ? by.slice(0, 32) : "";
   if (!b.creation.finished) throw new Refusal("Karma and money after creation start once the character is finished.", 190);
   if (op.op === "buyItem" || op.op === "sellItem" || op.op === "nuyen") return moneyOp(b, op, lookup, now, saleMode);
+  if (op.op === "damage" || op.op === "heal") return woundOp(b, op);
+  if (op.op === "useAmmo") return ammoOp(b, op);
+  if (op.op === "installWare") return surgeryOp(b, op, now);
   if (op.op === "undo") {
     const e = undoable(b);
     if (!e || e.id !== op.entryId) throw new Refusal("Only the latest change that isn't undone can be undone.");
     if (["buy", "sell", "nuyen"].includes(e.kind)) return undoMoney(b, e, now);
+    if (e.kind === "surgery") return undoSurgery(b, e, now);
   }
   const source = karmaSource(b), ctx = karmaContext(b);
   let action, note = "", undoes = null;
@@ -476,6 +486,7 @@ function moneyOp(b, op, lookup, now, saleMode) {
   // sellItem (p.188, R6): the server's sale mode; the client's quote must match it.
   const item = typeof op.itemId === "string" ? b.actor.items.find(i => i._id === op.itemId) : null;
   if (!item || !PLAY_GEAR.includes(item.type)) throw new Refusal("That isn't something to sell.");
+  if (item.type === "cyberware" && item.system.installed !== false) throw new Refusal("Installed cyberware comes out by surgery, not a sale.", 114);
   if (op.shownMode !== saleMode) throw new Refusal("The GM changed how selling works: look at the price again.");
   if (saleMode === "fence" && op.pct == null) throw new Refusal("A fence sale needs the agreed percentage.", 188);
   const q = saleQuoteOf(item, { mode: saleMode, pct: op.pct ?? 30, items: b.actor.items });
@@ -510,6 +521,92 @@ function undoMoney(b, e, now) {
     b.actor.items.push(back);
     sys.nuyen = have - r.price;
   }
+  ledgerAdd(b, now, { kind: "revert", summary: `Undone: ${e.summary}`, record: { of: e.kind }, undoes: e.id });
+  return b;
+}
+
+/* ── Damage, ammunition, cybersurgery (docs/PLAN-M4c.md) ───────────────────────────────────────────────────── */
+
+const TRACKS = ["physical", "stun"];
+const boxesOf = (n, what) => { if (!Number.isInteger(n) || n < 1 || n > 20) throw new Refusal(`${what} is 1 to 20 boxes.`, 112); return n; };
+/** The character's condition monitors, in Foundry's shape; created unwounded when missing (finished before M4c). */
+export function monitorOf(b) {
+  const sys = b.actor.system, box = () => ({ value: 0, max: 10, overflow: 0 });
+  const cm = sys.conditionMonitor ??= {};
+  cm.physical ??= box(); cm.stun ??= box(); cm.overflow ??= 0;
+  return cm;
+}
+/** Wounds (p.112): Stun past its monitor rolls into Physical, Physical past its monitor into overflow. Healing takes the overflow first. */
+function woundOp(b, op) {
+  if (!TRACKS.includes(op.track)) throw new Refusal("Physical or Stun.", 112);
+  const n = boxesOf(op.boxes, op.op === "damage" ? "Damage" : "Healing"), cm = monitorOf(b);
+  if (op.op === "damage") {
+    const o = damageUpdateFor(cm, op.track, n);
+    cm.physical.value = o.physical; cm.stun.value = o.stun; cm.overflow = o.overflow;
+  } else if (op.track === "stun") cm.stun.value = Math.max(0, cm.stun.value - n);
+  else {
+    const off = Math.min(cm.overflow, n);
+    cm.overflow -= off;
+    cm.physical.value = Math.max(0, cm.physical.value - (n - off));
+  }
+  return b;
+}
+/** Rounds fired or lost from a box of ammunition; more is bought on the Nuyen step. */
+function ammoOp(b, op) {
+  const item = typeof op.itemId === "string" ? b.actor.items.find(i => i._id === op.itemId) : null;
+  if (!item || item.type !== "ammo") throw new Refusal("That isn't ammunition.");
+  if (!Number.isInteger(op.rounds) || op.rounds < 1 || op.rounds > 1000) throw new Refusal("1 to 1,000 rounds.");
+  const left = Number(item.system.quantity) || 0;
+  if (op.rounds > left) throw new Refusal(`Only ${left} left.`);
+  item.system.quantity = left - op.rounds;
+  return b;
+}
+const round2 = (x) => Math.round(x * 100) / 100;
+/**
+ * What installing a spare would do (Cybertechnology p.53, core p.114; Foundry's `_surgeryPreview`): every number from
+ * the whole inventory with the implant in, so a limb changing muscle's Essence counts (Draft 2).
+ */
+export function surgeryPreview(body, itemId, successes = 2) {
+  const items = body.actor.items, item = items.find(i => i._id === itemId);
+  if (!item || item.type !== "cyberware" || item.system.installed !== false) return null;
+  const pct = surgeryEssencePct(successes);
+  const at = (p) => {
+    const cand = { ...item, system: { ...item.system, installed: true, surgeryEssencePct: p } };
+    const after = items.map(i => (i._id === itemId ? cand : i));
+    const total = after.filter(i => i.type === "cyberware" && i.system.installed !== false).reduce((t, i) => t + essenceOf(i, after), 0);
+    return { cost: essenceOf(cand, after), end: round2(6 - total) };
+  };
+  const plain = at(0), now = at(pct);   // the TN from the Essence it ends with at 0%: its own result can't move it
+  return { pct, cost: now.cost, end: now.end, tn: surgeonTN(plain.end), category: surgeryCategory(now.cost) };
+}
+function surgeryOp(b, op, now) {
+  const item = typeof op.itemId === "string" ? b.actor.items.find(i => i._id === op.itemId) : null;
+  if (!item || item.type !== "cyberware" || item.system.installed !== false) throw new Refusal("That isn't a spare implant.");
+  if (!Number.isInteger(op.successes) || op.successes < 0 || op.successes > 30) throw new Refusal("The surgeon's successes: 0 to 30.");
+  const pv = surgeryPreview(b, item._id, op.successes), have = nuyenOf(b), yen = (n) => `${n.toLocaleString("en-US")}¥`;
+  if (pv.end < 0) throw new Refusal("The surgery would leave the character below 0 Essence: it's aborted (Cybertechnology p.53).", 114);
+  const fee = op.fee === false ? 0 : pv.category.fee;
+  if (fee > have) throw new Refusal(`${yen(fee)} needed for the surgery, ${yen(have)} to spend.`);
+  const had = b.actor.system.conditionMonitor ? structuredClone(b.actor.system.conditionMonitor) : null;   // none: finished before M4c
+  const cm = monitorOf(b), before = { item: structuredClone(item), monitor: had };
+  item.system.installed = true;
+  item.system.surgeryEssencePct = pv.pct;
+  b.actor.system.nuyen = have - fee;
+  if (op.wound !== false) { const o = damageUpdateFor(cm, "physical", pv.category.boxes); cm.physical.value = o.physical; cm.overflow = o.overflow; }
+  const pctText = pv.pct ? ` (${pv.pct > 0 ? "+" : ""}${pv.pct}%)` : "";
+  ledgerAdd(b, now, { kind: "surgery", summary: `Installed ${item.name}: ${pv.category.label} surgery, Essence ${pv.cost}${pctText}${fee ? `, ${yen(fee)}` : ""}${op.wound !== false ? `, a ${pv.category.wound} wound` : ""}`,
+    record: { itemId: item._id, fee, before, after: { item: structuredClone(item), monitor: structuredClone(cm) } } });
+  return b;
+}
+/** Undo a surgery (Draft 2, r1 #5): only while the implant and the monitors are exactly as it left them. */
+function undoSurgery(b, e, now) {
+  const r = e.record, at = b.actor.items.findIndex(i => i._id === r.itemId);
+  if (at < 0 || !sameJson(b.actor.items[at], r.after.item) || !sameJson(monitorOf(b), r.after.monitor))
+    throw new Refusal("The implant or the wounds changed since the surgery: that can't be undone now.");
+  b.actor.items[at] = structuredClone(r.before.item);
+  if (r.before.monitor) b.actor.system.conditionMonitor = structuredClone(r.before.monitor);
+  else delete b.actor.system.conditionMonitor;   // exactly as it was (code review r1)
+  b.actor.system.nuyen = nuyenOf(b) + r.fee;
   ledgerAdd(b, now, { kind: "revert", summary: `Undone: ${e.summary}`, record: { of: e.kind }, undoes: e.id });
   return b;
 }

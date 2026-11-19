@@ -31,6 +31,7 @@ test("before finishing, Karma ops are refused; finishing freezes the skill ratin
   assert.throws(() => applyOp(newCharacter("New"), { op: "awardKarma", amount: 5, note: "" }, lookup), /once the character is finished/);
   const b = finished();
   assert.ok(b.actor.items.filter(i => i.type === "skill").every(i => i.system.ratingsFinalized === true));
+  assert.deepEqual(b.actor.system.conditionMonitor, { physical: { value: 0, max: 10, overflow: 0 }, stun: { value: 0, max: 10, overflow: 0 }, overflow: 0 }, "unwounded, in Foundry's shape (M4c)");
 });
 
 test("award 10 → Total 10, Good Karma 9, Pool 2 (1 + one-tenth); the rules check stays clean in play", () => {

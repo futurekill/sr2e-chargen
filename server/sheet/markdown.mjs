@@ -25,7 +25,7 @@ export function statBlock(m) {
   out.push(sec("Attributes", tableOf(["Attribute", "Rating"], m.attributes)));
   out.push(sec("Dice pools", tableOf(["Pool", "Dice"], m.pools)));
   out.push(sec("Armor", tableOf(["Worn", "Ballistic / Impact"], [["Worn", m.armor]])));
-  out.push(sec("Condition monitors", tableOf(["Monitor", "Boxes"], [["Physical", m.monitors.physical], ["Stun", m.monitors.stun], ["Physical overflow (Body)", m.monitors.overflow]])));
+  out.push(sec("Condition monitors", tableOf(["Monitor", "Filled", "Boxes"], [["Physical", m.monitors.filled.physical, m.monitors.physical], ["Stun", m.monitors.filled.stun, m.monitors.stun], ["Physical overflow (Body)", m.monitors.filled.overflow, m.monitors.overflow]])));
   out.push(sec("Attacks", tableOf(["Weapon", "Damage", "Skill"], m.attacks)));
   out.push(sec("Skills", tableOf(["Skill", "Rating", "Concentration / specialization", "Kind"], m.skills)));
   for (const [title, rows, head] of [["Cyberware", m.cyberware, ["Item", "Rating", "Essence", "Page"]], ["Adept powers", m.powers, ["Power", "Level", "For", "Page"]],
