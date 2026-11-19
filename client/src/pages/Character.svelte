@@ -238,8 +238,8 @@
       <section id="step-karma">
         <h2>Karma</h2>
         <p class="muted">Good Karma {sys.karma?.current ?? 0} · Total {sys.karma?.total ?? 0} · Karma Pool {derived.karmaPool}. An award adds to Total; one-tenth of Total (rounded up) is the Karma Pool, the rest Good Karma to spend. <span class="cite">SR2 p.190–191</span></p>
-        <form class="row adders" onsubmit={(ev) => { ev.preventDefault(); if (Number.isInteger(awardAmount) && awardAmount >= 1) { change({ op: "awardKarma", amount: awardAmount, note: awardNote }); awardNote = ""; } }}>
-          <label><span>Award</span><input type="number" min="1" max="1000" step="1" bind:value={awardAmount}></label>
+        <form class="row adders" onsubmit={(ev) => { ev.preventDefault(); if (Number.isInteger(awardAmount) && awardAmount >= 1 && awardAmount <= 200) { change({ op: "awardKarma", amount: awardAmount, note: awardNote }); awardNote = ""; } }}>
+          <label><span>Award</span><input type="number" min="1" max="200" step="1" bind:value={awardAmount}></label>
           <label class="grow"><span>For (optional)</span><input bind:value={awardNote} maxlength="120" placeholder="the run, a good scene…"></label>
           <button>Award Karma</button>
         </form>

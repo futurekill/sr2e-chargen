@@ -73,3 +73,28 @@ test("undo: newest first, an undo can't be undone, award→spend→undo→undo r
   assert.deepEqual(b.ledger.map(e => [e.kind, !!e.undoneBy, e.undoes ?? null]), [["award", true, null], ["advance", true, null], ["revert", false, spend.id], ["revert", false, award.id]]);
   assert.equal(undoable(b), null);
 });
+
+test("server: an award replayed with the same key pays once; amounts over 200 are refused at the door", async () => {
+  const { testContext, PW } = await import("./helpers.mjs");
+  const { buildApp } = await import("../server/app.mjs");
+  const { loadConfig } = await import("../server/config.mjs");
+  const A = await import("../server/auth/accounts.mjs");
+  const { randomUUID } = await import("node:crypto");
+  const t = await testContext(), ORIGIN = "https://hoi.example";
+  const app = await buildApp({ ctx: t.ctx, config: loadConfig({ NODE_ENV: "production", BASE_URL: ORIGIN }), logger: false, catalog: { byId } });
+  const res = await app.inject({ method: "POST", url: "/api/redeem", headers: { origin: ORIGIN }, payload: { secret: (await A.bootstrap(t.ctx)).secret, username: "Boss", password: PW } });
+  const cookie = res.headers["set-cookie"].split(";")[0], csrf = (await app.inject({ url: "/api/session", headers: { cookie } })).json().csrf;
+  const call = (url, body, key = randomUUID()) => app.inject({ method: "POST", url, headers: { origin: ORIGIN, cookie, "x-csrf-token": csrf, "idempotency-key": key }, payload: body });
+  const id = (await call("/api/documents/characters", { name: "Vet" })).json().document.id;
+  // Put a finished body in place (finishing is tested above); the award goes through the real route.
+  const L = await import("../server/library.mjs");
+  const done = finished(), text = JSON.stringify(done);
+  await t.ctx.db.updateTable("documents").set({ body: text, bytes: Buffer.byteLength(text) }).where("id", "=", id).execute();
+  assert.equal((await call(`/api/documents/${id}/ops`, { revision: 1, ops: [{ op: "awardKarma", amount: 201, note: "" }] })).statusCode, 400);
+  const key = randomUUID(), body = { revision: 1, ops: [{ op: "awardKarma", amount: 10, note: "run" }] };
+  const first = (await call(`/api/documents/${id}/ops`, body, key)).json(), again = (await call(`/api/documents/${id}/ops`, body, key)).json();
+  assert.deepEqual([first.body.actor.system.karma.total, again.body.actor.system.karma.total, again.document.revision], [10, 10, 2]);
+  const row = await t.ctx.db.selectFrom("documents").select("body").where("id", "=", id).executeTakeFirst();
+  assert.equal(L.decodeBody(row.body).ledger.length, 1, "one entry, not two");
+  await app.close();
+});

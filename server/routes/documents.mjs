@@ -32,7 +32,7 @@ const FIELD = { string: { type: "string", maxLength: 20000 }, boolean: { type: "
     gmApproved: { type: "boolean" }, libraryConfirmed: { type: "boolean" } } } };
 /** Tighter bounds for some ops' fields (docs/PLAN-M2d.md Draft 2): refused at the door, checked again by the reducer. */
 const short = { type: "string", maxLength: 60 }, choice = (...v) => ({ enum: ["", ...v] });
-const BOUNDS = { awardKarma: { amount: { type: "integer", minimum: 1, maximum: 1000 }, note: { type: "string", maxLength: 120 } }, addExtra: { kind: { enum: ["gang", "follower"] }, name: short },
+const BOUNDS = { awardKarma: { amount: { type: "integer", minimum: 1, maximum: 200 }, note: { type: "string", maxLength: 120 } }, addExtra: { kind: { enum: ["gang", "follower"] }, name: short },
   setAllergy: { substance: short, rarity: choice("uncommon", "common"), severity: choice("nuisance", "mild", "moderate", "severe"),
     rarityBonus: choice("attributes", "skills", "force", "nuyen"), severityBonus: choice("attributes", "skills", "force", "nuyen") } };
 const opSchema = { oneOf: Object.entries(OPS).map(([op, fields]) => ({ type: "object", additionalProperties: false, required: ["op", ...Object.keys(fields)],

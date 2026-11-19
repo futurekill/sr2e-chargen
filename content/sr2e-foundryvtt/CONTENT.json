@@ -2,7 +2,7 @@
   "dir": "sr2e-foundryvtt",
   "repo": "futurekill/sr2e-foundryvtt",
   "tag": "v0.160.99",
-  "commit": "7907ad57ab4769d3cc94b0b26df5afc97db17dda",
+  "commit": "cb5004ee7d98ab2f3acc1357fef0bc7394a924e4",
   "files": {
     "assets/pregen_portraits/glitch.webp": "d755a662065cf7ef209e114aab076e44ab813440",
     "assets/pregen_portraits/hexen.webp": "8bb0b8aad3f732fe85a2f700fe9b77c914e6475d",
@@ -16,7 +16,7 @@
     "module/rules/books.mjs": "a2f41e8dcf70828dbf9532c649a5fea933609f34",
     "module/rules/limb-rules.mjs": "c51d44177c33c407314f42fc2041fe5c9bb4c890",
     "module/rules/limb-stats.mjs": "8287f3a0e187e1fd8f3f0e86a9b01106468cae2b",
-    "module/rules/sr2e-rules.mjs": "cc091bdd28a7c012dea66af27606f5f94edfecb6",
+    "module/rules/sr2e-rules.mjs": "a0199417687fb160c4e2745cc2c6e76c10ac8195",
     "module/rules/vehicle-r2-rules.mjs": "a836dd3ca3bdcd110f6f26e18a0580ac48f5f11b",
     "module/rules/vr2-options.mjs": "54c2fe521741c7ecd0f649bb2c30e3d84e7b2700",
     "module/rules/ware-rules.mjs": "de92a575a4abb54fd073b46c35ffd8d1f3c5ae9e",
