@@ -129,6 +129,18 @@ docker compose exec chargen /nodejs/bin/node server/cli.mjs admin invite
 Links are shown once and stored only as hashes; if one is lost, make another. All admin commands:
 [Admin commands](#admin-commands).
 
+### Troubleshooting: "Wrong origin"
+
+Every form posts with the browser's `Origin` header, and the app accepts it only when it is EXACTLY the origin of
+`BASE_URL`: scheme, host name and port. The error message shows both. Typical mismatches:
+- `BASE_URL=http://localhost:3000` but the page was opened at `http://192.168.1.20:3000` (another machine on the LAN);
+- `http://` in the address bar but `https://` in `BASE_URL` (or the other way round);
+- a different host name (`www.` or not; an IP instead of the name) or a port the proxy exposes (`:8443`).
+
+Open the app at exactly the `BASE_URL`, or change `BASE_URL` to the address people type and restart the container.
+`BASE_URL` must be **https** for anything but `localhost`: for a LAN without a certificate, put a TLS proxy in front
+(Caddy's `tls internal`, for example) and use its https address.
+
 ### 6. Check it
 
 - `docker compose ps` shows `healthy` (the image's health check calls `/healthz`).
@@ -356,12 +368,34 @@ The links at the top of the character page jump between them.
    ratings and Force on each row.
    - Gear is bought at list price; nothing above Rating 6.
    - Cyberware takes Essence; cybereye accessories can go **In** the eyes (up to .5 Essence free, p.247).
+   - A physical adept buys its powers here too, in power points (its Magic Rating): Improved Ability names one of
+     your skills, Improved Physical Senses names its senses (each one is a level). Killing Hands levels can be held
+     together (p.126).
    - Magicians pay Force Points for spells (Force up to 6) and for bonding foci. A spell focus names its spell; a
      weapon focus names the melee weapon it is bonded to (its price follows the weapon's Reach, p.263).
-8. **Table card**: tick what goes on the one-page card for the table.
+   - **Contacts and extras** (p.43–44): two contacts are free, each further one 5,000¥; one may be your **buddy**
+     (10,000¥). Add a **gang or tribe** (50,000¥; the server rolls its 2D6 members once) or **followers** (200,000¥;
+     name five different archetypes).
+   - **Lifestyle** (p.46): pick one and the months paid ahead; with none, the character lives on the street.
+   - **Vehicles and drones** (p.264): choose the Vehicle type in the search and add one at its list price. The book's
+     "Restricted" vehicles have no price and can't be bought. The sheet lists their stats.
+   - Metahumans may take an **allergy** in the Metatype step for extra points (p.46).
+8. **Finish** (p.47): when the rules check is clean, finish: unspent Resources become nuyen at 10:1, plus 3D6 ×
+   1,000¥ rolled by the server. Creation then closes; name, notes and the table card can still change.
+9. **Table card**: tick what goes on the one-page card for the table.
 
 The house rulings the app follows where the book is unclear are in the repository's `docs/RULINGS.md` (for example:
 a weapon with Concealability above 5 makes a small weapon focus).
+
+### After creation: Karma
+
+A finished character gets a **Karma** step at the top of its page (p.190–191):
+- **Award Karma** after a run: it adds to Total Karma; one-tenth of Total (rounded up) is the Karma Pool, the rest
+  is Good Karma to spend.
+- **Raise** an attribute (its new rating; double above the racial maximum, with the GM's approval) or a skill
+  (2 × the new rating; a language 1 ×; a Concentration 1.5 ×; a Specialization 1 ×), **add** a named Concentration
+  or Specialization, or **learn** a new skill (1 Good Karma). Reaction, Essence and Magic are never raised with Karma.
+- **History** lists every change; **Undo** reverses the newest one.
 
 ### Print and share
 
@@ -377,8 +411,8 @@ follows you to other devices, and is the sheets' default font.
 
 ### Not in this beta
 
-Adept powers, contacts, lifestyle and the finishing step (leftover nuyen, starting Karma) come next. Vehicles and the
-sourcebooks follow. See the repository's CHANGELOG and `docs/ROADMAP.md`.
+The sourcebooks and character management in play
+follow. See the repository's CHANGELOG and `docs/ROADMAP.md`.
 
 ## Run it locally (development)
 

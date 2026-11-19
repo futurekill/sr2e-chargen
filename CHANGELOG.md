@@ -5,6 +5,10 @@ notes come from it.
 
 ## Unreleased
 
+### Changed
+- "Wrong origin" now says which address `BASE_URL` expects and which one the page was opened at (and the server
+  logs it), with a README troubleshooting section.
+
 ### Documentation
 - A user guide in the README: building a character, running the image (pull, settings,
   compose, reverse proxy, first admin, updates), databases (SQLite in depth, PostgreSQL, MySQL/MariaDB), backups and
