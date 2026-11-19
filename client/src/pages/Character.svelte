@@ -223,6 +223,14 @@
   })));
   // Deleting: typed confirmation, inline (a soft delete: the Library's Deleted list keeps it 30 days).
   let deleteOpen = $state(false), deleteTyped = $state("");
+  // Its own state, not server.document: an edit's answer racing the toggle would carry the old value back.
+  let archivedAt = $state(start.document.archivedAt ?? null), archiving = $state(false);
+  async function toggleArchive() {
+    archiving = true;
+    try { archivedAt = (await mutate("POST", `/api/documents/${server.document.id}/archive`, { archived: !archivedAt })).document.archivedAt; }
+    catch (err) { error = err.message; }
+    archiving = false;
+  }
   const numberFrom = (ev) => Number.parseInt(ev.currentTarget.value, 10);
   // The printable sheet: paper and font remembered in this browser (a convenience; the server holds no preference yet).
   const pref = (k, d) => { try { return localStorage.getItem(k) ?? d; } catch { return d; } };
@@ -419,6 +427,10 @@
         <textarea bind:value={notesInput} maxlength="20000" onchange={() => notesInput !== body.notes && change({ op: "setNotes", notes: notesInput })}></textarea></label>
 
       <div class="danger-zone">
+        <div class="row">
+          <button type="button" class="quiet" disabled={archiving} onclick={toggleArchive}>{archivedAt ? "Unarchive" : "Archive"}</button>
+          <span class="muted">{archivedAt ? "Archived: hidden from your Library's main list." : "Hide from your Library's main list without deleting."}</span>
+        </div>
         {#if !deleteOpen}
           <button type="button" class="danger" onclick={() => { deleteOpen = true; deleteTyped = ""; }}>Delete character…</button>
         {:else}

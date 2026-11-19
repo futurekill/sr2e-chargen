@@ -77,6 +77,10 @@ test("verify catches a changed asset byte, a wrong counter and a schema mismatch
   const db2 = new DatabaseSync(f2); db2.exec("UPDATE users SET bytes_used = bytes_used + 1; DELETE FROM migrations WHERE name = '003-assets'"); db2.close();
   const p = (await backupJob({ action: "verify", file: f2 })).problems.join("\n");
   assert.match(p, /bytes counted/); assert.match(p, /schema/);
+  // A backup from the release before (its migrations a prefix of this build's) verifies: the server migrates it at start.
+  const { file: f4 } = await createBackup({ databaseUrl: s.url, dir: s.backups });
+  const db4 = new DatabaseSync(f4); db4.exec("DELETE FROM migrations WHERE name = '004-archive'; ALTER TABLE documents DROP COLUMN archived_at"); db4.close();
+  assert.deepEqual((await backupJob({ action: "verify", file: f4 })).problems, []);
 });
 
 test("restore: offline, sanitized (no sessions, no unused links), verified, swapped in; a bad backup changes nothing", async () => {

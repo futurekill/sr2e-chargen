@@ -1,7 +1,7 @@
 <script>
   import { get, mutate } from "../lib/api.js";
   import { go } from "../lib/router.svelte.js";
-  let docs = $state(null), trash = $state([]), error = $state(""), name = $state(""), kind = $state("character"), busy = $state(false);
+  let docs = $state(null), trash = $state([]), archived = $state([]), error = $state(""), name = $state(""), kind = $state("character"), busy = $state(false);
   const when = (ms) => new Date(ms).toLocaleString();
 
   /** Every page of a listing (a library holds up to 200; the API hands out 100 at a time). */
@@ -13,9 +13,11 @@
       if (page.length < 100) return out;
     }
   }
+  let loads = 0;
   async function load() {
-    try { [docs, trash] = await Promise.all([all(""), all("&deleted=1")]); error = ""; }
-    catch (err) { error = err.message; docs ??= []; }
+    const mine = ++loads;   // only the newest refresh lands
+    try { const got = await Promise.all([all(""), all("&deleted=1"), all("&archived=1")]); if (mine === loads) { [docs, trash, archived] = got; error = ""; } }
+    catch (err) { if (mine === loads) { error = err.message; docs ??= []; } }
   }
   async function create(ev) {
     ev.preventDefault();
@@ -30,7 +32,11 @@
   }
   async function restore(d) {
     try { await mutate("POST", `/api/documents/${d.id}/restore`, { revision: d.revision }); await load(); }
-    catch (err) { error = err.message; await load(); }
+    catch (err) { await load(); error = err.message; }
+  }
+  async function archive(d, on) {
+    try { await mutate("POST", `/api/documents/${d.id}/archive`, { archived: on }); await load(); }
+    catch (err) { await load(); error = err.message; }
   }
   load();
 </script>
@@ -52,7 +58,17 @@
 {:else}
   <ul class="list">
     {#each docs as d (d.id)}
-      <li><a class="name" href={`/doc/${d.id}`}>{d.name}</a><span class="meta">{d.kind} · rev {d.revision} · {when(d.updatedAt)}</span></li>
+      <li><a class="name" href={`/doc/${d.id}`}>{d.name}</a><span class="meta">{d.kind} · rev {d.revision} · {when(d.updatedAt)}</span><button class="quiet" onclick={() => archive(d, true)} aria-label={`Archive ${d.name}`}>Archive</button></li>
+    {/each}
+  </ul>
+{/if}
+
+{#if archived.length}
+  <h2>Archived</h2>
+  <p class="muted">Hidden from the list above, kept as they are. Archived characters are never deleted on their own.</p>
+  <ul class="list">
+    {#each archived as d (d.id)}
+      <li><a class="name" href={`/doc/${d.id}`}>{d.name}</a><span class="meta">archived {when(d.archivedAt)}</span><button class="quiet" onclick={() => archive(d, false)} aria-label={`Unarchive ${d.name}`}>Unarchive</button></li>
     {/each}
   </ul>
 {/if}

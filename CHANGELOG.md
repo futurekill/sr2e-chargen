@@ -5,6 +5,11 @@ notes come from it.
 
 ## Unreleased
 
+### Added
+- **Archive a character**: hide it from the Library's main list without deleting it (an **Archive** button on each
+  Library row and on the Concept tab). It moves to an **Archived** list, stays editable, is never purged, and
+  **Unarchive** brings it back. Database migration `004-archive` adds a column; it runs on start.
+
 ### Changed
 - **The character page is tabbed**: each step is a tab (Karma and Nuyen first once a character is finished), with a
   count of what's left to do on each; the Rules check stays beside them and opens the tab of any problem you click.

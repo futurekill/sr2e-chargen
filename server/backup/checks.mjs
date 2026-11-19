@@ -19,7 +19,9 @@ export async function checkBackup(all, { sqlite = false } = {}) {
   }
   const applied = (await all("SELECT name FROM migrations ORDER BY name")).map(r => r.name);
   const known = Object.keys(MIGRATIONS).sort();
-  if (applied.join() !== known.join()) problems.push(`schema: the backup has migrations [${applied.join(", ")}], this build [${known.join(", ")}]`);
+  // An older backup (its migrations a prefix of this build's) is fine: the server migrates it at start.
+  const older = applied.length < known.length && applied.every((m, i) => m === known[i]);
+  if (!older && applied.join() !== known.join()) problems.push(`schema: the backup has migrations [${applied.join(", ")}], this build [${known.join(", ")}]`);
   // One portrait in memory at a time (r1 #7): list, then read each by its id (a checked UUID).
   for (const a of await all("SELECT id, sha256, bytes FROM assets ORDER BY id")) {
     if (!/^[0-9a-f-]{36}$/i.test(a.id)) { problems.push(`asset ${a.id}: not an id`); continue; }

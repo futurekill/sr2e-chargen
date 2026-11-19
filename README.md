@@ -412,6 +412,12 @@ The **Nuyen** step (finished characters):
 - Every change is in the history (the Karma step) with **Undo** on the newest one, and the printed sheet and the stat
   block include the history, so the GM can check it.
 
+### Archiving a character
+
+**Archive** (on a Library row, or on the **Concept** tab) hides a character from the Library's main list without
+deleting it: it moves to **Archived**, where you can still open, edit and print it, and **Unarchive** brings it back.
+Archived characters are never removed on their own.
+
 ### Deleting a character
 
 On the **Concept** tab, **Delete character…** asks you to type the character's name before it deletes. A deleted

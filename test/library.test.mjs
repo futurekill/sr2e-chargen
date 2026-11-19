@@ -89,6 +89,23 @@ test("delete is soft and restorable; restoring a revision makes a NEW revision",
   assert.equal((await razor.call("GET", `${D}/${doc.id}/revisions`)).json().revisions[0].note, "restored from revision 1");
 });
 
+test("archive hides a document from the main list without deleting it; no revision; a deleted one can't be archived", async () => {
+  const { razor, ctx } = await harness();
+  const doc = await make(razor), other = await make(razor, "Decker");
+  const res = (await razor.call("POST", `${D}/${doc.id}/archive`, { archived: true })).json().document;
+  assert.deepEqual([res.revision, typeof res.archivedAt], [1, "number"], "a view setting: the revision stays");
+  assert.deepEqual((await razor.call("GET", D)).json().documents.map(d => d.name), ["Decker"]);
+  assert.deepEqual((await razor.call("GET", `${D}?archived=1`)).json().documents.map(d => d.name), ["Street Sam"]);
+  assert.equal((await razor.call("PUT", `${D}/${doc.id}`, { name: "Still editable", revision: 1 })).statusCode, 200);
+  assert.equal((await razor.call("POST", `${D}/${doc.id}/archive`, { archived: true })).json().document.archivedAt, res.archivedAt, "again: no change");
+  assert.equal((await razor.call("POST", `${D}/${doc.id}/archive`, { archived: false })).json().document.archivedAt, null);
+  assert.equal((await razor.call("GET", D)).json().documents.length, 2);
+  await razor.call("DELETE", `${D}/${other.id}`, { revision: 1 });
+  assert.equal((await razor.call("POST", `${D}/${other.id}/archive`, { archived: true })).statusCode, 404);
+  await setMaintenance(ctx, true);
+  assert.equal((await razor.call("POST", `${D}/${doc.id}/archive`, { archived: true })).json().code, "maintenance");
+});
+
 test("someone else's document is a 404 on EVERY document route (admins included)", async () => {
   const { app, razor, boss } = await harness();
   const doc = await make(razor);
@@ -98,7 +115,8 @@ test("someone else's document is a 404 on EVERY document route (admins included)
     const url = r.url.replace(":id", doc.id).replace(":n", "1") + (r.url.endsWith("/portrait") ? "?revision=1" : "");
     const body = r.method === "GET" ? undefined : r.method === "PUT" ? { name: "Mine now", revision: 1 }
       : r.url.endsWith("/ops") ? { revision: 1, ops: [{ op: "setName", name: "Mine now" }] }
-      : r.url.endsWith("/portrait/stock") ? { revision: 1, stock: "tiger" } : { revision: 1 };
+      : r.url.endsWith("/portrait/stock") ? { revision: 1, stock: "tiger" }
+      : r.url.endsWith("/archive") ? { archived: true } : { revision: 1 };
     const res = await boss.call(r.method, url, body);
     assert.equal(res.statusCode, 404, `${r.method} ${r.url}`);
     assert.equal(res.json().code, "not-found");

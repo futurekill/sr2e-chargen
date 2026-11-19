@@ -23,7 +23,8 @@ const encode = (body) => JSON.stringify(body);
 /** The body column, decoded in ONE place: Postgres hands `jsonb` back parsed, SQLite and MySQL hand back text. */
 export const decodeBody = (v) => (typeof v === "string" ? JSON.parse(v) : v);
 const meta = (d) => ({ id: d.id, kind: d.kind, name: d.name, revision: d.revision, bytes: d.bytes,
-  createdAt: Number(d.created_at), updatedAt: Number(d.updated_at), deletedAt: d.deleted_at == null ? null : Number(d.deleted_at) });
+  createdAt: Number(d.created_at), updatedAt: Number(d.updated_at), deletedAt: d.deleted_at == null ? null : Number(d.deleted_at),
+  archivedAt: d.archived_at == null ? null : Number(d.archived_at) });
 const GONE = () => new Refused("No such document.", 404, "not-found");
 const STALE = () => new Refused("Someone changed this — reload and try again.", 409, "stale");
 
@@ -171,6 +172,20 @@ export function restoreDocument(ctx, userId, id, { revision }, key) {
     return answer(trx, userId, id);
   });
 }
+/**
+ * Archive or unarchive: a view setting, not an edit — no revision, no history row, so an open page never goes stale.
+ * Setting the state it already has is a no-op. A deleted document can't be archived (restore it first).
+ */
+export function setArchived(ctx, userId, id, { archived }, key) {
+  return idempotent(ctx, userId, key, fingerprint("POST", `/documents/${id}/archive`, { archived }), async trx => {
+    await trx.updateTable("documents").set({ archived_at: archived ? ctx.now() : null })
+      .where("id", "=", id).where("owner_id", "=", userId).where("deleted_at", "is", null)
+      .where("archived_at", archived ? "is" : "is not", null).executeTakeFirst();
+    const doc = await ownedDocument(trx, userId, id);
+    if (!doc || doc.deleted_at != null) throw GONE();
+    return { document: meta(doc) };
+  });
+}
 /** Bring an old revision back as a NEW revision (history is never rewritten). */
 export function restoreRevision(ctx, userId, id, from, { revision }, key) {
   return idempotent(ctx, userId, key, fingerprint("POST", `/documents/${id}/revisions/${from}/restore`, { revision }), async trx => {
@@ -188,9 +203,10 @@ export function restoreRevision(ctx, userId, id, from, { revision }, key) {
   });
 }
 
-export async function listDocuments(ctx, userId, { deleted = false, limit = 50, offset = 0 } = {}) {
-  let q = ctx.db.selectFrom("documents").select(["id", "kind", "name", "revision", "bytes", "created_at", "updated_at", "deleted_at"]).where("owner_id", "=", userId);
+export async function listDocuments(ctx, userId, { deleted = false, archived = false, limit = 50, offset = 0 } = {}) {
+  let q = ctx.db.selectFrom("documents").select(["id", "kind", "name", "revision", "bytes", "created_at", "updated_at", "deleted_at", "archived_at"]).where("owner_id", "=", userId);
   q = deleted ? q.where("deleted_at", "is not", null) : q.where("deleted_at", "is", null);
+  if (!deleted) q = archived ? q.where("archived_at", "is not", null) : q.where("archived_at", "is", null);   // the trash lists both
   return (await q.orderBy("updated_at", "desc").orderBy("id").limit(Math.min(100, limit)).offset(offset).execute()).map(meta);
 }
 export async function getDocument(ctx, userId, id) {

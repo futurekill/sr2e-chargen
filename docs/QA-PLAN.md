@@ -71,3 +71,7 @@ bonding (p.46, p.137), refusals.
   remembered after a reload.
 - Delete: the button stays disabled until the exact name is typed; the character appears under Deleted in the
   Library and Restore brings it back.
+- Archive (Library row and Concept tab): the character leaves the main list for Archived, opens and edits from there,
+  Unarchive returns it; the Concept tab button flips between Archive and Unarchive; a deleted character can't be
+  archived (404); archiving needs no revision, so an open character page never goes stale. Migration 004 on all four
+  databases (CI).
