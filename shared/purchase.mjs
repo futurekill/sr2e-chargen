@@ -4,9 +4,9 @@
  * operation, so no price or rule field is ever stored as typed. Prices and Essence come from the system's own pure
  * functions (shared/rules.mjs), called with the same inputs Foundry's creation panel gives them.
  */
-import { chargenItemCost, weaponFocusCost, ratedRow, wareCtx, containerEssence, eyeAccessoryKind, rowsListValue } from "./rules.mjs";
+import { chargenItemCost, weaponFocusCost, adeptPowerKey, ratedRow, wareCtx, containerEssence, eyeAccessoryKind, rowsListValue } from "./rules.mjs";
 
-export const BUYABLE = ["weapon", "armor", "gear", "ammo", "cyberware", "spell", "focus"];
+export const BUYABLE = ["weapon", "armor", "gear", "ammo", "cyberware", "spell", "focus", "adept_power"];
 const STRING_MAX = 60;
 
 const int = (lo, hi) => ({ kind: "int", lo, hi });
@@ -30,6 +30,12 @@ export function choiceSpec(rec) {
     case "spell": return { force: int(1, 6) };   // "no starting spell can have a Force greater than 6" (p.46)
     case "focus": return { ...(s.focusType === "spell_lock" ? {} : { force: int(1, 6) }), ...(s.focusType === "spell" ? { spell: text() } : {}),
       ...(s.focusType === "weapon" ? { weapon: text() } : {}) };
+    case "adept_power": {   // p.124–126: a level where the power has one; Improved Ability names a skill, Senses list theirs
+      const key = powerKeyOf(rec);
+      if (key === "improved_senses") return { senses: text() };
+      const top = Number(s.maxLevel) || 1;
+      return { ...(top > 1 ? { level: int(1, top) } : {}), ...(key === "improved_ability" ? { skill: text() } : {}) };
+    }
     default: return {};
   }
 }
@@ -68,16 +74,21 @@ export function checkChoices(rec, choices) {
 
 /** Why an entry can't be bought in milestone 2c, or null (PLAN-M2c §1). */
 export function refusalFor(entry) {
-  if (entry.type === "adept_power") return "Adept powers arrive in the next step of character creation (their costs need the book's tables).";
   if (entry.type === "vehicle") return "Vehicles wait for the Foundry system to count them at creation.";
   if (["program", "lifestyle", "contact"].includes(entry.type)) return "Programs, lifestyles and contacts arrive with the next system release.";
   if (!BUYABLE.includes(entry.type)) return "That isn't something a character buys.";
   if (entry.system?.limbOption) return "A cyberlimb option needs a cyberlimb: it arrives with the Cybertechnology rules.";
   if (entry.system?.category === "skillsoft" && entry.system?.grantedSkillCategory === "data") return "A DataSoft's price varies with its data (core): not yet.";
   const rec = { type: entry.type, name: entry.name, snapshot: entry.system, flags: entry.flags ?? {}, source: entry._stats?.compendiumSource ?? null };
-  if (entry.type !== "spell" && price(rec, project(rec, defaultChoices(rec)), []) <= 0) return "This has no fixed price in the core book (it varies): not yet.";
+  if (entry.type !== "spell" && entry.type !== "adept_power" && price(rec, project(rec, defaultChoices(rec)), []) <= 0) return "This has no fixed price in the core book (it varies): not yet.";
   return null;
 }
+
+/** Which book power a record is (the system's adeptPowerKey, from its compendium source or name). */
+export const powerKeyOf = (rec) => adeptPowerKey({ name: rec.name, flags: rec.flags, _stats: { compendiumSource: rec.source } }) ?? "";
+
+/** Improved Physical Senses' named improvements: comma-separated, trimmed, no blanks. */
+export const sensesOf = (t) => String(t ?? "").split(",").map(x => x.trim()).filter(Boolean);
 
 /** Bonding cost in Force Points (core p.137, Focus Bonding Table). */
 export function bondingCost(focusType, force) {
@@ -108,6 +119,16 @@ export function project(rec, c, recs = {}) {
     s.grade = "standard";
   }
   if (rec.type === "spell" || rec.type === "focus") s.force = c.force ?? s.force;
+  if (rec.type === "adept_power") {
+    if ("level" in c) s.level = c.level;
+    // Improved Ability: the system matches the skill by NAME, re-resolved on every rebuild ("" once the skill is gone).
+    if ("skill" in c) s.improvedSkill = recs[c.skill]?.type === "skill" ? recs[c.skill].name : "";
+    if ("senses" in c) {   // the named improvements are the level (p.126), kept in the notes as Foundry does
+      const list = sensesOf(c.senses);
+      s.level = Math.max(1, list.length);
+      s.notes = list.length ? `Senses: ${list.join(", ")}` : "";
+    }
+  }
   if (rec.type === "focus") {
     s.bondingCost = bondingCost(s.focusType, s.force);
     s.bonded = s.focusType === "weapon" ? !!c.weapon : s.focusType !== "spell_lock";   // creation pays the bond (p.46); a lock bonds when it locks a spell (p.138)

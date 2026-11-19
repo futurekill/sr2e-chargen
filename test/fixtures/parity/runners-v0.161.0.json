@@ -1,0 +1,301 @@
+{
+  "$comment": "Foundry's PREPARED values for the system's pregens (compendium sr2e.runners), exported 2026-11-18 from the local test world running the system's release/0.161.0 branch (pinned locally as v0.160.99 until the release; re-check after it). Change from v0.160.0: Tiger's Combat Pool 6 -> 7 (Combat Sense level 1 now adds its die, p.125). Sources: content/sr2e-foundryvtt/packs-src/runners/. Regenerate when the pin moves (docs/PLAN-sheet.md, parity); a changed value needs a reason in the commit.",
+  "version": "0.161.0",
+  "actors": [
+    {
+      "id": "117e09f576634196",
+      "name": "Tiger (Physical Adept)",
+      "race": "human",
+      "magicType": "physical_adept",
+      "attributes": {
+        "body": 4,
+        "quickness": 5,
+        "strength": 5,
+        "charisma": 2,
+        "intelligence": 3,
+        "willpower": 4
+      },
+      "reaction": 4,
+      "initiativeDice": 2,
+      "essence": 6,
+      "magic": 6,
+      "pools": {
+        "combat": 7,
+        "hacking": 0,
+        "magic": 0,
+        "control": 0,
+        "task": 0,
+        "astral": 4
+      },
+      "armor": {
+        "ballistic": 0,
+        "impact": 0
+      },
+      "monitors": {
+        "physical": 10,
+        "stun": 10
+      },
+      "karmaPool": 1,
+      "weapons": [
+        [
+          "Katana",
+          "(Str+3)M"
+        ]
+      ]
+    },
+    {
+      "id": "6e1f7e70062e5915",
+      "name": "Hexen (Combat Mage)",
+      "race": "human",
+      "magicType": "full_magician",
+      "attributes": {
+        "body": 3,
+        "quickness": 4,
+        "strength": 2,
+        "charisma": 4,
+        "intelligence": 6,
+        "willpower": 6
+      },
+      "reaction": 5,
+      "initiativeDice": 1,
+      "essence": 6,
+      "magic": 6,
+      "pools": {
+        "combat": 8,
+        "hacking": 0,
+        "magic": 6,
+        "control": 0,
+        "task": 0,
+        "astral": 8
+      },
+      "armor": {
+        "ballistic": 4,
+        "impact": 2
+      },
+      "monitors": {
+        "physical": 10,
+        "stun": 10
+      },
+      "karmaPool": 1,
+      "weapons": [
+        [
+          "Browning Max-Power",
+          "9M"
+        ]
+      ]
+    },
+    {
+      "id": "839a67840ff48d74",
+      "name": "Whisper (Dog Shaman)",
+      "race": "human",
+      "magicType": "full_magician",
+      "attributes": {
+        "body": 3,
+        "quickness": 4,
+        "strength": 3,
+        "charisma": 5,
+        "intelligence": 5,
+        "willpower": 6
+      },
+      "reaction": 4,
+      "initiativeDice": 1,
+      "essence": 6,
+      "magic": 6,
+      "pools": {
+        "combat": 7,
+        "hacking": 0,
+        "magic": 5,
+        "control": 0,
+        "task": 0,
+        "astral": 8
+      },
+      "armor": {
+        "ballistic": 1,
+        "impact": 0
+      },
+      "monitors": {
+        "physical": 10,
+        "stun": 10
+      },
+      "karmaPool": 1,
+      "weapons": [
+        [
+          "Walther Palm Pistol",
+          "4L"
+        ]
+      ]
+    },
+    {
+      "id": "e01ce6f649485ac3",
+      "name": "Patch (Rigger)",
+      "race": "dwarf",
+      "magicType": "none",
+      "attributes": {
+        "body": 5,
+        "quickness": 3,
+        "strength": 5,
+        "charisma": 3,
+        "intelligence": 5,
+        "willpower": 5
+      },
+      "reaction": 4,
+      "initiativeDice": 1,
+      "essence": 2.8,
+      "magic": 0,
+      "pools": {
+        "combat": 6,
+        "hacking": 0,
+        "magic": 0,
+        "control": 8,
+        "task": 0,
+        "astral": 0
+      },
+      "armor": {
+        "ballistic": 5,
+        "impact": 3
+      },
+      "monitors": {
+        "physical": 10,
+        "stun": 10
+      },
+      "karmaPool": 2,
+      "weapons": [
+        [
+          "Ares Predator",
+          "9M"
+        ]
+      ]
+    },
+    {
+      "id": "e4ccf15565035c94",
+      "name": "Glitch (Decker)",
+      "race": "elf",
+      "magicType": "none",
+      "attributes": {
+        "body": 3,
+        "quickness": 6,
+        "strength": 2,
+        "charisma": 6,
+        "intelligence": 6,
+        "willpower": 4
+      },
+      "reaction": 6,
+      "initiativeDice": 1,
+      "essence": 5.6,
+      "magic": 0,
+      "pools": {
+        "combat": 8,
+        "hacking": 12,
+        "magic": 0,
+        "control": 0,
+        "task": 0,
+        "astral": 0
+      },
+      "armor": {
+        "ballistic": 2,
+        "impact": 1
+      },
+      "monitors": {
+        "physical": 10,
+        "stun": 10
+      },
+      "karmaPool": 2,
+      "weapons": [
+        [
+          "Fichetti Security 500",
+          "6L"
+        ]
+      ]
+    },
+    {
+      "id": "e617819d1386da7a",
+      "name": "Razor (Street Samurai)",
+      "race": "ork",
+      "magicType": "none",
+      "attributes": {
+        "body": 9,
+        "quickness": 5,
+        "strength": 6,
+        "charisma": 1,
+        "intelligence": 3,
+        "willpower": 4
+      },
+      "reaction": 6,
+      "initiativeDice": 2,
+      "essence": 3,
+      "magic": 0,
+      "pools": {
+        "combat": 6,
+        "hacking": 0,
+        "magic": 0,
+        "control": 0,
+        "task": 0,
+        "astral": 0
+      },
+      "armor": {
+        "ballistic": 5,
+        "impact": 3
+      },
+      "monitors": {
+        "physical": 10,
+        "stun": 10
+      },
+      "karmaPool": 2,
+      "weapons": [
+        [
+          "Heckler & Koch HK227",
+          "7M"
+        ],
+        [
+          "Ares Predator",
+          "9M"
+        ],
+        [
+          "Katana",
+          "(Str+3)M"
+        ]
+      ]
+    },
+    {
+      "id": "f31e579dcf8bc085",
+      "name": "Silk (Face)",
+      "race": "human",
+      "magicType": "none",
+      "attributes": {
+        "body": 3,
+        "quickness": 4,
+        "strength": 3,
+        "charisma": 6,
+        "intelligence": 5,
+        "willpower": 4
+      },
+      "reaction": 4,
+      "initiativeDice": 1,
+      "essence": 6,
+      "magic": 0,
+      "pools": {
+        "combat": 6,
+        "hacking": 0,
+        "magic": 0,
+        "control": 0,
+        "task": 0,
+        "astral": 0
+      },
+      "armor": {
+        "ballistic": 0,
+        "impact": 0
+      },
+      "monitors": {
+        "physical": 10,
+        "stun": 10
+      },
+      "karmaPool": 1,
+      "weapons": [
+        [
+          "Ares Predator",
+          "9M"
+        ]
+      ]
+    }
+  ]
+}

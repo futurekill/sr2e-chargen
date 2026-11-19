@@ -34,8 +34,8 @@
     change({ op: "setSkill", itemId: item._id, allocated: c.allocated, concentration: c.concentration, specialization: c.specialization, freeLanguage: c.freeLanguage, ...patch });
   }
   // Resources (docs/PLAN-M2c.md).
-  const TYPE_NAME = { weapon: "Weapon", armor: "Armor", gear: "Gear", ammo: "Ammunition", cyberware: "Cyberware", spell: "Spell", focus: "Focus" };
-  const CHOICE_NAME = { quantity: "Qty", bundles: "Boxes", rating: "Rating", force: "Force", strengthMinimum: "Str Min", in: "In", spell: "Spell", skill: "Skill", weapon: "Weapon" };
+  const TYPE_NAME = { weapon: "Weapon", armor: "Armor", gear: "Gear", ammo: "Ammunition", cyberware: "Cyberware", spell: "Spell", focus: "Focus", adept_power: "Adept power" };
+  const CHOICE_NAME = { quantity: "Qty", bundles: "Boxes", rating: "Rating", force: "Force", strengthMinimum: "Str Min", in: "In", spell: "Spell", skill: "Skill", weapon: "Weapon", level: "Level", senses: "Senses (comma-separated)" };
   let shopQ = $state(""), shopType = $state(""), shop = $state([]), shopBusy = $state(false);
   let shopTimer, shopSeq = 0;
   function searchShop() {
@@ -63,6 +63,7 @@
   }));
   const eyes = $derived(bought.filter(x => isCybereye(x.r)));
   const spells = $derived(bought.filter(x => x.r.type === "spell"));
+  const ownSkills = $derived(Object.entries(body.creation.items).filter(([, r]) => r.type === "skill").map(([id, r]) => ({ id, name: r.name })));
   const melee = $derived(bought.filter(x => x.r.type === "weapon" && x.r.snapshot.weaponType === "melee"));
   const setChoice = (id, key, value) => change({ op: "setItem", itemId: id, choices: { [key]: value } });
 
@@ -356,7 +357,7 @@
 
     <section id="step-resources">
       <h2>Resources</h2>
-      <p class="muted">Spend your nuyen on gear at list price; magicians (adepts too) spend Force Points on bonding foci, and full magicians on spells (Force up to 6); a physical adept uses only a weapon focus. No starting gear above Rating 6. Cybereyes take up to .5 Essence of accessories for free. <span class="cite">SR2 p.46, p.124, p.137, p.247</span></p>
+      <p class="muted">Spend your nuyen on gear at list price; magicians (adepts too) spend Force Points on bonding foci, and full magicians on spells (Force up to 6); a physical adept uses only a weapon focus, and buys its powers here with power points (its Magic Rating). No starting gear above Rating 6. Cybereyes take up to .5 Essence of accessories for free. <span class="cite">SR2 p.46, p.124–126, p.137, p.247</span></p>
       {#if !finished}
         <div class="row adders">
           <label class="grow"><span>Search the core book</span><input bind:value={shopQ} oninput={searchShop} maxlength="64" placeholder="Ares Predator, armor jacket, wired reflexes…"></label>
@@ -389,6 +390,8 @@
                         <select value={x.r.choices.in} disabled={finished} onchange={(ev) => setChoice(x.id, "in", ev.currentTarget.value)}><option value="">On its own</option>{#each eyes as e (e.id)}<option value={e.id}>{e.r.name}</option>{/each}</select>
                       {:else if k === "spell"}
                         <select value={x.r.choices.spell} disabled={finished} onchange={(ev) => setChoice(x.id, "spell", ev.currentTarget.value)}><option value="">Choose…</option>{#each spells as sp2 (sp2.id)}<option value={sp2.id}>{sp2.r.name}</option>{/each}</select>
+                      {:else if k === "skill" && x.r.type === "adept_power"}
+                        <select value={x.r.choices.skill} disabled={finished} onchange={(ev) => setChoice(x.id, "skill", ev.currentTarget.value)}><option value="">Choose…</option>{#each ownSkills as sk (sk.id)}<option value={sk.id}>{sk.name}</option>{/each}</select>
                       {:else if k === "weapon"}
                         <select value={x.r.choices.weapon} disabled={finished} onchange={(ev) => setChoice(x.id, "weapon", ev.currentTarget.value)}><option value="">Choose…</option>{#each melee as w (w.id)}<option value={w.id}>{w.r.name} (Reach {w.r.snapshot.reach ?? 0}, {smallWeapon(w.r.snapshot) ? "small" : "large"})</option>{/each}</select>
                       {:else}
@@ -397,7 +400,7 @@
                     </label>
                   {/each}
                 </td>
-                <td class="price">{x.r.type === "spell" ? `${x.r.choices.force} FP` : nuyen(x.price)}{#if x.r.choices.in}<br><span class="muted small">in the eyes' price</span>{/if}</td>
+                <td class="price">{x.r.type === "adept_power" ? `${check.budgets.powerPoints?.costs[x.id] ?? "—"} PP` : x.r.type === "spell" ? `${x.r.choices.force} FP` : nuyen(x.price)}{#if x.r.choices.in}<br><span class="muted small">in the eyes' price</span>{/if}</td>
                 <td><button type="button" class="quiet" disabled={finished} aria-label={`Remove ${x.r.name}`} onclick={() => change({ op: "removeItem", itemId: x.id })}>✕</button></td>
               </tr>
             {/each}
@@ -436,7 +439,8 @@
     <dl>
       <div><dt>Attribute points</dt><dd class:bad={pr.attributes && check.budgets.attributes.over}>{check.budgets.attributes.spent} / {pr.attributes ? check.budgets.attributes.total : "—"}</dd></div>
       <div><dt>Skill points</dt><dd class:bad={pr.skills && check.budgets.skills.over}>{check.budgets.skills.spent} / {pr.skills ? check.budgets.skills.total : "—"}</dd></div>
-      {#if sys.magic.type === "full_magician" || check.budgets.forcePoints.spent}<div><dt>Force Points</dt><dd class:bad={check.budgets.forcePoints.over}>{check.budgets.forcePoints.spent} / {check.budgets.forcePoints.total}</dd></div>{/if}
+      {#if sys.magic.type === "physical_adept"}<div><dt>Power points</dt><dd class:bad={check.budgets.powerPoints?.over}>{check.budgets.powerPoints?.spent ?? 0} / {check.budgets.powerPoints?.total ?? 0}</dd></div>{/if}
+      {#if sys.magic.type !== "none" || check.budgets.forcePoints.spent}<div><dt>Force Points</dt><dd class:bad={check.budgets.forcePoints.over}>{check.budgets.forcePoints.spent} / {check.budgets.forcePoints.total}</dd></div>{/if}
       <div><dt>Nuyen</dt><dd class:bad={pr.resources && check.budgets.resources.over}>{nuyen(check.budgets.resources.spent)} / {pr.resources ? nuyen(check.budgets.resources.total) : "—"}</dd></div>
       <div><dt>Essence</dt><dd class:bad={check.essence < 0}>{check.essence}</dd></div>
       {#if sys.magic.type !== "none"}<div><dt>Magic</dt><dd class:bad={check.magic < 1}>{check.magic}</dd></div>{/if}

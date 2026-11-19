@@ -88,10 +88,10 @@ test("spells and foci spend Force Points (p.46, p.137); only magicians", () => {
   assert.equal(bondingCost("spell_lock", 1), 1);
 });
 
-test("refused at creation: no fixed price, limb options, weapon foci, adept powers, vehicles, programs, sourcebooks", () => {
+test("refused at creation: no fixed price, limb options, vehicles, programs, sourcebooks", () => {
   for (const n of ["Personal Computer (Pocket)", "DataSoft", "Smartgun System (Internal)", "Built-In Device (Cyberlimb)", "Unarmed Strike"])
     assert.throws(() => start(buy(n)), Refusal, n);
-  for (const type of ["adept_power", "vehicle", "program", "lifestyle", "contact"]) {
+  for (const type of ["vehicle", "program", "lifestyle", "contact"]) {
     const e = catalog.entries.find(x => x.book === "sr2" && x.type === type);
     assert.throws(() => start([{ op: "addItem", catalogId: e.id }]), Refusal, type);
   }

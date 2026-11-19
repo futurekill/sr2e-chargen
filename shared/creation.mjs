@@ -8,8 +8,8 @@
  * A character is the Foundry system's own `character` source shapes (`actor`), so the system's functions read it
  * unchanged; the app's own record sits beside it (`creation`).
  */
-import { TABLES, chargenSpend, label, skillTiersFromAllocation, validateSkillAllocation } from "./rules.mjs";
-import { defaultChoices, checkChoices, refusalFor, project, priceInput, eyeRow, essenceOf, isCybereye } from "./purchase.mjs";
+import { TABLES, chargenSpend, adeptPowerBudget, label, skillTiersFromAllocation, validateSkillAllocation } from "./rules.mjs";
+import { defaultChoices, checkChoices, refusalFor, project, priceInput, eyeRow, essenceOf, isCybereye, powerKeyOf, sensesOf } from "./purchase.mjs";
 
 export const SCHEMA = "sr2e-chargen-character", SCHEMA_VERSION = 1;
 export const CATEGORIES = ["race", "magic", "attributes", "skills", "resources"];
@@ -188,6 +188,10 @@ export function applyOp(body, op, lookup = () => null) {
       const why = refusalFor(e);
       if (why) throw new Refusal(why);
       const rec = recordOf(e);
+      // A power is bought once (Improved Ability once per skill, chosen after; p.124–126).
+      if (rec.type === "adept_power" && powerKeyOf(rec) !== "improved_ability"
+        && Object.values(b.creation.items).some(r => r.type === "adept_power" && powerKeyOf(r) === powerKeyOf(rec)))
+        throw new Refusal(`${rec.name} is already bought: raise its level instead.`, 125);
       addRecord(b, { ...rec, choices: defaultChoices(rec) });
       break;
     }
@@ -208,6 +212,11 @@ export function applyOp(body, op, lookup = () => null) {
         if (w?.type !== "weapon" || w.snapshot?.weaponType !== "melee") throw new Refusal("Bond it to one of this character's melee weapons.", 137);
         if (w.choices?.quantity > 1) throw new Refusal("A focus is one weapon: buy that weapon with quantity 1.", 137);
         if (Object.entries(b.creation.items).some(([k, r]) => k !== id && r.choices?.weapon === weapon)) throw new Refusal("That weapon is already a focus.", 137);
+      }
+      const skill = rec.type === "adept_power" ? checked.choices.skill : null;   // Improved Ability: a skill of THIS character, once (p.125)
+      if (skill && skill !== rec.choices.skill) {
+        if (!Object.hasOwn(b.creation.items, skill) || b.creation.items[skill].type !== "skill") throw new Refusal("Choose one of this character's skills.", 125);
+        if (Object.entries(b.creation.items).some(([k, r]) => k !== id && r.type === "adept_power" && r.choices?.skill === skill)) throw new Refusal("That skill already has Improved Ability: raise its dice instead.", 125);
       }
       rec.choices = checked.choices;
       break;
@@ -408,6 +417,13 @@ export function validate(body) {
       if (!w) add("resources", "todo", `${i.name}: choose the melee weapon it's bonded to.`, 137);
       else if ((w.system.quantity ?? 1) > 1) add("resources", "error", `${i.name}: a focus is one weapon, but ${w.name} has quantity ${w.system.quantity}.`, 137);
     }
+    if (i.type === "adept_power") {
+      const key = powerKeyOf(body.creation.items[i._id] ?? i);
+      if (mtype !== "physical_adept") add("magic", "error", `${i.name}: only a physical adept has powers.`, 124);
+      if (key === "improved_ability" && !c.skill) add("magic", "todo", `${i.name}: choose the skill it improves.`, 125);
+      else if (key === "improved_ability" && !i.system.improvedSkill) add("magic", "error", `${i.name}: its skill is no longer on this character.`, 125);
+      if (key === "improved_senses" && !sensesOf(c.senses).length) add("magic", "todo", `${i.name}: name the improvements (low-light vision, thermographic vision…).`, 126);
+    }
     if (["gear", "cyberware", "weapon", "armor"].includes(i.type) && Number(i.system.rating) > 6) add("resources", "error", `${i.name} is Rating ${i.system.rating}: no starting gear above 6.`, 44);
     if (i.type === "gear" && i.system.category === "skillsoft" && !c.skill) add("resources", "todo", `${i.name}: name the skill on the chip.`, 243);
   }
@@ -430,6 +446,13 @@ export function validate(body) {
   if (pr.skills) {
     if (spend.skills.over) add("skills", "error", `${spend.skills.spent} Skill Points spent; Priority ${pr.skills} gives ${spend.skills.total}.`, 45);
     else if (spend.skills.remaining > 0) add("skills", "todo", `${spend.skills.remaining} Skill Point${spend.skills.remaining === 1 ? "" : "s"} left to spend.`, 47);
+  }
+  // A physical adept's power points (p.124–126): the system's own costs and reports, against the Magic Rating.
+  if (mtype === "physical_adept") {
+    const pb = adeptPowerBudget({ items, maxes: max, natural: Object.fromEntries(["body", "quickness", "strength"].map(a => [a, withRacial(sys, a)])), magic });
+    spend.powerPoints = { spent: pb.used, total: magic, over: pb.used > magic, costs: pb.costs };
+    for (const p of pb.problems) add("magic", "error", p, Number(/p\.(\d+)/.exec(p)?.[1] ?? 125));
+    if (pb.used < magic) add("magic", "warning", `${magic - pb.used} power point${magic - pb.used === 1 ? "" : "s"} unspent.`, 124);
   }
   return { budgets: spend, essence, magic, problems, finishable: !problems.some(p => p.severity !== "warning") };
 }

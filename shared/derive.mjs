@@ -5,7 +5,7 @@
  * character at creation can hold is composed here (no in-play state, no sourcebook ware); each step names the
  * CharacterData method it matches.
  */
-import { TABLES, reactionBase, wornArmorTotals, heavyArmorPoolPenalty, astralCombatPool, startingKarmaPool, strengthMinWeaponStats, naturalAttribute } from "./rules.mjs";
+import { TABLES, combatSenseDice, reactionBase, wornArmorTotals, heavyArmorPoolPenalty, astralCombatPool, startingKarmaPool, strengthMinWeaponStats, naturalAttribute } from "./rules.mjs";
 import { essenceOf } from "./purchase.mjs";
 
 export const ATTRS = ["body", "quickness", "strength", "charisma", "intelligence", "willpower"];
@@ -54,7 +54,8 @@ export function derive({ actor, options = {} }) {
   const deck = items.find(i => i.type === "gear" && i.system.category === "cyberdeck" && i.system.deck?.active);
   const mpcp = num(deck?.system.deck?.mpcp ?? sys.cyberdeck?.mpcp);
   const pools = {
-    combat: Math.max(0, Math.floor((attributes.quickness + attributes.intelligence + attributes.willpower) / 2) - heavyArmorPoolPenalty(attributes.quickness, worn)),
+    combat: Math.max(0, Math.floor((attributes.quickness + attributes.intelligence + attributes.willpower) / 2) - heavyArmorPoolPenalty(attributes.quickness, worn))
+      + combatSenseDice(items, { physicalAdept: mtype === "physical_adept" }),   // Combat Sense (p.125)
     magic: mtype !== "none" && mtype !== "physical_adept"
       ? skill("sorcery") + items.filter(i => i.type === "focus" && i.system.focusType === "power" && i.system.bonded && i.system.active).reduce((t, i) => t + num(i.system.force), 0)
       : 0,

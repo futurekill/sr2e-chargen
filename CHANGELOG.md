@@ -5,6 +5,13 @@ notes come from it.
 
 ## Unreleased
 
+### Added
+- **Physical adept powers** (core p.124–126): buy the core book's powers in Resources, priced in power points by the
+  Foundry system's own tables (Combat Sense, Increased Reflexes and Reaction, Improved Physical Attributes, Improved
+  Ability on one of your skills, Improved Physical Senses by naming them, Killing Hands, Pain Resistance, Astral
+  Perception). The rules check shows power points against the Magic Rating and reports what the book limits. Combat
+  Sense adds its dice to the Combat Pool on the sheet.
+
 ## 0.1.0-beta.1 — 2026-11-18
 
 First beta, for a table demo. Character creation covers priorities, metatype, magic, attributes, skills and
