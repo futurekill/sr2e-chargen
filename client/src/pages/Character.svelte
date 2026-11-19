@@ -95,7 +95,8 @@
   }
   // Nuyen after creation (docs/PLAN-M4b.md, RULINGS R6/R7). The GM's sale mode comes from the server.
   let saleMode = $state("refund");
-  const loadRules = () => get("/api/session").then(s => { saleMode = s.rules?.saleMode ?? "refund"; }).catch(() => { /* keep the last known */ });
+  let rulesSeq = 0;   // only the latest answer counts: an older reply can't restore a stale mode (r2)
+  const loadRules = () => { const mine = ++rulesSeq; return get("/api/session").then(s => { if (mine === rulesSeq) saleMode = s.rules?.saleMode ?? "refund"; }).catch(() => { /* keep the last known */ }); };
   loadRules();
   // The GM may switch the mode while this page is open: re-read it when the page is shown again, and after a refusal.
   const onVisible = () => { if (document.visibilityState === "visible") loadRules(); };
