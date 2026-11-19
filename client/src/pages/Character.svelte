@@ -102,10 +102,14 @@
   const qualitiesBought = $derived(Object.entries(body.creation.items).filter(([, r]) => r.type === "quality").sort(([a], [b]) => (a < b ? -1 : 1))
     .map(([id, r]) => ({ id, r, spec: choiceSpec(r), item: body.actor.items.find(i => i._id === id) })));
   const qualityTotals = $derived(qualitiesBought.reduce((t, x) => { const v = Number(x.item?.system.pointValue) || 0; return v > 0 ? { ...t, edges: t.edges + v } : { ...t, flaws: t.flaws + v }; }, { edges: 0, flaws: 0 }));
-  let qualityList = $state([]), qualityPick = $state("");
+  // The books with Edges and Flaws: the Companion, Cyberpirates, Rigger 2.
+  const QUALITY_BOOKS = ["sc", "cp", "r2"];
+  let qualityList = $state([]), qualityPick = $state(""), qualityBooksLoaded = "";
   $effect(() => {
-    if (!booksOf(body).includes("sc") || qualityList.length) return;
-    get("/api/catalog/entries?type=quality&book=sc&limit=100&offerable=creation").then(r => { if (!gone) qualityList = r.entries; }).catch(() => { /* the list stays empty */ });
+    const qb = booksOf(body).filter(k => QUALITY_BOOKS.includes(k)).sort().join(",");
+    if (!qb || qualityBooksLoaded === qb) return;
+    qualityBooksLoaded = qb;
+    get(`/api/catalog/entries?type=quality&limit=100&offerable=creation${qb.split(",").map(k => `&book=${k}`).join("")}`).then(r => { if (!gone) qualityList = r.entries; }).catch(() => { /* the list stays empty */ });
   });
   const spells = $derived(bought.filter(x => x.r.type === "spell"));
   const ownSkills = $derived(Object.entries(body.creation.items).filter(([, r]) => r.type === "skill").map(([id, r]) => ({ id, name: r.name })));
@@ -566,8 +570,8 @@
           {/each}
         </fieldset>
       {/if}
-      {#if booksOf(body).includes("sc")}
-        <fieldset class="stack quals"><legend>Edges and Flaws (Shadowrun Companion)</legend>
+      {#if booksOf(body).some(k => QUALITY_BOOKS.includes(k))}
+        <fieldset class="stack quals"><legend>Edges and Flaws</legend>
           <p class="muted small">Optional, the GM's call: take any Edges and Flaws whose values add up to 0. A Bonus Attribute Point past the racial maximum costs 2. <span class="cite">Companion p.22–35</span></p>
           <p>Edges <strong>+{qualityTotals.edges}</strong>, Flaws <strong>{qualityTotals.flaws}</strong>: {qualityTotals.edges + qualityTotals.flaws === 0 ? "balanced" : `${qualityTotals.edges + qualityTotals.flaws > 0 ? "+" : ""}${qualityTotals.edges + qualityTotals.flaws} to balance`}.</p>
           {#if !finished}
@@ -576,7 +580,7 @@
                 <select bind:value={qualityPick}>
                   <option value="">Choose…</option>
                   {#each [["edge", "Edges"], ["flaw", "Flaws"]] as [k, label] (k)}
-                    <optgroup {label}>{#each qualityList.filter(e => e.quality?.kind === k) as e (e.id)}<option value={e.id}>{e.name} ({e.quality.value > 0 ? "+" : ""}{e.quality.value})</option>{/each}</optgroup>
+                    <optgroup {label}>{#each qualityList.filter(e => e.quality?.kind === k) as e (e.id)}<option value={e.id}>{e.name} ({e.quality.value > 0 ? "+" : ""}{e.quality.value}){e.book !== "sc" ? ` · ${bookAbbr(e.book)}` : ""}</option>{/each}</optgroup>
                   {/each}
                 </select></label>
               <button type="button" disabled={!qualityPick} onclick={() => { buy(qualityPick); qualityPick = ""; }}>Add</button>
@@ -587,7 +591,7 @@
               <thead><tr><th scope="col">Edge or Flaw</th><th scope="col">Choices</th><th scope="col">Value</th><th scope="col"><span class="sr-only">Remove</span></th></tr></thead>
               <tbody>
                 {#each qualitiesBought as x (x.id)}
-                  <tr><th scope="row">{x.r.name}<br><span class="muted small">Companion p.{x.r.snapshot.citation?.page}</span></th>
+                  <tr><th scope="row">{x.r.name}<br><span class="muted small">{bookAbbr(x.r.snapshot.citation?.book ?? "sc")} p.{x.r.snapshot.citation?.page}</span></th>
                     <td class="choices">{@render choiceControls(x)}</td>
                     <td class="price">{(x.item?.system.pointValue ?? 0) > 0 ? "+" : ""}{x.item?.system.pointValue ?? 0}</td>
                     <td><button type="button" class="quiet" disabled={finished} aria-label={`Remove ${x.r.name}`} onclick={() => change({ op: "removeItem", itemId: x.id })}>✕</button></td></tr>
@@ -937,7 +941,7 @@
     {:else}
       <ul class="problems">
         {#each check.problems as p, i (i)}
-          <li class={p.severity}><button type="button" class="plain" onclick={() => pick(TAB_OF[p.step] ?? p.step, true)} aria-label={`${p.severity === "error" ? "Rule" : p.severity === "todo" ? "To do" : "Note"}: open the ${p.step} step`}>{p.severity === "error" ? "Rule" : p.severity === "todo" ? "To do" : "Note"}</button> {p.text} <span class="cite">{p.cite.book === "sc" ? "Companion" : "SR2"} p.{p.cite.page}</span></li>
+          <li class={p.severity}><button type="button" class="plain" onclick={() => pick(TAB_OF[p.step] ?? p.step, true)} aria-label={`${p.severity === "error" ? "Rule" : p.severity === "todo" ? "To do" : "Note"}: open the ${p.step} step`}>{p.severity === "error" ? "Rule" : p.severity === "todo" ? "To do" : "Note"}</button> {p.text} <span class="cite">{p.cite.book === "sr2" ? "SR2" : bookAbbr(p.cite.book)} p.{p.cite.page}</span></li>
         {/each}
       </ul>
     {/if}

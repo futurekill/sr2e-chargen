@@ -114,7 +114,7 @@ export function offerReason(entry, books = [], { inPlay = false } = {}) {
   if (entry.type === "quality") {   // Edges and Flaws (PLAN-M5d Draft 2): their own path, creation only
     if (!books.includes(book)) return "That sourcebook isn't turned on for this character.";
     if (inPlay) return "Edges and Flaws are chosen at creation (after that, they're the GM's, p.22).";
-    if (!QUALITY_VALUES[entry._stats?.compendiumSource ?? ""]) return "This book's Edges and Flaws come later: only the Shadowrun Companion's for now.";
+    if (!QUALITY_VALUES[entry._stats?.compendiumSource ?? ""]) return "This Edge or Flaw isn't in the app's value table yet.";
     return null;
   }
   if (book !== "sr2") {

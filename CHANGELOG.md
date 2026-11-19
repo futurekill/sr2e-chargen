@@ -7,7 +7,8 @@ notes come from it.
 
 ### Added
 - **Edges and Flaws** (Shadowrun Companion p.22–35; RULINGS R11): with the Companion on, the Concept tab lists its 86
-  Edges and Flaws. Each takes a value from the book's table (the magically active values for Blind, Bio-Rejection and
+  Edges and Flaws (and, with those books on, Cyberpirates' and Rigger 2's, valued from their own pages). Each takes
+  a value from the book's table (the magically active values for Blind, Bio-Rejection and
   Sensitive System), an attribute where needed and a detail; they must balance to 0. Bonus Attribute Point, Exceptional
   Attribute, Bonus Skill Point, Bonus Force Point and Extra Contact change the creation budget; Lightning Reflexes and
   Will to Live change Reaction and the overflow. The rules check cites the Companion's pages (shapeshifter problems

@@ -71,3 +71,15 @@ test("the sheet lists them; Will to Live raises the overflow", async () => {
   const { sheetModel } = await import("../server/sheet/model.mjs");
   assert.deepEqual(sheetModel(b).qualities.map(r => r.slice(0, 2)), [["Will to Live", "+2"], ["Dark Secret", "-2"]]);
 });
+
+test("Cyberpirates and Rigger 2 Edges and Flaws, from their own pages: Connected 3 or 5, Gremlins −1 to −4; cited to their book", () => {
+  const id = (book, name) => { const e = catalog.entries.find(x => x.type === "quality" && x.book === book && x.name === name); assert.ok(e, name); return e.id; };
+  let b = run(newCharacter("Pirate"), [{ op: "setBooks", books: ["cp", "r2"] }, { op: "addItem", catalogId: id("cp", "Connected") }, { op: "addItem", catalogId: id("r2", "Gremlins") }]);
+  b = run(b, [{ op: "setItem", itemId: rec(b, "Connected"), choices: { ...b.creation.items[rec(b, "Connected")].choices, points: 5 } }]);
+  assert.match(concept(b).join(), /balance to 0/);
+  b = run(b, [{ op: "setItem", itemId: rec(b, "Gremlins"), choices: { ...b.creation.items[rec(b, "Gremlins")].choices, points: -4 } }]);
+  assert.match(concept(b).join(), /balance to 0/, "+5 − 4 = +1");
+  b = run(b, [{ op: "addItem", catalogId: id("cp", "Braggart") }]);
+  assert.deepEqual(concept(b), []);
+  assert.throws(() => run(b, [{ op: "setItem", itemId: rec(b, "Connected"), choices: { ...b.creation.items[rec(b, "Connected")].choices, points: 4 } }]), /points is one of 3, 5/);
+});

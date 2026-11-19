@@ -903,7 +903,7 @@ export function validate(body) {
 
   // Edges and Flaws (Companion p.22–35; PLAN-M5d): the system's audit, as Foundry's creation panel shows it.
   for (const p of qualityAudit({ system: sys, items, natural: (a) => withRacial(sys, a) + formMod(sys, a), maximum: (a) => max[a] ?? 6 }))
-    add("concept", "error", p.text.replace(/ \(p\.\d+\)/, ""), p.page, "sc");
+    add("concept", "error", p.text.replace(/ \(p\.\d+\)/, ""), p.page, p.book ?? "sc");
   const ev = attributeEdgeViolations(items.filter(i => i.type === "quality").map(i => ({ attribute: i.system.attribute, attributeBonus: i.system.attributeBonus, maximumBonus: i.system.maximumBonus })));
   if (ev.bonusOverCap) add("concept", "error", `${ev.bonusTotal} bonus Attribute Points: no more than 5.`, 24, "sc");
   if (qualityEffects(items).skillPoints > 5) add("concept", "error", "No more than 5 bonus Skill Points.", 24, "sc");
