@@ -95,18 +95,25 @@
   }
   // Nuyen after creation (docs/PLAN-M4b.md, RULINGS R6/R7). The GM's sale mode comes from the server.
   let saleMode = $state("refund");
-  get("/api/session").then(s => { saleMode = s.rules?.saleMode ?? "refund"; }).catch(() => { /* refund until known */ });
+  const loadRules = () => get("/api/session").then(s => { saleMode = s.rules?.saleMode ?? "refund"; }).catch(() => { /* keep the last known */ });
+  loadRules();
+  // The GM may switch the mode while this page is open: re-read it when the page is shown again, and after a refusal.
+  const onVisible = () => { if (document.visibilityState === "visible") loadRules(); };
+  document.addEventListener("visibilitychange", onVisible);
+  onDestroy(() => document.removeEventListener("visibilitychange", onVisible));
   let cashAmount = $state(0), cashDir = $state("in"), cashNote = $state(""), playQ = $state(""), playShop = $state([]), buying = $state(null), sellPct = $state({});
-  let playTimer;
+  let playTimer, playSeq = 0;
   function searchPlay() {
     clearTimeout(playTimer);
+    const mine = ++playSeq;   // only the latest search's answer is shown (as the Resources shop)
     playTimer = setTimeout(async () => {
       const p = new URLSearchParams({ book: "sr2", limit: "20" });
       for (const t of PLAY_GEAR) p.append("type", t);
       if (playQ.trim()) p.set("q", playQ.trim());
-      try { playShop = (await get(`/api/catalog/entries?${p}`)).entries; } catch (err) { if (!gone) error = err.message; }
+      try { const r = await get(`/api/catalog/entries?${p}`); if (!gone && mine === playSeq) playShop = r.entries; } catch (err) { if (!gone && mine === playSeq) error = err.message; }
     }, 250);
   }
+  searchPlay();
   /** Start buying an entry: its in-play choices with defaults, the street price shown, the price agreed prefilled. */
   async function startBuy(id) {
     try { if (!entries.has(id)) entries.set(id, await get(`/api/catalog/entries/${encodeURIComponent(id)}`)); }
@@ -149,6 +156,7 @@
         try { server = await mutate("POST", `/api/documents/${server.document.id}/ops`, { revision: server.document.revision, ops: [op] }); }
         catch (err) {
           epoch++; recovering = true;
+          if (/how selling works/.test(err.message ?? "")) loadRules();   // the GM switched the sale mode
           error = err.code === "stale" ? "This character changed somewhere else. It now shows the saved version: redo your last changes."
             : err.code === "network" ? "The line dropped. This shows what was saved: redo your last changes." : err.message;
           try { server = await get(`/api/documents/${server.document.id}`); } catch { /* keep the last answer */ }

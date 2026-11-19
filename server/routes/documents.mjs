@@ -37,7 +37,9 @@ const short = { type: "string", maxLength: 60 }, choice = (...v) => ({ enum: [""
 const BOUNDS = { sellItem: { pct: { enum: [10, 15, 20, 25, 30, 35, 40, 45, 50] }, shownMode: { enum: ["refund", "fence"] } }, nuyen: { note: { type: "string", maxLength: 120 } }, awardKarma: { amount: { type: "integer", minimum: 1, maximum: 200 }, note: { type: "string", maxLength: 120 } }, addExtra: { kind: { enum: ["gang", "follower"] }, name: short },
   setAllergy: { substance: short, rarity: choice("uncommon", "common"), severity: choice("nuisance", "mild", "moderate", "severe"),
     rarityBonus: choice("attributes", "skills", "force", "nuyen"), severityBonus: choice("attributes", "skills", "force", "nuyen") } };
-const opSchema = { oneOf: Object.entries(OPS).map(([op, fields]) => ({ type: "object", additionalProperties: false, required: ["op", ...Object.keys(fields)],
+/** Fields an op may leave out (the reducer decides when they are needed): a refund sale has no percentage. */
+const OPTIONAL = { sellItem: ["pct"] };
+const opSchema = { oneOf: Object.entries(OPS).map(([op, fields]) => ({ type: "object", additionalProperties: false, required: ["op", ...Object.keys(fields).filter(k => !OPTIONAL[op]?.includes(k))],
   properties: { op: { const: op }, ...Object.fromEntries(Object.entries(fields).map(([k, t]) => [k, BOUNDS[op]?.[k] ?? FIELD[t]])) } })) };
 const opsBody = { type: "object", additionalProperties: false, required: ["revision", "ops"],
   properties: { revision: { type: "integer", minimum: 1 }, ops: { type: "array", minItems: 1, maxItems: 50, items: opSchema } } };
@@ -50,7 +52,7 @@ export default async function documentRoutes(app) {
     async (req) => ({ documents: await L.listDocuments(req.ctx, me(req), { deleted: req.query.deleted === "1", limit: Number(req.query.limit ?? 50), offset: Number(req.query.offset ?? 0) }) }));
   app.post("/", { ...BIG, schema: { headers: keyHeader, querystring: noQuery, body: L.DRAFT_SCHEMA } }, (req) => L.createDraft(req.ctx, me(req), req.body, key(req)));
   app.post("/characters", { schema: { headers: keyHeader, querystring: noQuery, body: characterBody } }, (req) => L.createCharacter(req.ctx, me(req), req.body, key(req)));
-  app.post("/:id/ops", { schema: { params: idParams, headers: keyHeader, querystring: noQuery, body: opsBody } }, (req) => L.applyOps(req.ctx, me(req), req.params.id, req.body, key(req), (cid) => entryOf(app.catalog, cid)));
+  app.post("/:id/ops", { schema: { params: idParams, headers: keyHeader, querystring: noQuery, body: opsBody } }, (req) => L.applyOps(req.ctx, me(req), req.params.id, req.body, key(req), (cid) => entryOf(app.catalog, cid), req.session.user.username));
   app.get("/:id", { schema: { params: idParams } }, (req) => L.getDocument(req.ctx, me(req), req.params.id));
   app.put("/:id", { ...BIG, schema: { params: idParams, headers: keyHeader, querystring: noQuery, body: updateBody } }, (req) => L.updateDraft(req.ctx, me(req), req.params.id, req.body, key(req)));
   app.delete("/:id", { schema: { params: idParams, headers: keyHeader, querystring: noQuery, body: revisionBody } }, (req) => L.deleteDocument(req.ctx, me(req), req.params.id, req.body, key(req)));

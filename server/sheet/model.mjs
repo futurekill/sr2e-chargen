@@ -69,7 +69,7 @@ export function sheetModel(body) {
       const s = i.system, sub = [s.concentration?.name && `${s.concentration.name} ${s.concentration.rating}`, s.specialization?.name && `${s.specialization.name} ${s.specialization.rating}`].filter(Boolean);
       return [plain(i.name), String(s.rating), plain(sub.join(" · ")), s.category === "active" ? "active" : s.category];
     }),
-    cyberware: of("cyberware").map(i => [plain(i.name) + (i.system.modules?.length ? ` (${i.system.modules.map(m => plain(m.name)).join(", ")})` : ""),
+    cyberware: of("cyberware").map(i => [plain(i.name) + (i.system.modules?.length ? ` (${i.system.modules.map(m => plain(m.name)).join(", ")})` : "") + (i.system.installed === false ? " (spare, not installed)" : ""),
       i.system.rating ? `R${i.system.rating}` : "", `Ess ${num(essenceOf(i, items))}`, cite(i.system)]),
     gear: [...of("weapon"), ...of("armor"), ...of("gear"), ...of("ammo")].map(i => [plain(i.name),
       i.type === "ammo" ? `${i.system.quantity} rds` : i.system.quantity > 1 ? `×${i.system.quantity}` : i.system.rating ? `R${i.system.rating}` : "",
@@ -82,7 +82,7 @@ export function sheetModel(body) {
       `Hand ${v.system?.handling ?? "–"} · Speed ${v.system?.speed ?? "–"}`, `Body ${v.system?.body ?? "–"} · Armor ${v.system?.armor ?? "–"} · Sig ${v.system?.signature ?? "–"} · Pilot ${v.system?.pilot ?? "–"}`, cite(v.system)]),
     powers: of("adept_power").map(i => [plain(i.name), `L${i.system.level}`, plain(i.system.improvedSkill || (/^Senses: /.test(i.system.notes ?? "") ? i.system.notes.slice(8) : ""), 80), cite(i.system)]),
     // The history after creation (Karma and money, docs/PLAN-M4b Draft 3): the GM reads it from the sheet.
-    history: (body.ledger ?? []).map(e => [e.at ? new Date(e.at).toISOString().slice(0, 10) : "", plain(e.summary, 160), plain(e.note ?? "", 120), e.undoneBy ? "undone" : ""]),
+    history: (body.ledger ?? []).map(e => [e.at ? new Date(e.at).toISOString().slice(0, 10) : "", plain(e.summary, 160), plain([e.by, e.note].filter(Boolean).join(" · "), 120), e.undoneBy ? "undone" : ""]),
     notes: plain(body.notes),
     // Item ids parallel to the rows above (the table card filters by them).
     rowIds: { attacks: of("weapon").map(i => i._id), skills: of("skill").map(i => i._id), cyberware: of("cyberware").map(i => i._id),

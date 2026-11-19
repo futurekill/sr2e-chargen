@@ -51,6 +51,20 @@ test("sell: refund pays what was paid; a fence pays 30% of the list value, in st
   assert.throws(() => op(b, { op: "sellItem", itemId: id, pct: 30, shownMode: "fence", quoted: 999 }, "fence"), /price changed/);
 });
 
+test("code review r1: a no-fixed-price entry is refused; a refund sale needs no percentage, a fence sale does; the sheet marks a spare; who made it is recorded", async () => {
+  let b = finished();
+  assert.throws(() => op(b, { op: "buyItem", catalogId: core("DataSoft", "gear"), choices: {}, price: 0 }), /varies/);
+  b = applyOp(b, { op: "buyItem", catalogId: core("Ares Predator", "weapon"), choices: {}, price: 400 }, lookup, { now: 9, by: "razor" });
+  assert.equal(b.ledger[0].by, "razor");
+  const id = item(b, "Ares Predator")._id;
+  assert.equal(op(b, { op: "sellItem", itemId: id, shownMode: "refund", quoted: 400 }).actor.system.nuyen, 20000);
+  assert.throws(() => op(b, { op: "sellItem", itemId: id, shownMode: "fence", quoted: 135 }, "fence"), /agreed percentage/);
+  b = op(b, { op: "buyItem", catalogId: core("Datajack", "cyberware"), choices: {}, price: 1000 });
+  const { sheetModel } = await import("../server/sheet/model.mjs");
+  assert.match(sheetModel(b).cyberware.find(r => /Datajack/.test(r[0]))[0], /spare, not installed/);
+  assert.ok(sheetModel(b).history.length >= 2);
+});
+
 test("income and expenses; undo newest first for every kind, exact or refused", () => {
   let b = op(finished(), { op: "nuyen", amount: 5000, note: "the run" });
   assert.throws(() => op(b, { op: "nuyen", amount: -30000, note: "" }), /Only 25,000¥/);

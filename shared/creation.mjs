@@ -120,11 +120,11 @@ const OPTIONS = ["moreMetahumans"];
  * could have); rules a player may break while building are reported by `validate`, never refused. A finished
  * character takes no creation operation (changes after creation are milestone 4's).
  */
-export function applyOp(body, op, lookup = () => null, { roll = null, now = 0, saleMode = "refund" } = {}) {
+export function applyOp(body, op, lookup = () => null, { roll = null, now = 0, saleMode = "refund", by = "" } = {}) {
   if (!op || typeof op !== "object" || typeof op.op !== "string" || !Object.hasOwn(OPS, op.op)) throw new Refusal("Unknown operation.");
   if (body.creation.finished && !["setName", "setNotes", "setCard", ...PLAY_OPS].includes(op.op)) throw new Refusal("This character is finished: creation can't change it (use the Karma step).");
   const b = structuredClone(body), sys = b.actor.system;
-  if (PLAY_OPS.includes(op.op)) return playOp(b, op, lookup, now, saleMode);
+  if (PLAY_OPS.includes(op.op)) return playOp(b, op, lookup, now, saleMode, by);
   // Name and notes are metadata: they never rebuild the items, so a finished character's data stays as finished (M2d r1 #2).
   if (op.op === "setName") { b.name = b.actor.name = cleanName(op.name); return b; }
   if (op.op === "setNotes") {
@@ -391,12 +391,15 @@ function freshItemId(b) {
 function ledgerAdd(b, now, entry) {
   b.ledger ??= [];
   const id = `k${String(b.ledger.length + 1).padStart(5, "0")}`;
-  b.ledger.push({ id, at: now, note: "", ...entry });
+  b.ledger.push({ id, at: now, by: LEDGER_BY.value, note: "", ...entry });
   if (entry.undoes) b.ledger.find(e => e.id === entry.undoes).undoneBy = id;
   return id;
 }
 
-function playOp(b, op, lookup, now, saleMode) {
+/** Who is making the change (the server's signed-in handle; PLAN-M4b Draft 2's audit), set for one playOp call. */
+const LEDGER_BY = { value: "" };
+function playOp(b, op, lookup, now, saleMode, by = "") {
+  LEDGER_BY.value = typeof by === "string" ? by.slice(0, 32) : "";
   if (!b.creation.finished) throw new Refusal("Karma and money after creation start once the character is finished.", 190);
   if (op.op === "buyItem" || op.op === "sellItem" || op.op === "nuyen") return moneyOp(b, op, lookup, now, saleMode);
   if (op.op === "undo") {
@@ -453,6 +456,8 @@ function moneyOp(b, op, lookup, now, saleMode) {
   if (op.op === "buyItem") {   // p.184, R7: the street price shown; the price agreed entered by the player
     const e = lookup(op.catalogId);
     if (!e || !PLAY_GEAR.includes(e.type) || e.book !== CORE) throw new Refusal("In play, money buys the core book's weapons, armor, gear, ammunition, cyberware and programs.");
+    const why = refusalFor(e);   // no fixed price, a cyberlimb option… refused as at creation (code review M4b r1 #1)
+    if (why) throw new Refusal(why);
     const rec = recordOf(e), checked = checkChoices(rec, { ...defaultChoices(rec, { inPlay: true }), ...(op.choices ?? {}) }, { inPlay: true });
     if (checked.reason) throw new Refusal(checked.reason);
     const price = money(op.price, 0, MAX_MONEY, "A price");
@@ -472,7 +477,8 @@ function moneyOp(b, op, lookup, now, saleMode) {
   const item = typeof op.itemId === "string" ? b.actor.items.find(i => i._id === op.itemId) : null;
   if (!item || !PLAY_GEAR.includes(item.type)) throw new Refusal("That isn't something to sell.");
   if (op.shownMode !== saleMode) throw new Refusal("The GM changed how selling works: look at the price again.");
-  const q = saleQuoteOf(item, { mode: saleMode, pct: op.pct, items: b.actor.items });
+  if (saleMode === "fence" && op.pct == null) throw new Refusal("A fence sale needs the agreed percentage.", 188);
+  const q = saleQuoteOf(item, { mode: saleMode, pct: op.pct ?? 30, items: b.actor.items });
   if (q.price == null) throw new Refusal("A fence pays 10–50%, in steps of 5 (p.188).", 188);
   if (q.price !== op.quoted) throw new Refusal("The price changed: sell again to see the new one.");
   b.actor.items = b.actor.items.filter(i => i._id !== item._id);
