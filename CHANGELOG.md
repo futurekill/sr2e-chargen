@@ -9,6 +9,11 @@ notes come from it.
 - "Wrong origin" now says which address `BASE_URL` expects and which one the page was opened at (and the server
   logs it), with a README troubleshooting section.
 ### Added
+- **Nuyen after creation** (core p.184, p.188; RULINGS R6, R7): a finished character has a **Nuyen** step. Record
+  money received or paid; buy weapons, armor, gear, ammunition, cyberware and programs — the street price is shown
+  (list × Street Index) and you enter the price you agreed; sell what you own — by the GM's setting (Admin → Rules),
+  either a refund of what was paid or a fence (30% of the list value, 10–50% in steps of 5). Cyberware bought now is a
+  spare until surgery. Every change is in the history with Undo; the sheets print the history so the GM can read it.
 - **Karma after creation** (core p.190–191): a finished character has a **Karma** step. Award Karma (one-tenth of
   Total, rounded up, is the Karma Pool; the rest Good Karma); raise an attribute (its new rating, double above the
   racial maximum with the GM's approval), a skill (2 ×, a language 1 ×), a Concentration (1.5 ×) or Specialization

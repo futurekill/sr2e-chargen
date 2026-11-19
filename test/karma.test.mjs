@@ -28,7 +28,7 @@ function finished() {
 }
 
 test("before finishing, Karma ops are refused; finishing freezes the skill ratings", () => {
-  assert.throws(() => applyOp(newCharacter("New"), { op: "awardKarma", amount: 5, note: "" }, lookup), /after the character is finished/);
+  assert.throws(() => applyOp(newCharacter("New"), { op: "awardKarma", amount: 5, note: "" }, lookup), /once the character is finished/);
   const b = finished();
   assert.ok(b.actor.items.filter(i => i.type === "skill").every(i => i.system.ratingsFinalized === true));
 });
@@ -63,11 +63,11 @@ test("undo: newest first, an undo can't be undone, award→spend→undo→undo r
   let b = run(start, [{ op: "awardKarma", amount: 20, note: "" }]);
   b = run(b, [{ op: "spendKarma", target: { itemId: idOf(b, "Stealth"), tier: "general" } }]);
   const [award, spend] = b.ledger;
-  assert.throws(() => run(b, [{ op: "undoKarma", entryId: award.id }]), /latest change/);
-  b = run(b, [{ op: "undoKarma", entryId: spend.id }]);
+  assert.throws(() => run(b, [{ op: "undo", entryId: award.id }]), /latest change/);
+  b = run(b, [{ op: "undo", entryId: spend.id }]);
   assert.equal(skill(b, "Stealth").rating, 6);
   assert.equal(undoable(b).id, award.id, "the undo entry itself is skipped");
-  b = run(b, [{ op: "undoKarma", entryId: award.id }]);
+  b = run(b, [{ op: "undo", entryId: award.id }]);
   assert.deepEqual([b.actor.system.karma.total, b.actor.system.karma.current], [start.actor.system.karma?.total ?? 0, start.actor.system.karma?.current ?? 0]);
   assert.deepEqual(b.actor.items, start.actor.items);
   assert.deepEqual(b.ledger.map(e => [e.kind, !!e.undoneBy, e.undoes ?? null]), [["award", true, null], ["advance", true, null], ["revert", false, spend.id], ["revert", false, award.id]]);

@@ -10,6 +10,7 @@ import { writeTx, changed } from "./db/fence.mjs";
 import { Refused } from "./auth/accounts.mjs";
 import { sha256 } from "./auth/tokens.mjs";
 import { newCharacter, applyOp, Refusal, diceFor } from "../shared/creation.mjs";
+import { getSaleMode } from "./rules-settings.mjs";
 import { isStock, stockPortrait } from "./portrait/stock.mjs";
 
 export const MAX_DOCUMENTS = 200, MAX_BYTES = 500 * 1024 * 1024, MAX_REVISIONS = 50, MAX_BODY_BYTES = 2 * 1024 * 1024;
@@ -137,7 +138,9 @@ export function applyOps(ctx, userId, id, { revision, ops }, key, lookup = () =>
     // after its replay check, never taken from the request. ctx.randomInt lets tests fix the dice.
     const d6 = () => (ctx.randomInt ?? randomInt)(1, 7);
     const roll = (n) => Array.from({ length: n }, d6).reduce((t, x) => t + x, 0);
-    try { for (const op of ops) body = applyOp(body, op, lookup, { roll: diceFor(op) ? roll(diceFor(op)) : null, now: ctx.now() }); } catch (e) { throw refusal(e); }
+    // The GM's sale mode, read INSIDE this transaction (PLAN-M4b Draft 3, r2 #5): never a value the client sent.
+    const saleMode = ops.some(o => o.op === "sellItem") ? await getSaleMode(trx) : "refund";
+    try { for (const op of ops) body = applyOp(body, op, lookup, { roll: diceFor(op) ? roll(diceFor(op)) : null, now: ctx.now(), saleMode }); } catch (e) { throw refusal(e); }
     const text = encode(body);
     await bump(trx, ctx, userId, id, revision, { name: body.name, body: text, bytes: Buffer.byteLength(text) });
     await appendRevision(trx, ctx, { id, owner_id: userId }, revision + 1, body, ops.map(o => o.op).join(", ").slice(0, 200));

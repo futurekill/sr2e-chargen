@@ -15,22 +15,24 @@ const text = () => ({ kind: "text" });
 const isEyeAccessory = (e) => !!eyeAccessoryKind(e.flags, e.source);
 const isCybereye = (rec) => rec.type === "cyberware" && (rec.snapshot.capacity ?? 0) > 0;
 
-/** The choices an entry takes: `{ key: spec }`. Only these keys are ever accepted (PLAN-M2c §2). */
-export function choiceSpec(rec) {
-  const s = rec.snapshot;
-  const rows = (s.ratingStats ?? []).map(r => r.rating).filter(r => r <= 6);
+/** The choices an entry takes: `{ key: spec }`. Only these keys are ever accepted (PLAN-M2c §2). In play
+ * (`inPlay`, docs/PLAN-M4b.md Draft 2) the creation cap of Rating 6 is gone (any rating the entry lists, else up to
+ * 12) and an eye accessory is bought on its own (fitting it is surgery, M4c). */
+export function choiceSpec(rec, { inPlay = false } = {}) {
+  const s = rec.snapshot, top = inPlay ? 12 : 6;
+  const rows = (s.ratingStats ?? []).map(r => r.rating).filter(r => inPlay || r <= 6);
   switch (rec.type) {
     case "weapon": return { quantity: int(1, 20), ...(s.costPerStrengthMin > 0 ? { strengthMinimum: int(1, 6) } : {}) };
     case "armor": return { quantity: int(1, 5) };
     case "gear":
-      if (s.category === "skillsoft") return { quantity: int(1, 1000), rating: int(1, 6), skill: text() };
-      return { quantity: int(1, 1000), ...(s.costPerRating > 0 ? { rating: int(1, 6) } : rows.length > 1 ? { rating: oneOf(rows) } : {}) };
+      if (s.category === "skillsoft") return { quantity: int(1, 1000), rating: int(1, top), skill: text() };
+      return { quantity: int(1, 1000), ...(s.costPerRating > 0 ? { rating: int(1, top) } : rows.length > 1 ? { rating: oneOf(rows) } : {}) };
     case "ammo": return { bundles: int(1, 100) };
-    case "cyberware": return { ...(rows.length > 1 ? { rating: oneOf(rows) } : {}), ...(isEyeAccessory(rec) ? { in: text() } : {}) };
+    case "cyberware": return { ...(rows.length > 1 ? { rating: oneOf(rows) } : {}), ...(!inPlay && isEyeAccessory(rec) ? { in: text() } : {}) };
     case "spell": return { force: int(1, 6) };   // "no starting spell can have a Force greater than 6" (p.46)
     case "focus": return { ...(s.focusType === "spell_lock" ? {} : { force: int(1, 6) }), ...(s.focusType === "spell" ? { spell: text() } : {}),
       ...(s.focusType === "weapon" ? { weapon: text() } : {}) };
-    case "program": return { rating: int(1, 6) };   // no starting gear above Rating 6 (p.46)
+    case "program": return { rating: int(1, top) };   // no starting gear above Rating 6 (p.46)
     case "contact": return rec.catalogId ? { kind: oneOf(["contact", "buddy"]) } : {};   // gangs and followers: addExtra / setExtra
     case "lifestyle": return { months: int(1, 60) };   // prepaid months (p.46); 60 is a sanity bound, the book sets none
     case "adept_power": {   // p.124–126: a level where the power has one; Improved Ability names a skill, Senses list theirs
@@ -43,9 +45,9 @@ export function choiceSpec(rec) {
   }
 }
 /** A new purchase's choices: the entry's own values where it has them. */
-export function defaultChoices(rec) {
+export function defaultChoices(rec, opts) {
   const s = rec.snapshot, out = {};
-  for (const [k, spec] of Object.entries(choiceSpec(rec))) {
+  for (const [k, spec] of Object.entries(choiceSpec(rec, opts))) {
     if (spec.kind === "text") out[k] = "";
     else if (k === "rating") out[k] = spec.kind === "oneOf" ? spec.values.find(v => v >= (s.rating || 1)) ?? spec.values[0] : Math.min(6, Math.max(1, s.rating || 1));
     else if (k === "force") out[k] = Math.max(1, s.force || 1);
@@ -56,14 +58,14 @@ export function defaultChoices(rec) {
   return out;
 }
 /** Check a full set of choices against the spec; returns the cleaned choices or a reason. */
-export function checkChoices(rec, choices) {
+export function checkChoices(rec, choices, opts) {
   if (!choices || typeof choices !== "object" || Array.isArray(choices)) return { reason: "Choices are an object." };
-  const spec = choiceSpec(rec), out = {};
+  const spec = choiceSpec(rec, opts), out = {};
   for (const k of Object.keys(choices)) if (!Object.hasOwn(spec, k)) return { reason: `${rec.name} has no choice "${k}".` };
   for (const [k, sp] of Object.entries(spec)) {
     const v = Object.hasOwn(choices, k) ? choices[k] : rec.choices?.[k];
     if (sp.kind === "int" && !(Number.isInteger(v) && v >= sp.lo && v <= sp.hi)) return { reason: `${rec.name}: ${k} is a whole number from ${sp.lo} to ${sp.hi}.` };
-    if (sp.kind === "oneOf" && !sp.values.includes(v)) return { reason: `${rec.name}: ${k} is one of ${sp.values.join(", ")} (no starting gear above 6, p.44).` };
+    if (sp.kind === "oneOf" && !sp.values.includes(v)) return { reason: `${rec.name}: ${k} is one of ${sp.values.join(", ")}${opts?.inPlay ? "" : " (no starting gear above 6, p.44)"}.` };
     if (sp.kind === "text") {
       if (typeof v !== "string") return { reason: `${rec.name}: ${k} is text.` };
       const t = v.replace(/\s+/g, " ").trim();

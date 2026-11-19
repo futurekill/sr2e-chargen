@@ -1,4 +1,5 @@
 /** Sign-in, links and the account (docs/PLAN-M3.md §4). */
+import { getSaleMode } from "../rules-settings.mjs";
 import * as A from "../auth/accounts.mjs";
 import { writeTx } from "../db/fence.mjs";
 import { deleteSession, deleteUserSessions } from "../auth/sessions.mjs";
@@ -25,7 +26,8 @@ export default async function authRoutes(app) {
     return { ok: true };
   });
 
-  app.get("/session", { onRequest: app.needSession }, async (req) => ({ user: req.session.user, csrf: req.session.csrf }));
+  // The rules settings ride along, so the client shows what the server will do (PLAN-M4b Draft 2).
+  app.get("/session", { onRequest: app.needSession }, async (req) => ({ user: req.session.user, csrf: req.session.csrf, rules: { saleMode: await getSaleMode(app.ctx.db) } }));
   app.post("/logout", { onRequest: app.needSession }, async (req, reply) => {
     await writeTx(req.ctx, trx => deleteSession(trx, req.session.sessionId));
     app.clearSessionCookie(reply);

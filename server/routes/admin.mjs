@@ -1,5 +1,6 @@
 /** Admin: invites and users (docs/PLAN-M3.md §4). The same operations as the CLI, for a signed-in admin. */
 import * as A from "../auth/accounts.mjs";
+import { getSaleMode, setSaleMode, SALE_MODES } from "../rules-settings.mjs";
 
 const link = (config, secret) => `${config.baseUrl}/redeem#k=${secret}`;   // the secret rides in the fragment: never sent to a server
 const params = (name, max = 64) => ({ type: "object", required: [name], properties: { [name]: { type: "string", minLength: 1, maxLength: max } } });
@@ -19,6 +20,12 @@ export default async function adminRoutes(app) {
     return { ok: true };
   });
   app.get("/users", async () => ({ users: await A.listUsers(appCtx) }));
+  // The GM's rules settings (docs/PLAN-M4b.md, RULINGS R6): how selling pays.
+  app.get("/rules", async () => ({ saleMode: await getSaleMode(appCtx.db) }));
+  app.put("/rules", { schema: { body: { type: "object", additionalProperties: false, required: ["saleMode"], properties: { saleMode: { enum: SALE_MODES } } } } }, async (req) => {
+    await setSaleMode(req.ctx, req.body.saleMode, req.session.user.id);
+    return { saleMode: await getSaleMode(appCtx.db) };
+  });
   for (const [verb, disabled] of [["disable", true], ["enable", false]]) {
     app.post(`/users/:username/${verb}`, { schema: { params: params("username") } }, async (req) => {
       await A.setDisabled(req.ctx, req.params.username, disabled, { actor: req.session.user.id });

@@ -8,8 +8,8 @@
  * A character is the Foundry system's own `character` source shapes (`actor`), so the system's functions read it
  * unchanged; the app's own record sits beside it (`creation`).
  */
-import { TABLES, chargenBudget, karmaTransition, advancementOptions, startingMoney, startingKarmaPool, adeptPowerBudget, label, skillTiersFromAllocation, validateSkillAllocation } from "./rules.mjs";
-import { defaultChoices, checkChoices, refusalFor, project, eyeRow, essenceOf, isCybereye, powerKeyOf, sensesOf } from "./purchase.mjs";
+import { TABLES, chargenBudget, karmaTransition, advancementOptions, saleQuoteOf, streetPrice, ratedStreetIndex, startingMoney, startingKarmaPool, adeptPowerBudget, label, skillTiersFromAllocation, validateSkillAllocation } from "./rules.mjs";
+import { defaultChoices, checkChoices, refusalFor, project, price, eyeRow, essenceOf, isCybereye, powerKeyOf, sensesOf } from "./purchase.mjs";
 
 export const SCHEMA = "sr2e-chargen-character", SCHEMA_VERSION = 1;
 export const CATEGORIES = ["race", "magic", "attributes", "skills", "resources"];
@@ -87,10 +87,17 @@ export const OPS = Object.freeze({
   // After creation (docs/PLAN-M4a.md): Karma, through the system's karmaTransition; every change is a ledger entry.
   awardKarma: { amount: "integer", note: "string" },
   spendKarma: { target: "karmaTarget" },
-  undoKarma: { entryId: "string" }
+  undo: { entryId: "string" },
+  // Nuyen after creation (docs/PLAN-M4b.md): buy, sell (the server's sale mode), income and expenses.
+  buyItem: { catalogId: "string", choices: "choices", price: "money" },
+  sellItem: { itemId: "string", pct: "integer", shownMode: "string", quoted: "money" },
+  nuyen: { amount: "signedMoney", note: "string" }
 });
 /** The ops a FINISHED character takes (besides name, notes, card). */
-const PLAY_OPS = ["awardKarma", "spendKarma", "undoKarma"];
+const PLAY_OPS = ["awardKarma", "spendKarma", "undo", "buyItem", "sellItem", "nuyen"];
+/** What money buys and sells in play (PLAN-M4b Draft 2, r1 #3): property, not spells, foci, powers, contacts or homes. */
+export const PLAY_GEAR = ["weapon", "armor", "gear", "ammo", "cyberware", "program"];
+const MAX_MONEY = 10_000_000;
 const MAX_VEHICLES = 20;
 /** Ops the server must roll for (docs/PLAN-M2d.md Draft 2): how many D6, or 0. */
 export const diceFor = (op) => (op?.op === "finish" ? 3 : op?.op === "addExtra" && op.kind === "gang" ? 2 : 0);
@@ -113,11 +120,11 @@ const OPTIONS = ["moreMetahumans"];
  * could have); rules a player may break while building are reported by `validate`, never refused. A finished
  * character takes no creation operation (changes after creation are milestone 4's).
  */
-export function applyOp(body, op, lookup = () => null, { roll = null, now = 0 } = {}) {
+export function applyOp(body, op, lookup = () => null, { roll = null, now = 0, saleMode = "refund" } = {}) {
   if (!op || typeof op !== "object" || typeof op.op !== "string" || !Object.hasOwn(OPS, op.op)) throw new Refusal("Unknown operation.");
   if (body.creation.finished && !["setName", "setNotes", "setCard", ...PLAY_OPS].includes(op.op)) throw new Refusal("This character is finished: creation can't change it (use the Karma step).");
   const b = structuredClone(body), sys = b.actor.system;
-  if (PLAY_OPS.includes(op.op)) return playOp(b, op, lookup, now);
+  if (PLAY_OPS.includes(op.op)) return playOp(b, op, lookup, now, saleMode);
   // Name and notes are metadata: they never rebuild the items, so a finished character's data stays as finished (M2d r1 #2).
   if (op.op === "setName") { b.name = b.actor.name = cleanName(op.name); return b; }
   if (op.op === "setNotes") {
@@ -339,7 +346,8 @@ const shortText = (v, what) => {
  */
 function validateInPlay(body, add, problems) {
   const sys = body.actor.system, items = body.actor.items, mtype = sys.magic.type;
-  const essence = Math.round((6 - items.filter(i => i.type === "cyberware").reduce((t, i) => t + essenceOf(i, items), 0)) * 100) / 100;
+  // Only INSTALLED cyberware takes Essence: a spare bought in play waits for surgery (PLAN-M4b Draft 3, r2 #2).
+  const essence = Math.round((6 - items.filter(i => i.type === "cyberware" && i.system.installed !== false).reduce((t, i) => t + essenceOf(i, items), 0)) * 100) / 100;
   const magic = mtype === "none" ? 0 : Math.max(0, Math.min(6, Math.floor(essence + 1e-9)));
   if (essence < 0) add("resources", "error", `Essence is ${essence}.`, 46);
   const max = TABLES.racialMaximums[sys.race] ?? TABLES.racialMaximums.human;
@@ -369,16 +377,38 @@ const setPath = (obj, path, v) => { const ks = path.split("."); let o = obj; for
 /** The latest entry that can be undone: an ORIGINAL (not an undo) not yet undone (PLAN-M4a Draft 3). */
 export const undoable = (body) => [...(body.ledger ?? [])].reverse().find(e => !e.undoes && !e.undoneBy) ?? null;
 
-function playOp(b, op, lookup, now) {
-  if (!b.creation.finished) throw new Refusal("Karma is spent after the character is finished.", 190);
+const sameJson = (x, y) => JSON.stringify(x) === JSON.stringify(y);
+const nuyenOf = (b) => Math.max(0, Number(b.actor.system.nuyen) || 0);
+/** A fresh item id that no item (ours or a foreign one) and no creation record holds. */
+function freshItemId(b) {
+  const taken = new Set(b.actor.items.map(i => i._id));
+  let n = b.creation.nextItem ?? 1;
+  while (taken.has(itemId(n)) || Object.hasOwn(b.creation.items, itemId(n))) n++;
+  b.creation.nextItem = n + 1;
+  return itemId(n);
+}
+/** Append a ledger entry (who did it is the library's revision; `shown` = what the screen offered). */
+function ledgerAdd(b, now, entry) {
+  b.ledger ??= [];
+  const id = `k${String(b.ledger.length + 1).padStart(5, "0")}`;
+  b.ledger.push({ id, at: now, note: "", ...entry });
+  if (entry.undoes) b.ledger.find(e => e.id === entry.undoes).undoneBy = id;
+  return id;
+}
+
+function playOp(b, op, lookup, now, saleMode) {
+  if (!b.creation.finished) throw new Refusal("Karma and money after creation start once the character is finished.", 190);
+  if (op.op === "buyItem" || op.op === "sellItem" || op.op === "nuyen") return moneyOp(b, op, lookup, now, saleMode);
+  if (op.op === "undo") {
+    const e = undoable(b);
+    if (!e || e.id !== op.entryId) throw new Refusal("Only the latest change that isn't undone can be undone.");
+    if (["buy", "sell", "nuyen"].includes(e.kind)) return undoMoney(b, e, now);
+  }
   const source = karmaSource(b), ctx = karmaContext(b);
   let action, note = "", undoes = null;
   if (op.op === "awardKarma") { action = { award: op.amount }; note = shortText(op.note ?? "", "A note"); }
-  else if (op.op === "undoKarma") {
-    const e = undoable(b);
-    if (!e || e.id !== op.entryId) throw new Refusal("Only the latest change that isn't undone can be undone.");
-    action = { revert: e.record }; undoes = e.id;
-  } else {
+  else if (op.op === "undo") { const e = undoable(b); action = { revert: e.record }; undoes = e.id; }
+  else {
     const t = op.target && typeof op.target === "object" ? { ...op.target } : {};
     if (typeof t.newSkill === "string") {   // a core skill from the catalog, or a named Knowledge/Language skill
       const e = lookup(t.newSkill);
@@ -393,12 +423,7 @@ function playOp(b, op, lookup, now) {
         system: { category, linkedAttribute: "intelligence", rating: 0, concentration: { name: "", rating: 0 }, specialization: { name: "", rating: 0 }, isMagical: false, notes: "" } };
       delete t.newCustomSkill;
     }
-    if (t.newSkill) {   // a fresh id that no item (ours or a foreign one) holds
-      const taken = new Set(b.actor.items.map(i => i._id));
-      let n = b.creation.nextItem ?? 1;
-      while (taken.has(itemId(n)) || Object.hasOwn(b.creation.items, itemId(n))) n++;
-      t.newId = itemId(n); b.creation.nextItem = n + 1;
-    }
+    if (t.newSkill) t.newId = freshItemId(b);
     action = { advance: t };
   }
   const r = karmaTransition(source, action, ctx);
@@ -409,10 +434,77 @@ function playOp(b, op, lookup, now) {
   for (const it of rec.items) { const item = b.actor.items.find(i => i._id === it._id); for (const [path, [, after]] of Object.entries(it.set)) setPath(item, path, after); }
   if (rec.create) b.actor.items.push({ effects: [], flags: {}, ...rec.create });
   if (rec.remove) b.actor.items = b.actor.items.filter(i => i._id !== rec.remove);
-  b.ledger ??= [];
-  const id = `k${String(b.ledger.length + 1).padStart(5, "0")}`;
-  b.ledger.push({ id, at: now, kind: rec.kind, summary: rec.summary, note, record: rec, ...(undoes ? { undoes } : {}) });
-  if (undoes) b.ledger.find(e => e.id === undoes).undoneBy = id;
+  ledgerAdd(b, now, { kind: rec.kind, summary: rec.summary, note, record: rec, ...(undoes ? { undoes } : {}) });
+  return b;
+}
+
+/** Nuyen after creation (PLAN-M4b, R6/R7): every change a typed ledger entry with its own inverse. */
+function moneyOp(b, op, lookup, now, saleMode) {
+  const money = (v, lo, hi, what) => { if (!Number.isInteger(v) || v < lo || v > hi) throw new Refusal(`${what} is a whole number of nuyen from ${lo.toLocaleString("en-US")} to ${hi.toLocaleString("en-US")}.`); return v; };
+  const sys = b.actor.system, have = nuyenOf(b), yen = (n) => `${n.toLocaleString("en-US")}¥`;
+  if (op.op === "nuyen") {
+    const amount = money(op.amount, -MAX_MONEY, MAX_MONEY, "An amount");
+    if (amount === 0) throw new Refusal("An amount other than 0.");
+    if (have + amount < 0) throw new Refusal(`Only ${yen(have)} to spend.`);
+    sys.nuyen = have + amount;
+    ledgerAdd(b, now, { kind: "nuyen", summary: amount > 0 ? `Received ${yen(amount)}` : `Paid ${yen(-amount)}`, note: shortText(op.note ?? "", "A note"), record: { amount } });
+    return b;
+  }
+  if (op.op === "buyItem") {   // p.184, R7: the street price shown; the price agreed entered by the player
+    const e = lookup(op.catalogId);
+    if (!e || !PLAY_GEAR.includes(e.type) || e.book !== CORE) throw new Refusal("In play, money buys the core book's weapons, armor, gear, ammunition, cyberware and programs.");
+    const rec = recordOf(e), checked = checkChoices(rec, { ...defaultChoices(rec, { inPlay: true }), ...(op.choices ?? {}) }, { inPlay: true });
+    if (checked.reason) throw new Refusal(checked.reason);
+    const price = money(op.price, 0, MAX_MONEY, "A price");
+    if (price > have) throw new Refusal(`${yen(price)} needed, ${yen(have)} to spend.`);
+    const projected = project(rec, checked.choices, b.creation.items), s = projected.system;
+    if (rec.type === "cyberware") s.installed = false;   // a spare until surgery (M4c, p.115–116)
+    const street = streetOf(rec, projected, b.actor.items);
+    const id = freshItemId(b);
+    const flags = { ...projected.flags, sr2e: { ...(projected.flags.sr2e ?? {}), paid: price, ...(rec.type === "ammo" ? { acquiredQuantity: s.quantity } : {}) } };
+    const item = { _id: id, name: rec.name, type: rec.type, img: rec.img, system: s, flags, effects: [], _stats: { compendiumSource: rec.source } };
+    b.actor.items.push(item);
+    sys.nuyen = have - price;
+    ledgerAdd(b, now, { kind: "buy", summary: `Bought ${rec.name} for ${yen(price)} (street price ${yen(street)})`, record: { itemId: id, source: structuredClone(item), price, street } });
+    return b;
+  }
+  // sellItem (p.188, R6): the server's sale mode; the client's quote must match it.
+  const item = typeof op.itemId === "string" ? b.actor.items.find(i => i._id === op.itemId) : null;
+  if (!item || !PLAY_GEAR.includes(item.type)) throw new Refusal("That isn't something to sell.");
+  if (op.shownMode !== saleMode) throw new Refusal("The GM changed how selling works: look at the price again.");
+  const q = saleQuoteOf(item, { mode: saleMode, pct: op.pct, items: b.actor.items });
+  if (q.price == null) throw new Refusal("A fence pays 10–50%, in steps of 5 (p.188).", 188);
+  if (q.price !== op.quoted) throw new Refusal("The price changed: sell again to see the new one.");
+  b.actor.items = b.actor.items.filter(i => i._id !== item._id);
+  sys.nuyen = have + q.price;
+  ledgerAdd(b, now, { kind: "sell", summary: `Sold ${item.name} for ${yen(q.price)}${saleMode === "fence" ? ` (a fence, ${op.pct}%)` : " (refund)"}`,
+    record: { source: structuredClone(item), price: q.price, mode: saleMode, pct: saleMode === "fence" ? op.pct : null } });
+  return b;
+}
+/** The street price shown for a purchase (p.184): list × the rating's Street Index. */
+function streetOf(rec, projected, items) {
+  const s = projected.system, list = price(rec, projected, items);
+  return Math.round(streetPrice(list, ratedStreetIndex(s.ratingStats, s.rating, s.streetIndex)));
+}
+/** Undo a money entry (PLAN-M4b Draft 2, r1 #9): its own inverse, only while it is still exact. */
+function undoMoney(b, e, now) {
+  const sys = b.actor.system, have = nuyenOf(b), r = e.record;
+  if (e.kind === "nuyen") {
+    if (have - r.amount < 0) throw new Refusal("That money is already spent: undo the later change first.");
+    sys.nuyen = have - r.amount;
+  } else if (e.kind === "buy") {
+    const item = b.actor.items.find(i => i._id === r.itemId);
+    if (!item || !sameJson(item, r.source)) throw new Refusal("The item has changed since it was bought: that can't be undone now.");
+    b.actor.items = b.actor.items.filter(i => i._id !== r.itemId);
+    sys.nuyen = have + r.price;
+  } else {
+    if (have < r.price) throw new Refusal("That money is already spent: undo the later change first.");
+    const back = structuredClone(r.source);
+    if (b.actor.items.some(i => i._id === back._id)) back._id = freshItemId(b);
+    b.actor.items.push(back);
+    sys.nuyen = have - r.price;
+  }
+  ledgerAdd(b, now, { kind: "revert", summary: `Undone: ${e.summary}`, record: { of: e.kind }, undoes: e.id });
   return b;
 }
 

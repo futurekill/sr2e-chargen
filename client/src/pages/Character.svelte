@@ -7,9 +7,10 @@
   import { untrack, onDestroy } from "svelte";
   import { get, mutate, upload } from "../lib/api.js";
   import { derive } from "../../../shared/derive.mjs";
-  import { applyOp, validate, karmaOptions, undoable, cardIds, cardEligible, CARD_TYPES, CATEGORIES, CATEGORY_NAMES, LETTERS, METATYPES, MAGIC_TYPES, MAGIC_NAMES, TRADITIONS, ATTRIBUTES, ATTR_NAMES, CUSTOM_SKILL_CATEGORIES, totemNames } from "../../../shared/creation.mjs";
+  import { applyOp, validate, karmaOptions, undoable, PLAY_GEAR, cardIds, cardEligible, CARD_TYPES, CATEGORIES, CATEGORY_NAMES, LETTERS, METATYPES, MAGIC_TYPES, MAGIC_NAMES, TRADITIONS, ATTRIBUTES, ATTR_NAMES, CUSTOM_SKILL_CATEGORIES, totemNames } from "../../../shared/creation.mjs";
   import { TABLES } from "../../../shared/rules.mjs";
-  import { BUYABLE, choiceSpec, project, price, essenceOf, isCybereye, smallWeapon } from "../../../shared/purchase.mjs";
+  import { BUYABLE, choiceSpec, defaultChoices, project, price, essenceOf, isCybereye, smallWeapon } from "../../../shared/purchase.mjs";
+  import { saleQuoteOf, streetPrice, ratedStreetIndex, FENCE_STEPS } from "../../../shared/rules.mjs";
   let { doc: initial, onDeleted } = $props();
 
   // Plain objects, not reactive proxies: the reducer clones them (structuredClone can't clone a proxy).
@@ -92,6 +93,34 @@
     catch (err) { if (!gone) error = err.message; return; }
     if (!gone) change({ op: "spendKarma", target: { newSkill: id } });
   }
+  // Nuyen after creation (docs/PLAN-M4b.md, RULINGS R6/R7). The GM's sale mode comes from the server.
+  let saleMode = $state("refund");
+  get("/api/session").then(s => { saleMode = s.rules?.saleMode ?? "refund"; }).catch(() => { /* refund until known */ });
+  let cashAmount = $state(0), cashDir = $state("in"), cashNote = $state(""), playQ = $state(""), playShop = $state([]), buying = $state(null), sellPct = $state({});
+  let playTimer;
+  function searchPlay() {
+    clearTimeout(playTimer);
+    playTimer = setTimeout(async () => {
+      const p = new URLSearchParams({ book: "sr2", limit: "20" });
+      for (const t of PLAY_GEAR) p.append("type", t);
+      if (playQ.trim()) p.set("q", playQ.trim());
+      try { playShop = (await get(`/api/catalog/entries?${p}`)).entries; } catch (err) { if (!gone) error = err.message; }
+    }, 250);
+  }
+  /** Start buying an entry: its in-play choices with defaults, the street price shown, the price agreed prefilled. */
+  async function startBuy(id) {
+    try { if (!entries.has(id)) entries.set(id, await get(`/api/catalog/entries/${encodeURIComponent(id)}`)); }
+    catch (err) { if (!gone) error = err.message; return; }
+    const e = entries.get(id), rec = { type: e.type, name: e.name, snapshot: e.system, flags: e.flags ?? {}, source: e._stats?.compendiumSource ?? null, catalogId: e.id };
+    const choices = defaultChoices(rec, { inPlay: true });
+    buying = { id, rec, choices, price: streetFor(rec, choices) };
+  }
+  function streetFor(rec, choices) {
+    rec = $state.snapshot(rec); choices = $state.snapshot(choices);   // plain copies: project() clones them
+    const pr = project(rec, choices, body.creation.items), s = pr.system;
+    return Math.round(streetPrice(price(rec, pr, body.actor.items), ratedStreetIndex(s.ratingStats, s.rating, s.streetIndex)));
+  }
+  const quoteFor = (it) => saleQuoteOf(it, { mode: saleMode, pct: sellPct[it._id] ?? 30, items: body.actor.items });
   async function addCoreSkill() {
     const id = pickSkill;   // read once: the list can change while the entry is on its way
     if (!id) return;
@@ -112,7 +141,7 @@
   onDestroy(() => { gone = true; });
   function change(op) {
     if (recovering) return;   // nothing new on top of a copy that's about to be replaced (review r2)
-    try { body = applyOp(body, op, lookup); } catch (err) { error = err.message; return; }
+    try { body = applyOp(body, op, lookup, { saleMode }); } catch (err) { error = err.message; return; }
     error = ""; sending++;
     const mine = epoch;
     queue = queue.then(async () => {
@@ -230,7 +259,7 @@
         <label class="row inline"><span class="sr-only">Paper</span><select bind:value={paper} aria-label="Paper"><option value="letter">US Letter</option><option value="a4">A4</option></select></label>
         <label class="row inline"><span class="sr-only">Font</span><select bind:value={sheetFont} aria-label="Sheet font"><option value="">My account's font</option><option value="standard">Standard font</option><option value="readable">Readable font</option></select></label>
       </div>
-      <nav aria-label="Steps" class="row">{#each finished ? [["karma", "Karma"], ...STEPS] : STEPS as [id, title]}<a href={`#step-${id}`}>{title}</a>{/each}</nav>
+      <nav aria-label="Steps" class="row">{#each finished ? [["karma", "Karma"], ["nuyen", "Nuyen"], ...STEPS] : STEPS as [id, title]}<a href={`#step-${id}`}>{title}</a>{/each}</nav>
     </header>
     {#if error}<p class="notice bad" role="alert">{error}</p>{/if}
 
@@ -270,12 +299,56 @@
           <ol class="ledger" reversed>
             {#each [...body.ledger].reverse() as e (e.id)}
               <li class:muted={e.undoneBy}><span>{e.summary}{e.note ? ` — ${e.note}` : ""}{e.undoneBy ? " (undone)" : ""}</span>
-                {#if lastUndoable?.id === e.id}<button type="button" class="quiet" onclick={() => change({ op: "undoKarma", entryId: e.id })}>Undo</button>{/if}</li>
+                {#if lastUndoable?.id === e.id}<button type="button" class="quiet" onclick={() => change({ op: "undo", entryId: e.id })}>Undo</button>{/if}</li>
             {/each}
           </ol>
         {:else}
           <p class="muted">No Karma yet.</p>
         {/if}
+      </section>
+    {/if}
+
+    {#if finished}
+      <section id="step-nuyen">
+        <h2>Nuyen</h2>
+        <p class="muted">{nuyen(sys.nuyen ?? 0)} to spend. Buying: the street price is shown (list × Street Index); enter the price you agreed. Selling: {saleMode === "fence" ? "through a fence — 30% of the list value, 5% more or less per extra Negotiation success, 10–50%" : "what was paid comes back"}. <span class="cite">SR2 p.184, p.188</span></p>
+        <form class="row adders" onsubmit={(ev) => { ev.preventDefault(); const n = Number(cashAmount); if (Number.isInteger(n) && n > 0) { change({ op: "nuyen", amount: cashDir === "in" ? n : -n, note: cashNote }); cashNote = ""; cashAmount = 0; } }}>
+          <label><span>Money</span><select bind:value={cashDir}><option value="in">Received</option><option value="out">Paid</option></select></label>
+          <label><span>Amount (¥)</span><input type="number" min="1" max="10000000" step="1" bind:value={cashAmount}></label>
+          <label class="grow"><span>For (optional)</span><input bind:value={cashNote} maxlength="120" placeholder="the run's pay, rent…"></label>
+          <button>Record</button>
+        </form>
+        <h3>Buy</h3>
+        <label class="grow"><span>Search weapons, armor, gear, ammunition, cyberware, programs</span><input bind:value={playQ} oninput={searchPlay} maxlength="64"></label>
+        <ul class="shop">{#each playShop as e (e.id)}<li><span class="name">{e.name}</span><span class="muted small">{TYPE_NAME[e.type] ?? e.type}{e.cost ? ` · list ${nuyen(e.cost)}` : ""}</span><button type="button" class="quiet" onclick={() => startBuy(e.id)}>Buy…</button></li>{/each}</ul>
+        {#if buying}
+          <div class="row adders">
+            <strong>{buying.rec.name}</strong>
+            {#each Object.entries(choiceSpec(buying.rec, { inPlay: true })) as [k, sp] (k)}
+              <label><span>{CHOICE_NAME[k] ?? k}</span>
+                {#if sp.kind === "oneOf"}<select value={buying.choices[k]} onchange={(ev) => { buying.choices[k] = typeof sp.values[0] === "number" ? Number(ev.currentTarget.value) : ev.currentTarget.value; buying.price = streetFor(buying.rec, buying.choices); }}>{#each sp.values as v}<option value={v}>{v}</option>{/each}</select>
+                {:else if sp.kind === "int"}<input type="number" min={sp.lo} max={sp.hi} value={buying.choices[k]} onchange={(ev) => { const n = numberFrom(ev); if (Number.isInteger(n) && n >= sp.lo && n <= sp.hi) { buying.choices[k] = n; buying.price = streetFor(buying.rec, buying.choices); } }}>
+                {:else}<input value={buying.choices[k]} maxlength="60" onchange={(ev) => { buying.choices[k] = ev.currentTarget.value; }}>{/if}</label>
+            {/each}
+            <span class="muted small">street {nuyen(streetFor(buying.rec, buying.choices))}</span>
+            <label><span>Price agreed (¥)</span><input type="number" min="0" max="10000000" step="1" bind:value={buying.price}></label>
+            <button type="button" onclick={() => { change({ op: "buyItem", catalogId: buying.id, choices: $state.snapshot(buying.choices), price: Number(buying.price) }); buying = null; }}>Buy</button>
+            <button type="button" class="quiet" onclick={() => { buying = null; }}>Cancel</button>
+          </div>
+          {#if buying.rec.type === "cyberware"}<p class="muted small">Cyberware bought now is a spare: installing it is surgery (coming next).</p>{/if}
+        {/if}
+        <h3>Sell</h3>
+        {#if body.actor.items.some(i => PLAY_GEAR.includes(i.type))}
+          <ul class="shop">
+            {#each body.actor.items.filter(i => PLAY_GEAR.includes(i.type)) as it (it._id)}
+              <li><span class="name">{it.name}{it.type === "cyberware" && it.system.installed === false ? " (spare)" : ""}</span>
+                {#if saleMode === "fence"}<select aria-label={`${it.name}: agreed percentage`} value={sellPct[it._id] ?? 30} onchange={(ev) => { sellPct = { ...sellPct, [it._id]: Number(ev.currentTarget.value) }; }}>{#each FENCE_STEPS as p}<option value={p}>{p}%</option>{/each}</select>{/if}
+                <span class="muted small">{nuyen(quoteFor(it).price ?? 0)}</span>
+                <button type="button" class="quiet" onclick={() => change({ op: "sellItem", itemId: it._id, pct: sellPct[it._id] ?? 30, shownMode: saleMode, quoted: quoteFor(it).price })}>Sell</button></li>
+            {/each}
+          </ul>
+        {:else}<p class="muted">Nothing to sell.</p>{/if}
+        <p class="muted small">The history (with Undo) is in the Karma step.</p>
       </section>
     {/if}
 

@@ -1,5 +1,5 @@
 <script>
-  import { get, post, del } from "../lib/api.js";
+  import { get, post, del, put } from "../lib/api.js";
   let invites = $state([]), users = $state([]), error = $state(""), fresh = $state(null), role = $state("user");
   const when = (ms) => new Date(Number(ms)).toLocaleString();
 
@@ -12,6 +12,10 @@
   const revoke = (id) => act(async () => { await del(`/api/admin/invites/${id}`); });
   const toggle = (u) => act(async () => { await post(`/api/admin/users/${encodeURIComponent(u.username)}/${u.disabled_at == null ? "disable" : "enable"}`); });
   const resetLink = (u) => act(async () => { fresh = { what: `Password reset for ${u.username}`, ...(await post(`/api/admin/users/${encodeURIComponent(u.username)}/reset-link`)) }; });
+  // The GM's rules settings (RULINGS R6): how selling pays.
+  let saleMode = $state("refund");
+  get("/api/admin/rules").then(r => { saleMode = r.saleMode; }).catch(err => { error = err.message; });
+  const setSaleMode = async (mode) => { try { saleMode = (await put("/api/admin/rules", { saleMode: mode })).saleMode; error = ""; } catch (err) { error = err.message; } };
   load();
 </script>
 
@@ -24,6 +28,14 @@
     <button class="quiet" onclick={() => (fresh = null)}>I've copied it</button>
   </div>
 {/if}
+
+<h2>Rules</h2>
+<label class="row"><span>Selling gear</span>
+  <select value={saleMode} onchange={(ev) => setSaleMode(ev.currentTarget.value)}>
+    <option value="refund">Refund what was paid</option>
+    <option value="fence">Through a fence (30% of list, 10–50%, p.188)</option>
+  </select></label>
+<p class="muted">How Sell pays on every character. Refund: what was paid comes back. Fence: the book's rule — 30% of the item's list value, 5% more or less per extra Negotiation success, never below 10% or above 50%.</p>
 
 <h2>Invites</h2>
 <div class="row">

@@ -1,5 +1,5 @@
 # Plan: milestone 4b — nuyen after creation (buy, sell, income and expenses)
-_Draft 3 (2026-11-19), after Codex plan rounds 1–2 (9 + 6 + 1 findings, round 3 folded into Draft 3; docs/PLAN-M4b-REVIEW-LOG.md; the "Draft 2" and "Draft 3" sections at the end win). The second slice of milestone 4 (docs/ROADMAP.md item 4). Rules: core p.184 (buying: list
+_Draft 3 (2026-11-19), BUILT on the local branches (system f6082678, app chargen/on-0.161), after Codex plan rounds 1–2 (9 + 6 + 1 findings, round 3 folded into Draft 3; docs/PLAN-M4b-REVIEW-LOG.md; the "Draft 2" and "Draft 3" sections at the end win). The second slice of milestone 4 (docs/ROADMAP.md item 4). Rules: core p.184 (buying: list
 price, Street Index, negotiation), p.188 (selling through a fence), p.46 (in play, Availability and Street Price
 apply). GM rulings R6 (selling: a GM setting, fence or refund) and R7 (buying: street price shown, negotiated price
 entered) in docs/RULINGS.md. Built on the local branches like M4a; surgery wounds for cyberware are M4c (damage)._

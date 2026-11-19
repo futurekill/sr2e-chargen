@@ -30,7 +30,8 @@ export function statBlock(m) {
   out.push(sec("Skills", tableOf(["Skill", "Rating", "Concentration / specialization", "Kind"], m.skills)));
   for (const [title, rows, head] of [["Cyberware", m.cyberware, ["Item", "Rating", "Essence", "Page"]], ["Adept powers", m.powers, ["Power", "Level", "For", "Page"]],
     ["Spells", m.spells, ["Spell", "Force", "Category · drain", "Page"]], ["Foci", m.foci, ["Focus", "Force", "Bonded to", "Page"]], ["Gear", m.gear, ["Item", "Qty / rating", "Armor", "Page"]],
-    ["Vehicles", m.vehicles ?? [], ["Vehicle", "Handling · Speed", "Body · Armor · Signature · Pilot", "Page"]]])
+    ["Vehicles", m.vehicles ?? [], ["Vehicle", "Handling · Speed", "Body · Armor · Signature · Pilot", "Page"]],
+    ["History", m.history ?? [], ["Date", "What", "Note", ""]]])
     if (rows.length) out.push(sec(title, tableOf(head, rows)));
   if (m.notes) out.push(sec("Notes", tableOf(["Notes"], [[m.notes]])));
   return out.join("\n").replace(/\n{3,}/g, "\n\n").trimEnd() + "\n";

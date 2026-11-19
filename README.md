@@ -322,6 +322,7 @@ With no command it lists them all.
 | `admin invites` / `admin revoke-invite <id>` | The open invites / cancel one. |
 | `admin users` | Everyone, with role and state. |
 | `admin disable <user>` / `admin enable <user>` | Disabling signs that user out everywhere. The last admin can't be disabled. |
+| (Admin page) Rules | How selling pays: refund what was paid, or a fence (p.188) — every character on the server |
 | `admin reset-link <user>` | A one-time password reset link, valid 24 hours. There is no email: hand it over yourself. |
 | `db status` / `db migrate` | Migration state / run pending migrations (the server also migrates at start). |
 | `maintenance on` / `off` / `status` | Stop every write (reads go on) / resume. |
@@ -396,6 +397,18 @@ A finished character gets a **Karma** step at the top of its page (p.190–191):
   (2 × the new rating; a language 1 ×; a Concentration 1.5 ×; a Specialization 1 ×), **add** a named Concentration
   or Specialization, or **learn** a new skill (1 Good Karma). Reaction, Essence and Magic are never raised with Karma.
 - **History** lists every change; **Undo** reverses the newest one.
+
+### After creation: Nuyen
+
+The **Nuyen** step (finished characters):
+- **Record** money received (a run's pay) or paid (rent, a bribe); the balance can't go below 0.
+- **Buy** weapons, armor, gear, ammunition, cyberware and programs: the street price is shown (list × Street Index,
+  p.184); enter the price you agreed after any negotiation. Cyberware bought now is a spare: installing it is surgery
+  (coming with damage and healing).
+- **Sell** what you own. How selling pays is the GM's setting (Admin → Rules, R6): a refund of what was paid, or a
+  fence — 30% of the list value, 5% more or less per extra Negotiation success, between 10% and 50% (p.188).
+- Every change is in the history (the Karma step) with **Undo** on the newest one, and the printed sheet and the stat
+  block include the history, so the GM can check it.
 
 ### Print and share
 

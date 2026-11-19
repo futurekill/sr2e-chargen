@@ -53,6 +53,8 @@ bonding (p.46, p.137), refusals.
    Banshee is refused (Restricted).
    Karma (a finished character): award 40 — Good 36, Pool 5; raise Firearms 6 → 7 — 14; add a Concentration;
    learn a skill — 1; Undo twice returns to the start; Strength 6 → 7 needs the GM tick and costs 14.
+   Nuyen (finished): record +5,000; buy an Ares Predator for 400 (street 225 shown); Admin → Rules → fence: sell it at
+   30% (135) and 50% (225); undo the sale; a Datajack bought is a spare (Essence unchanged).
 9. Sheet: "Print sheet" on a character opens a PDF; try A4 and the readable font; print one page on paper and mark a
    condition box with a pencil. Download the Markdown stat block and open it in a Markdown viewer. On Account, turn
    on the readable font: the site changes at once, a second device shows it after sign-in, and "Print sheet" uses it. Look at `npm run sheet:snapshots`-style renders after any layout change.
