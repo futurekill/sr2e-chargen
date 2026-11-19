@@ -5,7 +5,7 @@
  * character at creation can hold is composed here (no in-play state, no sourcebook ware); each step names the
  * CharacterData method it matches.
  */
-import { TABLES, combatSenseDice, karmaPoolCapacity, karmaPoolAvailable, reactionBase, wornArmorTotals, heavyArmorPoolPenalty, astralCombatPool, strengthMinWeaponStats, naturalAttribute, racialProfile, shapeshifterOf, formModifiers, qualityEffects } from "./rules.mjs";
+import { TABLES, combatSenseDice, karmaPoolCapacity, karmaPoolAvailable, reactionBase, wornArmorTotals, heavyArmorPoolPenalty, astralCombatPool, strengthMinWeaponStats, naturalAttribute, racialProfile, shapeshifterOf, formModifiers, qualityEffects, bodyIndexTotal } from "./rules.mjs";
 import { essenceOf } from "./purchase.mjs";
 
 export const ATTRS = ["body", "quickness", "strength", "charisma", "intelligence", "willpower"];
@@ -29,6 +29,11 @@ export function derive({ actor, options = {} }) {
   // Adept powers are kept apart too: they work only in human form (Companion p.36), so a shapeshifter's animal form
   // leaves them out (code review M5c r1 #1).
   const adept = Object.fromEntries(Object.keys(mods).map(k => [k, 0]));
+  // Bioware (Shadowtech; PLAN-M5e): installed, untriggered implants' attribute bonuses × rating, as _collectItemModifiers.
+  for (const i of items.filter(i => i.type === "bioware" && i.system.installed !== false && !i.system.triggered)) {
+    const r = Math.max(1, num(i.system.rating) || 1);
+    for (const [k, v] of Object.entries(i.system.attributeMods ?? {})) if (k in mods) mods[k] += num(v) * r;
+  }
   if (mtype === "physical_adept") for (const p of items.filter(i => i.type === "adept_power")) {
     const lvl = Math.max(1, num(p.system.level) || 1);
     for (const [k, v] of Object.entries(p.system.attributeMods ?? {})) if (k in mods) { mods[k] += num(v) * lvl; adept[k] += num(v) * lvl; }
@@ -60,7 +65,10 @@ export function derive({ actor, options = {} }) {
   })) : null;
 
   // Essence and Magic (p.45): 6 − installed cyberware (with the cybereye allowance); Magic = Essence rounded down.
-  const essence = Math.round((6 - installed.reduce((t, i) => t + essenceOf(i, items), 0)) * 100) / 100;
+  // Body Index (Shadowtech p.6): the Awakened pay it in Essence too.
+  const bodyIndex = bodyIndexTotal(items.filter(i => i.type === "bioware").map(i => ({ installed: i.system.installed !== false, bodyCost: i.system.bodyCost, grade: i.system.grade, bodySystem: i.system.bodySystem })));
+  // Rounded to the thousandth only (float noise): cultured bioware (×0.75) gives three decimals, as Foundry keeps them.
+  const essence = Math.round((6 - installed.reduce((t, i) => t + essenceOf(i, items), 0) - (mtype !== "none" ? bodyIndex : 0)) * 1000) / 1000;
   const magic = mtype === "none" ? 0 : Math.max(0, Math.min(6, Math.floor(essence + 1e-9)));
 
   // Reaction (p.45) and Initiative: Muscle Replacement's Quickness never feeds Reaction (p.249).
@@ -97,6 +105,7 @@ export function derive({ actor, options = {} }) {
 
   return {
     attributes, natural, reaction, initiativeDice, essence, magic, pools, armor, weapons, vcr, mpcp, forms,
+    bodyIndex: { value: Math.round(bodyIndex * 1000) / 1000, max: natural.body, raw: bodyIndex },
     monitors: { physical: 10, stun: 10, overflow: natural.body + edges.willToLive },   // p.112; overflow against NATURAL Body
     // The Karma Pool (p.191): the starting pool + one-tenth of Total Karma, less what is burned (PLAN-M4a Draft 2).
     karmaPool: karmaPoolCapacity(sys.karma?.total, sys.karma?.burned, sys.karma?.poolAdjust, race, !!options.moreMetahumans),

@@ -4,9 +4,9 @@
  * operation, so no price or rule field is ever stored as typed. Prices and Essence come from the system's own pure
  * functions (shared/rules.mjs), called with the same inputs Foundry's creation panel gives them.
  */
-import { chargenItemCost, weaponFocusCost, adeptPowerKey, ratedRow, wareCtx, eyeAccessoryKind, rowsListValue, wareEssence, muscleFactor, QUALITY_VALUES, qualityRule } from "./rules.mjs";
+import { chargenItemCost, weaponFocusCost, adeptPowerKey, ratedRow, wareCtx, eyeAccessoryKind, rowsListValue, wareEssence, muscleFactor, QUALITY_VALUES, qualityRule, wareRule } from "./rules.mjs";
 
-export const BUYABLE = ["weapon", "armor", "gear", "ammo", "cyberware", "spell", "focus", "adept_power", "program", "contact", "lifestyle"];
+export const BUYABLE = ["weapon", "armor", "gear", "ammo", "cyberware", "bioware", "spell", "focus", "adept_power", "program", "contact", "lifestyle"];
 const STRING_MAX = 60;
 
 const int = (lo, hi) => ({ kind: "int", lo, hi });
@@ -40,6 +40,10 @@ export function choiceSpec(rec, { inPlay = false } = {}) {
       if (key === "improved_senses") return { senses: text() };
       const top = Number(s.maxLevel) || 1;
       return { ...(top > 1 ? { level: int(1, top) } : {}), ...(key === "improved_ability" ? { skill: text() } : {}) };
+    }
+    case "bioware": {   // PLAN-M5e: a rating row (≤ 6 at creation) and the grade; neural is always cultured (no choice)
+      const grade = s.bodySystem === "neural" ? {} : { grade: oneOf(["standard", "cultured"]) };
+      return { ...(rows.length > 1 ? { rating: oneOf(rows) } : {}), ...grade };
     }
     case "quality": {   // Edges and Flaws (Companion p.22–35, PLAN-M5d): the table's values, an attribute, a detail
       const v = QUALITY_VALUES[rec.source] ?? {}, rule = qualityRule(rec.snapshot?.rule, rec.source);
@@ -108,6 +112,11 @@ export function refusalFor(entry) {
  * plain data: weapons, armor, ammunition, gear and spells, with no Active Effect, special rule, drug or skillsoft.
  */
 export const BOOK_TYPES = ["weapon", "armor", "ammo", "gear", "spell"];
+const ST = (id) => `Compendium.sr2e-shadowtech.st-bioware.Item.${id}`;
+/** Bioware that needs a choice the app doesn't record yet (PLAN-M5e Draft 2): Reflex Recorder's skill, Toxin Exhaler's toxin. */
+const BIOWARE_WAITS = new Set([ST("6fac01c3ca92526c"), ST("9f7e371475559ce1")]);
+/** Rated at most the unaugmented Body (their entries; PLAN-M5e Draft 2): Toxin Extractor, Pathogenic Defense, Mnemonic Enhancer. */
+export const RATING_UP_TO_BODY = new Set([ST("40958403d94eeef2"), ST("64b5f0dc8dc701c3"), ST("f3dc18a732f084d2")]);
 export const bookOf = (entry) => entry.book ?? entry.listBook ?? null;
 export function offerReason(entry, books = [], { inPlay = false } = {}) {
   const book = bookOf(entry);
@@ -116,6 +125,15 @@ export function offerReason(entry, books = [], { inPlay = false } = {}) {
     if (inPlay) return "Edges and Flaws are chosen at creation (after that, they're the GM's, p.22).";
     if (!QUALITY_VALUES[entry._stats?.compendiumSource ?? ""]) return "This Edge or Flaw isn't in the app's value table yet.";
     return null;
+  }
+  if (entry.type === "bioware") {   // Shadowtech (PLAN-M5e): only the bioware whose numbers the app computes as Foundry does
+    if (!books.includes(book)) return "That sourcebook isn't turned on for this character.";
+    if (inPlay) return "Bioware goes in by surgery: buy it at creation for now.";
+    const s = entry.system ?? {};
+    if (wareRule(entry.flags, entry._stats?.compendiumSource ?? null) || s.triggered || s.damageCompensator || s.ignoresStunPenalty || s.activeSkillDice
+      || s.armorBallistic || s.armorImpact || (s.ratingStats ?? []).some(r => r.armorBallistic || r.armorImpact) || BIOWARE_WAITS.has(entry._stats?.compendiumSource))
+      return "This bioware has its own rules the app doesn't compute yet.";
+    return refusalFor(entry);
   }
   if (book !== "sr2") {
     if (!books.includes(book)) return "That sourcebook isn't turned on for this character.";
@@ -164,6 +182,12 @@ export function project(rec, c, recs = {}) {
     const row = ratedRow(s.ratingStats, s.rating);
     if (row && typeof row.essenceCost === "number") s.essenceCost = row.essenceCost;
     s.grade = "standard";
+  }
+  if (rec.type === "bioware") {   // BiowareData's preparation: the rating row's stats; installed (PLAN-M5e)
+    const row = ratedRow(s.ratingStats, s.rating);
+    if (row) for (const k of ["bodyCost", "cost", "availability", "streetIndex", "armorBallistic", "armorImpact"]) if (k in row) s[k] = row[k];
+    s.grade = "grade" in c ? c.grade : (s.grade || "standard");
+    s.installed = true;
   }
   if (rec.type === "spell" || rec.type === "focus") s.force = c.force ?? s.force;
   if (rec.type === "contact") {

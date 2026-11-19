@@ -5,7 +5,7 @@
 import { derive } from "../../shared/derive.mjs";
 import { validate, totemNames, CATEGORY_NAMES, ATTR_NAMES, MAGIC_NAMES } from "../../shared/creation.mjs";
 import { essenceOf } from "../../shared/purchase.mjs";
-import { TABLES, racialProfile, metavariantNotes } from "../../shared/rules.mjs";
+import { TABLES, racialProfile, metavariantNotes, effectiveBodyCost } from "../../shared/rules.mjs";
 
 /** Plain, printable text: no control characters, no bidi overrides/isolates, single spaces. */
 export function plain(v, max = Infinity) {
@@ -15,7 +15,7 @@ export function plain(v, max = Infinity) {
 }
 const cap = (t) => (t ? t[0].toUpperCase() + t.slice(1) : t);
 const cite = (s) => (s?.citation?.page ? `${s.citation.book === "sr2" ? "SR2" : String(s.citation.book).toUpperCase()} p.${s.citation.page}` : "");
-const num = (n) => (Number.isInteger(n) ? String(n) : String(Math.round(n * 100) / 100));
+const num = (n) => (Number.isInteger(n) ? String(n) : String(Math.round(n * 1000) / 1000));
 const nuyen = (n) => `${Math.round(n).toLocaleString("en-US")}¥`;
 
 /** The table card's model: the sheet model with only the chosen rows, and none of the long sections. */
@@ -23,7 +23,7 @@ export function cardModel(body, chosen) {
   const m = sheetModel(body), keep = new Set(chosen);
   const pick = (k) => m[k].filter((_, i) => keep.has(m.rowIds[k][i]));
   return { ...m, card: true, attacks: pick("attacks"), skills: pick("skills").filter(r => r[3] === "active"), cyberware: pick("cyberware"),
-    spells: pick("spells"), powers: pick("powers"), gear: [], foci: [], vehicles: [], qualities: [], history: [], notes: "" };
+    spells: pick("spells"), powers: pick("powers"), gear: [], foci: [], vehicles: [], qualities: [], bioware: [], history: [], notes: "" };
 }
 
 export function sheetModel(body) {
@@ -54,6 +54,7 @@ export function sheetModel(body) {
       ...(animalLine ? [["Animal form", animalLine], ["Shapeshifter", "Severe allergy and vulnerability to silver; regenerates; rejects cyberware (Companion p.38)."]] : []),
       ["Magic", magicLine],
       ["Priorities", Object.keys(CATEGORY_NAMES).map(c => `${CATEGORY_NAMES[c]} ${pr[c] || "–"}`).join(" · ")],
+      ...(d.bodyIndex?.raw ? [["Body Index", `${d.bodyIndex.value} / ${d.bodyIndex.max}`]] : []),
       ["Karma Pool", String(d.karmaPool)], ...(d.totalKarma > 0 ? [["Good Karma", String(d.goodKarma)], ["Total Karma", String(d.totalKarma)]] : []),
       ["Resources left", body.creation?.finished ? "" : nuyen(Math.max(0, check.budgets.resources.remaining))]
     ].filter(([, v]) => v !== ""),
@@ -89,6 +90,8 @@ export function sheetModel(body) {
       i.type === "armor" ? `${i.system.ballistic}/${i.system.impact}` : "", cite(i.system)]),
     spells: of("spell").map(i => [plain(i.name), `F${i.system.force}`, plain(`${cap(i.system.category ?? "")} · ${i.system.drainCode ?? ""}`, 80), cite(i.system)]),
     // Edges and Flaws (Companion p.22–35): name (and its attribute), value, the detail (unescaped from Foundry's notes).
+    // Bioware (Shadowtech; PLAN-M5e): rating, grade, Body Cost.
+    bioware: of("bioware").map(i => [plain(i.name), i.system.rating ? `R${i.system.rating}` : "", `${i.system.grade || "standard"} · BC ${num(effectiveBodyCost(i.system.bodyCost, i.system.grade, i.system.bodySystem))}`, cite(i.system)]),
     qualities: of("quality").map(i => [plain(i.name) + (i.system.attribute ? ` (${ATTR_NAMES[i.system.attribute] ?? i.system.attribute}${i.system.attributeBonus ? ` +${i.system.attributeBonus}` : ""})` : ""),
       (i.system.pointValue > 0 ? "+" : "") + String(i.system.pointValue ?? 0),
       plain(String(i.system.notes ?? "").replace(/<[^>]*>/g, ""), 80), cite(i.system)]),

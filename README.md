@@ -367,7 +367,10 @@ remembers the tab you were on.
    Attribute Point (+1 per point, 2 points past the racial maximum), Exceptional Attribute (+1 maximum), Bonus Skill
    Point (skill points), Bonus Force Point (2 Force Points per point, magicians only), Extra Contact (one more free
    contact); Lightning Reflexes adds Reaction and Will to Live overflow boxes. The rest are played at the table.
-   Cyberpirates' and Rigger 2's Edges and Flaws appear too when their books are on.
+   Cyberpirates' and Rigger 2's Edges and Flaws appear too when their books are on. With Shadowtech on, the shop offers **bioware**:
+   choose the rating and grade (cultured: ×0.75 Body Cost, ×4 price; neural bioware is always cultured already). The
+   Body Index is shown; an Awakened character pays it in Essence too; going over Body is overstress (a warning).
+   Bioware with its own rules (Adrenal Pump, Pain Editor, Orthoskin, Muscle Augmentation…) comes later.
 2. **Priorities** (p.44): give each of Race, Magic, Attributes, Skills and Resources one letter, A to E, each letter
    once. Picking a letter that is in use swaps the two.
 3. **Metatype** (p.44): human, dwarf, elf, ork or troll. A metahuman needs Race A (or C with the GM's *More

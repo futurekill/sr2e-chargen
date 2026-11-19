@@ -124,3 +124,8 @@ bonding (p.46, p.137), refusals.
   third free contact; Lightning Reflexes raises Reaction; Will to Live the overflow.
 - Blind is −6, or −2 for a magician or adept; a second copy is an error; the sheet's Edges and Flaws block.
 - Foundry: the creation panel shows the same audit (Quench sr2e.edge-effects).
+
+## Bioware (M5e)
+- With Shadowtech on, the shop lists plain bioware (no Adrenal Pump, Pain Editor, Orthoskin…); rating and grade
+  choices (no grade for neural); Body Cost in the row; the Rules check warns on overstress; the sheet's Bioware block
+  and Body Index line; a magician's Essence drops by the Body Index.

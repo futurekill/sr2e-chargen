@@ -78,8 +78,8 @@ test("every sourcebook entry: offered only as plain data — and then it can rea
     const why = offerReason(e, SOURCEBOOKS);
     if (why) continue;
     offered++;
-    assert.ok(BOOK_TYPES.includes(e.type) || e.type === "quality", `${e.name}: ${e.type}`);   // qualities: M5d
-    if (e.type !== "quality") assert.ok(!e.effects?.length && !e.flags?.sr2e?.rule && !e.flags?.sr2e?.drug && e.system.category !== "skillsoft", e.name);
+    assert.ok(BOOK_TYPES.includes(e.type) || ["quality", "bioware"].includes(e.type), `${e.name}: ${e.type}`);   // qualities: M5d; bioware: M5e
+    if (!["quality", "bioware"].includes(e.type)) assert.ok(!e.effects?.length && !e.flags?.sr2e?.rule && !e.flags?.sr2e?.drug && e.system.category !== "skillsoft", e.name);
     assert.doesNotThrow(() => op(all, { op: "addItem", catalogId: e.id }), e.name);
   }
   assert.ok(offered > 300, `${offered} offered`);

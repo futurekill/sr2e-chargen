@@ -8,8 +8,8 @@
  * A character is the Foundry system's own `character` source shapes (`actor`), so the system's functions read it
  * unchanged; the app's own record sits beside it (`creation`).
  */
-import { TABLES, SHAPESHIFTER_PRIORITIES, humanFormMod, shapeshifterOf, qualityAudit, qualityEffects, bonusAttributeCost, attributeEdgeViolations, qualityRule, racialProfile, metavariantFrom, isMetavariantItem, ONI_SOURCE, chargenBudget, damageUpdateFor, surgeryCategory, surgeryEssencePct, surgeonTN, karmaTransition, advancementOptions, saleQuoteOf, streetPrice, ratedStreetIndex, startingMoney, startingKarmaPool, adeptPowerBudget, label, skillTiersFromAllocation, validateSkillAllocation } from "./rules.mjs";
-import { defaultChoices, checkChoices, offerReason, project, price, eyeRow, essenceOf, isCybereye, powerKeyOf, sensesOf } from "./purchase.mjs";
+import { TABLES, SHAPESHIFTER_PRIORITIES, humanFormMod, shapeshifterOf, qualityAudit, qualityEffects, bonusAttributeCost, attributeEdgeViolations, qualityRule, bodyIndexTotal, overstressPenalty, racialProfile, metavariantFrom, isMetavariantItem, ONI_SOURCE, chargenBudget, damageUpdateFor, surgeryCategory, surgeryEssencePct, surgeonTN, karmaTransition, advancementOptions, saleQuoteOf, streetPrice, ratedStreetIndex, startingMoney, startingKarmaPool, adeptPowerBudget, label, skillTiersFromAllocation, validateSkillAllocation } from "./rules.mjs";
+import { defaultChoices, checkChoices, offerReason, RATING_UP_TO_BODY, project, price, eyeRow, essenceOf, isCybereye, powerKeyOf, sensesOf } from "./purchase.mjs";
 
 export const SCHEMA = "sr2e-chargen-character", SCHEMA_VERSION = 1;
 export const CATEGORIES = ["race", "magic", "attributes", "skills", "resources"];
@@ -375,9 +375,12 @@ const shortText = (v, what) => {
 function validateInPlay(body, add, problems) {
   const sys = body.actor.system, items = body.actor.items, mtype = sys.magic.type;
   // Only INSTALLED cyberware takes Essence: a spare bought in play waits for surgery (PLAN-M4b Draft 3, r2 #2).
-  const essence = Math.round((6 - items.filter(i => i.type === "cyberware" && i.system.installed !== false).reduce((t, i) => t + essenceOf(i, items), 0)) * 100) / 100;
+  const essence = Math.round((6 - items.filter(i => i.type === "cyberware" && i.system.installed !== false).reduce((t, i) => t + essenceOf(i, items), 0) - (mtype !== "none" ? bodyIndexOf(items) : 0)) * 1000) / 1000;
   const magic = mtype === "none" ? 0 : Math.max(0, Math.min(6, Math.floor(essence + 1e-9)));
   if (essence < 0) add("resources", "error", `Essence is ${essence}.`, 46);
+  // Overstress stays a warning in play too (Shadowtech p.6; code review M5e r1 #2).
+  const bodyMax = withRacial(sys, "body", items) + formMod(sys, "body"), over = overstressPenalty(bodyIndexOf(items), bodyMax);
+  if (over) add("resources", "warning", `Body Index ${Math.round(bodyIndexOf(items) * 1000) / 1000} is over the Body of ${bodyMax}: overstress, +${over} to Body tests.`, 6, "st");
   const max = racialProfile(sys, TABLES).maxes;
   for (const a of ATTRIBUTES) if (withRacial(sys, a, items) > 1.5 * max[a]) add("karma", "warning", `${ATTR_NAMES[a]} ${withRacial(sys, a, items)} is beyond 1.5 × the racial maximum: the book discourages it.`, 190);
   const budgets = {};
@@ -764,6 +767,8 @@ export function magicAllowed(letter, race, moreMetahumans) {
 export const metatypeAllowed = (letter, race, moreMetahumans) =>
   race === "shapeshifter" ? letter === "A" : race === "human" || (moreMetahumans ? ["A", "B", "C"].includes(letter) : letter === "A");
 
+/** The bioware Body Index (Shadowtech p.6), unrounded as Foundry keeps it; the Awakened lose it in Essence too. */
+export const bodyIndexOf = (items) => bodyIndexTotal(items.filter(i => i.type === "bioware").map(i => ({ installed: i.system.installed !== false, bodyCost: i.system.bodyCost, grade: i.system.grade, bodySystem: i.system.bodySystem })));
 /** The value an attribute has after racial modifiers (p.45: applied after allocation). */
 export const withRacial = (sys, attr, items = []) => (Number(sys[attr]?.base) || 0) + (racialProfile(sys, TABLES).mods[attr] ?? 0) + edgeBonus(items, attr);
 /** The attribute Edges (Companion p.24; PLAN-M5d): Bonus Attribute Point raises the natural rating, Exceptional Attribute the maximum. */
@@ -831,9 +836,16 @@ export function validate(body) {
   }
 
   // Essence and Magic (p.45–46): computed first — Sorcery, spells and foci need a Magic Rating of at least 1.
-  const essence = Math.round((6 - items.filter(i => i.type === "cyberware").reduce((t, i) => t + essenceOf(i, items), 0)) * 100) / 100;
+  // The Awakened pay the bioware Body Index in Essence too (Shadowtech p.6; PLAN-M5e).
+  const bodyIndex = bodyIndexOf(items);
+  const essence = Math.round((6 - items.filter(i => i.type === "cyberware").reduce((t, i) => t + essenceOf(i, items), 0) - (mtype !== "none" ? bodyIndex : 0)) * 1000) / 1000;
   const magic = mtype === "none" ? 0 : Math.max(0, Math.min(6, Math.floor(essence + 1e-9)));
   if (essence < 0) add("resources", "error", `Essence is ${essence}: cyberware can't take it below 0.`, 46);
+  // Body Index over the natural Body: overstress, shown not refused, as Foundry (Shadowtech p.6).
+  const bodyMax = withRacial(sys, "body", items) + formMod(sys, "body"), over = overstressPenalty(bodyIndex, bodyMax);
+  if (over) add("resources", "warning", `Body Index ${Math.round(bodyIndex * 1000) / 1000} is over the Body of ${bodyMax}: overstress, +${over} to Body tests.`, 6, "st");
+  for (const i of items.filter(i => i.type === "bioware" && RATING_UP_TO_BODY.has(i._stats?.compendiumSource)))
+    if ((Number(i.system.rating) || 1) > bodyMax) add("resources", "error", `${i.name} is Rating ${i.system.rating}: at most the unaugmented Body (${bodyMax}).`, Number(i.system.citation?.page) || 6, "st");
   if (shifter && items.some(i => i.type === "cyberware")) add("resources", "error", "A shapeshifter's body rejects all cyberware: remove it.", 38, "sc");
   if (mtype !== "none" && magic < 1) add("magic", "error", `Essence ${essence} leaves no Magic Rating: this character's magic is gone.`, 45);
 

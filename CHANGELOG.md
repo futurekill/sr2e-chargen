@@ -6,6 +6,11 @@ notes come from it.
 ## Unreleased
 
 ### Added
+- **Bioware** (Shadowtech; docs/PLAN-M5e.md): with Shadowtech on, the creation shop offers the bioware whose effects
+  the app computes as Foundry does (Tailored Pheromones, filters, Symbiotes, Synthacardium…), with its rating and grade
+  (cultured ×0.75 Body Cost, ×4 price; neural always cultured). The Body Index is derived and printed; the Awakened pay
+  it in Essence; overstress is a warning; Toxin Extractor, Pathogenic Defense and Mnemonic Enhancer can't be rated
+  over the unaugmented Body. Bioware with its own rules (Adrenal Pump, Pain Editor, Orthoskin…) comes later.
 - **Edges and Flaws** (Shadowrun Companion p.22–35; RULINGS R11): with the Companion on, the Concept tab lists its 86
   Edges and Flaws (and, with those books on, Cyberpirates' and Rigger 2's, valued from their own pages). Each takes
   a value from the book's table (the magically active values for Blind, Bio-Rejection and

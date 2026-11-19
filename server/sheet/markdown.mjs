@@ -28,7 +28,7 @@ export function statBlock(m) {
   out.push(sec("Condition monitors", tableOf(["Monitor", "Filled", "Boxes"], [["Physical", m.monitors.filled.physical, m.monitors.physical], ["Stun", m.monitors.filled.stun, m.monitors.stun], ["Physical overflow (Body)", m.monitors.filled.overflow, m.monitors.overflow]])));
   out.push(sec("Attacks", tableOf(["Weapon", "Damage", "Skill"], m.attacks)));
   out.push(sec("Skills", tableOf(["Skill", "Rating", "Concentration / specialization", "Kind"], m.skills)));
-  for (const [title, rows, head] of [["Cyberware", m.cyberware, ["Item", "Rating", "Essence", "Page"]], ["Adept powers", m.powers, ["Power", "Level", "For", "Page"]],
+  for (const [title, rows, head] of [["Cyberware", m.cyberware, ["Item", "Rating", "Essence", "Page"]], ["Bioware", m.bioware ?? [], ["Item", "Rating", "Grade · Body Cost", "Page"]], ["Adept powers", m.powers, ["Power", "Level", "For", "Page"]],
     ["Spells", m.spells, ["Spell", "Force", "Category · drain", "Page"]], ["Foci", m.foci, ["Focus", "Force", "Bonded to", "Page"]], ["Edges and Flaws", m.qualities ?? [], ["Edge / Flaw", "Value", "Detail", "Page"]], ["Gear", m.gear, ["Item", "Qty / rating", "Armor", "Page"]],
     ["Vehicles", m.vehicles ?? [], ["Vehicle", "Handling · Speed", "Body · Armor · Signature · Pilot", "Page"]],
     ["History", m.history ?? [], ["Date", "What", "Who · note", ""]]])
