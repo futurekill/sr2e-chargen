@@ -36,7 +36,14 @@ The links at the top of the character page jump between them.
      together (p.126).
    - Magicians pay Force Points for spells (Force up to 6) and for bonding foci. A spell focus names its spell; a
      weapon focus names the melee weapon it is bonded to (its price follows the weapon's Reach, p.263).
-8. **Table card**: tick what goes on the one-page card for the table.
+   - **Contacts and extras** (p.43–44): two contacts are free, each further one 5,000¥; one may be your **buddy**
+     (10,000¥). Add a **gang or tribe** (50,000¥; the server rolls its 2D6 members once) or **followers** (200,000¥;
+     name five different archetypes).
+   - **Lifestyle** (p.46): pick one and the months paid ahead; with none, the character lives on the street.
+   - Metahumans may take an **allergy** in the Metatype step for extra points (p.46).
+8. **Finish** (p.47): when the rules check is clean, finish: unspent Resources become nuyen at 10:1, plus 3D6 ×
+   1,000¥ rolled by the server. Creation then closes; name, notes and the table card can still change.
+9. **Table card**: tick what goes on the one-page card for the table.
 
 The house rulings the app follows where the book is unclear are in the repository's `docs/RULINGS.md` (for example:
 a weapon with Concealability above 5 makes a small weapon focus).
@@ -55,5 +62,5 @@ follows you to other devices, and is the sheets' default font.
 
 ## Not in this beta
 
-Contacts, lifestyle and the finishing step (leftover nuyen, starting Karma) come next. Vehicles and the
+Vehicles and the
 sourcebooks follow. See the repository's CHANGELOG and `docs/ROADMAP.md`.

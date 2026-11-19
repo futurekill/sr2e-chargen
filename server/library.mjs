@@ -5,11 +5,11 @@
  * Two kinds: a DRAFT (free text, edited whole) and a CHARACTER (docs/PLAN-M2.md: changed only by operations through
  * the shared reducer, so the server stays the authority on what a character holds).
  */
-import { randomUUID } from "node:crypto";
+import { randomUUID, randomInt } from "node:crypto";
 import { writeTx, changed } from "./db/fence.mjs";
 import { Refused } from "./auth/accounts.mjs";
 import { sha256 } from "./auth/tokens.mjs";
-import { newCharacter, applyOp, Refusal } from "../shared/creation.mjs";
+import { newCharacter, applyOp, Refusal, diceFor } from "../shared/creation.mjs";
 import { isStock, stockPortrait } from "./portrait/stock.mjs";
 
 export const MAX_DOCUMENTS = 200, MAX_BYTES = 500 * 1024 * 1024, MAX_REVISIONS = 50, MAX_BODY_BYTES = 2 * 1024 * 1024;
@@ -133,7 +133,11 @@ export function applyOps(ctx, userId, id, { revision, ops }, key, lookup = () =>
   return idempotent(ctx, userId, key, fingerprint("POST", `/documents/${id}/ops`, { revision, ops }), async trx => {
     const doc = await current(trx, userId, id, revision, "character");
     let body = decodeBody(doc.body);
-    try { for (const op of ops) body = applyOp(body, op, lookup); } catch (e) { throw refusal(e); }
+    // A gang's members and the finish roll (docs/PLAN-M2d.md Draft 2): rolled HERE, inside the idempotent write and
+    // after its replay check, never taken from the request. ctx.randomInt lets tests fix the dice.
+    const d6 = () => (ctx.randomInt ?? randomInt)(1, 7);
+    const roll = (n) => Array.from({ length: n }, d6).reduce((t, x) => t + x, 0);
+    try { for (const op of ops) body = applyOp(body, op, lookup, { roll: diceFor(op) ? roll(diceFor(op)) : null, now: ctx.now() }); } catch (e) { throw refusal(e); }
     const text = encode(body);
     await bump(trx, ctx, userId, id, revision, { name: body.name, body: text, bytes: Buffer.byteLength(text) });
     await appendRevision(trx, ctx, { id, owner_id: userId }, revision + 1, body, ops.map(o => o.op).join(", ").slice(0, 200));

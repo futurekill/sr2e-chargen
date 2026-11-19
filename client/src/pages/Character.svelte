@@ -20,7 +20,10 @@
   const sys = $derived(body.actor.system), pr = $derived(sys.chargen.priorities), opts = $derived(body.creation.options);
   const finished = $derived(!!body.creation.finished);
   const TOTEMS = Object.entries(totemNames()).sort((a, b) => a[1].localeCompare(b[1]));
-  const STEPS = [["concept", "Concept"], ["priorities", "Priorities"], ["metatype", "Metatype"], ["magic", "Magic"], ["attributes", "Attributes"], ["skills", "Skills"], ["resources", "Resources"], ["card", "Table card"]];
+  const STEPS = [["concept", "Concept"], ["priorities", "Priorities"], ["metatype", "Metatype"], ["magic", "Magic"], ["attributes", "Attributes"], ["skills", "Skills"], ["resources", "Resources"], ["card", "Table card"], ["finish", "Finish"]];
+  // The core book's archetypes (p.50–65): suggestions for followers, never a limit (docs/PLAN-M2d.md Draft 3).
+  const ARCHETYPES = ["Bodyguard", "Combat Mage", "Decker", "Detective", "Dwarf Mercenary", "Elven Decker", "Former Company Man", "Former Wage Mage",
+    "Gang Member", "Mercenary", "Rigger", "Shaman", "Street Mage", "Street Samurai", "Street Shaman", "Tribesman"];
   const SKILL_CATEGORY = { active: "Active", knowledge: "Knowledge", language: "Language", build_repair: "Build/Repair", special: "Special" };
   /** The full catalog entries this page fetched (the reducer copies an entry's data into the character). */
   const entries = new Map();
@@ -34,8 +37,8 @@
     change({ op: "setSkill", itemId: item._id, allocated: c.allocated, concentration: c.concentration, specialization: c.specialization, freeLanguage: c.freeLanguage, ...patch });
   }
   // Resources (docs/PLAN-M2c.md).
-  const TYPE_NAME = { weapon: "Weapon", armor: "Armor", gear: "Gear", ammo: "Ammunition", cyberware: "Cyberware", spell: "Spell", focus: "Focus", adept_power: "Adept power" };
-  const CHOICE_NAME = { quantity: "Qty", bundles: "Boxes", rating: "Rating", force: "Force", strengthMinimum: "Str Min", in: "In", spell: "Spell", skill: "Skill", weapon: "Weapon", level: "Level", senses: "Senses (comma-separated)" };
+  const TYPE_NAME = { weapon: "Weapon", armor: "Armor", gear: "Gear", ammo: "Ammunition", cyberware: "Cyberware", spell: "Spell", focus: "Focus", adept_power: "Adept power", program: "Program", contact: "Contact", lifestyle: "Lifestyle" };
+  const CHOICE_NAME = { quantity: "Qty", bundles: "Boxes", rating: "Rating", force: "Force", strengthMinimum: "Str Min", in: "In", spell: "Spell", skill: "Skill", weapon: "Weapon", level: "Level", senses: "Senses (comma-separated)", kind: "As", months: "Months" };
   let shopQ = $state(""), shopType = $state(""), shop = $state([]), shopBusy = $state(false);
   let shopTimer, shopSeq = 0;
   function searchShop() {
@@ -104,6 +107,24 @@
       if (--sending === 0) body = server.body;   // the server's copy wins once nothing else is on its way
     });
   }
+  /** An op only the server can apply (it rolls dice: a gang's members, the finish): no local copy first. */
+  function send(op) {
+    if (recovering) return;
+    error = ""; sending++;
+    queue = queue.then(async () => {
+      try { server = await mutate("POST", `/api/documents/${server.document.id}/ops`, { revision: server.document.revision, ops: [op] }); }
+      catch (err) {
+        error = err.message;
+        if (err.code === "stale" || err.code === "network") { try { server = await get(`/api/documents/${server.document.id}`); } catch { /* keep the last answer */ } }
+      }
+      if (--sending === 0) body = server.body;
+    });
+  }
+  let extraName = $state(""), confirmFinish = $state(false);
+  const ALLERGY_FIELDS = { rarity: ["uncommon", "common"], severity: ["nuisance", "mild", "moderate", "severe"], bonus: ["attributes", "skills", "force", "nuyen"] };
+  const allergy = $derived(sys.chargen.allergy ?? { substance: "", rarity: "", severity: "", rarityBonus: "", severityBonus: "" });
+  const setAllergy = (k, v) => change({ op: "setAllergy", ...allergy, [k]: v });
+  const contactPrice = (x) => ({ buddy: "10,000¥", gang: "50,000¥", follower: "200,000¥" })[x.r.choices.kind ?? x.r.snapshot.contactType] ?? "two free, then 5,000¥";
   const numberFrom = (ev) => Number.parseInt(ev.currentTarget.value, 10);
   // The printable sheet: paper and font remembered in this browser (a convenience; the server holds no preference yet).
   const pref = (k, d) => { try { return localStorage.getItem(k) ?? d; } catch { return d; } };
@@ -248,6 +269,19 @@
         {/each}
       </div>
       <p class="muted">A metahuman needs Priority A in Race{opts.moreMetahumans ? " (C or better with More Metahumans)" : ""}. <span class="cite">SR2 p.44</span></p>
+      {#if sys.race !== "human"}
+        <fieldset class="stack"><legend>Allergy (optional)</legend>
+          <p class="muted">A metahuman may take an allergy for extra points: one bonus for how common it is, one for its severity. <span class="cite">SR2 p.46, p.220</span></p>
+          <div class="row">
+            <label class="grow"><span>Substance</span><input value={allergy.substance} maxlength="60" disabled={finished} onchange={(ev) => setAllergy("substance", ev.currentTarget.value)}></label>
+            <label><span>How common</span><select value={allergy.rarity} disabled={finished} onchange={(ev) => setAllergy("rarity", ev.currentTarget.value)}><option value="">—</option>{#each ALLERGY_FIELDS.rarity as v}<option value={v}>{v}</option>{/each}</select></label>
+            <label><span>Bonus</span><select value={allergy.rarityBonus} disabled={finished} onchange={(ev) => setAllergy("rarityBonus", ev.currentTarget.value)}><option value="">—</option>{#each ALLERGY_FIELDS.bonus as v}<option value={v}>{v}</option>{/each}</select></label>
+            <label><span>Severity</span><select value={allergy.severity} disabled={finished} onchange={(ev) => setAllergy("severity", ev.currentTarget.value)}><option value="">—</option>{#each ALLERGY_FIELDS.severity as v}<option value={v}>{v}</option>{/each}</select></label>
+            <label><span>Bonus</span><select value={allergy.severityBonus} disabled={finished} onchange={(ev) => setAllergy("severityBonus", ev.currentTarget.value)}><option value="">—</option>{#each ALLERGY_FIELDS.bonus as v}<option value={v}>{v}</option>{/each}</select></label>
+          </div>
+          {#if !finished && Object.values(allergy).some(Boolean)}<button type="button" class="quiet" onclick={() => change({ op: "setAllergy", substance: "", rarity: "", severity: "", rarityBonus: "", severityBonus: "" })}>No allergy</button>{/if}
+        </fieldset>
+      {/if}
     </section>
 
     <section id="step-magic">
@@ -379,6 +413,13 @@
               <tr>
                 <th scope="row">{x.r.name}<br><span class="muted small">{TYPE_NAME[x.r.type]}{x.essence != null ? ` · Essence ${x.essence}` : ""}{x.r.choices.in ? " · in cybereyes" : ""}</span></th>
                 <td class="choices">
+                  {#if x.r.type === "contact" && x.r.snapshot.contactType === "gang"}<span class="muted small">{x.r.snapshot.members} members (2D6, rolled once)</span>{/if}
+                  {#if x.r.type === "contact" && x.r.snapshot.contactType === "follower"}
+                    {#each [0, 1, 2, 3, 4] as n}
+                      <label class="choice"><span>Archetype {n + 1}</span><input list="archetypes" value={x.r.choices.archetypes?.[n] ?? ""} maxlength="60" disabled={finished}
+                        onchange={(ev) => { const a = [0, 1, 2, 3, 4].map(i => x.r.choices.archetypes?.[i] ?? ""); a[n] = ev.currentTarget.value; change({ op: "setExtra", itemId: x.id, archetypes: a }); }}></label>
+                    {/each}
+                  {/if}
                   {#each Object.entries(x.spec) as [k, sp] (k)}
                     <label class="choice"><span>{CHOICE_NAME[k] ?? k}</span>
                       {#if sp.kind === "int"}
@@ -400,7 +441,7 @@
                     </label>
                   {/each}
                 </td>
-                <td class="price">{x.r.type === "adept_power" ? `${check.budgets.powerPoints?.costs[x.id] ?? "—"} PP` : x.r.type === "spell" ? `${x.r.choices.force} FP` : nuyen(x.price)}{#if x.r.choices.in}<br><span class="muted small">in the eyes' price</span>{/if}</td>
+                <td class="price">{x.r.type === "contact" ? contactPrice(x) : x.r.type === "adept_power" ? `${check.budgets.powerPoints?.costs[x.id] ?? "—"} PP` : x.r.type === "spell" ? `${x.r.choices.force} FP` : nuyen(x.price)}{#if x.r.choices.in}<br><span class="muted small">in the eyes' price</span>{/if}</td>
                 <td><button type="button" class="quiet" disabled={finished} aria-label={`Remove ${x.r.name}`} onclick={() => change({ op: "removeItem", itemId: x.id })}>✕</button></td>
               </tr>
             {/each}
@@ -408,6 +449,31 @@
         </table></div>
       {:else}
         <p class="muted">Nothing bought yet.</p>
+      {/if}
+      <datalist id="archetypes">{#each ARCHETYPES as a}<option value={a}></option>{/each}</datalist>
+      {#if !finished}
+        <h3>Contacts, extras and lifestyle</h3>
+        <p class="muted">Search the Contact type above for contacts (two are free, then 5,000¥; one may be your buddy, 10,000¥) and the Lifestyle type for where you live (months paid ahead; none bought means the street). A gang or tribe (50,000¥, 2D6 members rolled once) and followers (200,000¥, five different archetypes) are added here. <span class="cite">SR2 p.43–44, p.46</span></p>
+        <form class="row adders" onsubmit={(ev) => ev.preventDefault()}>
+          <label class="grow"><span>Gang or followers' name</span><input bind:value={extraName} maxlength="60"></label>
+          <button type="button" class="quiet" disabled={!extraName.trim()} onclick={() => { send({ op: "addExtra", kind: "gang", name: extraName }); extraName = ""; }}>Add a gang or tribe</button>
+          <button type="button" class="quiet" disabled={!extraName.trim()} onclick={() => { change({ op: "addExtra", kind: "follower", name: extraName }); extraName = ""; }}>Add followers</button>
+        </form>
+      {/if}
+    </section>
+
+    <section id="step-finish">
+      <h2>Finish</h2>
+      {#if finished}
+        <p>Finished. {nuyen(body.creation.finished.leftover)} unspent became {nuyen(Math.floor(body.creation.finished.leftover / 10))}, plus 3D6 = {body.creation.finished.roll} × 1,000¥: <strong>{nuyen(body.creation.finished.nuyen)}</strong> to start with. Karma Pool {body.creation.finished.karmaPool}. Name and notes can still change. <span class="cite">SR2 p.47</span></p>
+      {:else if !check.finishable}
+        <p class="muted">Finishing needs a clean rules check: no error and no to-do left.</p>
+      {:else if !confirmFinish}
+        <p class="muted">{nuyen(Math.max(0, check.budgets.resources.remaining))} unspent becomes {nuyen(Math.floor(Math.max(0, check.budgets.resources.remaining) / 10))} (10:1), plus 3D6 × 1,000¥ rolled by the server. Creation then closes. <span class="cite">SR2 p.47</span></p>
+        <button type="button" onclick={() => { confirmFinish = true; }}>Finish this character</button>
+      {:else}
+        <p role="alert">Finish now? Nothing about creation can change afterwards.</p>
+        <div class="row"><button type="button" onclick={() => { confirmFinish = false; send({ op: "finish" }); }}>Yes, finish and roll</button><button type="button" class="quiet" onclick={() => { confirmFinish = false; }}>Not yet</button></div>
       {/if}
     </section>
 
@@ -445,8 +511,10 @@
       <div><dt>Essence</dt><dd class:bad={check.essence < 0}>{check.essence}</dd></div>
       {#if sys.magic.type !== "none"}<div><dt>Magic</dt><dd class:bad={check.magic < 1}>{check.magic}</dd></div>{/if}
     </dl>
-    {#if check.problems.length === 0}
-      <p class="good">No problems in these steps. Contacts, lifestyle and finishing come next.</p>
+    {#if finished}
+      <p class="good">Finished: {nuyen(body.creation.finished.nuyen)} to start with. <span class="cite">SR2 p.47</span></p>
+    {:else if check.problems.length === 0}
+      <p class="good">No problems: ready to finish (the Finish step).</p>
     {:else}
       <ul class="problems">
         {#each check.problems as p, i (i)}

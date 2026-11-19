@@ -6,6 +6,12 @@ notes come from it.
 ## Unreleased
 
 ### Added
+- **Contacts, extras, lifestyle, allergy, programs and finishing** (core p.43–47): two free contacts, then
+  5,000¥ each; one buddy (10,000¥); a gang or tribe (50,000¥, 2D6 members rolled by the server); followers (200,000¥,
+  five different archetypes); a lifestyle with months paid ahead (none = the street); a metahuman's allergy and its
+  bonus points; programs up to Rating 6. **Finish** turns unspent Resources into nuyen at 10:1 plus 3D6 × 1,000¥ rolled
+  by the server, closes creation (name, notes and the table card stay editable), and marks the starting money as
+  given so Foundry doesn't offer it again. The budget is now the Foundry system's own `chargenBudget`.
 - **Physical adept powers** (core p.124–126): buy the core book's powers in Resources, priced in power points by the
   Foundry system's own tables (Combat Sense, Increased Reflexes and Reaction, Improved Physical Attributes, Improved
   Ability on one of your skills, Improved Physical Senses by naming them, Killing Hands, Pain Resistance, Astral

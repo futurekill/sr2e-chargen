@@ -8,8 +8,8 @@
  * A character is the Foundry system's own `character` source shapes (`actor`), so the system's functions read it
  * unchanged; the app's own record sits beside it (`creation`).
  */
-import { TABLES, chargenSpend, adeptPowerBudget, label, skillTiersFromAllocation, validateSkillAllocation } from "./rules.mjs";
-import { defaultChoices, checkChoices, refusalFor, project, priceInput, eyeRow, essenceOf, isCybereye, powerKeyOf, sensesOf } from "./purchase.mjs";
+import { TABLES, chargenBudget, startingMoney, startingKarmaPool, adeptPowerBudget, label, skillTiersFromAllocation, validateSkillAllocation } from "./rules.mjs";
+import { defaultChoices, checkChoices, refusalFor, project, eyeRow, essenceOf, isCybereye, powerKeyOf, sensesOf } from "./purchase.mjs";
 
 export const SCHEMA = "sr2e-chargen-character", SCHEMA_VERSION = 1;
 export const CATEGORIES = ["race", "magic", "attributes", "skills", "resources"];
@@ -75,8 +75,17 @@ export const OPS = Object.freeze({
   addItem: { catalogId: "string" },
   setItem: { itemId: "string", choices: "choices" },
   removeItem: { itemId: "string" },
-  setCard: { itemId: "string", on: "boolean" }
+  setCard: { itemId: "string", on: "boolean" },
+  // M2d (docs/PLAN-M2d.md): gangs and followers, the allergy, finishing. A server roll is never a field (Draft 2).
+  addExtra: { kind: "string", name: "string" },
+  setExtra: { itemId: "string", archetypes: "archetypes" },
+  setAllergy: { substance: "string", rarity: "string", severity: "string", rarityBonus: "string", severityBonus: "string" },
+  finish: {}
 });
+/** Ops the server must roll for (docs/PLAN-M2d.md Draft 2): how many D6, or 0. */
+export const diceFor = (op) => (op?.op === "finish" ? 3 : op?.op === "addExtra" && op.kind === "gang" ? 2 : 0);
+const ALLERGY = { rarity: ["uncommon", "common"], severity: ["nuisance", "mild", "moderate", "severe"], bonus: ["attributes", "skills", "force", "nuyen"] };
+const NO_ALLERGY = { substance: "", rarity: "", severity: "", rarityBonus: "", severityBonus: "" };
 /** The table card's sections (docs/PLAN-sheet.md slice 4): what it can show, all of it by default. */
 export const CARD_TYPES = { weapon: "attacks", skill: "skills", cyberware: "cyberware", adept_power: "powers", spell: "spells" };
 /** The item ids on the table card: the stored choice, or every item of the card's types (active skills only). */
@@ -94,10 +103,16 @@ const OPTIONS = ["moreMetahumans"];
  * could have); rules a player may break while building are reported by `validate`, never refused. A finished
  * character takes no creation operation (changes after creation are milestone 4's).
  */
-export function applyOp(body, op, lookup = () => null) {
+export function applyOp(body, op, lookup = () => null, { roll = null, now = 0 } = {}) {
   if (!op || typeof op !== "object" || typeof op.op !== "string" || !Object.hasOwn(OPS, op.op)) throw new Refusal("Unknown operation.");
-  if (body.creation.finished && op.op !== "setNotes" && op.op !== "setCard") throw new Refusal("This character is finished: creation can't change it.");
+  if (body.creation.finished && !["setName", "setNotes", "setCard"].includes(op.op)) throw new Refusal("This character is finished: creation can't change it (changes after creation come with character management).");
   const b = structuredClone(body), sys = b.actor.system;
+  // Name and notes are metadata: they never rebuild the items, so a finished character's data stays as finished (M2d r1 #2).
+  if (op.op === "setName") { b.name = b.actor.name = cleanName(op.name); return b; }
+  if (op.op === "setNotes") {
+    if (typeof op.notes !== "string" || op.notes.length > 20000) throw new Refusal("Notes are at most 20,000 characters.");
+    b.notes = op.notes; return b;
+  }
   if (op.op === "setCard") {
     // A print choice only: it touches nothing else, so a finished character's data is never rebuilt by it (card r1 #1).
     if (typeof op.on !== "boolean") throw new Refusal("On or off.");
@@ -110,10 +125,6 @@ export function applyOp(body, op, lookup = () => null) {
   }
   fillLegacyRecords(b);   // before the operation looks records up (r1 #2)
   switch (op.op) {
-    case "setName": b.name = b.actor.name = cleanName(op.name); break;
-    case "setNotes":
-      if (typeof op.notes !== "string" || op.notes.length > 20000) throw new Refusal("Notes are at most 20,000 characters.");
-      b.notes = op.notes; break;
     case "setOption":
       if (!OPTIONS.includes(op.key) || typeof op.value !== "boolean") throw new Refusal("Unknown option.");
       b.creation.options[op.key] = op.value; break;
@@ -127,7 +138,9 @@ export function applyOp(body, op, lookup = () => null) {
     }
     case "setMetatype":
       if (!METATYPES.includes(op.race)) throw new Refusal("That isn't a core metatype.", 44);
-      sys.race = op.race; break;
+      sys.race = op.race;
+      if (op.race === "human") sys.chargen.allergy = { ...NO_ALLERGY };   // an allergy is for metahumans only (p.46)
+      break;
     case "setMagic":
       if (!MAGIC_TYPES.includes(op.type)) throw new Refusal("That isn't a core magic type.", 45);
       sys.magic.type = op.type;
@@ -188,6 +201,8 @@ export function applyOp(body, op, lookup = () => null) {
       const why = refusalFor(e);
       if (why) throw new Refusal(why);
       const rec = recordOf(e);
+      // One lifestyle (p.46): a new one replaces the old, in this one operation.
+      if (rec.type === "lifestyle") for (const [k, r] of Object.entries(b.creation.items)) if (r.type === "lifestyle") { delete b.creation.items[k]; b.actor.items = b.actor.items.filter(i => i._id !== k); }
       // A power is bought once: Improved Ability once per skill (chosen after), Killing Hands once per level — an adept
       // may hold (Str)L and (Str)D (p.126).
       const once = (r) => (powerKeyOf(r) === "killing_hands" ? r.catalogId : powerKeyOf(r));
@@ -222,6 +237,47 @@ export function applyOp(body, op, lookup = () => null) {
       }
       rec.choices = checked.choices;
       break;
+    }
+    case "addExtra": {   // a gang or tribe (p.44, members 2D6 rolled by the server) or followers (five archetypes)
+      if (!["gang", "follower"].includes(op.kind)) throw new Refusal("An extra is a gang or tribe, or followers.", 44);
+      const name = shortText(op.name, "A name");
+      if (!name) throw new Refusal("Name the gang or the followers.", 44);
+      const members = op.kind === "gang" ? Number(roll) : 0;
+      if (op.kind === "gang" && !(Number.isInteger(members) && members >= 2 && members <= 12)) throw new Refusal("The server rolls the gang's members (2D6).", 44);
+      addRecord(b, { type: "contact", name, img: null, catalogId: null, source: null, flags: {},
+        snapshot: { contactType: op.kind, members, archetypes: [], loyalty: 1, influence: 1, notes: "" }, choices: {} });
+      break;
+    }
+    case "setExtra": {
+      const id = ownId(b, op.itemId, r => r.type === "contact" && r.snapshot?.contactType === "follower", "followers");
+      if (!Array.isArray(op.archetypes) || op.archetypes.length > 5) throw new Refusal("Followers come from five archetypes.", 44);
+      b.creation.items[id].choices = { archetypes: op.archetypes.map(a => shortText(a, "An archetype")) };
+      break;
+    }
+    case "setAllergy": {   // p.46, metahumans only: every field from the system's own choices
+      const a = {};
+      for (const k of Object.keys(NO_ALLERGY)) {
+        if (typeof op[k] !== "string") throw new Refusal("Allergy fields are text.", 46);
+        a[k] = k === "substance" ? shortText(op[k], "The substance") : op[k];
+      }
+      const list = { rarity: ALLERGY.rarity, severity: ALLERGY.severity, rarityBonus: ALLERGY.bonus, severityBonus: ALLERGY.bonus };
+      for (const [k, vs] of Object.entries(list)) if (a[k] && !vs.includes(a[k])) throw new Refusal("That isn't on the Allergy and Severity Table.", 46);
+      if (sys.race === "human" && Object.values(a).some(Boolean)) throw new Refusal("Only a metahuman takes an allergy for points.", 46);
+      sys.chargen.allergy = a;
+      break;
+    }
+    case "finish": {   // p.47: a clean rules check; unspent Resources at 10:1 + 3D6 × 1,000¥; creation ends
+      const dice = Number(roll);
+      if (!(Number.isInteger(dice) && dice >= 3 && dice <= 18)) throw new Refusal("The server rolls the 3D6.", 47);
+      rebuildItems(b);
+      const v = validate(b);
+      if (!v.finishable) throw new Refusal("Fix every error and to-do in the rules check first.", 47);
+      const leftover = Math.max(0, v.budgets.resources.remaining);
+      sys.nuyen = startingMoney(leftover, dice);
+      sys.chargen.inProgress = false;
+      b.actor.flags = { ...(b.actor.flags ?? {}), sr2e: { ...(b.actor.flags?.sr2e ?? {}), startingMoneyGranted: true } };   // Foundry never offers it again
+      b.creation.finished = { at: now, leftover, roll: dice, nuyen: sys.nuyen, karmaPool: startingKarmaPool(sys.race, !!b.creation.options.moreMetahumans) };
+      return b;
     }
     case "removeItem": {
       const id = ownId(b, op.itemId, r => r.type !== "skill", "item");
@@ -309,6 +365,8 @@ function rebuildItems(b) {
   // the rebuild never drops data it didn't make.
   const foreign = b.actor.items.filter(i => !Object.hasOwn(recs, i._id));
   b.actor.items = [...foreign, ...out];
+  // The lifestyle bought, or the street (p.46: no lifestyle bought = living on the street), never Foundry's "low".
+  b.actor.system.lifestyle = b.actor.items.find(i => i.type === "lifestyle")?.system.level || "streets";
 }
 
 /* ── Validation: the rules panel ─────────────────────────────────────────────────────────────────────────────── */
@@ -436,13 +494,25 @@ export function validate(body) {
     if (i.type === "gear" && i.system.category === "skillsoft" && !c.skill) add("resources", "todo", `${i.name}: name the skill on the chip.`, 243);
   }
 
-  // Budgets through the system's own function (core p.44–46).
-  const allot = { attributes: table[pr.attributes]?.attributes ?? 0, skills: table[pr.skills]?.skills ?? 0,
-    resources: table[pr.resources]?.resources ?? 0, forcePoints: mtype !== "none" ? table[pr.resources]?.forcePoints ?? 0 : 0 };   // every magician, adepts too (p.46, p.124)
-  const spend = chargenSpend({ attributes: ATTRIBUTES.map(a => ({ base: Number(sys[a]?.base) || 0 })),
-    skills: skills.map(i => ({ category: i.system.category, freeLanguage: i.system.freeLanguage, rating: i.system.rating, allocated: i.system.allocated,
-      ratingsFinalized: false, concentration: { name: i.system.concentration.name }, specialization: { name: i.system.specialization.name } })),
-    items: items.filter(i => i.type !== "skill").map(i => priceInput(i, items)) }, allot);
+  // Contacts and extras (p.43–44), lifestyle (p.46), the allergy (p.46).
+  const contacts = items.filter(i => i.type === "contact"), kind = (i) => i.system.contactType ?? "contact";
+  if (contacts.filter(i => kind(i) === "contact").length < 2) add("contacts", "todo", "Choose your two free contacts.", 43);
+  if (contacts.filter(i => kind(i) === "buddy").length > 1) add("contacts", "error", "Only one buddy can be bought at creation.", 43);
+  for (const f of contacts.filter(i => kind(i) === "follower")) {
+    const names = (f.system.archetypes ?? []).filter(Boolean), norm = names.map(n => n.toLowerCase());
+    if (names.length < 5) add("contacts", "todo", `${f.name}: name the five archetypes the followers come from.`, 44);
+    if (new Set(norm).size < norm.length) add("contacts", "error", `${f.name}: the five archetypes must all be different.`, 44);
+  }
+  if (!items.some(i => i.type === "lifestyle")) add("contacts", "warning", "No lifestyle bought: the character lives on the street.", 46);
+  const al = sys.chargen.allergy ?? NO_ALLERGY;
+  if (Object.values(al).some(Boolean)) {
+    const missing = [["substance", "the substance"], ["rarity", "how common it is"], ["severity", "its severity"], ["rarityBonus", "the bonus for how common"], ["severityBonus", "the bonus for the severity"]].filter(([k]) => !al[k]).map(([, t]) => t);
+    if (missing.length) add("metatype", "todo", `Allergy: choose ${missing.join(", ")}.`, 46);
+  }
+
+  // Budgets: the system's own chargenBudget, the call Foundry's panel makes (core p.44–46; M2d §1).
+  const spend = chargenBudget({ system: sys, items, table });
+  for (const p of spend.resources.vehicleProblems ?? []) add("resources", "error", p, 264);
   if (pr.resources && spend.resources.over) add("resources", "error", `${spend.resources.spent.toLocaleString("en-US")}¥ spent; Priority ${pr.resources} gives ${spend.resources.total.toLocaleString("en-US")}¥.`, 46);
   if (mtype !== "none" && pr.resources && spend.forcePoints.remaining > 0)
     add("resources", "warning", `${spend.forcePoints.remaining} Force Points unspent: only unspent nuyen carries into play.`, 47);
