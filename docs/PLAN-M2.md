@@ -10,7 +10,7 @@ page renders; every rule here cites it). Catalog: docs/PLAN-catalog.md._
 | M2b skills | done, pushed (docs/CODE-REVIEW-LOG-M2b.md) |
 | M2c resources | done, pushed; its own plan docs/PLAN-M2c.md (docs/CODE-REVIEW-LOG-M2c.md) |
 | M2c-2 adept powers | BUILT 2026-11-19 on the local app branch `chargen/on-0.161` (content pinned to the system's unreleased release/0.161.0 via the local tag v0.160.99); code review docs/CODE-REVIEW-LOG-M2c-2.md. Pushed after the system release (re-sync to v0.161.0 first) |
-| M2d contacts, lifestyle, allergy, derived values, parity, finish | waits for the system release |
+| M2d contacts, lifestyle, allergy, derived values, parity, finish | BUILT 2026-11-19 on the local branch `chargen/on-0.161` (docs/PLAN-M2d.md, 3 plan rounds; docs/CODE-REVIEW-LOG-M2d.md); pushed after the system release |
 | System prerequisites (§0) | S1–S4, S6–S8 (+ S10, S11 from PLAN-M2c) and S13 built on sr2e-foundryvtt branch `chargen/s-prereqs` (local, not pushed), unit-tested, Codex-reviewed (docs/CODE-REVIEW-LOG-chargen-prereqs.md there), checked in the test world; CHANGELOG Unreleased written. NOT released — after the Friday game. S5 built on the branch 2026-11-18 (`wareEssence`, 98 cyberware Quench tests pass). S12 built in the app (weapon foci, no system change). S9 vehicles: system side built on the branch 2026-11-18 (plan docs/PLAN-S9-vehicles.md approved by the GM after 4 Codex rounds; code review log docs/CODE-REVIEW-LOG-chargen-s9.md there); the app side (vehicles.json, addVehicle) waits for the release. |
 
 ## As built (where the code differs from the text below — the code wins)

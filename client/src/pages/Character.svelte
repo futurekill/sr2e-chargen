@@ -111,7 +111,9 @@
   function send(op) {
     if (recovering) return;
     error = ""; sending++;
+    const mine = epoch;
     queue = queue.then(async () => {
+      if (mine !== epoch) { if (--sending === 0) body = server.body; return; }   // dropped with the failed edit before it (r2)
       try { server = await mutate("POST", `/api/documents/${server.document.id}/ops`, { revision: server.document.revision, ops: [op] }); }
       catch (err) {
         // As change(): edits queued behind this one were made on a copy that is now gone, so they are dropped (M2d code r1 #2).
