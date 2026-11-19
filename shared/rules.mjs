@@ -7,6 +7,7 @@ import { SR2E } from "../content/sr2e-foundryvtt/module/config.mjs";
 import LABELS from "../content/sr2e-foundryvtt/lang/en.json" with { type: "json" };
 
 export { chargenSpend, chargenBudget, saleQuoteOf, itemListValue, fenceValue, FENCE_STEPS, streetPrice, ratedStreetIndex, karmaTransition, advancementOptions, karmaPoolCapacity, karmaPoolAvailable, startingMoney, weaponFocusCost, adeptPowerBudget, adeptPowerKey, combatSenseDice, skillTiersFromAllocation, validateSkillAllocation, chargenItemCost, ratedRow, reactionBase, wornArmorTotals, heavyArmorPoolPenalty, astralCombatPool, startingKarmaPool, strengthMinWeaponStats, naturalAttribute, wareEssence, damageUpdateFor, totalWoundPenalty, woundLevel, surgeryCategory, surgeryEssencePct, surgeonTN, racialProfile, metavariantFrom, isMetavariantItem, metavariantNotes, ONI_SOURCE } from "../content/sr2e-foundryvtt/module/rules/sr2e-rules.mjs";
+export { SHAPESHIFTER_PRIORITIES, SHAPESHIFTER_SPECIES, formModifiers, shapeshifterOf, humanFormMod } from "../content/sr2e-foundryvtt/module/rules/shapeshift-rules.mjs";
 export { wareCtx, containerEssence, eyeAccessoryKind, rowsListValue, muscleFactor } from "../content/sr2e-foundryvtt/module/rules/ware-rules.mjs";
 
 /** The system's tables the app reads. */

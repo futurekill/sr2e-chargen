@@ -5,7 +5,7 @@
  * character at creation can hold is composed here (no in-play state, no sourcebook ware); each step names the
  * CharacterData method it matches.
  */
-import { TABLES, combatSenseDice, karmaPoolCapacity, karmaPoolAvailable, reactionBase, wornArmorTotals, heavyArmorPoolPenalty, astralCombatPool, strengthMinWeaponStats, naturalAttribute, racialProfile } from "./rules.mjs";
+import { TABLES, combatSenseDice, karmaPoolCapacity, karmaPoolAvailable, reactionBase, wornArmorTotals, heavyArmorPoolPenalty, astralCombatPool, strengthMinWeaponStats, naturalAttribute, racialProfile, shapeshifterOf, formModifiers } from "./rules.mjs";
 import { essenceOf } from "./purchase.mjs";
 
 export const ATTRS = ["body", "quickness", "strength", "charisma", "intelligence", "willpower"];
@@ -26,19 +26,35 @@ export function derive({ actor, options = {} }) {
     if (i.system.noReactionBonus || /muscle (replacement|augmentation)/i.test(i.name)) exemptQuickness += num(i.system.attributeMods?.quickness);
     if (i.system.isVcr) vcr = Math.max(vcr, num(i.system.rating) || 1);
   }
+  // Adept powers are kept apart too: they work only in human form (Companion p.36), so a shapeshifter's animal form
+  // leaves them out (code review M5c r1 #1).
+  const adept = Object.fromEntries(Object.keys(mods).map(k => [k, 0]));
   if (mtype === "physical_adept") for (const p of items.filter(i => i.type === "adept_power")) {
     const lvl = Math.max(1, num(p.system.level) || 1);
-    for (const [k, v] of Object.entries(p.system.attributeMods ?? {})) if (k in mods) mods[k] += num(v) * lvl;
+    for (const [k, v] of Object.entries(p.system.attributeMods ?? {})) if (k in mods) { mods[k] += num(v) * lvl; adept[k] += num(v) * lvl; }
   }
 
   // _calculateAttributeValues: the natural rating (base + racial, held at the racial maximum while creation is in
   // progress, as Foundry does) + mods.
   const attributes = {}, natural = {};
   const maxes = sys.chargen?.inProgress === false ? {} : profile.maxes;
+  // A shapeshifter (Companion p.36): the form's modifiers come after the base cap, uncapped, floor 1 — as
+  // `_naturalAttribute`. The character's own values are its human form; `forms` gives both (PLAN-M5c Draft 2).
+  const shifter = shapeshifterOf("character", sys), formOf = (form) => formModifiers(sys.shapeshifter?.species, form);
+  const naturalIn = (a, form) => {
+    const n = naturalAttribute(num(sys[a]?.base), num(racial[a]), 0, maxes[a] ?? null), fm = shifter ? num(formOf(form).attrs[a]) : 0;
+    return fm ? Math.max(1, n + fm) : n;
+  };
   for (const a of ATTRS) {
-    natural[a] = naturalAttribute(num(sys[a]?.base), num(racial[a]), 0, maxes[a] ?? null);
+    natural[a] = naturalIn(a, "human");
     attributes[a] = Math.max(0, natural[a] + mods[a]);
   }
+  const forms = shifter ? Object.fromEntries(["human", "animal"].map(form => {
+    const f = formOf(form), m = (k) => mods[k] - (form === "animal" ? adept[k] : 0);
+    const at = Object.fromEntries(ATTRS.map(a => [a, Math.max(0, naturalIn(a, form) + m(a))]));
+    return [form, { attributes: at, reaction: Math.max(0, reactionBase(at.quickness, at.intelligence, exemptQuickness) + m("reaction")),
+      initiativeDice: Math.max(1, 1 + m("initiativeDice") + num(f.initDice)), reach: num(f.reach), dermalDice: num(f.dermalDice) }];
+  })) : null;
 
   // Essence and Magic (p.45): 6 − installed cyberware (with the cybereye allowance); Magic = Essence rounded down.
   const essence = Math.round((6 - installed.reduce((t, i) => t + essenceOf(i, items), 0)) * 100) / 100;
@@ -75,7 +91,7 @@ export function derive({ actor, options = {} }) {
     concealability: i.system.concealability ?? null, reach: i.system.reach ?? 0 }));
 
   return {
-    attributes, natural, reaction, initiativeDice, essence, magic, pools, armor, weapons, vcr, mpcp,
+    attributes, natural, reaction, initiativeDice, essence, magic, pools, armor, weapons, vcr, mpcp, forms,
     monitors: { physical: 10, stun: 10, overflow: natural.body },   // p.112; overflow against NATURAL Body
     // The Karma Pool (p.191): the starting pool + one-tenth of Total Karma, less what is burned (PLAN-M4a Draft 2).
     karmaPool: karmaPoolCapacity(sys.karma?.total, sys.karma?.burned, sys.karma?.poolAdjust, race, !!options.moreMetahumans),

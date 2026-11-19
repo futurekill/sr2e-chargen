@@ -367,7 +367,11 @@ remembers the tab you were on.
    Metahumans* option, p.46). With the Shadowrun Companion turned on, a dwarf, elf, ork or troll can be a
    **metavariant** (Cyclops, Gnome, Oni, Night One…, Companion p.39–44): its own racial modifiers, the base
    metatype's priority and maximums, and its notes (every variant meets a Hostile reaction; a Cyclops takes +2 TN on
-   ranged attacks). For an Oni the GM may allow Race B with Resources A and Magic C (an adept, p.42).
+   ranged attacks). For an Oni the GM may allow Race B with Resources A and Magic C (an adept, p.42). The Companion
+   also offers **shapeshifters** (bear, fox, leopard, seal, tiger, wolf; p.36–38): Race A buys only the shapeshifter
+   and its own table gives the rest (Magic B a magician, C an adept); base attributes go no higher than 6 and the
+   species' human-form modifiers apply on top (the Attributes tab shows both forms); no free contacts, no cyberware,
+   no allergy points, and a Karma Pool of 1 (R10).
 4. **Magic** (p.45): full magician (hermetic, or shamanic with a totem) or physical adept, as your Magic priority
    allows.
 5. **Attributes** (p.45): spend your Attribute Points; racial modifiers and maximums are applied for you.

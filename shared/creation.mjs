@@ -8,7 +8,7 @@
  * A character is the Foundry system's own `character` source shapes (`actor`), so the system's functions read it
  * unchanged; the app's own record sits beside it (`creation`).
  */
-import { TABLES, racialProfile, metavariantFrom, isMetavariantItem, ONI_SOURCE, chargenBudget, damageUpdateFor, surgeryCategory, surgeryEssencePct, surgeonTN, karmaTransition, advancementOptions, saleQuoteOf, streetPrice, ratedStreetIndex, startingMoney, startingKarmaPool, adeptPowerBudget, label, skillTiersFromAllocation, validateSkillAllocation } from "./rules.mjs";
+import { TABLES, SHAPESHIFTER_PRIORITIES, humanFormMod, shapeshifterOf, racialProfile, metavariantFrom, isMetavariantItem, ONI_SOURCE, chargenBudget, damageUpdateFor, surgeryCategory, surgeryEssencePct, surgeonTN, karmaTransition, advancementOptions, saleQuoteOf, streetPrice, ratedStreetIndex, startingMoney, startingKarmaPool, adeptPowerBudget, label, skillTiersFromAllocation, validateSkillAllocation } from "./rules.mjs";
 import { defaultChoices, checkChoices, offerReason, project, price, eyeRow, essenceOf, isCybereye, powerKeyOf, sensesOf } from "./purchase.mjs";
 
 export const SCHEMA = "sr2e-chargen-character", SCHEMA_VERSION = 1;
@@ -163,7 +163,19 @@ export function applyOp(body, op, lookup = () => null, { roll = null, now = 0, s
       break;
     }
     case "setMetatype": {
+      // A shapeshifter (Companion p.36–38, PLAN-M5c): the Companion's race entry names the species, and it is required.
+      if (op.race === "shapeshifter") {
+        const e = op.variant ? lookup(op.variant) : null;
+        if (!(e && e.type === "race" && e.system?.raceKey === "shapeshifter" && e.system.species)) throw new Refusal("Choose the shapeshifter's species.", 36);
+        if (!booksOf(b).includes(e.system.citation?.book ?? "sc")) throw new Refusal("That sourcebook isn't turned on for this character.");
+        sys.race = "shapeshifter";
+        sys.shapeshifter = { ...(sys.shapeshifter ?? {}), species: e.system.species, form: "human" };
+        sys.metavariant = metavariantFrom({});
+        sys.chargen.allergy = { ...NO_ALLERGY };   // allergy points are for metahumans (p.46)
+        break;
+      }
       if (!METATYPES.includes(op.race)) throw new Refusal("That isn't a core metatype.", 44);
+      if (sys.shapeshifter) sys.shapeshifter = { ...sys.shapeshifter, species: "", form: "human" };
       // A metavariant (PLAN-M5b): a turned-on sourcebook's race entry of THIS metatype, written as Foundry's drop does.
       const v = op.variant ? lookup(op.variant) : null;
       if (op.variant && !(v && v.type === "race" && isMetavariantItem(v) && v.system.raceKey === op.race))
@@ -230,6 +242,7 @@ export function applyOp(body, op, lookup = () => null, { roll = null, now = 0, s
       const e = lookup(op.catalogId);
       if (!e) throw new Refusal("That isn't in the catalog.");
       if (e.type === "skill") throw new Refusal("Add a skill in the Skills step.");
+      if (e.type === "cyberware" && sys.race === "shapeshifter") throw new Refusal("A shapeshifter's body rejects all cyberware (Companion p.38).");
       const why = offerReason(e, booksOf(b));
       if (why) throw new Refusal(why);
       const rec = recordOf(e);
@@ -313,7 +326,7 @@ export function applyOp(body, op, lookup = () => null, { roll = null, now = 0, s
       }
       const list = { rarity: ALLERGY.rarity, severity: ALLERGY.severity, rarityBonus: ALLERGY.bonus, severityBonus: ALLERGY.bonus };
       for (const [k, vs] of Object.entries(list)) if (a[k] && !vs.includes(a[k])) throw new Refusal("That isn't on the Allergy and Severity Table.", 46);
-      if (sys.race === "human" && Object.values(a).some(Boolean)) throw new Refusal("Only a metahuman takes an allergy for points.", 46);
+      if (["human", "shapeshifter"].includes(sys.race) && Object.values(a).some(Boolean)) throw new Refusal("Only a metahuman takes an allergy for points.", 46);
       sys.chargen.allergy = a;
       break;
     }
@@ -369,7 +382,7 @@ function validateInPlay(body, add, problems) {
   for (const a of ATTRIBUTES) if (withRacial(sys, a) > 1.5 * max[a]) add("karma", "warning", `${ATTR_NAMES[a]} ${withRacial(sys, a)} is beyond 1.5 × the racial maximum: the book discourages it.`, 190);
   const budgets = {};
   if (mtype === "physical_adept") {   // a lost Magic point costs one point of improvements (p.126): still reported
-    const pb = adeptPowerBudget({ items, maxes: max, natural: Object.fromEntries(["body", "quickness", "strength"].map(a => [a, withRacial(sys, a)])), magic });
+    const pb = adeptPowerBudget({ items, maxes: max, natural: Object.fromEntries(["body", "quickness", "strength"].map(a => [a, withRacial(sys, a) + formMod(sys, a)])), magic });
     budgets.powerPoints = { spent: pb.used, total: magic, over: pb.used > magic, costs: pb.costs };
     if (pb.used > magic) add("magic", "error", `${pb.used} power points used; the Magic Rating gives ${magic}: give up improvements to match.`, 126);
   }
@@ -548,6 +561,7 @@ function booksInUse(b, lookup) {
   for (const i of b.actor.items ?? []) used.add(i.system?.citation?.book);
   for (const v of Object.values(b.creation.vehicles ?? {})) used.add(v.source?.system?.citation?.book);
   if (b.actor.system.metavariant?.name) used.add(b.actor.system.metavariant.book);   // PLAN-M5b r1 #6
+  if (b.actor.system.race === "shapeshifter") used.add("sc");   // PLAN-M5c r1 #5
   used.delete(CORE); used.delete(undefined); used.delete(null);
   return used;
 }
@@ -619,6 +633,7 @@ export function surgeryPreview(body, itemId, successes = 2) {
 function surgeryOp(b, op, now) {
   const item = typeof op.itemId === "string" ? b.actor.items.find(i => i._id === op.itemId) : null;
   if (!item || item.type !== "cyberware" || item.system.installed !== false) throw new Refusal("That isn't a spare implant.");
+  if (b.actor.system.race === "shapeshifter") throw new Refusal("A shapeshifter's body rejects all cyberware (Companion p.38).");
   if (!Number.isInteger(op.successes) || op.successes < 0 || op.successes > 30) throw new Refusal("The surgeon's successes: 0 to 30.");
   const pv = surgeryPreview(b, item._id, op.successes), have = nuyenOf(b), yen = (n) => `${n.toLocaleString("en-US")}¥`;
   if (pv.end < 0) throw new Refusal("The surgery would leave the character below 0 Essence: it's aborted (Cybertechnology p.53).", 114);
@@ -696,7 +711,7 @@ function fillLegacyRecords(b) {
 }
 /** Regenerate `actor.items` from the records: skills, bought items, and eye accessories as rows of their eye. */
 function rebuildItems(b) {
-  const recs = b.creation.items, int = withRacial(b.actor.system, "intelligence");
+  const recs = b.creation.items, int = withRacial(b.actor.system, "intelligence") + formMod(b.actor.system, "intelligence");   // human form (M5c Draft 3)
   const ids = Object.keys(recs).sort();
   const rows = new Map(), out = [];
   for (const id of ids) {
@@ -732,15 +747,25 @@ function rebuildItems(b) {
  * every race (code review M2a #4: the table assigns a type to a letter, it doesn't set a minimum).
  */
 export function magicAllowed(letter, race, moreMetahumans) {
+  // A shapeshifter's own table (Companion p.36): B magician, C adept ("adept" there is the physical adept), whatever
+  // More Metahumans says (PLAN-M5c Draft 2).
+  if (race === "shapeshifter") return { B: ["full_magician"], C: ["physical_adept"] }[letter] ?? [];
   const table = moreMetahumans || race === "human" ? { A: "full_magician", B: "physical_adept" } : { B: "full_magician", C: "physical_adept" };
   return table[letter] ? [table[letter]] : [];
 }
 /** Does the Race priority allow this metatype (p.44; More Metahumans moves it to C, p.46)? */
 export const metatypeAllowed = (letter, race, moreMetahumans) =>
-  race === "human" || (moreMetahumans ? ["A", "B", "C"].includes(letter) : letter === "A");
+  race === "shapeshifter" ? letter === "A" : race === "human" || (moreMetahumans ? ["A", "B", "C"].includes(letter) : letter === "A");
 
 /** The value an attribute has after racial modifiers (p.45: applied after allocation). */
 export const withRacial = (sys, attr) => (Number(sys[attr]?.base) || 0) + (racialProfile(sys, TABLES).mods[attr] ?? 0);
+/** A shapeshifter's human-form modifier (Companion p.36), 0 for anyone else: on top of `withRacial`; it counts for adept
+ * power pricing (R4) and the free language, never for Karma prices. The system's own function. */
+export const formMod = humanFormMod;
+/** The priority table this character uses: a shapeshifter's own (Companion p.36), else the core table. */
+export const priorityTable = (sys) => (shapeshifterOf("character", sys) ? SHAPESHIFTER_PRIORITIES : TABLES.priorities);
+/** Free contacts at creation (p.43): two; a shapeshifter none (Companion p.38). */
+export const freeContacts = (sys) => (shapeshifterOf("character", sys) ? 0 : 2);
 
 /**
  * The budgets and every problem: `{ budgets, problems: [{ step, severity, text, cite }], finishable }`. `severity`:
@@ -751,7 +776,7 @@ export function validate(body) {
   const sys = body.actor.system, pr = sys.chargen.priorities, opts = body.creation.options, problems = [];
   const add = (step, severity, text, page) => problems.push({ step, severity, text, cite: cite(page) });
   if (body.creation.finished) return validateInPlay(body, add, problems);
-  const table = TABLES.priorities;
+  const table = priorityTable(sys), shifter = sys.race === "shapeshifter";
 
   // Priorities (p.44): every category, each letter once.
   const missing = CATEGORIES.filter(c => !pr[c]);
@@ -764,7 +789,10 @@ export function validate(body) {
   // A magical oni may take Race B with Resources A and Magic C (a metahuman adept), at the GM's discretion (Companion p.42).
   const oniB = !!opts.oniPriority && pr.race === "B" && pr.resources === "A" && pr.magic === "C" && sys.magic.type === "physical_adept"
     && racialProfile(sys, TABLES).source === ONI_SOURCE;
-  if (pr.race && !oniB && !metatypeAllowed(pr.race, sys.race, opts.moreMetahumans))
+  if (shifter) {
+    if (!shapeshifterOf("character", sys)) add("metatype", "todo", "Choose the shapeshifter's species.", 36);
+    if (pr.race && pr.race !== "A") add("metatype", "error", "A shapeshifter needs Priority A in Race (Companion p.36).", 36);
+  } else if (pr.race && !oniB && !metatypeAllowed(pr.race, sys.race, opts.moreMetahumans))
     add("metatype", "error", `${cap(aRace(sys.race))} needs Priority ${opts.moreMetahumans ? "C or better" : "A"} in Race.`, opts.moreMetahumans ? 46 : 44);
 
   // Magic (p.44–46).
@@ -783,7 +811,9 @@ export function validate(body) {
   for (const a of ATTRIBUTES) {
     const base = Number(sys[a]?.base) || 0, v = withRacial(sys, a);
     if (base < 1) add("attributes", "error", `${ATTR_NAMES[a]} must be at least 1.`, 45);
-    if (v > max[a]) add("attributes", "error", `${ATTR_NAMES[a]} is ${v} after racial modifiers; ${aRace(sys.race)}'s maximum is ${max[a]}.`, 43);
+    // A shapeshifter: the BASE may not exceed 6; the form modifiers apply after, uncapped (Companion p.36).
+    if (shifter ? base > 6 : v > max[a]) add("attributes", "error", shifter ? `${ATTR_NAMES[a]} is bought at ${base}: a shapeshifter's base attributes may not exceed 6.`
+      : `${ATTR_NAMES[a]} is ${v} after racial modifiers; ${aRace(sys.race)}'s maximum is ${max[a]}.`, shifter ? 36 : 43);
     if (v < 1) add("attributes", "error", `${ATTR_NAMES[a]} is ${v} after racial modifiers: raise it to at least 1.`, 45);
   }
 
@@ -792,6 +822,7 @@ export function validate(body) {
   const essence = Math.round((6 - items.filter(i => i.type === "cyberware").reduce((t, i) => t + essenceOf(i, items), 0)) * 100) / 100;
   const magic = mtype === "none" ? 0 : Math.max(0, Math.min(6, Math.floor(essence + 1e-9)));
   if (essence < 0) add("resources", "error", `Essence is ${essence}: cyberware can't take it below 0.`, 46);
+  if (shifter && items.some(i => i.type === "cyberware")) add("resources", "error", "A shapeshifter's body rejects all cyberware (Companion p.38): remove it.", 38);
   if (mtype !== "none" && magic < 1) add("magic", "error", `Essence ${essence} leaves no Magic Rating: this character's magic is gone.`, 45);
 
   // Skills (p.45, p.66, p.70, p.74).
@@ -855,7 +886,7 @@ export function validate(body) {
 
   // Contacts and extras (p.43–44), lifestyle (p.46), the allergy (p.46).
   const contacts = items.filter(i => i.type === "contact"), kind = (i) => i.system.contactType ?? "contact";
-  if (contacts.filter(i => kind(i) === "contact").length < 2) add("contacts", "todo", "Choose your two free contacts.", 43);
+  if (contacts.filter(i => kind(i) === "contact").length < freeContacts(sys)) add("contacts", "todo", "Choose your two free contacts.", 43);
   if (contacts.filter(i => kind(i) === "buddy").length > 1) add("contacts", "error", "Only one buddy can be bought at creation.", 43);
   for (const f of contacts.filter(i => kind(i) === "follower")) {
     const names = (f.system.archetypes ?? []).filter(Boolean), norm = names.map(n => n.toLowerCase());
@@ -886,7 +917,7 @@ export function validate(body) {
   }
   // A physical adept's power points (p.124–126): the system's own costs and reports, against the Magic Rating.
   if (mtype === "physical_adept") {
-    const pb = adeptPowerBudget({ items, maxes: max, natural: Object.fromEntries(["body", "quickness", "strength"].map(a => [a, withRacial(sys, a)])), magic });
+    const pb = adeptPowerBudget({ items, maxes: max, natural: Object.fromEntries(["body", "quickness", "strength"].map(a => [a, withRacial(sys, a) + formMod(sys, a)])), magic });
     spend.powerPoints = { spent: pb.used, total: magic, over: pb.used > magic, costs: pb.costs };
     for (const p of pb.problems) add("magic", "error", p, Number(/p\.(\d+)/.exec(p)?.[1] ?? 125));
     if (pb.used < magic) add("magic", "warning", `${magic - pb.used} power point${magic - pb.used === 1 ? "" : "s"} unspent.`, 124);

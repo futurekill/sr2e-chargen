@@ -7,7 +7,7 @@
   import { untrack, onDestroy } from "svelte";
   import { get, mutate, upload } from "../lib/api.js";
   import { derive } from "../../../shared/derive.mjs";
-  import { applyOp, validate, karmaOptions, undoable, surgeryPreview, booksOf, PLAY_GEAR, cardIds, cardEligible, CARD_TYPES, CATEGORIES, CATEGORY_NAMES, LETTERS, METATYPES, MAGIC_TYPES, MAGIC_NAMES, TRADITIONS, ATTRIBUTES, ATTR_NAMES, CUSTOM_SKILL_CATEGORIES, totemNames } from "../../../shared/creation.mjs";
+  import { applyOp, validate, karmaOptions, undoable, surgeryPreview, booksOf, priorityTable, freeContacts, withRacial, formMod, PLAY_GEAR, cardIds, cardEligible, CARD_TYPES, CATEGORIES, CATEGORY_NAMES, LETTERS, METATYPES, MAGIC_TYPES, MAGIC_NAMES, TRADITIONS, ATTRIBUTES, ATTR_NAMES, CUSTOM_SKILL_CATEGORIES, totemNames } from "../../../shared/creation.mjs";
   import { TABLES, racialProfile, metavariantNotes, metavariantFrom, ONI_SOURCE } from "../../../shared/rules.mjs";
   import { BUYABLE, choiceSpec, defaultChoices, project, price, essenceOf, isCybereye, smallWeapon } from "../../../shared/purchase.mjs";
   import { saleQuoteOf, streetPrice, ratedStreetIndex, FENCE_STEPS, totalWoundPenalty, woundLevel } from "../../../shared/rules.mjs";
@@ -40,13 +40,13 @@
   const sourcebooks = $derived(catalogBookList.filter(x => x.key !== "sr2"));
   // Metavariants (docs/PLAN-M5b.md): the Companion's race entries, fetched whole (the reducer copies their data).
   const profile = $derived(racialProfile(sys, TABLES));
-  let variants = $state([]);
+  let variants = $state([]), species = $state([]);
   $effect(() => {
     if (!booksOf(body).includes("sc") || variants.length) return;
     get("/api/catalog/entries?type=race&book=sc&limit=100").then(async (r) => {
       const full = await Promise.all(r.entries.filter(e => e.book === "sc").map(e => get(`/api/catalog/entries/${encodeURIComponent(e.id)}`)));
       for (const e of full) entries.set(e.id, e);
-      if (!gone) variants = full.filter(e => ["dwarf", "elf", "ork", "troll"].includes(e.system.raceKey));
+      if (!gone) { variants = full.filter(e => ["dwarf", "elf", "ork", "troll"].includes(e.system.raceKey)); species = full.filter(e => e.system.raceKey === "shapeshifter"); }
     }).catch(() => { /* no variants listed; the core metatypes still work */ });
   });
   const variantMods = (e) => Object.entries(e.system.attributeMods ?? {}).filter(([a, v]) => v !== (racialProfile({ race: e.system.raceKey }, TABLES).mods[a] ?? 0))
@@ -215,7 +215,7 @@
   const setAllergy = (k, v) => change({ op: "setAllergy", ...allergy, [k]: v });
   // Each contact row's charge (p.46): the first two ordinary contacts (in the order bought) are free.
   const plainContacts = $derived(bought.filter(x => x.r.type === "contact" && (x.r.choices.kind ?? x.r.snapshot.contactType) === "contact").map(x => x.id));
-  const contactPrice = (x) => ({ buddy: "10,000¥", gang: "50,000¥", follower: "200,000¥" })[x.r.choices.kind ?? x.r.snapshot.contactType] ?? (plainContacts.indexOf(x.id) < 2 ? "free" : "5,000¥");
+  const contactPrice = (x) => ({ buddy: "10,000¥", gang: "50,000¥", follower: "200,000¥" })[x.r.choices.kind ?? x.r.snapshot.contactType] ?? (plainContacts.indexOf(x.id) < freeContacts(sys) ? "free" : "5,000¥");
   // The steps as tabs (one panel at a time; the Rules check stays beside them). The open tab is remembered per
   // character for this browser tab (sessionStorage): the address's fragment is reserved for one-time link secrets.
   const tabs = $derived(finished ? [["karma", "Karma"], ["nuyen", "Nuyen"], ["condition", "Condition"], ...STEPS] : STEPS);
@@ -562,9 +562,11 @@
       <label class="row inline"><input type="checkbox" class="check" checked={opts.moreMetahumans} disabled={finished}
         onchange={(ev) => change({ op: "setOption", key: "moreMetahumans", value: ev.currentTarget.checked })}>
         <span>Optional rule: More Metahumans (metahumans at Race C; magic at A or B for everyone) <span class="cite">SR2 p.46</span></span></label>
+      {#if sys.race === "shapeshifter"}<p class="muted">A shapeshifter uses its own table: Race A buys the shapeshifter; Magic B a magician, C an adept. <span class="cite">Companion p.36</span></p>{/if}
       <dl class="table-rows">
         {#each LETTERS as l}
-          <div><dt>{l}</dt><dd>{TABLES.priorities[l].attributes} attribute pts · {TABLES.priorities[l].skills} skill pts · {nuyen(TABLES.priorities[l].resources)}</dd></div>
+          {@const row = priorityTable(sys)[l]}
+          <div><dt>{l}</dt><dd>{row.race === "shapeshifter" ? "Race: the shapeshifter (nothing else)" : `${row.attributes} attribute pts · ${row.skills} skill pts · ${nuyen(row.resources)}`}</dd></div>
         {/each}
       </dl>
     </section>
@@ -576,6 +578,17 @@
           <label class="row inline"><input type="radio" class="check" name="metatype" checked={sys.race === m} disabled={finished} onchange={() => change({ op: "setMetatype", race: m })}><span>{m[0].toUpperCase() + m.slice(1)}</span></label>
         {/each}
       </div>
+      {#if booksOf(body).includes("sc") && species.length}
+        <fieldset class="stack"><legend>Shapeshifter (Shadowrun Companion)</legend>
+          <p class="muted">An awakened animal that takes human form: Priority A in Race, its own priority table, no free contacts, no cyberware, a Severe allergy and vulnerability to silver; it regenerates. <span class="cite">Companion p.36–38</span></p>
+          <div class="row" role="radiogroup" aria-label="Shapeshifter species (instead of a metatype above)">
+            {#each species as e (e.id)}
+              <label class="row inline"><input type="radio" class="check" name="species" checked={sys.race === "shapeshifter" && sys.shapeshifter?.species === e.system.species} disabled={finished}
+                onchange={() => change({ op: "setMetatype", race: "shapeshifter", variant: e.id })}><span>{e.name.replace(/^Shapeshifter \((.*)\)$/, "$1")}</span></label>
+            {/each}
+          </div>
+        </fieldset>
+      {/if}
       <p class="muted">A metahuman needs Priority A in Race{opts.moreMetahumans ? " (C or better with More Metahumans)" : ""}. <span class="cite">SR2 p.44</span></p>
       {#if booksOf(body).includes("sc") && sys.race !== "human" && variants.some(e => e.system.raceKey === sys.race)}
         <fieldset class="stack"><legend>Metavariant (Shadowrun Companion)</legend>
@@ -593,7 +606,7 @@
           onchange={(ev) => change({ op: "setOption", key: "oniPriority", value: ev.currentTarget.checked })}>
           <span>GM allows a magical oni Race B, with Resources A and Magic C (an adept) <span class="cite">Companion p.42</span></span></label>
       {/if}
-      {#if sys.race !== "human"}
+      {#if !["human", "shapeshifter"].includes(sys.race)}
         <fieldset class="stack"><legend>Allergy (optional)</legend>
           <p class="muted">A metahuman may take an allergy for extra points: one bonus for how common it is, one for its severity. <span class="cite">SR2 p.46, p.220</span></p>
           <div class="row">
@@ -636,19 +649,24 @@
       <h2>Attributes</h2>
       <p class="muted">Buy each attribute from 1; racial modifiers apply after. <span class="cite">SR2 p.45</span></p>
       <div class="scroll"><table class="grid attrs">
-        <thead><tr><th scope="col">Attribute</th><th scope="col">Bought</th><th scope="col">Racial</th><th scope="col">Rating</th><th scope="col">Max</th></tr></thead>
+        <thead><tr><th scope="col">Attribute</th><th scope="col">Bought</th><th scope="col">{derived.forms ? "Human form ±" : "Racial"}</th><th scope="col">{derived.forms ? "Human form" : "Rating"}</th>{#if derived.forms}<th scope="col">Animal form</th>{/if}<th scope="col">Max</th></tr></thead>
         <tbody>
           {#each ATTRIBUTES as a}
-            {@const mod = profile.mods[a] ?? 0}
+            {@const mod = (profile.mods[a] ?? 0) + formMod(sys, a)}
             {@const max = profile.maxes[a] ?? 6}
-            {@const rating = sys[a].base + mod}
+            {@const rating = withRacial(sys, a)}
             <tr>
               <th scope="row">{ATTR_NAMES[a]}</th>
               <td><input type="number" min="1" max="12" step="1" value={sys[a].base} aria-label={`${ATTR_NAMES[a]} bought`} disabled={finished}
                 onchange={(ev) => { const n = numberFrom(ev); if (Number.isInteger(n) && n !== sys[a].base) change({ op: "setAttribute", attr: a, base: n }); else ev.currentTarget.value = sys[a].base; }}></td>
               <td>{sign(mod)}</td>
-              <td class:bad={rating > max || rating < 1}>{rating}</td>
-              <td class="muted">{max}</td>
+              {#if derived.forms}
+                <td class:bad={sys[a].base > 6}>{derived.natural[a]}</td><td>{derived.forms.animal.attributes[a]}</td>
+                <td class="muted">6 bought</td>
+              {:else}
+                <td class:bad={rating > max || rating < 1}>{rating}</td>
+                <td class="muted">{max}</td>
+              {/if}
             </tr>
           {/each}
         </tbody>

@@ -33,6 +33,10 @@ export function sheetModel(body) {
   // A metavariant (Companion p.39–44): "Troll (Cyclops)", its rules as a header line.
   const variant = racialProfile(sys, TABLES).variant, raceName = cap(sys.race ?? "human") + (variant ? ` (${plain(variant)})` : "");
   const variantNotes = metavariantNotes(sys, TABLES).join(" ");
+  // A shapeshifter (Companion p.36–38): the attributes below are the human form; the animal form on its own line.
+  const af = d.forms?.animal, short = { body: "B", quickness: "Q", strength: "S", charisma: "C", intelligence: "I", willpower: "W" };
+  const animalLine = af ? [Object.entries(af.attributes).map(([a, v]) => `${short[a]} ${v}`).join(" "), `R ${af.reaction}`, `Init ${af.reaction} + ${af.initiativeDice}D6`,
+    af.reach ? `Reach +${af.reach}` : "", af.dermalDice ? `dermal armor +${af.dermalDice} Body vs damage` : ""].filter(Boolean).join(" · ") : "";
   const check = validate(body);
   const pr = sys.chargen?.priorities ?? {};
   const magic = sys.magic ?? {};
@@ -45,7 +49,9 @@ export function sheetModel(body) {
     title: plain(body.name),
     draft: !body.creation?.finished,
     header: [
-      ["Metatype", raceName], ...(variantNotes ? [["Metatype notes", plain(variantNotes, 400)]] : []),
+      ["Metatype", sys.race === "shapeshifter" ? `Shapeshifter (${cap(sys.shapeshifter?.species ?? "")}), human form` : raceName],
+      ...(variantNotes ? [["Metatype notes", plain(variantNotes, 400)]] : []),
+      ...(animalLine ? [["Animal form", animalLine], ["Shapeshifter", "Severe allergy and vulnerability to silver; regenerates; rejects cyberware (Companion p.38)."]] : []),
       ["Magic", magicLine],
       ["Priorities", Object.keys(CATEGORY_NAMES).map(c => `${CATEGORY_NAMES[c]} ${pr[c] || "–"}`).join(" · ")],
       ["Karma Pool", String(d.karmaPool)], ...(d.totalKarma > 0 ? [["Good Karma", String(d.goodKarma)], ["Total Karma", String(d.totalKarma)]] : []),

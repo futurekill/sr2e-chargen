@@ -106,3 +106,12 @@ bonding (p.46, p.137), refusals.
 - The Companion can't be turned off while a variant is chosen.
 - Foundry (Quench sr2e.metavariant): dropping a Cyclops sets Strength racial +6 and no dermal die; a core Troll clears
   it; a Cyclops' firearm attack card shows "no depth perception +2".
+
+## Shapeshifters (M5c)
+- With the Companion on, the Metatype step lists six species; picking one makes the character a shapeshifter (the
+  core metatype radios unticked); another metatype clears it.
+- Priorities: the shapeshifter table's rows (A = the shapeshifter only); Race other than A is an error even with More
+  Metahumans; Magic B allows a magician, C an adept.
+- Attributes: a base of 7 is an error; human-form and animal-form columns (a bear's Body 6 → 7 human, 11 animal).
+- Contacts: the first one is 5,000¥; no "two free contacts" to-do. Cyberware can't be added; the allergy fieldset is
+  hidden. Karma Pool 1. The sheet's header has the animal form and the silver line.

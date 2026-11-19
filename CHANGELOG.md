@@ -6,6 +6,11 @@ notes come from it.
 ## Unreleased
 
 ### Added
+- **Shapeshifter characters** (Shadowrun Companion p.36–38; RULINGS R10): with the Companion on, pick a species on
+  the Metatype step. The character uses the shapeshifter priority table (Race A; Magic B magician, C adept), buys base
+  attributes up to 6 with the human-form modifiers on top, and shows both forms on the Attributes tab and the sheets
+  (with the animal form's Reach, Initiative and dermal armor). No free contacts, no cyberware, no allergy points;
+  the Karma Pool starts at 1.
 - **Metavariants** (Shadowrun Companion p.39–44; RULINGS R9): with the Companion turned on, the Metatype step lists
   each metatype's variants with their modifiers and page. The character takes the variant's own racial modifiers
   (a Cyclops +6 Strength) with the base metatype's priority and maximums; the sheets print "Troll (Cyclops)" and the
