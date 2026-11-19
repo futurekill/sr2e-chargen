@@ -44,13 +44,17 @@ export function loadCatalog(dir, { pins = null } = {}) {
   // Vehicles' complete sources (docs/PLAN-S9-vehicles.md Draft 4/5): checked against their own checksum; a catalog
   // built without them (older builds, test fixtures) simply has none, and buying a vehicle is refused.
   const vehicles = new Map();
+  const vf = join(dir, "vehicles.json");
+  if (!manifest.vehiclesSha256 && existsSync(vf)) throw new CatalogError("vehicles.json is there but the manifest has no checksum for it");   // r1 #3
   if (manifest.vehiclesSha256) {
-    const vf = join(dir, "vehicles.json");
     if (!existsSync(vf)) throw new CatalogError("the manifest names vehicles.json but it is missing");
     const vbody = readFileSync(vf);
     if (createHash("sha256").update(vbody).digest("hex") !== manifest.vehiclesSha256) throw new CatalogError("vehicles.json doesn't match its manifest's checksum");
     for (const [id, src] of Object.entries(JSON.parse(vbody.toString("utf8")))) {
-      if (byId.get(id)?.type !== "vehicle" || src?.type !== "vehicle") throw new CatalogError(`vehicles.json holds ${id}, which is not a catalog vehicle`);
+      const e = byId.get(id);
+      // The source must be THAT entry's (r1 #2): its type, its document id (the id's last part) and its name.
+      if (e?.type !== "vehicle" || src?.type !== "vehicle" || src._id !== id.split(".").pop() || src.name !== e.name)
+        throw new CatalogError(`vehicles.json holds ${id}, which is not that catalog vehicle's source`);
       vehicles.set(id, src);
     }
   }

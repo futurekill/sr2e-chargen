@@ -248,7 +248,7 @@ export function applyOp(body, op, lookup = () => null, { roll = null, now = 0 } 
       if (e.book !== CORE) throw new Refusal("Only the core book's vehicles for now: sourcebooks arrive with the book toggles.");
       if (!e.actorSource) throw new Refusal("This vehicle's full data isn't available on this server.");
       if (!(Number(e.actorSource.system?.cost) > 0)) throw new Refusal(`${e.name} has no list price (the book prints “Restricted”): it can't be bought at creation.`, 264);
-      b.creation.vehicles ??= {};
+      if (!b.creation.vehicles) { b.creation.vehicles = {}; b.creation.vehicleBase = structuredClone(sys.chargen.vehicles ?? []); }   // receipts the app didn't write stay (r1 #1)
       if (Object.keys(b.creation.vehicles).length >= MAX_VEHICLES) throw new Refusal(`A character buys at most ${MAX_VEHICLES} vehicles here.`);
       let n = b.creation.nextVehicle ?? 1;
       while (Object.hasOwn(b.creation.vehicles, vehicleKey(n))) n++;
@@ -391,10 +391,10 @@ function rebuildItems(b) {
   const foreign = b.actor.items.filter(i => !Object.hasOwn(recs, i._id));
   b.actor.items = [...foreign, ...out];
   // Vehicles bought here become the system's receipts (S9), in id order; a character the app didn't make keeps its own.
-  if (b.creation.vehicles) b.actor.system.chargen.vehicles = Object.keys(b.creation.vehicles).sort().map(k => {
+  if (b.creation.vehicles) b.actor.system.chargen.vehicles = [...(b.creation.vehicleBase ?? []), ...Object.keys(b.creation.vehicles).sort().map(k => {
     const v = b.creation.vehicles[k];
     return { name: v.source.name, source: v.source._stats?.compendiumSource || v.uuid, cost: Number(v.source.system?.cost) || 0 };
-  });
+  })];
   // The lifestyle bought, or the street (p.46: no lifestyle bought = living on the street), never Foundry's "low".
   b.actor.system.lifestyle = b.actor.items.find(i => i.type === "lifestyle")?.system.level || "streets";
 }

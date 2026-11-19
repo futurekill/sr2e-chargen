@@ -27,6 +27,15 @@ test("a vehicle is bought at its list price; the character keeps the whole sourc
   assert.deepEqual([b.actor.system.chargen.vehicles, validate(b).budgets.resources.spent], [[], 0]);
 });
 
+test("a Foundry-made character's own receipts stay when the app adds and removes a vehicle (r1 #1)", () => {
+  let b = start();
+  b.actor.system.chargen.vehicles = [{ name: "Old Van", source: "", cost: 5000 }];
+  b = applyOp(b, { op: "addVehicle", catalogId: vehicle("Dodge Scoot").id }, lookup);
+  assert.deepEqual(b.actor.system.chargen.vehicles.map(r => r.name), ["Old Van", "Dodge Scoot"]);
+  b = applyOp(b, { op: "removeVehicle", vehicleId: Object.keys(b.creation.vehicles)[0] }, lookup);
+  assert.deepEqual(b.actor.system.chargen.vehicles, [{ name: "Old Van", source: "", cost: 5000 }]);
+});
+
 test("refused: a Restricted vehicle (no price), a non-vehicle, a vehicle without its source, the 21st", () => {
   const restricted = catalog.entries.find(x => x.book === "sr2" && x.type === "vehicle" && !(sources[x.id]?.system.cost > 0));
   assert.ok(restricted, "the core book has Restricted vehicles");
@@ -51,4 +60,12 @@ test("vehicles.json: written with its own checksum, loaded and checked; entryOf 
   assert.equal(entryOf(loaded, catalog.entries.find(x => x.type === "weapon").id).actorSource, undefined);
   writeFileSync(join(dir, "vehicles.json"), JSON.stringify({ ...sources, extra: 1 }));
   assert.throws(() => loadCatalog(dir), CatalogError, "a changed vehicles.json is refused");
+  // A swapped source with a matching checksum is still refused (r1 #2); a file without its checksum too (r1 #3).
+  const [a, b] = Object.keys(sources), swapped = { ...sources, [a]: sources[b] };
+  writeCatalog(catalog, dir, swapped);
+  assert.throws(() => loadCatalog(dir), /not that catalog vehicle's source/);
+  writeCatalog(catalog, dir, sources);
+  const m = JSON.parse(readFileSync(join(dir, "manifest.json"), "utf8")); delete m.vehiclesSha256;
+  writeFileSync(join(dir, "manifest.json"), JSON.stringify(m));
+  assert.throws(() => loadCatalog(dir), /no checksum/);
 });
