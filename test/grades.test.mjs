@@ -36,7 +36,7 @@ test("a beta Datajack: Essence ×0.6, price ×7; the SSC must be on and then can
 test("book cyberware: plain implants offered; limbs, ruled ware, Skillwires and the tactical computer wait; Shadowtech has no grade", () => {
   const plain = catalog.entries.find(x => x.type === "cyberware" && x.book === "ssc" && offerReason(x, ["ssc"]) === null);
   assert.ok(plain, "an SSC implant is offered");
-  assert.match(offerReason(cy("ct", /^Cyberarm/), ["ct"]) ?? "", /own rules/);
+  assert.match(offerReason(cy("ct", "Hydraulic Jack"), ["ct"]) ?? "", /own rules/);   // limbs: PLAN-M5j
   assert.match(offerReason(cy("ct", "Skillwires"), ["ct"]) ?? "", /own rules/);
   const tac = catalog.entries.find(x => x.type === "cyberware" && x.system.isTacticalComputer && x.book !== "sr2");
   if (tac) assert.match(offerReason(tac, [tac.book]) ?? "", /own rules/);

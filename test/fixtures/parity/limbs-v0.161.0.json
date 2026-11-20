@@ -1,0 +1,1969 @@
+{
+ "$comment": "Foundry PREPARED values for five characters with cyberlimbs (docs/PLAN-M5j.md, Proof), exported 2026-11-19 from the local test world on release/0.161.0 (pinned locally as v0.160.99). The sources were BUILT by the app (ops: addItem, setItem side/limb/grade), so sides, links and placement facts are the app’s own. Item cost = Foundry’s prepared cost (before the grade multiplier). Foundry adds an Unarmed Strike at creation; the app derives a virtual one. (e) was prepared under vehicleRuleset rigger2. Regenerate when the pin moves.",
+ "version": "0.161.0",
+ "actors": [
+  {
+   "ruleset": "core",
+   "name": "Limbs a",
+   "attributes": {
+    "body": 8,
+    "quickness": 6,
+    "strength": 5,
+    "charisma": 3,
+    "intelligence": 5,
+    "willpower": 4
+   },
+   "reaction": 5,
+   "initiativeDice": 1,
+   "essence": 3.6,
+   "pools": {
+    "combat": 7,
+    "magic": 0,
+    "astral": 0,
+    "control": 0,
+    "hacking": 0
+   },
+   "armor": {
+    "ballistic": 0,
+    "impact": 0
+   },
+   "weapons": [
+    [
+     "Unarmed Strike",
+     "(Str+2)M"
+    ]
+   ],
+   "items": {
+    "cg00000000000001": {
+     "cost": 100000,
+     "essence": 1,
+     "surcharge": false,
+     "adjacent": false
+    },
+    "cg00000000000002": {
+     "cost": 100000,
+     "essence": 0.8,
+     "surcharge": false,
+     "adjacent": false
+    },
+    "cg00000000000003": {
+     "cost": 450000,
+     "essence": 0,
+     "surcharge": false,
+     "adjacent": false
+    },
+    "cg00000000000004": {
+     "cost": 180000,
+     "essence": 0,
+     "surcharge": false,
+     "adjacent": false
+    },
+    "cg00000000000005": {
+     "cost": 165000,
+     "essence": 0,
+     "surcharge": true,
+     "adjacent": false
+    },
+    "cg00000000000006": {
+     "cost": 20000,
+     "essence": 0.6,
+     "surcharge": false,
+     "adjacent": false
+    }
+   },
+   "limbs": {
+    "anyCyber": true,
+    "avgStrength": 5,
+    "avgQuickness": 6,
+    "pairBody": 3,
+    "caps": [],
+    "rejected": []
+   },
+   "source": {
+    "name": "Limbs a",
+    "type": "character",
+    "system": {
+     "race": "human",
+     "magic": {
+      "type": "none",
+      "tradition": "none",
+      "totem": ""
+     },
+     "body": {
+      "base": 5
+     },
+     "quickness": {
+      "base": 5
+     },
+     "strength": {
+      "base": 5
+     },
+     "charisma": {
+      "base": 3
+     },
+     "intelligence": {
+      "base": 5
+     },
+     "willpower": {
+      "base": 4
+     },
+     "lifestyle": "streets",
+     "chargen": {
+      "inProgress": false,
+      "priorityMethod": "standard",
+      "priorities": {
+       "race": "",
+       "magic": "",
+       "attributes": "",
+       "skills": "",
+       "resources": ""
+      }
+     }
+    },
+    "items": [
+     {
+      "_id": "cg00000000000001",
+      "name": "Cyberarm",
+      "type": "cyberware",
+      "img": "modules/sr2e-cybertechnology/assets/item_icons/cyberware/cyberarm.webp",
+      "system": {
+       "location": "cyberlimb",
+       "grade": "standard",
+       "essenceCost": 1,
+       "rating": 1,
+       "cost": 100000,
+       "availability": "4/4 days",
+       "streetIndex": "1",
+       "legality": "Legal",
+       "installed": true,
+       "attributeMods": {
+        "body": 0,
+        "quickness": 0,
+        "strength": 0,
+        "charisma": 0,
+        "intelligence": 0,
+        "willpower": 0,
+        "reaction": 0,
+        "initiativeDice": 0
+       },
+       "ratingStats": [],
+       "capacity": 0,
+       "modules": [],
+       "citation": {
+        "book": "ct",
+        "page": "30"
+       },
+       "side": "left"
+      },
+      "flags": {
+       "sr2e": {
+        "source": {
+         "book": "Cybertechnology",
+         "code": "FASA7119",
+         "page": 98
+        },
+        "rule": "limb:arm"
+       }
+      },
+      "effects": [],
+      "_stats": {
+       "compendiumSource": "Compendium.sr2e-cybertechnology.ct-cyberlimbs.Item.7e6d3687835bf26c"
+      }
+     },
+     {
+      "_id": "cg00000000000002",
+      "name": "Cyberarm",
+      "type": "cyberware",
+      "img": "modules/sr2e-cybertechnology/assets/item_icons/cyberware/cyberarm.webp",
+      "system": {
+       "location": "cyberlimb",
+       "grade": "alpha",
+       "essenceCost": 1,
+       "rating": 1,
+       "cost": 100000,
+       "availability": "4/4 days",
+       "streetIndex": "1",
+       "legality": "Legal",
+       "installed": true,
+       "attributeMods": {
+        "body": 0,
+        "quickness": 0,
+        "strength": 0,
+        "charisma": 0,
+        "intelligence": 0,
+        "willpower": 0,
+        "reaction": 0,
+        "initiativeDice": 0
+       },
+       "ratingStats": [],
+       "capacity": 0,
+       "modules": [],
+       "citation": {
+        "book": "ct",
+        "page": "30"
+       },
+       "side": "right"
+      },
+      "flags": {
+       "sr2e": {
+        "source": {
+         "book": "Cybertechnology",
+         "code": "FASA7119",
+         "page": 98
+        },
+        "rule": "limb:arm"
+       }
+      },
+      "effects": [],
+      "_stats": {
+       "compendiumSource": "Compendium.sr2e-cybertechnology.ct-cyberlimbs.Item.7e6d3687835bf26c"
+      }
+     },
+     {
+      "_id": "cg00000000000003",
+      "name": "Strength Enhancement +3",
+      "type": "cyberware",
+      "img": "modules/sr2e-cybertechnology/assets/item_icons/cyberware/strength-enhancement-3.webp",
+      "system": {
+       "location": "cyberlimb",
+       "grade": "standard",
+       "essenceCost": 0,
+       "rating": 3,
+       "cost": 450000,
+       "availability": "6/4 days",
+       "streetIndex": "1.5",
+       "legality": "6P-CB",
+       "installed": true,
+       "attributeMods": {
+        "body": 0,
+        "quickness": 0,
+        "strength": 0,
+        "charisma": 0,
+        "intelligence": 0,
+        "willpower": 0,
+        "reaction": 0,
+        "initiativeDice": 0
+       },
+       "ratingStats": [],
+       "capacity": 0,
+       "modules": [],
+       "limbOption": true,
+       "citation": {
+        "book": "ct",
+        "page": "31"
+       },
+       "linkedLimbId": "cg00000000000001",
+       "limbSurcharge": false,
+       "limbAdjacent": false
+      },
+      "flags": {
+       "sr2e": {
+        "source": {
+         "book": "Cybertechnology",
+         "code": "FASA7119",
+         "page": 98
+        },
+        "rule": "limb-enhancement:strength"
+       }
+      },
+      "effects": [],
+      "_stats": {
+       "compendiumSource": "Compendium.sr2e-cybertechnology.ct-cyberlimbs.Item.6043927234568dbc"
+      }
+     },
+     {
+      "_id": "cg00000000000004",
+      "name": "Quickness Enhancement +2",
+      "type": "cyberware",
+      "img": "modules/sr2e-cybertechnology/assets/item_icons/cyberware/quickness-enhancement-2.webp",
+      "system": {
+       "location": "cyberlimb",
+       "grade": "standard",
+       "essenceCost": 0,
+       "rating": 2,
+       "cost": 180000,
+       "availability": "8/4 days",
+       "streetIndex": "1.5",
+       "legality": "6P-CB",
+       "installed": true,
+       "attributeMods": {
+        "body": 0,
+        "quickness": 0,
+        "strength": 0,
+        "charisma": 0,
+        "intelligence": 0,
+        "willpower": 0,
+        "reaction": 0,
+        "initiativeDice": 0
+       },
+       "ratingStats": [],
+       "capacity": 0,
+       "modules": [],
+       "limbOption": true,
+       "citation": {
+        "book": "ct",
+        "page": "31"
+       },
+       "linkedLimbId": "cg00000000000002",
+       "limbSurcharge": false,
+       "limbAdjacent": false
+      },
+      "flags": {
+       "sr2e": {
+        "source": {
+         "book": "Cybertechnology",
+         "code": "FASA7119",
+         "page": 98
+        },
+        "rule": "limb-enhancement:quickness"
+       }
+      },
+      "effects": [],
+      "_stats": {
+       "compendiumSource": "Compendium.sr2e-cybertechnology.ct-cyberlimbs.Item.65e3a84524791217"
+      }
+     },
+     {
+      "_id": "cg00000000000005",
+      "name": "Body Enhancement +2",
+      "type": "cyberware",
+      "img": "modules/sr2e-cybertechnology/assets/item_icons/cyberware/body-enhancement-2.webp",
+      "system": {
+       "location": "cyberlimb",
+       "grade": "standard",
+       "essenceCost": 0,
+       "rating": 2,
+       "cost": 150000,
+       "availability": "6/4 days",
+       "streetIndex": "1.5",
+       "legality": "6P-CB",
+       "installed": true,
+       "attributeMods": {
+        "body": 0,
+        "quickness": 0,
+        "strength": 0,
+        "charisma": 0,
+        "intelligence": 0,
+        "willpower": 0,
+        "reaction": 0,
+        "initiativeDice": 0
+       },
+       "ratingStats": [],
+       "capacity": 0,
+       "modules": [],
+       "limbOption": true,
+       "citation": {
+        "book": "ct",
+        "page": "31"
+       },
+       "linkedLimbId": "cg00000000000001",
+       "limbSurcharge": true,
+       "limbAdjacent": false
+      },
+      "flags": {
+       "sr2e": {
+        "source": {
+         "book": "Cybertechnology",
+         "code": "FASA7119",
+         "page": 98
+        },
+        "rule": "limb-enhancement:body"
+       }
+      },
+      "effects": [],
+      "_stats": {
+       "compendiumSource": "Compendium.sr2e-cybertechnology.ct-cyberlimbs.Item.34d0a9296a8ae428"
+      }
+     },
+     {
+      "_id": "cg00000000000006",
+      "name": "Muscle Replacement (Rating 1)",
+      "type": "cyberware",
+      "img": "modules/sr2e-cybertechnology/assets/item_icons/cyberware/muscle-replacement-rating-1.webp",
+      "system": {
+       "location": "bodyware",
+       "grade": "standard",
+       "essenceCost": 1,
+       "rating": 1,
+       "cost": 20000,
+       "availability": "4/4 days",
+       "streetIndex": "1",
+       "legality": "5P-CB",
+       "installed": true,
+       "attributeMods": {
+        "body": 0,
+        "quickness": 1,
+        "strength": 1,
+        "charisma": 0,
+        "intelligence": 0,
+        "willpower": 0,
+        "reaction": 0,
+        "initiativeDice": 0
+       },
+       "ratingStats": [],
+       "capacity": 0,
+       "modules": [],
+       "noReactionBonus": true,
+       "citation": {
+        "book": "ct",
+        "page": "97"
+       }
+      },
+      "flags": {
+       "sr2e": {
+        "source": {
+         "book": "Cybertechnology",
+         "code": "FASA7119",
+         "page": 97
+        }
+       }
+      },
+      "effects": [],
+      "_stats": {
+       "compendiumSource": "Compendium.sr2e-cybertechnology.ct-bodyware.Item.eaf2a954ca2065bc"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "ruleset": "core",
+   "name": "Limbs b",
+   "attributes": {
+    "body": 14,
+    "quickness": 2,
+    "strength": 11,
+    "charisma": 1,
+    "intelligence": 1,
+    "willpower": 1
+   },
+   "reaction": 1,
+   "initiativeDice": 1,
+   "essence": 3.95,
+   "pools": {
+    "combat": 2,
+    "magic": 0,
+    "astral": 0,
+    "control": 0,
+    "hacking": 0
+   },
+   "armor": {
+    "ballistic": 0,
+    "impact": 0
+   },
+   "weapons": [
+    [
+     "Unarmed Strike",
+     "(Str+1)M"
+    ]
+   ],
+   "items": {
+    "cg00000000000001": {
+     "cost": 100000,
+     "essence": 1,
+     "surcharge": false,
+     "adjacent": false
+    },
+    "cg00000000000002": {
+     "cost": 300000,
+     "essence": 0.8,
+     "surcharge": false,
+     "adjacent": false
+    },
+    "cg00000000000003": {
+     "cost": 2500,
+     "essence": 0.25,
+     "surcharge": false,
+     "adjacent": false
+    }
+   },
+   "limbs": {
+    "anyCyber": true,
+    "avgStrength": 11,
+    "avgQuickness": 2,
+    "pairBody": 0,
+    "caps": [],
+    "rejected": []
+   },
+   "source": {
+    "name": "Limbs b",
+    "type": "character",
+    "system": {
+     "race": "troll",
+     "magic": {
+      "type": "none",
+      "tradition": "none",
+      "totem": ""
+     },
+     "body": {
+      "base": 9
+     },
+     "quickness": {
+      "base": 3
+     },
+     "strength": {
+      "base": 8
+     },
+     "charisma": {
+      "base": 1
+     },
+     "intelligence": {
+      "base": 2
+     },
+     "willpower": {
+      "base": 2
+     },
+     "lifestyle": "streets",
+     "chargen": {
+      "inProgress": false,
+      "priorityMethod": "standard",
+      "priorities": {
+       "race": "",
+       "magic": "",
+       "attributes": "",
+       "skills": "",
+       "resources": ""
+      }
+     }
+    },
+    "items": [
+     {
+      "_id": "cg00000000000001",
+      "name": "Cyberarm (Full)",
+      "type": "cyberware",
+      "img": "systems/sr2e/assets/item_icons/cyberware/cyberarm-full.webp",
+      "system": {
+       "location": "cyberlimb",
+       "grade": "standard",
+       "essenceCost": 1,
+       "rating": 0,
+       "cost": 100000,
+       "availability": "6/72hrs",
+       "legality": "Restricted",
+       "installed": true,
+       "attributeMods": {
+        "body": 0,
+        "quickness": 0,
+        "strength": 0,
+        "charisma": 0,
+        "intelligence": 0,
+        "willpower": 0,
+        "reaction": 0,
+        "initiativeDice": 0
+       },
+       "limbType": "arm",
+       "side": "left",
+       "citation": {
+        "book": "sr2",
+        "page": "249"
+       }
+      },
+      "flags": {},
+      "effects": [],
+      "_stats": {
+       "compendiumSource": "Compendium.sr2e.cyberware.Item.896ab7272e2fd9b0"
+      }
+     },
+     {
+      "_id": "cg00000000000002",
+      "name": "Increased Strength (Cyberlimb)",
+      "type": "cyberware",
+      "img": "systems/sr2e/assets/item_icons/cyberware/increased-strength-cyberlimb.webp",
+      "system": {
+       "location": "cyberlimb",
+       "grade": "standard",
+       "essenceCost": 0,
+       "rating": 2,
+       "cost": 0,
+       "availability": "6/4 days",
+       "streetIndex": "1.5",
+       "legality": "Legal",
+       "installed": true,
+       "limbOption": true,
+       "linkedLimbId": "cg00000000000001",
+       "costPerRating": 150000,
+       "costMultiplierOfBase": 0,
+       "isWeapon": false,
+       "weaponType": "melee",
+       "skill": "armed combat",
+       "damageCode": "",
+       "damageType": "physical",
+       "reach": 0,
+       "combatTnMod": 0,
+       "isVcr": false,
+       "isTacticalComputer": false,
+       "unarmedPowerBonus": 0,
+       "noReactionBonus": false,
+       "armorBallistic": 0,
+       "armorImpact": 0,
+       "cranialDeck": false,
+       "skillwirePlus": false,
+       "ratingStats": [],
+       "attributeMods": {
+        "body": 0,
+        "quickness": 0,
+        "strength": 0,
+        "charisma": 0,
+        "intelligence": 0,
+        "willpower": 0,
+        "reaction": 0,
+        "initiativeDice": 0
+       },
+       "capacity": 0,
+       "modules": [],
+       "limbOptionKind": "strength",
+       "citation": {
+        "book": "sr2",
+        "page": "261"
+       },
+       "limbSurcharge": false,
+       "limbAdjacent": false
+      },
+      "flags": {},
+      "effects": [],
+      "_stats": {
+       "compendiumSource": "Compendium.sr2e.cyberware.Item.34b1c0f27ae95d11"
+      }
+     },
+     {
+      "_id": "cg00000000000003",
+      "name": "Built-In Smartlink (Cyberlimb)",
+      "type": "cyberware",
+      "img": "systems/sr2e/assets/item_icons/cyberware/built-in-smartlink-cyberlimb.webp",
+      "system": {
+       "location": "cyberlimb",
+       "grade": "standard",
+       "essenceCost": 0.25,
+       "rating": 1,
+       "cost": 2500,
+       "availability": "6/4 days",
+       "streetIndex": "1.5",
+       "legality": "Legal",
+       "installed": true,
+       "limbOption": true,
+       "linkedLimbId": "cg00000000000001",
+       "costPerRating": 0,
+       "costMultiplierOfBase": 0,
+       "isWeapon": false,
+       "weaponType": "melee",
+       "skill": "armed combat",
+       "damageCode": "",
+       "damageType": "physical",
+       "reach": 0,
+       "combatTnMod": -2,
+       "isVcr": false,
+       "isTacticalComputer": false,
+       "unarmedPowerBonus": 0,
+       "noReactionBonus": false,
+       "armorBallistic": 0,
+       "armorImpact": 0,
+       "cranialDeck": false,
+       "skillwirePlus": false,
+       "ratingStats": [],
+       "attributeMods": {
+        "body": 0,
+        "quickness": 0,
+        "strength": 0,
+        "charisma": 0,
+        "intelligence": 0,
+        "willpower": 0,
+        "reaction": 0,
+        "initiativeDice": 0
+       },
+       "capacity": 0,
+       "modules": [],
+       "limbOptionKind": "smartlink",
+       "citation": {
+        "book": "sr2",
+        "page": "90"
+       },
+       "limbSurcharge": false,
+       "limbAdjacent": false
+      },
+      "flags": {},
+      "effects": [],
+      "_stats": {
+       "compendiumSource": "Compendium.sr2e.cyberware.Item.6d2e59a8c1f40b73"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "ruleset": "core",
+   "name": "Limbs c",
+   "attributes": {
+    "body": 6,
+    "quickness": 5,
+    "strength": 4,
+    "charisma": 3,
+    "intelligence": 5,
+    "willpower": 4
+   },
+   "reaction": 5,
+   "initiativeDice": 1,
+   "essence": 3.5,
+   "pools": {
+    "combat": 7,
+    "magic": 0,
+    "astral": 0,
+    "control": 0,
+    "hacking": 0
+   },
+   "armor": {
+    "ballistic": 0,
+    "impact": 0
+   },
+   "weapons": [
+    [
+     "Unarmed Strike",
+     "(Str+2)M"
+    ]
+   ],
+   "items": {
+    "cg00000000000001": {
+     "cost": 45000,
+     "essence": 0.35,
+     "surcharge": false,
+     "adjacent": false
+    },
+    "cg00000000000002": {
+     "cost": 70000,
+     "essence": 0.65,
+     "surcharge": false,
+     "adjacent": false
+    },
+    "cg00000000000003": {
+     "cost": 65000,
+     "essence": 0,
+     "surcharge": false,
+     "adjacent": false
+    },
+    "cg00000000000004": {
+     "cost": 120000,
+     "essence": 0,
+     "surcharge": false,
+     "adjacent": true
+    },
+    "cg00000000000005": {
+     "cost": 100000,
+     "essence": 1,
+     "surcharge": false,
+     "adjacent": false
+    },
+    "cg00000000000006": {
+     "cost": 7500,
+     "essence": 0.5,
+     "surcharge": false,
+     "adjacent": false
+    }
+   },
+   "limbs": {
+    "anyCyber": true,
+    "avgStrength": 4,
+    "avgQuickness": 5,
+    "pairBody": 0,
+    "caps": [],
+    "rejected": []
+   },
+   "source": {
+    "name": "Limbs c",
+    "type": "character",
+    "system": {
+     "race": "human",
+     "magic": {
+      "type": "none",
+      "tradition": "none",
+      "totem": ""
+     },
+     "body": {
+      "base": 5
+     },
+     "quickness": {
+      "base": 5
+     },
+     "strength": {
+      "base": 5
+     },
+     "charisma": {
+      "base": 3
+     },
+     "intelligence": {
+      "base": 5
+     },
+     "willpower": {
+      "base": 4
+     },
+     "lifestyle": "streets",
+     "chargen": {
+      "inProgress": false,
+      "priorityMethod": "standard",
+      "priorities": {
+       "race": "",
+       "magic": "",
+       "attributes": "",
+       "skills": "",
+       "resources": ""
+      }
+     }
+    },
+    "items": [
+     {
+      "_id": "cg00000000000001",
+      "name": "Cyberhand",
+      "type": "cyberware",
+      "img": "modules/sr2e-cybertechnology/assets/item_icons/cyberware/cyberhand.webp",
+      "system": {
+       "location": "cyberlimb",
+       "grade": "standard",
+       "essenceCost": 0.35,
+       "rating": 1,
+       "cost": 45000,
+       "availability": "3/4 days",
+       "streetIndex": "1",
+       "legality": "Legal",
+       "installed": true,
+       "attributeMods": {
+        "body": 0,
+        "quickness": 0,
+        "strength": 0,
+        "charisma": 0,
+        "intelligence": 0,
+        "willpower": 0,
+        "reaction": 0,
+        "initiativeDice": 0
+       },
+       "ratingStats": [],
+       "capacity": 0,
+       "modules": [],
+       "citation": {
+        "book": "ct",
+        "page": "30"
+       },
+       "side": "right"
+      },
+      "flags": {
+       "sr2e": {
+        "source": {
+         "book": "Cybertechnology",
+         "code": "FASA7119",
+         "page": 98
+        },
+        "rule": "limb:hand"
+       }
+      },
+      "effects": [],
+      "_stats": {
+       "compendiumSource": "Compendium.sr2e-cybertechnology.ct-cyberlimbs.Item.ba51d7fb0b2ad878"
+      }
+     },
+     {
+      "_id": "cg00000000000002",
+      "name": "Cyber Forearm",
+      "type": "cyberware",
+      "img": "modules/sr2e-cybertechnology/assets/item_icons/cyberware/cyber-forearm.webp",
+      "system": {
+       "location": "cyberlimb",
+       "grade": "standard",
+       "essenceCost": 0.65,
+       "rating": 1,
+       "cost": 70000,
+       "availability": "4/4 days",
+       "streetIndex": "1",
+       "legality": "Legal",
+       "installed": true,
+       "attributeMods": {
+        "body": 0,
+        "quickness": 0,
+        "strength": 0,
+        "charisma": 0,
+        "intelligence": 0,
+        "willpower": 0,
+        "reaction": 0,
+        "initiativeDice": 0
+       },
+       "ratingStats": [],
+       "capacity": 0,
+       "modules": [],
+       "citation": {
+        "book": "ct",
+        "page": "30"
+       },
+       "side": "right"
+      },
+      "flags": {
+       "sr2e": {
+        "source": {
+         "book": "Cybertechnology",
+         "code": "FASA7119",
+         "page": 98
+        },
+        "rule": "limb:forearm"
+       }
+      },
+      "effects": [],
+      "_stats": {
+       "compendiumSource": "Compendium.sr2e-cybertechnology.ct-cyberlimbs.Item.4cc6da3912ae12ea"
+      }
+     },
+     {
+      "_id": "cg00000000000003",
+      "name": "Strength Enhancement +1",
+      "type": "cyberware",
+      "img": "modules/sr2e-cybertechnology/assets/item_icons/cyberware/strength-enhancement-1.webp",
+      "system": {
+       "location": "cyberlimb",
+       "grade": "standard",
+       "essenceCost": 0,
+       "rating": 1,
+       "cost": 150000,
+       "availability": "6/4 days",
+       "streetIndex": "1.5",
+       "legality": "6P-CB",
+       "installed": true,
+       "attributeMods": {
+        "body": 0,
+        "quickness": 0,
+        "strength": 0,
+        "charisma": 0,
+        "intelligence": 0,
+        "willpower": 0,
+        "reaction": 0,
+        "initiativeDice": 0
+       },
+       "ratingStats": [],
+       "capacity": 0,
+       "modules": [],
+       "limbOption": true,
+       "citation": {
+        "book": "ct",
+        "page": "31"
+       },
+       "linkedLimbId": "cg00000000000001",
+       "limbSurcharge": false,
+       "limbAdjacent": false
+      },
+      "flags": {
+       "sr2e": {
+        "source": {
+         "book": "Cybertechnology",
+         "code": "FASA7119",
+         "page": 98
+        },
+        "rule": "limb-enhancement:strength"
+       }
+      },
+      "effects": [],
+      "_stats": {
+       "compendiumSource": "Compendium.sr2e-cybertechnology.ct-cyberlimbs.Item.40cb0b8f892c2dc0"
+      }
+     },
+     {
+      "_id": "cg00000000000004",
+      "name": "Strength Enhancement +2",
+      "type": "cyberware",
+      "img": "modules/sr2e-cybertechnology/assets/item_icons/cyberware/strength-enhancement-2.webp",
+      "system": {
+       "location": "cyberlimb",
+       "grade": "standard",
+       "essenceCost": 0,
+       "rating": 2,
+       "cost": 300000,
+       "availability": "6/4 days",
+       "streetIndex": "1.5",
+       "legality": "6P-CB",
+       "installed": true,
+       "attributeMods": {
+        "body": 0,
+        "quickness": 0,
+        "strength": 0,
+        "charisma": 0,
+        "intelligence": 0,
+        "willpower": 0,
+        "reaction": 0,
+        "initiativeDice": 0
+       },
+       "ratingStats": [],
+       "capacity": 0,
+       "modules": [],
+       "limbOption": true,
+       "citation": {
+        "book": "ct",
+        "page": "31"
+       },
+       "linkedLimbId": "cg00000000000002",
+       "limbSurcharge": false,
+       "limbAdjacent": true
+      },
+      "flags": {
+       "sr2e": {
+        "source": {
+         "book": "Cybertechnology",
+         "code": "FASA7119",
+         "page": 98
+        },
+        "rule": "limb-enhancement:strength"
+       }
+      },
+      "effects": [],
+      "_stats": {
+       "compendiumSource": "Compendium.sr2e-cybertechnology.ct-cyberlimbs.Item.c94c76cc4d394d2a"
+      }
+     },
+     {
+      "_id": "cg00000000000005",
+      "name": "Cyberleg",
+      "type": "cyberware",
+      "img": "modules/sr2e-cybertechnology/assets/item_icons/cyberware/cyberleg.webp",
+      "system": {
+       "location": "cyberlimb",
+       "grade": "standard",
+       "essenceCost": 1,
+       "rating": 1,
+       "cost": 100000,
+       "availability": "4/4 days",
+       "streetIndex": "1",
+       "legality": "Legal",
+       "installed": true,
+       "attributeMods": {
+        "body": 0,
+        "quickness": 0,
+        "strength": 0,
+        "charisma": 0,
+        "intelligence": 0,
+        "willpower": 0,
+        "reaction": 0,
+        "initiativeDice": 0
+       },
+       "ratingStats": [],
+       "capacity": 0,
+       "modules": [],
+       "citation": {
+        "book": "ct",
+        "page": "30"
+       },
+       "side": "left"
+      },
+      "flags": {
+       "sr2e": {
+        "source": {
+         "book": "Cybertechnology",
+         "code": "FASA7119",
+         "page": 98
+        },
+        "rule": "limb:leg"
+       }
+      },
+      "effects": [],
+      "_stats": {
+       "compendiumSource": "Compendium.sr2e-cybertechnology.ct-cyberlimbs.Item.66dfefbc29609f2c"
+      }
+     },
+     {
+      "_id": "cg00000000000006",
+      "name": "Bone Lacing (Plastic)",
+      "type": "cyberware",
+      "img": "modules/sr2e-cybertechnology/assets/item_icons/cyberware/bone-lacing-plastic.webp",
+      "system": {
+       "location": "bodyware",
+       "grade": "standard",
+       "essenceCost": 0.5,
+       "rating": 1,
+       "cost": 7500,
+       "availability": "5/14 days",
+       "streetIndex": "1.5",
+       "legality": "6P-CA",
+       "installed": true,
+       "attributeMods": {
+        "body": 1,
+        "quickness": 0,
+        "strength": 0,
+        "charisma": 0,
+        "intelligence": 0,
+        "willpower": 0,
+        "reaction": 0,
+        "initiativeDice": 0
+       },
+       "ratingStats": [],
+       "capacity": 0,
+       "modules": [],
+       "unarmedPowerBonus": 1,
+       "citation": {
+        "book": "ct",
+        "page": "96"
+       }
+      },
+      "flags": {
+       "sr2e": {
+        "source": {
+         "book": "Cybertechnology",
+         "code": "FASA7119",
+         "page": 96
+        }
+       }
+      },
+      "effects": [],
+      "_stats": {
+       "compendiumSource": "Compendium.sr2e-cybertechnology.ct-bodyware.Item.37c5825987f7e3be"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "ruleset": "core",
+   "name": "Limbs d",
+   "attributes": {
+    "body": 9,
+    "quickness": 5,
+    "strength": 4,
+    "charisma": 3,
+    "intelligence": 5,
+    "willpower": 4
+   },
+   "reaction": 5,
+   "initiativeDice": 1,
+   "essence": 1.75,
+   "pools": {
+    "combat": 7,
+    "magic": 0,
+    "astral": 0,
+    "control": 0,
+    "hacking": 0
+   },
+   "armor": {
+    "ballistic": 0,
+    "impact": 0
+   },
+   "weapons": [
+    [
+     "Unarmed Strike",
+     "(Str+2)M"
+    ]
+   ],
+   "items": {
+    "cg00000000000001": {
+     "cost": 120000,
+     "essence": 1.5,
+     "surcharge": false,
+     "adjacent": false
+    },
+    "cg00000000000002": {
+     "cost": 75000,
+     "essence": 0.75,
+     "surcharge": false,
+     "adjacent": false
+    },
+    "cg00000000000003": {
+     "cost": 100000,
+     "essence": 1,
+     "surcharge": false,
+     "adjacent": false
+    },
+    "cg00000000000004": {
+     "cost": 100000,
+     "essence": 1,
+     "surcharge": false,
+     "adjacent": false
+    },
+    "cg00000000000005": {
+     "cost": 75000,
+     "essence": 0,
+     "surcharge": false,
+     "adjacent": false
+    },
+    "cg00000000000006": {
+     "cost": 330000,
+     "essence": 0,
+     "surcharge": true,
+     "adjacent": false
+    },
+    "cg00000000000007": {
+     "cost": 99000,
+     "essence": 0,
+     "surcharge": true,
+     "adjacent": false
+    }
+   },
+   "limbs": {
+    "anyCyber": true,
+    "avgStrength": 4,
+    "avgQuickness": 5,
+    "pairBody": 2,
+    "caps": [],
+    "rejected": []
+   },
+   "source": {
+    "name": "Limbs d",
+    "type": "character",
+    "system": {
+     "race": "human",
+     "magic": {
+      "type": "none",
+      "tradition": "none",
+      "totem": ""
+     },
+     "body": {
+      "base": 5
+     },
+     "quickness": {
+      "base": 5
+     },
+     "strength": {
+      "base": 5
+     },
+     "charisma": {
+      "base": 3
+     },
+     "intelligence": {
+      "base": 5
+     },
+     "willpower": {
+      "base": 4
+     },
+     "lifestyle": "streets",
+     "chargen": {
+      "inProgress": false,
+      "priorityMethod": "standard",
+      "priorities": {
+       "race": "",
+       "magic": "",
+       "attributes": "",
+       "skills": "",
+       "resources": ""
+      }
+     }
+    },
+    "items": [
+     {
+      "_id": "cg00000000000001",
+      "name": "Cybertorso",
+      "type": "cyberware",
+      "img": "modules/sr2e-cybertechnology/assets/item_icons/cyberware/cybertorso.webp",
+      "system": {
+       "location": "cyberlimb",
+       "grade": "standard",
+       "essenceCost": 1.5,
+       "rating": 1,
+       "cost": 120000,
+       "availability": "6/4 days",
+       "streetIndex": "1",
+       "legality": "Legal",
+       "installed": true,
+       "attributeMods": {
+        "body": 1,
+        "quickness": 0,
+        "strength": 0,
+        "charisma": 0,
+        "intelligence": 0,
+        "willpower": 0,
+        "reaction": 0,
+        "initiativeDice": 0
+       },
+       "ratingStats": [],
+       "capacity": 0,
+       "modules": [],
+       "citation": {
+        "book": "ct",
+        "page": "37"
+       }
+      },
+      "flags": {
+       "sr2e": {
+        "source": {
+         "book": "Cybertechnology",
+         "code": "FASA7119",
+         "page": 96
+        },
+        "rule": "limb:torso"
+       }
+      },
+      "effects": [],
+      "_stats": {
+       "compendiumSource": "Compendium.sr2e-cybertechnology.ct-cyberlimbs.Item.ba5528e8d8b2e619"
+      }
+     },
+     {
+      "_id": "cg00000000000002",
+      "name": "Cyberskull",
+      "type": "cyberware",
+      "img": "modules/sr2e-cybertechnology/assets/item_icons/cyberware/cyberskull.webp",
+      "system": {
+       "location": "cyberlimb",
+       "grade": "standard",
+       "essenceCost": 0.75,
+       "rating": 1,
+       "cost": 75000,
+       "availability": "6/4 days",
+       "streetIndex": "1",
+       "legality": "Legal",
+       "installed": true,
+       "attributeMods": {
+        "body": 1,
+        "quickness": 0,
+        "strength": 0,
+        "charisma": 0,
+        "intelligence": 0,
+        "willpower": 0,
+        "reaction": 0,
+        "initiativeDice": 0
+       },
+       "ratingStats": [],
+       "capacity": 0,
+       "modules": [],
+       "citation": {
+        "book": "ct",
+        "page": "37"
+       }
+      },
+      "flags": {
+       "sr2e": {
+        "source": {
+         "book": "Cybertechnology",
+         "code": "FASA7119",
+         "page": 96
+        },
+        "rule": "limb:skull"
+       }
+      },
+      "effects": [],
+      "_stats": {
+       "compendiumSource": "Compendium.sr2e-cybertechnology.ct-cyberlimbs.Item.fc46573b14543686"
+      }
+     },
+     {
+      "_id": "cg00000000000003",
+      "name": "Cyberleg",
+      "type": "cyberware",
+      "img": "modules/sr2e-cybertechnology/assets/item_icons/cyberware/cyberleg.webp",
+      "system": {
+       "location": "cyberlimb",
+       "grade": "standard",
+       "essenceCost": 1,
+       "rating": 1,
+       "cost": 100000,
+       "availability": "4/4 days",
+       "streetIndex": "1",
+       "legality": "Legal",
+       "installed": true,
+       "attributeMods": {
+        "body": 0,
+        "quickness": 0,
+        "strength": 0,
+        "charisma": 0,
+        "intelligence": 0,
+        "willpower": 0,
+        "reaction": 0,
+        "initiativeDice": 0
+       },
+       "ratingStats": [],
+       "capacity": 0,
+       "modules": [],
+       "citation": {
+        "book": "ct",
+        "page": "30"
+       },
+       "side": "left"
+      },
+      "flags": {
+       "sr2e": {
+        "source": {
+         "book": "Cybertechnology",
+         "code": "FASA7119",
+         "page": 98
+        },
+        "rule": "limb:leg"
+       }
+      },
+      "effects": [],
+      "_stats": {
+       "compendiumSource": "Compendium.sr2e-cybertechnology.ct-cyberlimbs.Item.66dfefbc29609f2c"
+      }
+     },
+     {
+      "_id": "cg00000000000004",
+      "name": "Cyberleg",
+      "type": "cyberware",
+      "img": "modules/sr2e-cybertechnology/assets/item_icons/cyberware/cyberleg.webp",
+      "system": {
+       "location": "cyberlimb",
+       "grade": "standard",
+       "essenceCost": 1,
+       "rating": 1,
+       "cost": 100000,
+       "availability": "4/4 days",
+       "streetIndex": "1",
+       "legality": "Legal",
+       "installed": true,
+       "attributeMods": {
+        "body": 0,
+        "quickness": 0,
+        "strength": 0,
+        "charisma": 0,
+        "intelligence": 0,
+        "willpower": 0,
+        "reaction": 0,
+        "initiativeDice": 0
+       },
+       "ratingStats": [],
+       "capacity": 0,
+       "modules": [],
+       "citation": {
+        "book": "ct",
+        "page": "30"
+       },
+       "side": "right"
+      },
+      "flags": {
+       "sr2e": {
+        "source": {
+         "book": "Cybertechnology",
+         "code": "FASA7119",
+         "page": 98
+        },
+        "rule": "limb:leg"
+       }
+      },
+      "effects": [],
+      "_stats": {
+       "compendiumSource": "Compendium.sr2e-cybertechnology.ct-cyberlimbs.Item.66dfefbc29609f2c"
+      }
+     },
+     {
+      "_id": "cg00000000000005",
+      "name": "Body Enhancement +1",
+      "type": "cyberware",
+      "img": "modules/sr2e-cybertechnology/assets/item_icons/cyberware/body-enhancement-1.webp",
+      "system": {
+       "location": "cyberlimb",
+       "grade": "standard",
+       "essenceCost": 0,
+       "rating": 1,
+       "cost": 75000,
+       "availability": "6/4 days",
+       "streetIndex": "1.5",
+       "legality": "6P-CB",
+       "installed": true,
+       "attributeMods": {
+        "body": 0,
+        "quickness": 0,
+        "strength": 0,
+        "charisma": 0,
+        "intelligence": 0,
+        "willpower": 0,
+        "reaction": 0,
+        "initiativeDice": 0
+       },
+       "ratingStats": [],
+       "capacity": 0,
+       "modules": [],
+       "limbOption": true,
+       "citation": {
+        "book": "ct",
+        "page": "31"
+       },
+       "linkedLimbId": "cg00000000000003",
+       "limbSurcharge": false,
+       "limbAdjacent": false
+      },
+      "flags": {
+       "sr2e": {
+        "source": {
+         "book": "Cybertechnology",
+         "code": "FASA7119",
+         "page": 98
+        },
+        "rule": "limb-enhancement:body"
+       }
+      },
+      "effects": [],
+      "_stats": {
+       "compendiumSource": "Compendium.sr2e-cybertechnology.ct-cyberlimbs.Item.f299379c011c1283"
+      }
+     },
+     {
+      "_id": "cg00000000000006",
+      "name": "Strength Enhancement +2",
+      "type": "cyberware",
+      "img": "modules/sr2e-cybertechnology/assets/item_icons/cyberware/strength-enhancement-2.webp",
+      "system": {
+       "location": "cyberlimb",
+       "grade": "standard",
+       "essenceCost": 0,
+       "rating": 2,
+       "cost": 300000,
+       "availability": "6/4 days",
+       "streetIndex": "1.5",
+       "legality": "6P-CB",
+       "installed": true,
+       "attributeMods": {
+        "body": 0,
+        "quickness": 0,
+        "strength": 0,
+        "charisma": 0,
+        "intelligence": 0,
+        "willpower": 0,
+        "reaction": 0,
+        "initiativeDice": 0
+       },
+       "ratingStats": [],
+       "capacity": 0,
+       "modules": [],
+       "limbOption": true,
+       "citation": {
+        "book": "ct",
+        "page": "31"
+       },
+       "linkedLimbId": "cg00000000000003",
+       "limbSurcharge": true,
+       "limbAdjacent": false
+      },
+      "flags": {
+       "sr2e": {
+        "source": {
+         "book": "Cybertechnology",
+         "code": "FASA7119",
+         "page": 98
+        },
+        "rule": "limb-enhancement:strength"
+       }
+      },
+      "effects": [],
+      "_stats": {
+       "compendiumSource": "Compendium.sr2e-cybertechnology.ct-cyberlimbs.Item.c94c76cc4d394d2a"
+      }
+     },
+     {
+      "_id": "cg00000000000007",
+      "name": "Quickness Enhancement +1",
+      "type": "cyberware",
+      "img": "modules/sr2e-cybertechnology/assets/item_icons/cyberware/quickness-enhancement-1.webp",
+      "system": {
+       "location": "cyberlimb",
+       "grade": "standard",
+       "essenceCost": 0,
+       "rating": 1,
+       "cost": 90000,
+       "availability": "8/4 days",
+       "streetIndex": "1.5",
+       "legality": "6P-CB",
+       "installed": true,
+       "attributeMods": {
+        "body": 0,
+        "quickness": 0,
+        "strength": 0,
+        "charisma": 0,
+        "intelligence": 0,
+        "willpower": 0,
+        "reaction": 0,
+        "initiativeDice": 0
+       },
+       "ratingStats": [],
+       "capacity": 0,
+       "modules": [],
+       "limbOption": true,
+       "citation": {
+        "book": "ct",
+        "page": "31"
+       },
+       "linkedLimbId": "cg00000000000003",
+       "limbSurcharge": true,
+       "limbAdjacent": false
+      },
+      "flags": {
+       "sr2e": {
+        "source": {
+         "book": "Cybertechnology",
+         "code": "FASA7119",
+         "page": 98
+        },
+        "rule": "limb-enhancement:quickness"
+       }
+      },
+      "effects": [],
+      "_stats": {
+       "compendiumSource": "Compendium.sr2e-cybertechnology.ct-cyberlimbs.Item.aafd532fe64c1b89"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "ruleset": "rigger2",
+   "name": "Limbs e",
+   "attributes": {
+    "body": 6,
+    "quickness": 6,
+    "strength": 4,
+    "charisma": 3,
+    "intelligence": 5,
+    "willpower": 4
+   },
+   "reaction": 5,
+   "initiativeDice": 1,
+   "essence": 2,
+   "pools": {
+    "combat": 7,
+    "magic": 0,
+    "astral": 0,
+    "control": 7,
+    "hacking": 0
+   },
+   "armor": {
+    "ballistic": 0,
+    "impact": 0
+   },
+   "weapons": [
+    [
+     "Unarmed Strike",
+     "(Str+2)M"
+    ]
+   ],
+   "items": {
+    "cg00000000000001": {
+     "cost": 12000,
+     "essence": 2,
+     "surcharge": false,
+     "adjacent": false
+    },
+    "cg00000000000002": {
+     "cost": 100000,
+     "essence": 1,
+     "surcharge": false,
+     "adjacent": false
+    },
+    "cg00000000000003": {
+     "cost": 100000,
+     "essence": 1,
+     "surcharge": false,
+     "adjacent": false
+    },
+    "cg00000000000004": {
+     "cost": 180000,
+     "essence": 0,
+     "surcharge": false,
+     "adjacent": false
+    },
+    "cg00000000000005": {
+     "cost": 180000,
+     "essence": 0,
+     "surcharge": false,
+     "adjacent": false
+    }
+   },
+   "limbs": {
+    "anyCyber": true,
+    "avgStrength": 4,
+    "avgQuickness": 6,
+    "pairBody": 1,
+    "caps": [],
+    "rejected": []
+   },
+   "source": {
+    "name": "Limbs e",
+    "type": "character",
+    "system": {
+     "race": "human",
+     "magic": {
+      "type": "none",
+      "tradition": "none",
+      "totem": ""
+     },
+     "body": {
+      "base": 5
+     },
+     "quickness": {
+      "base": 5
+     },
+     "strength": {
+      "base": 5
+     },
+     "charisma": {
+      "base": 3
+     },
+     "intelligence": {
+      "base": 5
+     },
+     "willpower": {
+      "base": 4
+     },
+     "lifestyle": "streets",
+     "chargen": {
+      "inProgress": false,
+      "priorityMethod": "standard",
+      "priorities": {
+       "race": "",
+       "magic": "",
+       "attributes": "",
+       "skills": "",
+       "resources": ""
+      }
+     }
+    },
+    "items": [
+     {
+      "_id": "cg00000000000001",
+      "name": "Vehicle Control Rig",
+      "type": "cyberware",
+      "img": "systems/sr2e/assets/item_icons/cyberware/vehicle-control-rig.webp",
+      "system": {
+       "location": "bodyware",
+       "grade": "standard",
+       "essenceCost": 2,
+       "rating": 1,
+       "cost": 12000,
+       "availability": "6/48 hrs",
+       "legality": "Restricted",
+       "installed": true,
+       "attributeMods": {
+        "body": 0,
+        "quickness": 0,
+        "strength": 0,
+        "charisma": 0,
+        "intelligence": 0,
+        "willpower": 0,
+        "reaction": 0,
+        "initiativeDice": 0
+       },
+       "ratingStats": [
+        {
+         "rating": 1,
+         "essenceCost": 2,
+         "cost": 12000,
+         "availability": "6/48 hrs",
+         "streetIndex": ""
+        },
+        {
+         "rating": 2,
+         "essenceCost": 3,
+         "cost": 60000,
+         "availability": "8/48 hrs",
+         "streetIndex": ""
+        },
+        {
+         "rating": 3,
+         "essenceCost": 5,
+         "cost": 300000,
+         "availability": "8/48 hrs",
+         "streetIndex": ""
+        }
+       ],
+       "isVcr": true,
+       "citation": {
+        "book": "sr2",
+        "page": "261"
+       }
+      },
+      "flags": {},
+      "effects": [],
+      "_stats": {
+       "compendiumSource": "Compendium.sr2e.cyberware.Item.1c6jtaztn4kz6186"
+      }
+     },
+     {
+      "_id": "cg00000000000002",
+      "name": "Cyberarm",
+      "type": "cyberware",
+      "img": "modules/sr2e-cybertechnology/assets/item_icons/cyberware/cyberarm.webp",
+      "system": {
+       "location": "cyberlimb",
+       "grade": "standard",
+       "essenceCost": 1,
+       "rating": 1,
+       "cost": 100000,
+       "availability": "4/4 days",
+       "streetIndex": "1",
+       "legality": "Legal",
+       "installed": true,
+       "attributeMods": {
+        "body": 0,
+        "quickness": 0,
+        "strength": 0,
+        "charisma": 0,
+        "intelligence": 0,
+        "willpower": 0,
+        "reaction": 0,
+        "initiativeDice": 0
+       },
+       "ratingStats": [],
+       "capacity": 0,
+       "modules": [],
+       "citation": {
+        "book": "ct",
+        "page": "30"
+       },
+       "side": "left"
+      },
+      "flags": {
+       "sr2e": {
+        "source": {
+         "book": "Cybertechnology",
+         "code": "FASA7119",
+         "page": 98
+        },
+        "rule": "limb:arm"
+       }
+      },
+      "effects": [],
+      "_stats": {
+       "compendiumSource": "Compendium.sr2e-cybertechnology.ct-cyberlimbs.Item.7e6d3687835bf26c"
+      }
+     },
+     {
+      "_id": "cg00000000000003",
+      "name": "Cyberarm",
+      "type": "cyberware",
+      "img": "modules/sr2e-cybertechnology/assets/item_icons/cyberware/cyberarm.webp",
+      "system": {
+       "location": "cyberlimb",
+       "grade": "standard",
+       "essenceCost": 1,
+       "rating": 1,
+       "cost": 100000,
+       "availability": "4/4 days",
+       "streetIndex": "1",
+       "legality": "Legal",
+       "installed": true,
+       "attributeMods": {
+        "body": 0,
+        "quickness": 0,
+        "strength": 0,
+        "charisma": 0,
+        "intelligence": 0,
+        "willpower": 0,
+        "reaction": 0,
+        "initiativeDice": 0
+       },
+       "ratingStats": [],
+       "capacity": 0,
+       "modules": [],
+       "citation": {
+        "book": "ct",
+        "page": "30"
+       },
+       "side": "right"
+      },
+      "flags": {
+       "sr2e": {
+        "source": {
+         "book": "Cybertechnology",
+         "code": "FASA7119",
+         "page": 98
+        },
+        "rule": "limb:arm"
+       }
+      },
+      "effects": [],
+      "_stats": {
+       "compendiumSource": "Compendium.sr2e-cybertechnology.ct-cyberlimbs.Item.7e6d3687835bf26c"
+      }
+     },
+     {
+      "_id": "cg00000000000004",
+      "name": "Quickness Enhancement +2",
+      "type": "cyberware",
+      "img": "modules/sr2e-cybertechnology/assets/item_icons/cyberware/quickness-enhancement-2.webp",
+      "system": {
+       "location": "cyberlimb",
+       "grade": "standard",
+       "essenceCost": 0,
+       "rating": 2,
+       "cost": 180000,
+       "availability": "8/4 days",
+       "streetIndex": "1.5",
+       "legality": "6P-CB",
+       "installed": true,
+       "attributeMods": {
+        "body": 0,
+        "quickness": 0,
+        "strength": 0,
+        "charisma": 0,
+        "intelligence": 0,
+        "willpower": 0,
+        "reaction": 0,
+        "initiativeDice": 0
+       },
+       "ratingStats": [],
+       "capacity": 0,
+       "modules": [],
+       "limbOption": true,
+       "citation": {
+        "book": "ct",
+        "page": "31"
+       },
+       "linkedLimbId": "cg00000000000002",
+       "limbSurcharge": false,
+       "limbAdjacent": false
+      },
+      "flags": {
+       "sr2e": {
+        "source": {
+         "book": "Cybertechnology",
+         "code": "FASA7119",
+         "page": 98
+        },
+        "rule": "limb-enhancement:quickness"
+       }
+      },
+      "effects": [],
+      "_stats": {
+       "compendiumSource": "Compendium.sr2e-cybertechnology.ct-cyberlimbs.Item.65e3a84524791217"
+      }
+     },
+     {
+      "_id": "cg00000000000005",
+      "name": "Quickness Enhancement +2",
+      "type": "cyberware",
+      "img": "modules/sr2e-cybertechnology/assets/item_icons/cyberware/quickness-enhancement-2.webp",
+      "system": {
+       "location": "cyberlimb",
+       "grade": "standard",
+       "essenceCost": 0,
+       "rating": 2,
+       "cost": 180000,
+       "availability": "8/4 days",
+       "streetIndex": "1.5",
+       "legality": "6P-CB",
+       "installed": true,
+       "attributeMods": {
+        "body": 0,
+        "quickness": 0,
+        "strength": 0,
+        "charisma": 0,
+        "intelligence": 0,
+        "willpower": 0,
+        "reaction": 0,
+        "initiativeDice": 0
+       },
+       "ratingStats": [],
+       "capacity": 0,
+       "modules": [],
+       "limbOption": true,
+       "citation": {
+        "book": "ct",
+        "page": "31"
+       },
+       "linkedLimbId": "cg00000000000003",
+       "limbSurcharge": false,
+       "limbAdjacent": false
+      },
+      "flags": {
+       "sr2e": {
+        "source": {
+         "book": "Cybertechnology",
+         "code": "FASA7119",
+         "page": 98
+        },
+        "rule": "limb-enhancement:quickness"
+       }
+      },
+      "effects": [],
+      "_stats": {
+       "compendiumSource": "Compendium.sr2e-cybertechnology.ct-cyberlimbs.Item.65e3a84524791217"
+      }
+     }
+    ]
+   }
+  }
+ ]
+}

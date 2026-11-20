@@ -8,8 +8,9 @@
  * A character is the Foundry system's own `character` source shapes (`actor`), so the system's functions read it
  * unchanged; the app's own record sits beside it (`creation`).
  */
-import { TABLES, BP_NUYEN_TIERS, SHAPESHIFTER_PRIORITIES, humanFormMod, shapeshifterOf, qualityAudit, qualityEffects, bonusAttributeCost, attributeEdgeViolations, qualityRule, bodyIndexTotal, overstressPenalty, wareRule, racialProfile, metavariantFrom, isMetavariantItem, ONI_SOURCE, chargenBudget, damageUpdateFor, surgeryCategory, surgeryEssencePct, surgeonTN, karmaTransition, advancementOptions, saleQuoteOf, streetPrice, ratedStreetIndex, startingMoney, startingKarmaPool, adeptPowerBudget, label, skillTiersFromAllocation, validateSkillAllocation } from "./rules.mjs";
-import { defaultChoices, checkChoices, offerReason, RATING_UP_TO_BODY, project, price, eyeRow, essenceOf, isCybereye, powerKeyOf, sensesOf } from "./purchase.mjs";
+import { TABLES, BP_NUYEN_TIERS, SHAPESHIFTER_PRIORITIES, humanFormMod, shapeshifterOf, qualityAudit, qualityEffects, bonusAttributeCost, attributeEdgeViolations, qualityRule, bodyIndexTotal, overstressPenalty, wareRule, placementFacts, racialProfile, metavariantFrom, isMetavariantItem, ONI_SOURCE, chargenBudget, damageUpdateFor, surgeryCategory, surgeryEssencePct, surgeonTN, karmaTransition, advancementOptions, saleQuoteOf, streetPrice, ratedStreetIndex, startingMoney, startingKarmaPool, adeptPowerBudget, label, skillTiersFromAllocation, validateSkillAllocation } from "./rules.mjs";
+import { defaultChoices, checkChoices, offerReason, RATING_UP_TO_BODY, project, price, eyeRow, essenceOf, isCybereye, powerKeyOf, sensesOf, limbTypeOf, optionKindOf, pricedItems, limbModelOf } from "./purchase.mjs";
+import { derive } from "./derive.mjs";
 
 export const SCHEMA = "sr2e-chargen-character", SCHEMA_VERSION = 1;
 export const CATEGORIES = ["race", "magic", "attributes", "skills", "resources"];
@@ -284,6 +285,15 @@ export function applyOp(body, op, lookup = () => null, { roll = null, now = 0, s
         const eye = Object.keys(b.creation.items).find(k => k === into);
         if (!eye || !isCybereye(b.creation.items[eye])) throw new Refusal("Place it in a cybereye of this character.");
       }
+      const limb = checked.choices.limb;   // a cyberlimb option goes into a cyberlimb of THIS character (PLAN-M5j)
+      if (limb !== undefined && limb !== (rec.choices.limb ?? "")) {
+        if (limb && !(Object.hasOwn(b.creation.items, limb) && b.creation.items[limb].type === "cyberware" && limbTypeOf(b.creation.items[limb])))
+          throw new Refusal("Build it into one of this character's cyberlimbs (Cybertechnology p.31).");
+        // Recorded when it is attached, against the cyberware then held (Foundry's placement hook; Draft 2, r1 #3).
+        const sib = b.actor.items.filter(i => i.type === "cyberware" && i._id !== id).map(i => ({ id: i._id, kind: i.system.limbOption ? optionKindOf(i) : null,
+          linkedLimbId: i.system.linkedLimbId ?? "", limbType: limbTypeOf(i), side: i.system.side }));
+        rec.placement = limb ? placementFacts(optionKindOf(rec), limb, sib) : { limbSurcharge: false, limbAdjacent: false };
+      }
       const spell = checked.choices.spell;   // a specific spell focus bonds to a spell of THIS character (r1 #5)
       if (spell && !Object.keys(b.creation.items).some(k => k === spell && b.creation.items[k].type === "spell")) throw new Refusal("Bond it to one of this character's spells.", 137);
       const weapon = checked.choices.weapon;   // a weapon focus is one melee weapon of THIS character, one focus each (p.147)
@@ -394,10 +404,11 @@ const shortText = (v, what) => {
 function validateInPlay(body, add, problems) {
   const sys = body.actor.system, items = body.actor.items, mtype = sys.magic.type;
   // Only INSTALLED cyberware takes Essence: a spare bought in play waits for surgery (PLAN-M4b Draft 3, r2 #2).
-  const essence = Math.round((6 - items.filter(i => i.type === "cyberware" && i.system.installed !== false).reduce((t, i) => t + essenceOf(i, items), 0) - (mtype !== "none" ? bodyIndexOf(items) : 0)) * 1000) / 1000;
+  const essence = Math.round((6 - items.filter(i => i.type === "cyberware" && i.system.installed !== false).reduce((t, i) => t + essenceOf(i, items, sys.race), 0) - (mtype !== "none" ? bodyIndexOf(items) : 0)) * 1000) / 1000;
   const magic = mtype === "none" ? 0 : Math.max(0, Math.min(6, Math.floor(essence + 1e-9)));
   if (essence < 0) add("resources", "error", `Essence is ${essence}.`, 46);
   wareWarnings(items, add);
+  limbChecks(body.actor, add, false);
   // Overstress stays a warning in play too (Shadowtech p.6; code review M5e r1 #2).
   const bodyMax = withRacial(sys, "body", items) + formMod(sys, "body"), over = overstressPenalty(bodyIndexOf(items), bodyMax);
   if (over) add("resources", "warning", `Body Index ${Math.round(bodyIndexOf(items) * 1000) / 1000} is over the Body of ${bodyMax}: overstress, +${over} to Body tests.`, 6, "st");
@@ -515,6 +526,7 @@ function moneyOp(b, op, lookup, now, saleMode) {
     if (why) throw new Refusal(why);
     const rec = recordOf(e), checked = checkChoices(rec, { ...defaultChoices(rec, { inPlay: true }), ...(op.choices ?? {}) }, { inPlay: true });
     if (checked.reason) throw new Refusal(checked.reason);
+    if (checked.choices.side === "") throw new Refusal(`${rec.name}: choose its side, left or right (Cybertechnology p.30).`);   // M5j r1 #2
     const price = money(op.price, 0, MAX_MONEY, "A price");
     if (price > have) throw new Refusal(`${yen(price)} needed, ${yen(have)} to spend.`);
     const projected = project(rec, checked.choices, b.creation.items), s = projected.system;
@@ -534,7 +546,8 @@ function moneyOp(b, op, lookup, now, saleMode) {
   if (item.type === "cyberware" && item.system.installed !== false) throw new Refusal("Installed cyberware comes out by surgery, not a sale.", 114);
   if (op.shownMode !== saleMode) throw new Refusal("The GM changed how selling works: look at the price again.");
   if (saleMode === "fence" && op.pct == null) throw new Refusal("A fence sale needs the agreed percentage.", 188);
-  const q = saleQuoteOf(item, { mode: saleMode, pct: op.pct ?? 30, items: b.actor.items });
+  const priced = pricedItems(b.actor.items);   // a limb option at its placement price (M5j r1 #3)
+  const q = saleQuoteOf(priced.find(i => i._id === item._id), { mode: saleMode, pct: op.pct ?? 30, items: priced });
   if (q.price == null) throw new Refusal("A fence pays 10–50%, in steps of 5 (p.188).", 188);
   if (q.price !== op.quoted) throw new Refusal("The price changed: sell again to see the new one.");
   b.actor.items = b.actor.items.filter(i => i._id !== item._id);
@@ -652,8 +665,8 @@ export function surgeryPreview(body, itemId, successes = 2) {
   const at = (p) => {
     const cand = { ...item, system: { ...item.system, installed: true, surgeryEssencePct: p } };
     const after = items.map(i => (i._id === itemId ? cand : i));
-    const total = after.filter(i => i.type === "cyberware" && i.system.installed !== false).reduce((t, i) => t + essenceOf(i, after), 0);
-    return { cost: essenceOf(cand, after), end: round2(6 - total) };
+    const total = after.filter(i => i.type === "cyberware" && i.system.installed !== false).reduce((t, i) => t + essenceOf(i, after, body.actor.system.race), 0);
+    return { cost: essenceOf(cand, after, body.actor.system.race), end: round2(6 - total) };
   };
   const plain = at(0), now = at(pct);   // the TN from the Essence it ends with at 0%: its own result can't move it
   return { pct, cost: now.cost, end: now.end, tn: surgeonTN(plain.end), category: surgeryCategory(now.cost) };
@@ -812,6 +825,24 @@ function wareWarnings(items, add) {
   const enh = ware.filter(w => w.i.type === "cyberware" && w.rule === "reaction-enhancer").reduce((t, w) => t + (Number(w.i.system.attributeMods?.reaction) || 0), 0);
   if (enh > 6) add("resources", "warning", `Reaction Enhancers give +${enh}: +6 at most counts for a player character (+${enh - 6} lost).`, 38, "ct");
 }
+/**
+ * Cyberlimbs (PLAN-M5j): the system model's reasons. At creation a sided limb needs its side, limbs may not overlap, and
+ * an option must be in an installed limb (errors); in play the same are warnings (the GM fits limbs in Foundry). A
+ * rejected duplicate option and a capped average are warnings either way (Cybertechnology p.31, p.50–51).
+ */
+function limbChecks(actor, add, creation) {
+  if (!actor.items.some(i => i.type === "cyberware" && (i.system.limbOption || i.system.location === "cyberlimb"))) return;
+  const model = limbModelOf(actor.items), sev = creation ? "error" : "warning", name = (id) => actor.items.find(i => i._id === id)?.name ?? "a part";
+  for (const l of model.limbs) {
+    if (!l.classified) add("resources", sev, `${l.name}: set its limb type (Foundry's sheet), or its rules don't apply.`, 30, "ct");   // r1 #4
+    else if (!l.sideKnown) add("resources", sev, `${l.name}: choose its side (left or right).`, 30, "ct");
+  }
+  for (const c of model.conflicts) add("resources", sev, `${c.ids.map(name).join(" and ")} overlap on the ${c.side === "none" ? "body" : c.side} (${c.slot}).`, 30, "ct");
+  for (const o of model.orphans) add("resources", sev, `${o.name}: ${o.reason}.`, 31, "ct");
+  const d = derive({ actor });
+  for (const r of d.limbs.selection?.rejected ?? []) add("resources", "warning", `${name(r.id)}: ${r.reason}.`, 31, "ct");
+  for (const c of d.limbs.caps) add("resources", "warning", `The limbs' average ${c.attr} ${c.was} is over its limit: ${c.cap} counts.`, 51, "ct");
+}
 /** The bioware Body Index (Shadowtech p.6), unrounded as Foundry keeps it; the Awakened lose it in Essence too. */
 export const bodyIndexOf = (items) => bodyIndexTotal(items.filter(i => i.type === "bioware").map(i => ({ installed: i.system.installed !== false, bodyCost: i.system.bodyCost, grade: i.system.grade, bodySystem: i.system.bodySystem })));
 /** The value an attribute has after racial modifiers (p.45: applied after allocation). */
@@ -889,10 +920,11 @@ export function validate(body) {
   // Essence and Magic (p.45–46): computed first — Sorcery, spells and foci need a Magic Rating of at least 1.
   // The Awakened pay the bioware Body Index in Essence too (Shadowtech p.6; PLAN-M5e).
   const bodyIndex = bodyIndexOf(items);
-  const essence = Math.round((6 - items.filter(i => i.type === "cyberware").reduce((t, i) => t + essenceOf(i, items), 0) - (mtype !== "none" ? bodyIndex : 0)) * 1000) / 1000;
+  const essence = Math.round((6 - items.filter(i => i.type === "cyberware").reduce((t, i) => t + essenceOf(i, items, sys.race), 0) - (mtype !== "none" ? bodyIndex : 0)) * 1000) / 1000;
   const magic = mtype === "none" ? 0 : Math.max(0, Math.min(6, Math.floor(essence + 1e-9)));
   if (essence < 0) add("resources", "error", `Essence is ${essence}: cyberware can't take it below 0.`, 46);
   wareWarnings(items, add);
+  limbChecks(body.actor, add, true);
   // Cyberware grades (SSC p.98; PLAN-M5f): the book on; an accessory inside an eye takes the eye's grade.
   for (const [id, r] of Object.entries(body.creation.items)) {
     if (r.type !== "cyberware" || !r.choices?.grade || r.choices.grade === "standard") continue;
@@ -992,7 +1024,7 @@ export function validate(body) {
   }
 
   // Budgets: the system's own chargenBudget, the call Foundry's panel makes (core p.44–46; M2d §1).
-  const spend = chargenBudget({ system: sys, items, table });
+  const spend = chargenBudget({ system: sys, items: pricedItems(items), table });   // limb options at their placement price (PLAN-M5j)
   for (const p of spend.resources.vehicleProblems ?? []) add("resources", "error", p, 264);
   if ((points || pr.resources) && spend.resources.over) add("resources", "error", `${spend.resources.spent.toLocaleString("en-US")}¥ spent; ${points ? "the nuyen tier" : `Priority ${pr.resources}`} gives ${spend.resources.total.toLocaleString("en-US")}¥.`, 46);
   if (points && spend.buildingPoints) {   // the overrun blocks finishing (PLAN-M5h r1 #4)

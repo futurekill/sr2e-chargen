@@ -84,7 +84,7 @@ test("every sourcebook entry: offered only as plain data — and then it can rea
   }
   assert.ok(offered > 300, `${offered} offered`);
   assert.match(offerReason(find("st", "gear", /Kamikaze/), SOURCEBOOKS), /special rules|Drugs/);
-  assert.match(offerReason(catalog.entries.find(x => x.book === "ct" && x.type === "cyberware" && x.system.limbOption), SOURCEBOOKS) ?? "", /own rules/);
+  assert.match(offerReason(catalog.entries.find(x => x.book === "ct" && x.type === "cyberware" && x.name === "Cyberarm Cyberdeck"), SOURCEBOOKS) ?? "", /own rules/);   // PLAN-M5j
 });
 
 test("server: the books field is bounded; the catalog search lists only what the books offer", async () => {

@@ -4,7 +4,7 @@
  * operation, so no price or rule field is ever stored as typed. Prices and Essence come from the system's own pure
  * functions (shared/rules.mjs), called with the same inputs Foundry's creation panel gives them.
  */
-import { chargenItemCost, weaponFocusCost, adeptPowerKey, ratedRow, wareCtx, eyeAccessoryKind, rowsListValue, wareEssence, muscleFactor, QUALITY_VALUES, qualityRule, wareRule, limbRole } from "./rules.mjs";
+import { chargenItemCost, weaponFocusCost, adeptPowerKey, ratedRow, wareCtx, eyeAccessoryKind, rowsListValue, wareEssence, muscleFactor, QUALITY_VALUES, qualityRule, wareRule, limbRole, resolveLimbType, resolveOptionKind, SIDED, limbOptionPrice, limbModel, limbStats, limbEssence, forLimbRules } from "./rules.mjs";
 
 export const BUYABLE = ["weapon", "armor", "gear", "ammo", "cyberware", "bioware", "spell", "focus", "adept_power", "program", "contact", "lifestyle"];
 const STRING_MAX = 60;
@@ -29,7 +29,10 @@ export function choiceSpec(rec, { inPlay = false } = {}) {
       return { quantity: int(1, 1000), ...(s.costPerRating > 0 ? { rating: int(1, top) } : rows.length > 1 ? { rating: oneOf(rows) } : {}) };
     case "ammo": return { bundles: int(1, 100) };
     // Grades (SSC p.98; PLAN-M5f): at creation only, never for Shadowtech's cyberware (p.40); the SSC must be on (validate).
-    case "cyberware": return { ...(rows.length > 1 ? { rating: oneOf(rows) } : {}), ...(!inPlay && isEyeAccessory(rec) ? { in: text() } : {}),
+    // A sided cyberlimb's side, an option's limb (PLAN-M5j): "" until chosen (creation reports it).
+    case "cyberware": return { ...(rows.length > 1 ? { rating: oneOf(rows) } : s.costPerRating > 0 ? { rating: int(1, top) } : {}), ...(!inPlay && isEyeAccessory(rec) ? { in: text() } : {}),
+      ...(SIDED.has(limbTypeOf(rec)) && !isLimbOption(rec) ? { side: oneOf(["", "left", "right"]) } : {}),   // in play too: surgery installs it (r1 #2)
+      ...(!inPlay && isLimbOption(rec) ? { limb: text() } : {}),
       ...(!inPlay && !String(rec.source ?? "").includes("sr2e-shadowtech") ? { grade: oneOf(CYBER_GRADES) } : {}) };
     case "spell": return { force: int(1, 6) };   // "no starting spell can have a Force greater than 6" (p.46)
     case "focus": return { ...(s.focusType === "spell_lock" ? {} : { force: int(1, 6) }), ...(s.focusType === "spell" ? { spell: text() } : {}),
@@ -98,13 +101,75 @@ export function checkChoices(rec, choices, opts) {
   return { choices: out };
 }
 
+/* ── Cyberlimbs (docs/PLAN-M5j.md Draft 2) ─────────────────────────────────────────────────────────────────── */
+const CTL = (id) => `Compendium.sr2e-cybertechnology.ct-cyberlimbs.Item.${id}`;
+/** The "other" options checked against the book (Draft 2, r1 #8): coverings, External Mount, Magnetic System, DNI. */
+const LIMB_OTHER_OFFERED = new Set(["c95c853f0df4d549", "0c136ee98018d026", "5a2e9c5a1a71b5d8", "3f3a5f25f8f76a06", "3f225dc670d0102a", "a14f54f55d66846f"].map(CTL));
+const LIMB_KINDS_OFFERED = new Set(["strength", "quickness", "body", "smartlink"]);
+const srcOf = (e) => e._stats?.compendiumSource ?? e.source ?? null;
+/** A limb's resolved type (field, rule or known source; never `location`), or null. */
+export const limbTypeOf = (e) => resolveLimbType(e.system ?? e.snapshot ?? {}, e.flags ?? {}, srcOf(e)).type;
+/** An option's resolved kind, or null. */
+export const optionKindOf = (e) => resolveOptionKind(e.system ?? e.snapshot ?? {}, e.flags ?? {}, srcOf(e)).kind;
+const isLimbOption = (e) => !!(e.system ?? e.snapshot)?.limbOption;
+/** Why a limb or option can't be bought, or null; undefined when the entry isn't limb ware. */
+function limbReason(entry, inPlay) {
+  const role = limbRole(entry.system ?? {}, entry.flags ?? {}, srcOf(entry));
+  if (!role) return undefined;
+  if (role === "limb") return limbTypeOf(entry) ? null : "This part of a cyberlimb has its own rules the app doesn't compute yet.";
+  // In play a limb is a spare until surgery (M4c); building an option into one is the GM's, in Foundry.
+  if (inPlay) return "A cyberlimb option is bought at creation here; after that, fit it in Foundry.";
+  const kind = optionKindOf(entry);
+  if (LIMB_KINDS_OFFERED.has(kind) || (kind === "other" && LIMB_OTHER_OFFERED.has(srcOf(entry)))) return null;
+  return kind === "device" ? "A built-in device costs four times the device's own price: not yet."
+    : kind === "weapon" ? "A cybergun or taser needs its weapon added with it: not yet."
+    : "This cyberlimb option has its own rules the app doesn't compute yet.";
+}
+/**
+ * Foundry's prepared price of a limb option (item-data.mjs: `limbOptionPrice` for its RECORDED placement, the linked
+ * limb's type resolved from its source). `items`: the character's items, to find the linked limb.
+ */
+export function limbOptionCostOf(item, items) {
+  const s = item.system, limb = s.linkedLimbId ? items.find(i => i._id === s.linkedLimbId && i.type === "cyberware") : null;
+  return limbOptionPrice({ rating: s.rating, cost: s.cost ?? 0, costPerRating: s.costPerRating, costMultiplierOfBase: s.costMultiplierOfBase,
+    limbSurcharge: s.limbSurcharge, limbAdjacent: s.limbAdjacent }, optionKindOf(item), limb ? limbTypeOf(limb) : null);
+}
+/** The limb model over a character's cyberware, as `_limbEssenceAndModel` builds it (installed parts only). */
+export const limbModelOf = (items) => limbModel(items.filter(i => i.type === "cyberware").map(i => ({ id: i._id, name: i.name,
+  installed: i.system.installed !== false, system: i.system, flags: i.flags ?? {}, source: i._stats?.compendiumSource ?? null })));
+/**
+ * Each installed part's limb-adjusted Essence (Cybertechnology p.31, p.37, p.49–52), as `_limbEssenceAndModel`
+ * assigns `limbEssence`: options counted in a limb, the troll and cybertorso rules. A Map of item id → Essence.
+ */
+export function limbEssences(items, race) {
+  const model = limbModelOf(items), stats = limbStats(model), place = new Map(), out = new Map();
+  for (const l of model.limbs) for (const o of l.options) place.set(o.id, { inLimb: forLimbRules(l), limbType: l.type, counted: stats.selection.counted.has(o.id) });
+  for (const i of items) {
+    if (i.type !== "cyberware" || i.system.installed === false) continue;
+    const e = limbEssence({ sys: i.system, source: i._stats?.compendiumSource ?? null, kind: i.system.limbOption ? optionKindOf(i) : null },
+      { ...(place.get(i._id) ?? { inLimb: false }), troll: race === "troll", torso: stats.torso });
+    if (e !== null) out.set(i._id, e);
+  }
+  return out;
+}
+/** The pricing context a limb option's `itemBaseCost` reads: its kind and its linked limb's type (PLAN-M5j). */
+export function limbPriceCtx(item, items) {
+  if (item.type !== "cyberware" || !item.system?.limbOption) return {};
+  const limb = item.system.linkedLimbId ? items.find(i => i._id === item.system.linkedLimbId && i.type === "cyberware") : null;
+  return { limbOptionKind: optionKindOf(item), limbType: limb ? limbTypeOf(limb) : null };
+}
+/** The items as Foundry's preparation prices them: limb options at their placement price (Draft 2, r1 #4, r2 #1). */
+export const pricedItems = (items) => items.map(i => i.type === "cyberware" && i.system?.limbOption
+  ? { ...i, system: { ...i.system, cost: limbOptionCostOf(i, items) } } : i);
+
 /** The types that must have a list price (contacts are priced as extras, the Streets lifestyle is free; M2d r1 #3). */
 const FIXED_PRICE = ["weapon", "armor", "gear", "ammo", "cyberware", "program", "focus"];
 /** Why an entry can't be bought in milestone 2c, or null (PLAN-M2c §1). */
 export function refusalFor(entry) {
   if (entry.type === "vehicle") return "Vehicles wait for the Foundry system to count them at creation.";
   if (!BUYABLE.includes(entry.type)) return "That isn't something a character buys.";
-  if (entry.system?.limbOption) return "A cyberlimb option needs a cyberlimb: it arrives with the Cybertechnology rules.";
+  // Limb options are gated by limbReason (offerReason) and priced for their placement: no fixed-price check here.
+  if (entry.system?.limbOption) return null;
   if (entry.system?.category === "skillsoft" && entry.system?.grantedSkillCategory === "data") return "A DataSoft's price varies with its data (core): not yet.";
   const rec = { type: entry.type, name: entry.name, snapshot: entry.system, flags: entry.flags ?? {}, source: entry._stats?.compendiumSource ?? null };
   if (FIXED_PRICE.includes(entry.type) && price(rec, project(rec, defaultChoices(rec)), []) <= 0) return "This has no fixed price in the core book (it varies): not yet.";
@@ -148,6 +213,11 @@ export function offerReason(entry, books = [], { inPlay = false } = {}) {
       || s.armorBallistic || s.armorImpact || (s.ratingStats ?? []).some(r => r.armorBallistic || r.armorImpact) || BIOWARE_WAITS.has(entry._stats?.compendiumSource))
       return "This bioware has its own rules the app doesn't compute yet.";
     return refusalFor(entry);
+  }
+  if (entry.type === "cyberware") {   // cyberlimbs and options, core and book (PLAN-M5j): their own gate
+    if (book !== "sr2" && !books.includes(book)) return "That sourcebook isn't turned on for this character.";
+    const why = limbReason(entry, inPlay);
+    if (why !== undefined) return why ?? refusalFor(entry);
   }
   if (entry.type === "cyberware" && book !== "sr2") {   // book cyberware (PLAN-M5f, M5i): plain implants and the allowed rules
     if (!books.includes(book)) return "That sourcebook isn't turned on for this character.";
@@ -206,6 +276,12 @@ export function project(rec, c, recs = {}) {
     const row = ratedRow(s.ratingStats, s.rating);
     if (row && typeof row.essenceCost === "number") s.essenceCost = row.essenceCost;
     s.grade = c.grade ?? "standard";
+    if ("side" in c) s.side = c.side || "unknown";
+    if ("limb" in c) {   // the limb it is built into, and the placement facts recorded when it was attached (Draft 2, r1 #3)
+      s.linkedLimbId = c.limb;
+      s.limbSurcharge = !!rec.placement?.limbSurcharge;
+      s.limbAdjacent = !!rec.placement?.limbAdjacent;
+    }
   }
   if (rec.type === "bioware") {   // BiowareData's preparation: the rating row's stats; installed (PLAN-M5e)
     const row = ratedRow(s.ratingStats, s.rating);
@@ -262,9 +338,10 @@ export function priceInput(item, items) {
 }
 /** One item's list price. */
 export function price(rec, projected, items) {
-  const item = { type: rec.type, name: rec.name, system: projected.system, flags: projected.flags, _stats: { compendiumSource: rec.source } };
-  const i = priceInput(item, [...items, item]);
-  return chargenItemCost(i);   // the system's own: ammo by its bundle value, the rest list × quantity + eye rows
+  const item = { _id: rec.id ?? "", type: rec.type, name: rec.name, system: projected.system, flags: projected.flags, _stats: { compendiumSource: rec.source } };
+  const all = [...items.filter(x => x._id !== item._id || !item._id), item];
+  // A limb option: itemBaseCost's own limbOptionPrice branch, given its kind and the linked limb's type (r2 #1, code r1 #1).
+  return chargenItemCost(priceInput(item, all), limbPriceCtx(item, all));   // the system's own: ammo by its bundle value, the rest list × quantity + eye rows
 }
 
 /** An eye accessory's row inside its cybereye, in the system's own shape (core p.247). */
@@ -277,12 +354,16 @@ export function eyeRow(id, rec, projected) {
 /**
  * One cyberware item's Essence: the system's own `wareEssence` (Foundry's `actualEssenceCost`, S5), given the markers
  * Foundry's preparation sets — the eye's module total, the ware rule, and muscle's discount beside full cyberlimbs
- * (Cybertechnology p.57). The surgeon's `surgeryEssencePct` applies (PLAN-M4c Draft 2). No limb options: no `limbEssence`.
+ * (Cybertechnology p.57). The surgeon's `surgeryEssencePct` applies (PLAN-M4c Draft 2); a limb part's `limbEssence` (PLAN-M5j).
  */
-export function essenceOf(item, items) {
+export function essenceOf(item, items, race = null) {
   const s = item.system, ctx = ctxOf(items, item);
   const capacityUsed = Math.round((s.modules ?? []).reduce((t, r) => t + (Number(r.essenceCost) || 0), 0) * 100) / 100;
-  return wareEssence({ ...s, capacityUsed, wareRule: ctx.wareRule, limbEssence: undefined,
+  // A cyberlimb part's own Essence (PLAN-M5j); `race` for the troll rule (p.51). shortcut: the model is rebuilt per call,
+  // fine for a character's few dozen implants; cache by items if a profile ever shows it.
+  const limb = item.type === "cyberware" && item.system.installed !== false && items.some(i => i.type === "cyberware" && (i.system.limbOption || i.system.location === "cyberlimb"))
+    ? limbEssences(items, race).get(item._id) : undefined;
+  return wareEssence({ ...s, capacityUsed, wareRule: ctx.wareRule, limbEssence: limb,
     limbDiscount: ctx.fullCyberlimbs > 0 ? muscleFactor(ctx.fullCyberlimbs) : undefined });
 }
 export { isCybereye, isEyeAccessory };

@@ -22,7 +22,7 @@ function finished(nuyen = 1_000_000) {
   b.actor.system.conditionMonitor = { physical: { value: 0, max: 10, overflow: 0 }, stun: { value: 0, max: 10, overflow: 0 }, overflow: 0 };   // as finish writes it
   return b;
 }
-const buy = (b, name) => op(b, { op: "buyItem", catalogId: core(name, "cyberware"), choices: {}, price: 1000 });
+const buy = (b, name) => op(b, { op: "buyItem", catalogId: core(name, "cyberware"), choices: /\(Full\)/.test(name) ? { side: "left" } : {}, price: 1000 });   // a limb names its side (M5j)
 
 test("damage: Stun past 10 rolls into Physical, Physical past 10 into overflow (p.112); healing takes the overflow first", () => {
   let b = op(finished(), { op: "damage", track: "stun", boxes: 12 });

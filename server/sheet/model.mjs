@@ -88,7 +88,7 @@ export function sheetModel(body) {
       return [plain(i.name), String(s.rating), plain(sub.join(" · ")), s.category === "active" ? "active" : s.category];
     }),
     cyberware: of("cyberware").map(i => [plain(i.name) + (i.system.modules?.length ? ` (${i.system.modules.map(m => plain(m.name)).join(", ")})` : "") + (i.system.installed === false ? " (spare, not installed)" : ""),
-      i.system.rating ? `R${i.system.rating}` : "", `Ess ${num(essenceOf(i, items))}`, cite(i.system)]),
+      i.system.rating ? `R${i.system.rating}` : "", `Ess ${num(essenceOf(i, items, sys.race))}`, cite(i.system)]),
     gear: [...of("weapon"), ...of("armor"), ...of("gear"), ...of("ammo")].map(i => [plain(i.name),
       i.type === "ammo" ? `${i.system.quantity} rds` : i.system.quantity > 1 ? `×${i.system.quantity}` : i.system.rating ? `R${i.system.rating}` : "",
       i.type === "armor" ? `${i.system.ballistic}/${i.system.impact}` : "", cite(i.system)]),

@@ -1,0 +1,25 @@
+# Plan review log: M5j
+
+## Round 1 — Codex (gpt-6-sol, high)
+1. **Rigger 2 Control Pool will still diverge.** [The plan](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/docs/PLAN-M5j.md:38) says to use the limb Reaction average, but [the app’s current calculation](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/shared/derive.mjs:108) still uses natural Quickness. Foundry uses `avgQuicknessReaction` when a full cyberlimb occupies a position. **Fix:** Feed that average into `controlRigger2` when `anyCyber`, and test it with a VCR and a Quickness-enhanced limb.
+
+2. **The cap inputs need exact definitions.** Foundry averages the *already modified* Strength and Quickness, while capping Strength against unaugmented Body and Quickness against natural Quickness plus bioware Quickness. [The derive step](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/docs/PLAN-M5j.md:37) names these inputs without specifying how the app obtains them. **Fix:** State and test those four input expressions, including pair Body before attribute calculation.
+
+3. **Placement facts would change after purchase.** [The plan](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/docs/PLAN-M5j.md:26) derives them from earlier records on projection, whereas Foundry’s [placement hook](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-foundryvtt/module/sr2e.mjs:1508) records them only when that option’s link changes. `placementFacts` also needs limb records, including an adjacent hand or foot, among its siblings. **Fix:** Persist both facts in the option record at attachment time and pass all then-existing relevant limbs and options.
+
+4. **The app’s price path lacks placement context.** `itemBaseCost` needs the resolved option kind and linked limb type; [priceInput](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/shared/purchase.mjs:261) currently supplies neither. A forearm Strength option can therefore be charged its authored price instead of the recorded 60,000¥ or 120,000¥ per point. **Fix:** Resolve both fields for every budget, buy-price, and sheet-price call using the authored option cost.
+
+5. **The `in` choice collides with cybereye validation.** [Creation validation](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/shared/creation.mjs:896) treats *any* graded cyberware record with `choices.in` as an eye accessory. The plan gives that same choice to limb options. **Fix:** Distinguish eye placement from limb placement by resolved role or use separate choice keys.
+
+6. **Cyberguns and the taser need their paired weapons.** The proposed cyberware entries carry price and Essence but have no `isWeapon`; for example, the [Light Pistol implant](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/content/sr2e-cybertechnology/packs-src/ct-cyberlimbs/Cybergun_Light_Pistol_5744e70a42e4efb4.json) points to a separate zero-cost [weapon item](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/content/sr2e-cybertechnology/packs-src/ct-weapons/Cybergun_Light_Pistol_a6dad5c34858acc2.json). The plan offers the implant but specifies no paired-weapon step. **Fix:** Add the matching weapon once, linked to its implant, or defer these offers.
+
+7. **Simple Replacement Limb is treated as a full cyberlimb.** Giving it `limbType: "arm"` or `"leg"` makes Foundry’s model count it in averages, pair Body, and the muscle discount, although the [core item describes a plain prosthetic without full-limb enhancements](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-foundryvtt/packs-src/cyberware/Simple_Replacement_Limb_c7e13f9d5a8b0246.json). The plan itself leaves the book check open. **Fix:** Verify the printed rule and add a distinct simple-replacement rule in Foundry before offering it.
+
+8. **The offer gate needs an explicit allowlist.** `limbRole` classifies any `location: "cyberlimb"` item without `limbOption` as a limb, including the [Hydraulic Jack](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/content/sr2e-cybertechnology/packs-src/ct-cyberlimbs/Hydraulic_Jack_83fd2daf53698503.json) that [the plan refuses](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/docs/PLAN-M5j.md:23). **Fix:** Gate offers by checked compendium source and resolved type or kind, and keep every unclassified entry refused.
+
+VERDICT: REVISE
+## Round 2 — Codex (gpt-6-sol, high)
+**Round 1 finding #4 remains unresolved.** Draft 2 puts `limbOptionKind` and `limbType` on the price input, but [the app calls `chargenItemCost(i)` without a context](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/shared/purchase.mjs:266). [Foundry reads both values from the separate `ctx` argument](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-foundryvtt/module/rules/sr2e-rules.mjs:2955). Partial-limb Strength prices and enhancement surcharges can therefore still be wrong. Pass those values as pricing context, or explicitly change `chargenItemCost` to read them from `i`.
+
+VERDICT: REVISE
+Responses: Draft 2 and the round-2 line in docs/PLAN-M5j.md.

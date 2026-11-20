@@ -6,6 +6,14 @@ notes come from it.
 ## Unreleased
 
 ### Added
+- **Cyberlimbs** (docs/PLAN-M5j.md): cyberarms, cyberlegs, forearms, lower legs, hands, feet, the cybertorso and
+  cyberskull (core and Cybertechnology), each with its side; and their Strength, Quickness and Body enhancements, the
+  core Increased Strength (rated), built-in smartlinks, coverings, the External Mount, the Magnetic System and the
+  DNI, each built into a limb. Strength and Quickness become the four limbs' averages, a complete pair adds Body, the
+  limb Essence and prices (partial limbs, the 10 % surcharge, the troll and torso rules) follow Cybertechnology
+  p.30–31 and p.49–52, as Foundry computes them (a parity fixture). The rules check reports a missing side, an option
+  not in a limb, overlapping limbs and a duplicate enhancement. Still waiting: built-in devices, cyberguns and the
+  taser, the limb cyberdeck, the simple replacement limb, hydraulic jacks and foot anchors.
 - **Implants with their own rules** (docs/PLAN-M5i.md): with Cybertechnology on, the shop offers wired and boosted
   reflexes, Reaction Enhancers (+6 at most counts, p.38), move-by-wire, the reflex trigger, muscle replacement, dermal
   plating and sheathing, body plating, bone lacing (it raises the Unarmed Strike), datajacks, commlinks, cyberears,
@@ -112,6 +120,7 @@ notes come from it.
   restore, admin commands. README and OPERATIONS updated for the beta.
 
 ### Fixed
+- **Attributes floor at 1**, as in Foundry: a troll's Charisma of 1 (racial −2) showed 0.
 - **The fist survives the trip to Foundry**: Foundry's Import Data replaces a new actor's items, so a character
   from the app arrived without the Unarmed Strike every Foundry character has. The export now carries one, and the
   sheet shows it.

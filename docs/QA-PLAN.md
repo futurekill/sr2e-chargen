@@ -163,3 +163,11 @@ bonding (p.46, p.137), refusals.
 - A VCR with move-by-wire or muscle replacement: the sheet shows "Control Pool X (Rigger 2 rules: Y)".
 - Invoked Memory Stimulator and Automatic-Medication are refused ("comes with a cybermantic operation").
 - `test/fixtures/parity/ware-v0.161.0.json` is Foundry's prepared values; regenerate it when the pin moves.
+
+## Cyberlimbs (M5j)
+- With Cybertechnology on, buy two Cyberarms: each asks for its side (an error until chosen). Buy a Strength
+  Enhancement +3 and build it into the left arm: Strength shows the four limbs' average.
+- Add a Body Enhancement to the same arm: its price shows the 10 % surcharge (a second enhancement type on one limb).
+- A Cyber Forearm on the same side as a Cyberarm: an overlap error. Remove the arm: the option's "its limb is gone".
+- A troll with a core Cyberarm (Full) and Increased Strength 2: Essence 0.8 for the option (p.51).
+- `test/fixtures/parity/limbs-v0.161.0.json` is Foundry's prepared values; regenerate it when the pin moves.

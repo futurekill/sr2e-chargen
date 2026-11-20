@@ -9,7 +9,7 @@
   import { derive } from "../../../shared/derive.mjs";
   import { applyOp, validate, karmaOptions, undoable, surgeryPreview, booksOf, priorityTable, freeContacts, withRacial, formMod, edgeMax, PLAY_GEAR, cardIds, cardEligible, CARD_TYPES, CATEGORIES, CATEGORY_NAMES, LETTERS, METATYPES, MAGIC_TYPES, MAGIC_NAMES, TRADITIONS, ATTRIBUTES, ATTR_NAMES, CUSTOM_SKILL_CATEGORIES, totemNames } from "../../../shared/creation.mjs";
   import { TABLES, racialProfile, metavariantNotes, metavariantFrom, ONI_SOURCE, qualityEffects, effectiveBodyCost, BP_NUYEN_TIERS } from "../../../shared/rules.mjs";
-  import { BUYABLE, choiceSpec, defaultChoices, project, price, essenceOf, isCybereye, smallWeapon } from "../../../shared/purchase.mjs";
+  import { BUYABLE, choiceSpec, defaultChoices, project, price, essenceOf, isCybereye, smallWeapon, limbTypeOf, pricedItems } from "../../../shared/purchase.mjs";
   import { saleQuoteOf, streetPrice, ratedStreetIndex, FENCE_STEPS, totalWoundPenalty, woundLevel } from "../../../shared/rules.mjs";
   let { doc: initial, onDeleted } = $props();
 
@@ -63,7 +63,7 @@
   // Resources (docs/PLAN-M2c.md).
   const TYPE_NAME = { bioware: "Bioware", weapon: "Weapon", armor: "Armor", gear: "Gear", ammo: "Ammunition", cyberware: "Cyberware", spell: "Spell", focus: "Focus", adept_power: "Adept power", program: "Program", contact: "Contact", lifestyle: "Lifestyle", vehicle: "Vehicle" };
   const SHOP_TYPES = [...BUYABLE, "vehicle"];   // a vehicle is an actor: addVehicle, not addItem (S9)
-  const CHOICE_NAME = { grade: "Grade", points: "Value", gain: "Bonus +", attribute: "Attribute", detail: "Detail (skill, substance…)", quantity: "Qty", bundles: "Boxes", rating: "Rating", force: "Force", strengthMinimum: "Str Min", in: "In", spell: "Spell", skill: "Skill", weapon: "Weapon", level: "Level", senses: "Senses (comma-separated)", kind: "As", months: "Months" };
+  const CHOICE_NAME = { grade: "Grade", points: "Value", gain: "Bonus +", attribute: "Attribute", detail: "Detail (skill, substance…)", quantity: "Qty", bundles: "Boxes", rating: "Rating", force: "Force", strengthMinimum: "Str Min", in: "In", spell: "Spell", skill: "Skill", weapon: "Weapon", side: "Side", limb: "Built into", level: "Level", senses: "Senses (comma-separated)", kind: "As", months: "Months" };
   let shopQ = $state(""), shopType = $state(""), shop = $state([]), shopBusy = $state(false);
   let shopTimer, shopSeq = 0;
   function searchShop() {
@@ -89,9 +89,10 @@
   /** Every bought thing (eye accessories included), with what it costs and the Essence it takes. */
   const bought = $derived(Object.entries(body.creation.items).filter(([, r]) => r.type !== "skill" && r.type !== "quality").sort(([a], [b]) => (a < b ? -1 : 1)).map(([id, r]) => {
     const item = body.actor.items.find(i => i._id === id), projected = item ? { system: item.system, flags: item.flags } : project(r, r.choices, body.creation.items);
-    return { id, r, spec: choiceSpec(r), price: price(r, projected, body.actor.items), essence: item && r.type === "cyberware" ? essenceOf(item, body.actor.items) : null };
+    return { id, r, spec: choiceSpec(r), price: price(r, projected, body.actor.items), essence: item && r.type === "cyberware" ? essenceOf(item, body.actor.items, body.actor.system.race) : null };
   }));
   const eyes = $derived(bought.filter(x => isCybereye(x.r)));
+  const cyberlimbs = $derived(bought.filter(x => x.r.type === "cyberware" && !x.r.snapshot.limbOption && limbTypeOf(x.r)));   // PLAN-M5j
   /** A bioware row's Body Cost after its grade (Shadowtech p.7), as the Body Index counts it. */
   const bioCost = (id) => { const s = body.actor.items.find(i => i._id === id)?.system; return s ? Math.round(effectiveBodyCost(s.bodyCost, s.grade, s.bodySystem) * 1000) / 1000 : "—"; };
   /** A choice control's accessible name, distinct per row: the item, its detail or its place in the list, the choice. */
@@ -173,7 +174,7 @@
     const pr = project(rec, choices, body.creation.items), s = pr.system;
     return Math.round(streetPrice(price(rec, pr, body.actor.items), ratedStreetIndex(s.ratingStats, s.rating, s.streetIndex)));
   }
-  const quoteFor = (it) => saleQuoteOf(it, { mode: saleMode, pct: sellPct[it._id] ?? 30, items: body.actor.items });
+  const quoteFor = (it) => { const priced = pricedItems(body.actor.items); return saleQuoteOf(priced.find(i => i._id === it._id) ?? it, { mode: saleMode, pct: sellPct[it._id] ?? 30, items: priced }); };
   async function addCoreSkill() {
     const id = pickSkill;   // read once: the list can change while the entry is on its way
     if (!id) return;
@@ -516,7 +517,11 @@
                       {/if}
                       {#each Object.entries(x.spec) as [k, sp] (k)}
                         <label class="choice"><span>{CHOICE_NAME[k] ?? k}</span>
-                          {#if sp.kind === "int"}
+                          {#if k === "side"}
+                            <select value={x.r.choices.side} disabled={finished} aria-label={ctlName(x, "side")} onchange={(ev) => setChoice(x.id, "side", ev.currentTarget.value)}><option value="">Choose…</option><option value="left">Left</option><option value="right">Right</option></select>
+                          {:else if k === "limb"}
+                            <select value={x.r.choices.limb} disabled={finished} aria-label={ctlName(x, "limb")} onchange={(ev) => setChoice(x.id, "limb", ev.currentTarget.value)}><option value="">Choose a cyberlimb…</option>{#each cyberlimbs as l (l.id)}<option value={l.id}>{l.r.name}{l.r.choices.side ? ` (${l.r.choices.side})` : ""}</option>{/each}</select>
+                          {:else if sp.kind === "int"}
                             <input type="number" min={sp.lo} max={sp.hi} step="1" value={x.r.choices[k]} disabled={finished} aria-label={ctlName(x, k)}
                               onchange={(ev) => { const n = numberFrom(ev); if (Number.isInteger(n) && n >= sp.lo && n <= sp.hi) setChoice(x.id, k, n); else ev.currentTarget.value = x.r.choices[k]; }}>
                           {:else if sp.kind === "oneOf"}
