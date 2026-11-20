@@ -6,11 +6,11 @@
    */
   import { untrack, onDestroy } from "svelte";
   import { get, mutate, upload } from "../lib/api.js";
-  import { derive } from "../../../shared/derive.mjs";
+  import { derive, injuryPenalty } from "../../../shared/derive.mjs";
   import { applyOp, validate, karmaOptions, undoable, surgeryPreview, booksOf, priorityTable, freeContacts, withRacial, formMod, edgeMax, PLAY_GEAR, cardIds, cardEligible, CARD_TYPES, CATEGORIES, CATEGORY_NAMES, LETTERS, METATYPES, MAGIC_TYPES, MAGIC_NAMES, TRADITIONS, ATTRIBUTES, ATTR_NAMES, CUSTOM_SKILL_CATEGORIES, totemNames } from "../../../shared/creation.mjs";
-  import { TABLES, racialProfile, metavariantNotes, metavariantFrom, ONI_SOURCE, qualityEffects, effectiveBodyCost, BP_NUYEN_TIERS } from "../../../shared/rules.mjs";
-  import { BUYABLE, choiceSpec, defaultChoices, project, price, essenceOf, isCybereye, smallWeapon, limbTypeOf, pricedItems } from "../../../shared/purchase.mjs";
-  import { saleQuoteOf, streetPrice, ratedStreetIndex, FENCE_STEPS, totalWoundPenalty, woundLevel } from "../../../shared/rules.mjs";
+  import { TABLES, racialProfile, metavariantNotes, metavariantFrom, ONI_SOURCE, qualityEffects, BP_NUYEN_TIERS } from "../../../shared/rules.mjs";
+  import { BUYABLE, choiceSpec, defaultChoices, project, price, essenceOf, isCybereye, smallWeapon, limbTypeOf, pricedItems, bodyCostOf } from "../../../shared/purchase.mjs";
+  import { saleQuoteOf, streetPrice, ratedStreetIndex, FENCE_STEPS, woundLevel } from "../../../shared/rules.mjs";
   let { doc: initial, onDeleted } = $props();
 
   // Plain objects, not reactive proxies: the reducer clones them (structuredClone can't clone a proxy).
@@ -94,7 +94,7 @@
   const eyes = $derived(bought.filter(x => isCybereye(x.r)));
   const cyberlimbs = $derived(bought.filter(x => x.r.type === "cyberware" && !x.r.snapshot.limbOption && limbTypeOf(x.r)));   // PLAN-M5j
   /** A bioware row's Body Cost after its grade (Shadowtech p.7), as the Body Index counts it. */
-  const bioCost = (id) => { const s = body.actor.items.find(i => i._id === id)?.system; return s ? Math.round(effectiveBodyCost(s.bodyCost, s.grade, s.bodySystem) * 1000) / 1000 : "—"; };
+  const bioCost = (id) => { const it = body.actor.items.find(i => i._id === id); return it ? Math.round(bodyCostOf(it, body.actor.items) * 1000) / 1000 : "—"; };
   /** A choice control's accessible name, distinct per row: the item, its detail or its place in the list, the choice. */
   const ctlName = (x, k) => {
     const same = Object.entries(body.creation.items).filter(([, r]) => r.name === x.r.name).map(([id]) => id).sort();
@@ -461,7 +461,7 @@
             {#if cm.overflow > derived.monitors.overflow}<strong class="bad">Dead: the overflow is past the Body Rating.</strong>
             {:else if cm.overflow > 0}<strong class="bad">Dying: an extra box every 10 minutes without medical help (p.111).</strong>
             {:else if cm.stun.value >= 10 || cm.physical.value >= 10}<strong class="bad">Unconscious.</strong>{/if}</p>
-          {#if totalWoundPenalty(cm.physical.value, cm.stun.value)}<p>Injury: +{totalWoundPenalty(cm.physical.value, cm.stun.value)} to target numbers, −{totalWoundPenalty(cm.physical.value, cm.stun.value)} Initiative.</p>{/if}
+          {#if injuryPenalty(body.actor)}<p>Injury: +{injuryPenalty(body.actor)} to target numbers, −{injuryPenalty(body.actor)} Initiative.</p>{/if}
         </div>
         <form class="row adders" onsubmit={(ev) => ev.preventDefault()}>
           <label><span>Monitor</span><select bind:value={hurtTrack}><option value="physical">Physical</option><option value="stun">Stun</option></select></label>

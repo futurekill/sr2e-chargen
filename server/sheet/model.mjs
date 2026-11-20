@@ -4,8 +4,8 @@
  */
 import { derive } from "../../shared/derive.mjs";
 import { validate, totemNames, CATEGORY_NAMES, ATTR_NAMES, MAGIC_NAMES } from "../../shared/creation.mjs";
-import { essenceOf } from "../../shared/purchase.mjs";
-import { TABLES, racialProfile, metavariantNotes, effectiveBodyCost } from "../../shared/rules.mjs";
+import { essenceOf, bodyCostOf } from "../../shared/purchase.mjs";
+import { TABLES, racialProfile, metavariantNotes } from "../../shared/rules.mjs";
 
 /** Plain, printable text: no control characters, no bidi overrides/isolates, single spaces. */
 export function plain(v, max = Infinity) {
@@ -73,11 +73,15 @@ export function sheetModel(body) {
     attrRow: Object.keys(ATTR_NAMES).map(a => ({ abbr: ATTR_NAMES[a].slice(0, 3).toUpperCase(), value: String(d.attributes[a]), natural: d.attributes[a] !== d.natural[a] ? String(d.natural[a]) : "" })),
     stats: [["Reaction", String(d.reaction)], ["Initiative", `${d.reaction} + ${d.initiativeDice}D6`], ["Combat pool", String(d.pools.combat)],
       ...[["Magic pool", d.pools.magic], ["Astral pool", d.pools.astral], ["Hacking pool", d.pools.hacking], ["Control pool", d.pools.control]].filter(([, v]) => v > 0).map(([k, v]) => [k, k === "Control pool" ? control : String(v)]),
+      // Rigger 2's Task Pool (a world setting) and Enhanced Articulation's skill die (PLAN-M5k).
+      ...(d.pools.taskRigger2 > 0 ? [["Task pool (Rigger 2 rules)", String(d.pools.taskRigger2)]] : []),
+      ...(d.activeSkillDice > 0 ? [["Active skill dice", `+${d.activeSkillDice}`]] : []),
       ["Karma pool", String(d.karmaPool)], ...(d.totalKarma > 0 ? [["Good Karma", String(d.goodKarma)], ["Total Karma", String(d.totalKarma)]] : []), ["Essence", num(d.essence)], ...(magic.type !== "none" ? [["Magic", String(d.magic)]] : []), ["Armor", `${d.armor.ballistic} / ${d.armor.impact}`]],
     priorities: sys.chargen?.priorityMethod === "points" ? [] : Object.keys(CATEGORY_NAMES).map(c => [{ race: "RACE", magic: "MAGIC", attributes: "ATTR", skills: "SKILLS", resources: "RES" }[c], pr[c] || "–"]),
     subtitle: [raceName, magicLine].join(" · "),
     pools: [["Combat", d.pools.combat], ["Magic", d.pools.magic], ["Astral", d.pools.astral], ["Hacking", d.pools.hacking], ["Control", d.pools.control]]
-      .filter(([k, v]) => v > 0 || k === "Combat").map(([k, v]) => [k, k === "Control" ? control : String(v)]),
+      .filter(([k, v]) => v > 0 || k === "Combat").map(([k, v]) => [k, k === "Control" ? control : String(v)])
+      .concat(d.pools.taskRigger2 > 0 ? [["Task (Rigger 2 rules)", String(d.pools.taskRigger2)]] : [], d.activeSkillDice > 0 ? [["Active skill dice", `+${d.activeSkillDice}`]] : []),   // M5k r1 #2
     armor: `${d.armor.ballistic} / ${d.armor.impact}`,
     monitors: { physical: d.monitors.physical, stun: d.monitors.stun, overflow: d.monitors.overflow,
       // The wounds carried (PLAN-M4c): boxes filled, from Foundry's stored monitor (none before finishing).
@@ -95,7 +99,7 @@ export function sheetModel(body) {
     spells: of("spell").map(i => [plain(i.name), `F${i.system.force}`, plain(`${cap(i.system.category ?? "")} · ${i.system.drainCode ?? ""}`, 80), cite(i.system)]),
     // Edges and Flaws (Companion p.22–35): name (and its attribute), value, the detail (unescaped from Foundry's notes).
     // Bioware (Shadowtech; PLAN-M5e): rating, grade, Body Cost.
-    bioware: of("bioware").map(i => [plain(i.name), i.system.rating ? `R${i.system.rating}` : "", `${i.system.grade || "standard"} · BC ${num(effectiveBodyCost(i.system.bodyCost, i.system.grade, i.system.bodySystem))}`, cite(i.system)]),
+    bioware: of("bioware").map(i => [plain(i.name), i.system.rating ? `R${i.system.rating}` : "", `${i.system.grade || "standard"} · BC ${num(bodyCostOf(i, items))}`, cite(i.system)]),
     qualities: of("quality").map(i => [plain(i.name) + (i.system.attribute ? ` (${ATTR_NAMES[i.system.attribute] ?? i.system.attribute}${i.system.attributeBonus ? ` +${i.system.attributeBonus}` : ""})` : ""),
       (i.system.pointValue > 0 ? "+" : "") + String(i.system.pointValue ?? 0),
       plain(String(i.system.notes ?? "").replace(/<[^>]*>/g, ""), 80), cite(i.system)]),

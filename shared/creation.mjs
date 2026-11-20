@@ -8,8 +8,8 @@
  * A character is the Foundry system's own `character` source shapes (`actor`), so the system's functions read it
  * unchanged; the app's own record sits beside it (`creation`).
  */
-import { TABLES, BP_NUYEN_TIERS, SHAPESHIFTER_PRIORITIES, humanFormMod, shapeshifterOf, qualityAudit, qualityEffects, bonusAttributeCost, attributeEdgeViolations, qualityRule, bodyIndexTotal, overstressPenalty, wareRule, placementFacts, racialProfile, metavariantFrom, isMetavariantItem, ONI_SOURCE, chargenBudget, damageUpdateFor, surgeryCategory, surgeryEssencePct, surgeonTN, karmaTransition, advancementOptions, saleQuoteOf, streetPrice, ratedStreetIndex, startingMoney, startingKarmaPool, adeptPowerBudget, label, skillTiersFromAllocation, validateSkillAllocation } from "./rules.mjs";
-import { defaultChoices, checkChoices, offerReason, RATING_UP_TO_BODY, project, price, eyeRow, essenceOf, isCybereye, powerKeyOf, sensesOf, limbTypeOf, optionKindOf, pricedItems, limbModelOf } from "./purchase.mjs";
+import { TABLES, BP_NUYEN_TIERS, SHAPESHIFTER_PRIORITIES, humanFormMod, shapeshifterOf, qualityAudit, qualityEffects, bonusAttributeCost, attributeEdgeViolations, qualityRule, overstressPenalty, wareRule, placementFacts, racialProfile, metavariantFrom, isMetavariantItem, ONI_SOURCE, chargenBudget, damageUpdateFor, surgeryCategory, surgeryEssencePct, surgeonTN, karmaTransition, advancementOptions, saleQuoteOf, streetPrice, ratedStreetIndex, startingMoney, startingKarmaPool, adeptPowerBudget, label, skillTiersFromAllocation, validateSkillAllocation } from "./rules.mjs";
+import { defaultChoices, checkChoices, offerReason, RATING_UP_TO_BODY, project, price, eyeRow, essenceOf, isCybereye, powerKeyOf, sensesOf, limbTypeOf, optionKindOf, pricedItems, limbModelOf, bodyIndexOfItems } from "./purchase.mjs";
 import { derive } from "./derive.mjs";
 
 export const SCHEMA = "sr2e-chargen-character", SCHEMA_VERSION = 1;
@@ -814,7 +814,9 @@ export const metatypeAllowed = (letter, race, moreMetahumans) =>
  * `wareRule` as Foundry reads it (an implant with no rule key isn't counted there either).
  */
 const REFLEX = /^(wired-reflexes|boosted-reflexes|reaction-enhancer|synaptic-accelerator|adrenal-pump|suprathyroid)(:|$)/;
-function wareWarnings(items, add) {
+/** The SSC's Boosted Reflexes: Foundry gives them no rule key (by source; PLAN-M5k Draft 2). */
+const SSC_BOOSTED = new Set(["d80c870280d415b7", "f0e85c37c0ed59eb", "fb6236aac8123518"].map(id => `Compendium.sr2e-street-samurai-catalog.ssc-cyberware.Item.${id}`));
+function wareWarnings(items, add, creation = false) {
   const ware = items.filter(i => (i.type === "cyberware" || i.type === "bioware") && i.system.installed !== false && !(i.type === "cyberware" && i.system.secondhandFailed))
     .map(i => ({ i, rule: wareRule(i.flags, i._stats?.compendiumSource ?? null) ?? "" }));
   const mbw = ware.filter(w => w.i.type === "cyberware" && /^move-by-wire:/.test(w.rule));
@@ -825,6 +827,14 @@ function wareWarnings(items, add) {
     add("resources", "warning", stop ? `${i.name}: doesn't work with move-by-wire.`
       : rule === "synaptic-accelerator" && (i.system.rating ?? 1) <= 1 ? `${i.name}: Level 1 combines with move-by-wire only at triple cost, implanted together.`
       : `${i.name}: not compatible with move-by-wire; still counted, the GM's call.`, stop || rule === "synaptic-accelerator" ? 56 : 39, "ct");
+  }
+  // The synaptic accelerator (PLAN-M5k Draft 2, RAW): incompatible with boosted or wired reflexes (Shadowtech p.28);
+  // with move-by-wire only at Level 1, at triple cost (priced so), implanted together (Cybertechnology p.57).
+  const sev = creation ? "error" : "warning";
+  for (const { i } of ware.filter(w => w.i.type === "bioware" && w.rule === "synaptic-accelerator")) {
+    const reflex = ware.find(w => w.i.type === "cyberware" && (/^(wired-reflexes|boosted-reflexes)(:|$)/.test(w.rule) || SSC_BOOSTED.has(w.i._stats?.compendiumSource)));
+    if (reflex) add("resources", sev, `${i.name} is incompatible with ${reflex.i.name} (Shadowtech p.28).`, 28, "st");
+    if (mbw.length && (Number(i.system.rating) || 1) > 1) add("resources", sev, `${i.name} Level ${i.system.rating} can't combine with move-by-wire: only Level 1, at triple cost (Cybertechnology p.57).`, 57, "ct");
   }
   const enh = ware.filter(w => w.i.type === "cyberware" && w.rule === "reaction-enhancer").reduce((t, w) => t + (Number(w.i.system.attributeMods?.reaction) || 0), 0);
   if (enh > 6) add("resources", "warning", `Reaction Enhancers give +${enh}: +6 at most counts for a player character (+${enh - 6} lost).`, 38, "ct");
@@ -848,7 +858,7 @@ function limbChecks(actor, add, creation) {
   for (const c of d.limbs.caps) add("resources", "warning", `The limbs' average ${c.attr} ${c.was} is over its limit: ${c.cap} counts.`, 51, "ct");
 }
 /** The bioware Body Index (Shadowtech p.6), unrounded as Foundry keeps it; the Awakened lose it in Essence too. */
-export const bodyIndexOf = (items) => bodyIndexTotal(items.filter(i => i.type === "bioware").map(i => ({ installed: i.system.installed !== false, bodyCost: i.system.bodyCost, grade: i.system.grade, bodySystem: i.system.bodySystem })));
+export const bodyIndexOf = (items) => bodyIndexOfItems(items);   // the muscle discount and culturing per item (PLAN-M5k)
 /** The value an attribute has after racial modifiers (p.45: applied after allocation). */
 export const withRacial = (sys, attr, items = []) => (Number(sys[attr]?.base) || 0) + (racialProfile(sys, TABLES).mods[attr] ?? 0) + edgeBonus(items, attr);
 /** The attribute Edges (Companion p.24; PLAN-M5d): Bonus Attribute Point raises the natural rating, Exceptional Attribute the maximum. */
@@ -927,7 +937,7 @@ export function validate(body) {
   const essence = Math.round((6 - items.filter(i => i.type === "cyberware").reduce((t, i) => t + essenceOf(i, items, sys.race), 0) - (mtype !== "none" ? bodyIndex : 0)) * 1000) / 1000;
   const magic = mtype === "none" ? 0 : Math.max(0, Math.min(6, Math.floor(essence + 1e-9)));
   if (essence < 0) add("resources", "error", `Essence is ${essence}: cyberware can't take it below 0.`, 46);
-  wareWarnings(items, add);
+  wareWarnings(items, add, true);
   limbChecks(body.actor, add, true);
   // Cyberware grades (SSC p.98; PLAN-M5f): the book on; an accessory inside an eye takes the eye's grade.
   for (const [id, r] of Object.entries(body.creation.items)) {

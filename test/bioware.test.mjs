@@ -23,10 +23,11 @@ const buy = (b, name, choices) => {
   return choices ? run(b, [{ op: "setItem", itemId: rec(b, name), choices: { ...b.creation.items[rec(b, name)].choices, ...choices } }]) : b;
 };
 
-test("the gate: plain bioware offered; rule-bearing, triggered, armored and choice-needing implants wait", () => {
+test("the gate: plain and rule-bearing bioware offered (M5k); the choice-needing implants wait", () => {
   assert.equal(offerReason(bio("Tailored Pheromones"), ["st"]), null);
-  for (const n of ["Adrenal Pump", "Pain Editor", "Damage Compensator", "Enhanced Articulation", "Orthoskin", "Muscle Augmentation", "Reflex Recorder (General)", "Toxin Exhaler"])
-    assert.match(offerReason(bio(n), ["st"]) ?? "", /own rules/, n);
+  for (const n of ["Adrenal Pump", "Pain Editor", "Damage Compensator", "Enhanced Articulation", "Orthoskin", "Muscle Augmentation", "Synaptic Accelerator", "Suprathyroid Gland", "Cerebral Booster"])
+    assert.equal(offerReason(bio(n), ["st"]), null, n);
+  for (const n of ["Reflex Recorder (General)", "Toxin Exhaler"]) assert.match(offerReason(bio(n), ["st"]) ?? "", /own rules/, n);
   assert.match(offerReason(bio("Tailored Pheromones"), []) ?? "", /isn't turned on/);
 });
 
@@ -52,4 +53,44 @@ test("neural bioware has no grade choice; the Body Index over Body warns; rated-
   b = run(buy(b, "Synthacardium", { rating: 2 }), [{ op: "setAttribute", attr: "body", base: 1 }]);
   const w = validate(b).problems.find(p => /overstress/.test(p.text));
   assert.ok(w && w.severity === "warning" && w.cite.book === "st", JSON.stringify(validate(b).problems.filter(p => p.step === "resources")));
+});
+
+test("M5k: the synaptic accelerator — not with wired or boosted reflexes (ST p.28), with move-by-wire only at Level 1 and triple cost (CT p.57)", async () => {
+  const { price, project, pricedItems } = await import("../shared/purchase.mjs");
+  const cy = (book, name) => catalog.entries.find(x => x.type === "cyberware" && x.book === book && x.name === name).id;
+  const errs = (b) => validate(b).problems.filter(p => p.severity === "error").map(p => p.text);
+  let b = run(newCharacter("Fast"), [{ op: "setBooks", books: ["st", "ssc", "ct"] }, { op: "addItem", catalogId: bio("Synaptic Accelerator").id }, { op: "addItem", catalogId: cy("ssc", "Boosted Reflexes 1") }]);
+  assert.ok(errs(b).some(t => /Synaptic Accelerator is incompatible with Boosted Reflexes 1/.test(t)), errs(b).join(" | "));
+  b = run(newCharacter("Wire"), [{ op: "setBooks", books: ["st", "ct"] }, { op: "addItem", catalogId: bio("Synaptic Accelerator").id }, { op: "addItem", catalogId: cy("ct", "Move-by-Wire System (Level 1)") }]);
+  const sa = rec(b, "Synaptic Accelerator"), r = b.creation.items[sa];
+  assert.equal(price(r, project(r, r.choices), b.actor.items), 3 * 75000);
+  assert.equal(pricedItems(b.actor.items).find(i => i._id === sa).system.ratingStats[0].cost, 3 * 75000);
+  assert.ok(!errs(b).some(t => /move-by-wire/.test(t)));
+  b = run(b, [{ op: "setItem", itemId: sa, choices: { ...r.choices, rating: 2 } }]);
+  assert.ok(errs(b).some(t => /Level 2 can't combine with move-by-wire/.test(t)));
+});
+
+test("M5k: Muscle Augmentation beside two full cyberarms — Body Cost and price × .6, as Foundry's budget input", () => {
+  const cy = (name) => catalog.entries.find(x => x.type === "cyberware" && x.book === "ct" && x.name === name).id;
+  let b = run(newCharacter("Arms"), [{ op: "setBooks", books: ["st", "ct"] }, { op: "addItem", catalogId: cy("Cyberarm") }, { op: "addItem", catalogId: cy("Cyberarm") }, { op: "addItem", catalogId: bio("Muscle Augmentation").id }]);
+  const [l, r] = Object.keys(b.creation.items).filter(k => b.creation.items[k].name === "Cyberarm");
+  b = run(b, [{ op: "setItem", itemId: l, choices: { ...b.creation.items[l].choices, side: "left" } }, { op: "setItem", itemId: r, choices: { ...b.creation.items[r].choices, side: "right" } }]);
+  const it = item(b, "Muscle Augmentation"), n = b.actor.items.indexOf(it);
+  assert.equal(chargenItemCost(priceInput(it, b.actor.items)), chargenItemCost(budgetItemInput(it, b.actor.items.map(i => ({ ...i, id: i._id, _source: { system: i.system } })), n)));
+  assert.equal(chargenItemCost(priceInput(it, b.actor.items)), 27000);
+  assert.equal(derive({ actor: b.actor }).bodyIndex.value, 0.48);
+});
+
+test("M5k code review r1: the sheet's Body Cost has the muscle discount; the Markdown pools carry the Task Pool and skill dice; the Injury line follows the compensator and pain editor", async () => {
+  const { sheetModel } = await import("../server/sheet/model.mjs");
+  const { injuryPenalty } = await import("../shared/derive.mjs");
+  const cy = (name) => catalog.entries.find(x => x.type === "cyberware" && x.book === "ct" && x.name === name).id;
+  let b = run(newCharacter("Arms"), [{ op: "setBooks", books: ["st", "ct"] }, { op: "addItem", catalogId: cy("Cyberarm") }, { op: "addItem", catalogId: cy("Cyberarm") }, { op: "addItem", catalogId: bio("Muscle Augmentation").id }, { op: "addItem", catalogId: bio("Enhanced Articulation").id }]);
+  const [l, r] = Object.keys(b.creation.items).filter(k => b.creation.items[k].name === "Cyberarm");
+  b = run(b, [{ op: "setItem", itemId: l, choices: { ...b.creation.items[l].choices, side: "left" } }, { op: "setItem", itemId: r, choices: { ...b.creation.items[r].choices, side: "right" } }]);
+  const m = sheetModel(b);
+  assert.ok(m.bioware.some(row => row[0] === "Muscle Augmentation" && /BC 0\.48/.test(row[2])), JSON.stringify(m.bioware));
+  assert.ok(m.pools.some(([k, v]) => k === "Active skill dice" && v === "+1"));
+  const actor = { system: { conditionMonitor: { physical: { value: 2 }, stun: { value: 0 } } }, items: [{ type: "bioware", system: { damageCompensator: true, rating: 2, installed: true } }] };
+  assert.equal(injuryPenalty(actor), 0, "a Rating 2 compensator hides 2 Physical boxes (Shadowtech p.24)");
 });

@@ -171,3 +171,10 @@ bonding (p.46, p.137), refusals.
 - A Cyber Forearm on the same side as a Cyberarm: an overlap error. Remove the arm: the option's "its limb is gone".
 - A troll with a core Cyberarm (Full) and Increased Strength 2: Essence 0.8 for the option (p.51).
 - `test/fixtures/parity/limbs-v0.161.0.json` is Foundry's prepared values; regenerate it when the pin moves.
+
+## Bioware with its own rules (M5k)
+- With Shadowtech on, buy a Synaptic Accelerator 2: Initiative +2D6. Add Wired Reflexes: an error (Shadowtech p.28).
+- Synaptic Accelerator 1 with Move-by-Wire 1: priced ×3; Level 2 with move-by-wire: an error (Cybertechnology p.57).
+- Muscle Augmentation beside two full cyberarms: Body Cost and price × .6.
+- Orthoskin 2 with an Armor Vest: armor adds. Enhanced Articulation beside three cyber limb positions: no Reaction bonus.
+- `test/fixtures/parity/bioware-v0.161.0.json` is Foundry's prepared values; regenerate it when the pin moves.

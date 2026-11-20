@@ -4,7 +4,7 @@
  * operation, so no price or rule field is ever stored as typed. Prices and Essence come from the system's own pure
  * functions (shared/rules.mjs), called with the same inputs Foundry's creation panel gives them.
  */
-import { chargenItemCost, weaponFocusCost, adeptPowerKey, ratedRow, wareCtx, eyeAccessoryKind, rowsListValue, wareEssence, muscleFactor, QUALITY_VALUES, qualityRule, wareRule, limbRole, resolveLimbType, resolveOptionKind, SIDED, limbOptionPrice, limbModel, limbStats, limbEssence, forLimbRules } from "./rules.mjs";
+import { chargenItemCost, weaponFocusCost, adeptPowerKey, ratedRow, wareCtx, eyeAccessoryKind, rowsListValue, wareEssence, muscleFactor, QUALITY_VALUES, qualityRule, wareRule, limbRole, resolveLimbType, resolveOptionKind, SIDED, limbOptionPrice, limbModel, limbStats, limbEssence, forLimbRules, effectiveBodyCost, ceil2 } from "./rules.mjs";
 
 export const BUYABLE = ["weapon", "armor", "gear", "ammo", "cyberware", "bioware", "spell", "focus", "adept_power", "program", "contact", "lifestyle"];
 const STRING_MAX = 60;
@@ -158,9 +158,25 @@ export function limbPriceCtx(item, items) {
   const limb = item.system.linkedLimbId ? items.find(i => i._id === item.system.linkedLimbId && i.type === "cyberware") : null;
   return { limbOptionKind: optionKindOf(item), limbType: limb ? limbTypeOf(limb) : null };
 }
+/**
+ * A Level 1 synaptic accelerator beside move-by-wire costs triple (Cybertechnology p.57: at creation both go in together;
+ * Level 2 can't combine — validate). Foundry warns but doesn't price it: RULINGS R13 (PLAN-M5k Draft 2).
+ */
+export const synapticTriple = (item, items) => item.type === "bioware" && wareRule(item.flags, item._stats?.compendiumSource ?? null) === "synaptic-accelerator"
+  && (Number(item.system.rating) || 1) <= 1 && items.some(i => i.type === "cyberware" && i.system.installed !== false && /^move-by-wire:/.test(wareRule(i.flags, i._stats?.compendiumSource ?? null) ?? ""));
+/** One bioware item's Body Cost as Foundry's `actualBodyCost`: the muscle discount beside full cyberlimbs, then culturing. */
+export function bodyCostOf(item, items) {
+  const s = item.system, n = ctxOf(items, item).fullCyberlimbs ?? 0;
+  const bc = n > 0 ? ceil2((Number(s.bodyCost) || 0) * muscleFactor(n)) : s.bodyCost;
+  return effectiveBodyCost(bc, s.grade, s.bodySystem);
+}
+/** The bioware Body Index (Shadowtech p.6), unrounded as Foundry keeps it (M5k r1 #2: one Body Cost everywhere). */
+export const bodyIndexOfItems = (items) => items.filter(i => i.type === "bioware" && i.system.installed !== false).reduce((t, i) => t + bodyCostOf(i, items), 0);
 /** The items as Foundry's preparation prices them: limb options at their placement price (Draft 2, r1 #4, r2 #1). */
 export const pricedItems = (items) => items.map(i => i.type === "cyberware" && i.system?.limbOption
-  ? { ...i, system: { ...i.system, cost: limbOptionCostOf(i, items) } } : i);
+  ? { ...i, system: { ...i.system, cost: limbOptionCostOf(i, items) } }
+  : synapticTriple(i, items) ? { ...i, system: { ...i.system, cost: 3 * (Number(i.system.cost) || 0), ratingStats: (i.system.ratingStats ?? []).map(r => ({ ...r, cost: 3 * (Number(r.cost) || 0) })) } }
+  : i);
 
 /** The types that must have a list price (contacts are priced as extras, the Streets lifestyle is free; M2d r1 #3). */
 const FIXED_PRICE = ["weapon", "armor", "gear", "ammo", "cyberware", "program", "focus"];
@@ -195,6 +211,8 @@ const CYBER_WAITS = new Set(["Compendium.sr2e-cybertechnology.ct-bodyware.Item.9
 export const WARE_RULES_OFFERED = new Set(["wired-reflexes", "boosted-reflexes", "reaction-enhancer", "move-by-wire", "reflex-trigger",
   "muscle-replacement", "dermal-plating", "dermal-sheath", "body-plating", "body-plating-hardened",
   "datajack", "improved-datajack", "comm-headware", "cyberear", "cranial-bomb", "designator-laser"]);
+/** Bioware rules derive computes at creation (docs/PLAN-M5k.md; Shadowtech, Cybertechnology p.56–57). */
+export const BIOWARE_RULES_OFFERED = new Set(["adrenal-pump", "suprathyroid", "synaptic-accelerator", "muscle-augmentation", "enhanced-articulation", "cerebral-booster", "orthoskin"]);
 export const RATING_UP_TO_BODY = new Set([ST("40958403d94eeef2"), ST("64b5f0dc8dc701c3"), ST("f3dc18a732f084d2")]);
 export const bookOf = (entry) => entry.book ?? entry.listBook ?? null;
 export function offerReason(entry, books = [], { inPlay = false } = {}) {
@@ -208,9 +226,9 @@ export function offerReason(entry, books = [], { inPlay = false } = {}) {
   if (entry.type === "bioware") {   // Shadowtech (PLAN-M5e): only the bioware whose numbers the app computes as Foundry does
     if (!books.includes(book)) return "That sourcebook isn't turned on for this character.";
     if (inPlay) return "Bioware goes in by surgery: buy it at creation for now.";
-    const s = entry.system ?? {};
-    if (wareRule(entry.flags, entry._stats?.compendiumSource ?? null) || s.triggered || s.damageCompensator || s.ignoresStunPenalty || s.activeSkillDice
-      || s.armorBallistic || s.armorImpact || (s.ratingStats ?? []).some(r => r.armorBallistic || r.armorImpact) || BIOWARE_WAITS.has(entry._stats?.compendiumSource))
+    // PLAN-M5k: the bioware rules derive computes as Foundry does (an allow list); two still wait for their choice.
+    const rule = wareRule(entry.flags, entry._stats?.compendiumSource ?? null);
+    if ((rule && !BIOWARE_RULES_OFFERED.has(rule)) || BIOWARE_WAITS.has(entry._stats?.compendiumSource))
       return "This bioware has its own rules the app doesn't compute yet.";
     return refusalFor(entry);
   }
@@ -334,14 +352,14 @@ const ctxOf = (items, item) => wareCtx(asDocs(items), { ...item, id: item._id, _
 export function priceInput(item, items) {
   return { ...item.system, type: item.type, name: item.name, acquiredListValue: item.flags?.sr2e?.acquiredListValue,
     moduleListValue: rowsListValue(item.system.modules ?? []),
-    ...(item.type === "cyberware" ? ctxOf(items, item) : {}) };
+    ...(item.type === "cyberware" || item.type === "bioware" ? ctxOf(items, item) : {}) };   // bioware too, as budgetItemInput (M5k r1 #1)
 }
 /** One item's list price. */
 export function price(rec, projected, items) {
   const item = { _id: rec.id ?? "", type: rec.type, name: rec.name, system: projected.system, flags: projected.flags, _stats: { compendiumSource: rec.source } };
   const all = [...items.filter(x => x._id !== item._id || !item._id), item];
   // A limb option: itemBaseCost's own limbOptionPrice branch, given its kind and the linked limb's type (r2 #1, code r1 #1).
-  return chargenItemCost(priceInput(item, all), limbPriceCtx(item, all));   // the system's own: ammo by its bundle value, the rest list × quantity + eye rows
+  return chargenItemCost(priceInput(item, all), limbPriceCtx(item, all)) * (synapticTriple(item, all) ? 3 : 1);   // the system's own: ammo by its bundle value, the rest list × quantity + eye rows
 }
 
 /** An eye accessory's row inside its cybereye, in the system's own shape (core p.247). */

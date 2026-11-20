@@ -6,6 +6,13 @@ notes come from it.
 ## Unreleased
 
 ### Added
+- **Bioware with its own rules** (docs/PLAN-M5k.md): the Synaptic Accelerator, Muscle Augmentation, Orthoskin, the
+  Suprathyroid Gland, the Adrenal Pump, Enhanced Articulation, the Cerebral Booster, the Damage Compensator and the
+  Pain Editor. Cyberware cuts a pump's or suprathyroid's bonus (Cybertechnology p.56–57), muscle augmentation beside
+  full cyberlimbs costs less Body and nuyen, Enhanced Articulation's Reaction is lost to cyberlimbs, Orthoskin adds
+  armor, and the sheet shows the Rigger 2 Task Pool and the articulation skill die — as Foundry computes them (a
+  parity fixture). The synaptic accelerator follows the books (RULINGS R13). Still waiting: the Reflex Recorder and
+  the Toxin Exhaler (their choices).
 - **Cyberlimbs** (docs/PLAN-M5j.md): cyberarms, cyberlegs, forearms, lower legs, hands, feet, the cybertorso and
   cyberskull (core and Cybertechnology), each with its side; and their Strength, Quickness and Body enhancements, the
   core Increased Strength (rated), built-in smartlinks, coverings, the External Mount, the Magnetic System and the

@@ -1,0 +1,23 @@
+# Plan review log: M5k
+
+## Round 1 — Codex (gpt-6-sol, high)
+1. **Muscle Augmentation pricing is not already wired.** [The plan](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/docs/PLAN-M5k.md:22) says its price uses `wareCtx`, but [the app’s `priceInput`](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/shared/purchase.mjs:334) adds that context only for cyberware. Foundry’s `budgetItemInput` adds it for bioware too. **Fix:** Pass `wareCtx` for bioware and compare the discounted list price with Foundry’s budget input.
+
+2. **The Body Index change needs three consumers.** Foundry sets the muscle discount before reading `actualBodyCost`, which applies `ceil2(bodyCost × muscleFactor(n))` *before* culturing. [App derivation](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/shared/derive.mjs:93), [creation validation](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/shared/creation.mjs:851), and [the displayed item cost](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/client/src/pages/Character.svelte:97) currently use undiscounted Body Cost. That also affects an awakened character’s Essence and overstress warning. **Fix:** Use one per-item effective Body Cost calculation in all three paths, and test cultured Muscle Augmentation with full cyberlimbs.
+
+3. **The Cerebral Booster claim omits a prepared value.** Under Rigger 2, Foundry gives a Level 2 Cerebral Booster **one Task Pool die**; [the plan](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/docs/PLAN-M5k.md:28) and its Level 1 fixture leave that value untested. Excluding the pool conflicts with the stated prepared-value parity goal. **Fix:** Derive and compare the Rigger 2 Task Pool using a Level 2 fixture.
+
+4. **Two cyberarms do not by themselves suppress Enhanced Articulation.** Foundry removes its Reaction only when limb averaging actually raises the Reaction base, or when more than two *known* limb positions contain cyber parts. The [“lost: limbs” fixture](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/docs/PLAN-M5k.md:38) specifies only two positions and no demonstrated Reaction gain. Foundry makes this decision *after* limb averaging. **Fix:** Assert the before/after Reaction bases and add separate fixtures for a gain with two positions, loss with three, and retention with two that give no gain.
+
+5. **The proposed parity comparison misses the new behavior.** [“Compared as M5j”](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/docs/PLAN-M5k.md:41) omits Foundry’s `activeSkillDice` for Enhanced Articulation and per-item price; the listed cases also never exercise a partial-limb efficiency, Suprathyroid with move-by-wire, or Orthoskin stacked with worn armor. The named bioware fixture does not yet exist, so it proves nothing today. **Fix:** Compare those prepared fields and costs against Foundry, with fixtures that exercise each branch.
+
+6. **The Synaptic Accelerator warning is insufficient for book-rule creation.** Cybertechnology allows its Level 1 combination with move-by-wire only at **triple cost and simultaneous implantation**; Level 2 cannot combine. Shadowtech also lists it as incompatible with boosted or wired reflexes. [Current validation](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/shared/creation.mjs:816) only warns about move-by-wire, while [the plan](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/docs/PLAN-M5k.md:31) accepts that warning as complete. **Fix:** Enforce the Level 1 price and combination conditions, and validate the other incompatible pairings.
+
+7. **“Major only” for Suprathyroid is a Foundry ruling, not the book’s stated formula.** Foundry documents that choice as a user ruling while `pumpEfficiency(..., {major: true})` implements it. **Fix:** Label it explicitly as the system ruling in [the plan](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/docs/PLAN-M5k.md:18) and test both a partial limb and a full limb against Foundry.
+
+VERDICT: REVISE
+## Round 2 — Codex (gpt-6-sol, high)
+**Material gap — Task Pool:** Draft 2 hardcodes `encephalon: 0` in [PLAN-M5k.md](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-chargen/docs/PLAN-M5k.md:57). The app can offer the core Encephalon, while [Foundry adds its Task Pool dice to the Cerebral Booster’s](/Users/jcandalino/Code/foundryvtt/shadowrun/sr2e-foundryvtt/module/data/actor-data.mjs:1645). A Level 2 Encephalon plus Level 2 Booster would produce 2 dice in Foundry and 1 under the plan. Derive the working Encephalon level and add a combined fixture.
+
+VERDICT: REVISE
+Responses: Draft 2 and the round-2 line in docs/PLAN-M5k.md.

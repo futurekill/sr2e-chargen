@@ -1,0 +1,2124 @@
+{
+ "$comment": "Foundry PREPARED values for six characters with rule-bearing bioware (docs/PLAN-M5k.md, Proof), exported 2026-11-19 from the local test world on release/0.161.0 (pinned locally as v0.160.99). Sources BUILT by the app (ops), books ct+ssc+st. Item cost = the prepared row cost (before grade). (a) was prepared under vehicleRuleset rigger2 (Task Pool). Regenerate when the pin moves.",
+ "version": "0.161.0",
+ "actors": [
+  {
+   "ruleset": "rigger2",
+   "name": "Bio a",
+   "attributes": {
+    "body": 5,
+    "quickness": 6,
+    "strength": 6,
+    "charisma": 3,
+    "intelligence": 7,
+    "willpower": 4
+   },
+   "reaction": 6,
+   "initiativeDice": 3,
+   "essence": 4.5,
+   "bodyIndex": 4.6,
+   "pools": {
+    "combat": 8,
+    "magic": 0,
+    "astral": 0,
+    "control": 0,
+    "hacking": 0,
+    "task": 2
+   },
+   "armor": {
+    "ballistic": 3,
+    "impact": 2
+   },
+   "activeSkillDice": 0,
+   "articulation": null,
+   "items": {
+    "cg00000000000001": {
+     "bodyCost": 1.6,
+     "cost": 200000
+    },
+    "cg00000000000002": {
+     "bodyCost": 1.2,
+     "cost": 90000
+    },
+    "cg00000000000003": {
+     "bodyCost": 1,
+     "cost": 60000
+    },
+    "cg00000000000004": {
+     "bodyCost": 0.8,
+     "cost": 110000
+    }
+   },
+   "source": {
+    "name": "Bio a",
+    "type": "character",
+    "system": {
+     "race": "human",
+     "magic": {
+      "type": "none",
+      "tradition": "none",
+      "totem": ""
+     },
+     "body": {
+      "base": 5
+     },
+     "quickness": {
+      "base": 4
+     },
+     "strength": {
+      "base": 4
+     },
+     "charisma": {
+      "base": 3
+     },
+     "intelligence": {
+      "base": 5
+     },
+     "willpower": {
+      "base": 4
+     },
+     "lifestyle": "streets",
+     "chargen": {
+      "inProgress": false,
+      "priorityMethod": "standard",
+      "priorities": {
+       "race": "",
+       "magic": "",
+       "attributes": "",
+       "skills": "",
+       "resources": ""
+      }
+     }
+    },
+    "items": [
+     {
+      "_id": "cg00000000000001",
+      "name": "Synaptic Accelerator",
+      "type": "bioware",
+      "img": "modules/sr2e-shadowtech/assets/item_icons/bioware/synaptic-accelerator.webp",
+      "system": {
+       "bodySystem": "neural",
+       "grade": "standard",
+       "bodyCost": 1.6,
+       "rating": 2,
+       "cost": 200000,
+       "availability": "6/12 days",
+       "streetIndex": "2",
+       "legality": "5P-BB",
+       "installed": true,
+       "triggered": false,
+       "active": false,
+       "ratingStats": [
+        {
+         "rating": 1,
+         "bodyCost": 0.3,
+         "cost": 75000,
+         "availability": "6/12 days",
+         "streetIndex": "2",
+         "armorBallistic": 0,
+         "armorImpact": 0
+        },
+        {
+         "rating": 2,
+         "bodyCost": 1.6,
+         "cost": 200000,
+         "availability": "6/12 days",
+         "streetIndex": "2",
+         "armorBallistic": 0,
+         "armorImpact": 0
+        }
+       ],
+       "armorBallistic": 0,
+       "armorImpact": 0,
+       "attributeMods": {
+        "body": 0,
+        "quickness": 0,
+        "strength": 0,
+        "charisma": 0,
+        "intelligence": 0,
+        "willpower": 0,
+        "reaction": 0,
+        "initiativeDice": 1
+       },
+       "noReactionBonus": false,
+       "activeSkillDice": 0,
+       "damageCompensator": false,
+       "ignoresStunPenalty": false,
+       "citation": {
+        "book": "st",
+        "page": "28"
+       }
+      },
+      "flags": {},
+      "effects": [],
+      "_stats": {
+       "compendiumSource": "Compendium.sr2e-shadowtech.st-bioware.Item.abf83fc461cdb66a"
+      }
+     },
+     {
+      "_id": "cg00000000000002",
+      "name": "Muscle Augmentation",
+      "type": "bioware",
+      "img": "modules/sr2e-shadowtech/assets/item_icons/bioware/muscle-augmentation.webp",
+      "system": {
+       "bodySystem": "structural",
+       "grade": "cultured",
+       "bodyCost": 1.6,
+       "rating": 2,
+       "cost": 90000,
+       "availability": "6/6 days",
+       "streetIndex": ".9",
+       "legality": "4P-BC/D",
+       "installed": true,
+       "triggered": false,
+       "active": false,
+       "ratingStats": [
+        {
+         "rating": 1,
+         "bodyCost": 0.8,
+         "cost": 45000,
+         "availability": "6/6 days",
+         "streetIndex": ".9",
+         "armorBallistic": 0,
+         "armorImpact": 0
+        },
+        {
+         "rating": 2,
+         "bodyCost": 1.6,
+         "cost": 90000,
+         "availability": "6/6 days",
+         "streetIndex": ".9",
+         "armorBallistic": 0,
+         "armorImpact": 0
+        },
+        {
+         "rating": 3,
+         "bodyCost": 2.4,
+         "cost": 135000,
+         "availability": "6/6 days",
+         "streetIndex": ".9",
+         "armorBallistic": 0,
+         "armorImpact": 0
+        },
+        {
+         "rating": 4,
+         "bodyCost": 3.2,
+         "cost": 180000,
+         "availability": "6/6 days",
+         "streetIndex": ".9",
+         "armorBallistic": 0,
+         "armorImpact": 0
+        }
+       ],
+       "armorBallistic": 0,
+       "armorImpact": 0,
+       "attributeMods": {
+        "body": 0,
+        "quickness": 1,
+        "strength": 1,
+        "charisma": 0,
+        "intelligence": 0,
+        "willpower": 0,
+        "reaction": 0,
+        "initiativeDice": 0
+       },
+       "noReactionBonus": false,
+       "activeSkillDice": 0,
+       "damageCompensator": false,
+       "ignoresStunPenalty": false,
+       "citation": {
+        "book": "st",
+        "page": "35"
+       }
+      },
+      "flags": {},
+      "effects": [],
+      "_stats": {
+       "compendiumSource": "Compendium.sr2e-shadowtech.st-bioware.Item.f29c412ec9f800eb"
+      }
+     },
+     {
+      "_id": "cg00000000000003",
+      "name": "Orthoskin",
+      "type": "bioware",
+      "img": "modules/sr2e-shadowtech/assets/item_icons/bioware/orthoskin.webp",
+      "system": {
+       "bodySystem": "dermal",
+       "grade": "standard",
+       "bodyCost": 1,
+       "rating": 2,
+       "cost": 60000,
+       "availability": "8/8 days",
+       "streetIndex": ".8",
+       "legality": "SP-BA",
+       "installed": true,
+       "triggered": false,
+       "active": false,
+       "ratingStats": [
+        {
+         "rating": 1,
+         "bodyCost": 0.5,
+         "cost": 25000,
+         "availability": "8/8 days",
+         "streetIndex": ".8",
+         "armorBallistic": 0,
+         "armorImpact": 1
+        },
+        {
+         "rating": 2,
+         "bodyCost": 1,
+         "cost": 60000,
+         "availability": "8/8 days",
+         "streetIndex": ".8",
+         "armorBallistic": 1,
+         "armorImpact": 1
+        },
+        {
+         "rating": 3,
+         "bodyCost": 1.5,
+         "cost": 100000,
+         "availability": "8/8 days",
+         "streetIndex": ".8",
+         "armorBallistic": 1,
+         "armorImpact": 2
+        }
+       ],
+       "armorBallistic": 1,
+       "armorImpact": 1,
+       "attributeMods": {
+        "body": 0,
+        "quickness": 0,
+        "strength": 0,
+        "charisma": 0,
+        "intelligence": 0,
+        "willpower": 0,
+        "reaction": 0,
+        "initiativeDice": 0
+       },
+       "noReactionBonus": false,
+       "activeSkillDice": 0,
+       "damageCompensator": false,
+       "ignoresStunPenalty": false,
+       "citation": {
+        "book": "st",
+        "page": "17"
+       }
+      },
+      "flags": {},
+      "effects": [],
+      "_stats": {
+       "compendiumSource": "Compendium.sr2e-shadowtech.st-bioware.Item.f59178e795823c16"
+      }
+     },
+     {
+      "_id": "cg00000000000004",
+      "name": "Cerebral Booster",
+      "type": "bioware",
+      "img": "modules/sr2e-shadowtech/assets/item_icons/bioware/cerebral-booster.webp",
+      "system": {
+       "bodySystem": "neural",
+       "grade": "standard",
+       "bodyCost": 0.8,
+       "rating": 2,
+       "cost": 110000,
+       "availability": "6/14 days",
+       "streetIndex": "2",
+       "legality": "Legal",
+       "installed": true,
+       "triggered": false,
+       "active": false,
+       "ratingStats": [
+        {
+         "rating": 1,
+         "bodyCost": 0.4,
+         "cost": 50000,
+         "availability": "6/14 days",
+         "streetIndex": "2",
+         "armorBallistic": 0,
+         "armorImpact": 0
+        },
+        {
+         "rating": 2,
+         "bodyCost": 0.8,
+         "cost": 110000,
+         "availability": "6/14 days",
+         "streetIndex": "2",
+         "armorBallistic": 0,
+         "armorImpact": 0
+        }
+       ],
+       "armorBallistic": 0,
+       "armorImpact": 0,
+       "attributeMods": {
+        "body": 0,
+        "quickness": 0,
+        "strength": 0,
+        "charisma": 0,
+        "intelligence": 1,
+        "willpower": 0,
+        "reaction": 0,
+        "initiativeDice": 0
+       },
+       "noReactionBonus": false,
+       "activeSkillDice": 0,
+       "damageCompensator": false,
+       "ignoresStunPenalty": false,
+       "citation": {
+        "book": "st",
+        "page": "23"
+       }
+      },
+      "flags": {
+       "sr2e": {
+        "rule": "cerebral-booster"
+       }
+      },
+      "effects": [],
+      "_stats": {
+       "compendiumSource": "Compendium.sr2e-shadowtech.st-bioware.Item.bca4fdaee6a77912"
+      }
+     },
+     {
+      "_id": "cg00000000000005",
+      "name": "Encephalon",
+      "type": "cyberware",
+      "img": "systems/sr2e/assets/item_icons/cyberware/encephalon.webp",
+      "system": {
+       "grade": "standard",
+       "legality": "Restricted",
+       "installed": true,
+       "attributeMods": {
+        "body": 0,
+        "quickness": 0,
+        "strength": 0,
+        "charisma": 0,
+        "intelligence": 0,
+        "willpower": 0,
+        "reaction": 0,
+        "initiativeDice": 0
+       },
+       "location": "headware",
+       "essenceCost": 1.5,
+       "rating": 2,
+       "cost": 20000,
+       "availability": "8/7 days",
+       "streetIndex": "",
+       "ratingStats": [
+        {
+         "rating": 1,
+         "essenceCost": 1,
+         "cost": 20000,
+         "availability": "8/7 days",
+         "streetIndex": ""
+        },
+        {
+         "rating": 2,
+         "essenceCost": 1.5,
+         "cost": 50000,
+         "availability": "10/14 days",
+         "streetIndex": ""
+        }
+       ],
+       "citation": {
+        "book": "sr2",
+        "page": "248"
+       }
+      },
+      "flags": {},
+      "effects": [],
+      "_stats": {
+       "compendiumSource": "Compendium.sr2e.cyberware.Item.501ec03f28acd6d8"
+      }
+     },
+     {
+      "_id": "cg00000000000006",
+      "name": "Armor Vest",
+      "type": "armor",
+      "img": "systems/sr2e/assets/item_icons/armor/armor-vest.webp",
+      "system": {
+       "ballistic": 2,
+       "impact": 1,
+       "concealability": 12,
+       "weight": 0,
+       "cost": 200,
+       "availability": "2/36 hrs",
+       "legality": "Legal",
+       "equipped": true,
+       "isLayered": false,
+       "streetIndex": 0.8,
+       "citation": {
+        "book": "sr2",
+        "page": "242"
+       },
+       "quantity": 1
+      },
+      "flags": {},
+      "effects": [],
+      "_stats": {
+       "compendiumSource": "Compendium.sr2e.armor.Item.e60470cf68f666ea"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "ruleset": "core",
+   "name": "Bio b",
+   "attributes": {
+    "body": 6,
+    "quickness": 6,
+    "strength": 4,
+    "charisma": 3,
+    "intelligence": 5,
+    "willpower": 4
+   },
+   "reaction": 6,
+   "initiativeDice": 1,
+   "essence": 4,
+   "bodyIndex": 2.48,
+   "pools": {
+    "combat": 7,
+    "magic": 0,
+    "astral": 0,
+    "control": 0,
+    "hacking": 0,
+    "task": 0
+   },
+   "armor": {
+    "ballistic": 0,
+    "impact": 0
+   },
+   "activeSkillDice": 1,
+   "articulation": {
+    "lost": false,
+    "why": null,
+    "unknownSides": 0
+   },
+   "items": {
+    "cg00000000000005": {
+     "bodyCost": 0.48,
+     "cost": 45000
+    },
+    "cg00000000000006": {
+     "bodyCost": 1.4,
+     "cost": 50000
+    },
+    "cg00000000000007": {
+     "bodyCost": 0.6,
+     "cost": 40000
+    }
+   },
+   "source": {
+    "name": "Bio b",
+    "type": "character",
+    "system": {
+     "race": "human",
+     "magic": {
+      "type": "none",
+      "tradition": "none",
+      "totem": ""
+     },
+     "body": {
+      "base": 5
+     },
+     "quickness": {
+      "base": 4
+     },
+     "strength": {
+      "base": 4
+     },
+     "charisma": {
+      "base": 3
+     },
+     "intelligence": {
+      "base": 5
+     },
+     "willpower": {
+      "base": 4
+     },
+     "lifestyle": "streets",
+     "chargen": {
+      "inProgress": false,
+      "priorityMethod": "standard",
+      "priorities": {
+       "race": "",
+       "magic": "",
+       "attributes": "",
+       "skills": "",
+       "resources": ""
+      }
+     }
+    },
+    "items": [
+     {
+      "_id": "cg00000000000001",
+      "name": "Cyberarm",
+      "type": "cyberware",
+      "img": "modules/sr2e-cybertechnology/assets/item_icons/cyberware/cyberarm.webp",
+      "system": {
+       "location": "cyberlimb",
+       "grade": "standard",
+       "essenceCost": 1,
+       "rating": 1,
+       "cost": 100000,
+       "availability": "4/4 days",
+       "streetIndex": "1",
+       "legality": "Legal",
+       "installed": true,
+       "attributeMods": {
+        "body": 0,
+        "quickness": 0,
+        "strength": 0,
+        "charisma": 0,
+        "intelligence": 0,
+        "willpower": 0,
+        "reaction": 0,
+        "initiativeDice": 0
+       },
+       "ratingStats": [],
+       "capacity": 0,
+       "modules": [],
+       "citation": {
+        "book": "ct",
+        "page": "30"
+       },
+       "side": "left"
+      },
+      "flags": {
+       "sr2e": {
+        "source": {
+         "book": "Cybertechnology",
+         "code": "FASA7119",
+         "page": 98
+        },
+        "rule": "limb:arm"
+       }
+      },
+      "effects": [],
+      "_stats": {
+       "compendiumSource": "Compendium.sr2e-cybertechnology.ct-cyberlimbs.Item.7e6d3687835bf26c"
+      }
+     },
+     {
+      "_id": "cg00000000000002",
+      "name": "Cyberarm",
+      "type": "cyberware",
+      "img": "modules/sr2e-cybertechnology/assets/item_icons/cyberware/cyberarm.webp",
+      "system": {
+       "location": "cyberlimb",
+       "grade": "standard",
+       "essenceCost": 1,
+       "rating": 1,
+       "cost": 100000,
+       "availability": "4/4 days",
+       "streetIndex": "1",
+       "legality": "Legal",
+       "installed": true,
+       "attributeMods": {
+        "body": 0,
+        "quickness": 0,
+        "strength": 0,
+        "charisma": 0,
+        "intelligence": 0,
+        "willpower": 0,
+        "reaction": 0,
+        "initiativeDice": 0
+       },
+       "ratingStats": [],
+       "capacity": 0,
+       "modules": [],
+       "citation": {
+        "book": "ct",
+        "page": "30"
+       },
+       "side": "right"
+      },
+      "flags": {
+       "sr2e": {
+        "source": {
+         "book": "Cybertechnology",
+         "code": "FASA7119",
+         "page": 98
+        },
+        "rule": "limb:arm"
+       }
+      },
+      "effects": [],
+      "_stats": {
+       "compendiumSource": "Compendium.sr2e-cybertechnology.ct-cyberlimbs.Item.7e6d3687835bf26c"
+      }
+     },
+     {
+      "_id": "cg00000000000003",
+      "name": "Quickness Enhancement +2",
+      "type": "cyberware",
+      "img": "modules/sr2e-cybertechnology/assets/item_icons/cyberware/quickness-enhancement-2.webp",
+      "system": {
+       "location": "cyberlimb",
+       "grade": "standard",
+       "essenceCost": 0,
+       "rating": 2,
+       "cost": 180000,
+       "availability": "8/4 days",
+       "streetIndex": "1.5",
+       "legality": "6P-CB",
+       "installed": true,
+       "attributeMods": {
+        "body": 0,
+        "quickness": 0,
+        "strength": 0,
+        "charisma": 0,
+        "intelligence": 0,
+        "willpower": 0,
+        "reaction": 0,
+        "initiativeDice": 0
+       },
+       "ratingStats": [],
+       "capacity": 0,
+       "modules": [],
+       "limbOption": true,
+       "citation": {
+        "book": "ct",
+        "page": "31"
+       },
+       "linkedLimbId": "cg00000000000001",
+       "limbSurcharge": false,
+       "limbAdjacent": false
+      },
+      "flags": {
+       "sr2e": {
+        "source": {
+         "book": "Cybertechnology",
+         "code": "FASA7119",
+         "page": 98
+        },
+        "rule": "limb-enhancement:quickness"
+       }
+      },
+      "effects": [],
+      "_stats": {
+       "compendiumSource": "Compendium.sr2e-cybertechnology.ct-cyberlimbs.Item.65e3a84524791217"
+      }
+     },
+     {
+      "_id": "cg00000000000004",
+      "name": "Quickness Enhancement +2",
+      "type": "cyberware",
+      "img": "modules/sr2e-cybertechnology/assets/item_icons/cyberware/quickness-enhancement-2.webp",
+      "system": {
+       "location": "cyberlimb",
+       "grade": "standard",
+       "essenceCost": 0,
+       "rating": 2,
+       "cost": 180000,
+       "availability": "8/4 days",
+       "streetIndex": "1.5",
+       "legality": "6P-CB",
+       "installed": true,
+       "attributeMods": {
+        "body": 0,
+        "quickness": 0,
+        "strength": 0,
+        "charisma": 0,
+        "intelligence": 0,
+        "willpower": 0,
+        "reaction": 0,
+        "initiativeDice": 0
+       },
+       "ratingStats": [],
+       "capacity": 0,
+       "modules": [],
+       "limbOption": true,
+       "citation": {
+        "book": "ct",
+        "page": "31"
+       },
+       "linkedLimbId": "cg00000000000002",
+       "limbSurcharge": false,
+       "limbAdjacent": false
+      },
+      "flags": {
+       "sr2e": {
+        "source": {
+         "book": "Cybertechnology",
+         "code": "FASA7119",
+         "page": 98
+        },
+        "rule": "limb-enhancement:quickness"
+       }
+      },
+      "effects": [],
+      "_stats": {
+       "compendiumSource": "Compendium.sr2e-cybertechnology.ct-cyberlimbs.Item.65e3a84524791217"
+      }
+     },
+     {
+      "_id": "cg00000000000005",
+      "name": "Muscle Augmentation",
+      "type": "bioware",
+      "img": "modules/sr2e-shadowtech/assets/item_icons/bioware/muscle-augmentation.webp",
+      "system": {
+       "bodySystem": "structural",
+       "grade": "standard",
+       "bodyCost": 0.8,
+       "rating": 1,
+       "cost": 45000,
+       "availability": "6/6 days",
+       "streetIndex": ".9",
+       "legality": "4P-BC/D",
+       "installed": true,
+       "triggered": false,
+       "active": false,
+       "ratingStats": [
+        {
+         "rating": 1,
+         "bodyCost": 0.8,
+         "cost": 45000,
+         "availability": "6/6 days",
+         "streetIndex": ".9",
+         "armorBallistic": 0,
+         "armorImpact": 0
+        },
+        {
+         "rating": 2,
+         "bodyCost": 1.6,
+         "cost": 90000,
+         "availability": "6/6 days",
+         "streetIndex": ".9",
+         "armorBallistic": 0,
+         "armorImpact": 0
+        },
+        {
+         "rating": 3,
+         "bodyCost": 2.4,
+         "cost": 135000,
+         "availability": "6/6 days",
+         "streetIndex": ".9",
+         "armorBallistic": 0,
+         "armorImpact": 0
+        },
+        {
+         "rating": 4,
+         "bodyCost": 3.2,
+         "cost": 180000,
+         "availability": "6/6 days",
+         "streetIndex": ".9",
+         "armorBallistic": 0,
+         "armorImpact": 0
+        }
+       ],
+       "armorBallistic": 0,
+       "armorImpact": 0,
+       "attributeMods": {
+        "body": 0,
+        "quickness": 1,
+        "strength": 1,
+        "charisma": 0,
+        "intelligence": 0,
+        "willpower": 0,
+        "reaction": 0,
+        "initiativeDice": 0
+       },
+       "noReactionBonus": false,
+       "activeSkillDice": 0,
+       "damageCompensator": false,
+       "ignoresStunPenalty": false,
+       "citation": {
+        "book": "st",
+        "page": "35"
+       }
+      },
+      "flags": {},
+      "effects": [],
+      "_stats": {
+       "compendiumSource": "Compendium.sr2e-shadowtech.st-bioware.Item.f29c412ec9f800eb"
+      }
+     },
+     {
+      "_id": "cg00000000000006",
+      "name": "Suprathyroid Gland",
+      "type": "bioware",
+      "img": "modules/sr2e-shadowtech/assets/item_icons/bioware/suprathyroid-gland.webp",
+      "system": {
+       "bodySystem": "endocrine",
+       "grade": "standard",
+       "bodyCost": 1.4,
+       "rating": 1,
+       "cost": 50000,
+       "availability": "8/12 days",
+       "streetIndex": "2.5",
+       "legality": "6P-BB",
+       "installed": true,
+       "triggered": false,
+       "active": false,
+       "ratingStats": [],
+       "armorBallistic": 0,
+       "armorImpact": 0,
+       "attributeMods": {
+        "body": 1,
+        "quickness": 1,
+        "strength": 1,
+        "charisma": 0,
+        "intelligence": 0,
+        "willpower": 0,
+        "reaction": 1,
+        "initiativeDice": 0
+       },
+       "noReactionBonus": false,
+       "activeSkillDice": 0,
+       "damageCompensator": false,
+       "ignoresStunPenalty": false,
+       "citation": {
+        "book": "st",
+        "page": "20"
+       }
+      },
+      "flags": {},
+      "effects": [],
+      "_stats": {
+       "compendiumSource": "Compendium.sr2e-shadowtech.st-bioware.Item.fc58c133d4a51a68"
+      }
+     },
+     {
+      "_id": "cg00000000000007",
+      "name": "Enhanced Articulation",
+      "type": "bioware",
+      "img": "modules/sr2e-shadowtech/assets/item_icons/bioware/enhanced-articulation.webp",
+      "system": {
+       "bodySystem": "structural",
+       "grade": "standard",
+       "bodyCost": 0.6,
+       "rating": 1,
+       "cost": 40000,
+       "availability": "5/6 days",
+       "streetIndex": "1.5",
+       "legality": "Legal",
+       "installed": true,
+       "triggered": false,
+       "active": false,
+       "ratingStats": [],
+       "armorBallistic": 0,
+       "armorImpact": 0,
+       "attributeMods": {
+        "body": 0,
+        "quickness": 0,
+        "strength": 0,
+        "charisma": 0,
+        "intelligence": 0,
+        "willpower": 0,
+        "reaction": 1,
+        "initiativeDice": 0
+       },
+       "noReactionBonus": false,
+       "activeSkillDice": 1,
+       "damageCompensator": false,
+       "ignoresStunPenalty": false,
+       "citation": {
+        "book": "st",
+        "page": "34"
+       }
+      },
+      "flags": {},
+      "effects": [],
+      "_stats": {
+       "compendiumSource": "Compendium.sr2e-shadowtech.st-bioware.Item.339597bae36eceb8"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "ruleset": "core",
+   "name": "Bio c",
+   "attributes": {
+    "body": 5,
+    "quickness": 4,
+    "strength": 4,
+    "charisma": 3,
+    "intelligence": 5,
+    "willpower": 4
+   },
+   "reaction": 5,
+   "initiativeDice": 1,
+   "essence": 6,
+   "bodyIndex": 2.85,
+   "pools": {
+    "combat": 6,
+    "magic": 0,
+    "astral": 0,
+    "control": 0,
+    "hacking": 0,
+    "task": 0
+   },
+   "armor": {
+    "ballistic": 0,
+    "impact": 0
+   },
+   "activeSkillDice": 1,
+   "articulation": {
+    "lost": false,
+    "why": null,
+    "unknownSides": 0
+   },
+   "items": {
+    "cg00000000000001": {
+     "bodyCost": 0.6,
+     "cost": 40000
+    },
+    "cg00000000000002": {
+     "bodyCost": 1.25,
+     "cost": 60000
+    },
+    "cg00000000000003": {
+     "bodyCost": 0.4,
+     "cost": 50000
+    },
+    "cg00000000000004": {
+     "bodyCost": 0.6,
+     "cost": 60000
+    }
+   },
+   "source": {
+    "name": "Bio c",
+    "type": "character",
+    "system": {
+     "race": "human",
+     "magic": {
+      "type": "none",
+      "tradition": "none",
+      "totem": ""
+     },
+     "body": {
+      "base": 5
+     },
+     "quickness": {
+      "base": 4
+     },
+     "strength": {
+      "base": 4
+     },
+     "charisma": {
+      "base": 3
+     },
+     "intelligence": {
+      "base": 5
+     },
+     "willpower": {
+      "base": 4
+     },
+     "lifestyle": "streets",
+     "chargen": {
+      "inProgress": false,
+      "priorityMethod": "standard",
+      "priorities": {
+       "race": "",
+       "magic": "",
+       "attributes": "",
+       "skills": "",
+       "resources": ""
+      }
+     }
+    },
+    "items": [
+     {
+      "_id": "cg00000000000001",
+      "name": "Enhanced Articulation",
+      "type": "bioware",
+      "img": "modules/sr2e-shadowtech/assets/item_icons/bioware/enhanced-articulation.webp",
+      "system": {
+       "bodySystem": "structural",
+       "grade": "standard",
+       "bodyCost": 0.6,
+       "rating": 1,
+       "cost": 40000,
+       "availability": "5/6 days",
+       "streetIndex": "1.5",
+       "legality": "Legal",
+       "installed": true,
+       "triggered": false,
+       "active": false,
+       "ratingStats": [],
+       "armorBallistic": 0,
+       "armorImpact": 0,
+       "attributeMods": {
+        "body": 0,
+        "quickness": 0,
+        "strength": 0,
+        "charisma": 0,
+        "intelligence": 0,
+        "willpower": 0,
+        "reaction": 1,
+        "initiativeDice": 0
+       },
+       "noReactionBonus": false,
+       "activeSkillDice": 1,
+       "damageCompensator": false,
+       "ignoresStunPenalty": false,
+       "citation": {
+        "book": "st",
+        "page": "34"
+       }
+      },
+      "flags": {},
+      "effects": [],
+      "_stats": {
+       "compendiumSource": "Compendium.sr2e-shadowtech.st-bioware.Item.339597bae36eceb8"
+      }
+     },
+     {
+      "_id": "cg00000000000002",
+      "name": "Adrenal Pump",
+      "type": "bioware",
+      "img": "modules/sr2e-shadowtech/assets/item_icons/bioware/adrenal-pump.webp",
+      "system": {
+       "bodySystem": "endocrine",
+       "grade": "standard",
+       "bodyCost": 1.25,
+       "rating": 1,
+       "cost": 60000,
+       "availability": "10/16 days",
+       "streetIndex": "3",
+       "legality": "5P-BB",
+       "installed": true,
+       "triggered": true,
+       "active": false,
+       "ratingStats": [
+        {
+         "rating": 1,
+         "bodyCost": 1.25,
+         "cost": 60000,
+         "availability": "10/16 days",
+         "streetIndex": "3",
+         "armorBallistic": 0,
+         "armorImpact": 0
+        },
+        {
+         "rating": 2,
+         "bodyCost": 2.5,
+         "cost": 100000,
+         "availability": "10/16 days",
+         "streetIndex": "3",
+         "armorBallistic": 0,
+         "armorImpact": 0
+        }
+       ],
+       "armorBallistic": 0,
+       "armorImpact": 0,
+       "attributeMods": {
+        "body": 0,
+        "quickness": 1,
+        "strength": 1,
+        "charisma": 0,
+        "intelligence": 0,
+        "willpower": 1,
+        "reaction": 2,
+        "initiativeDice": 0
+       },
+       "noReactionBonus": true,
+       "activeSkillDice": 0,
+       "damageCompensator": false,
+       "ignoresStunPenalty": false,
+       "citation": {
+        "book": "st",
+        "page": "19"
+       }
+      },
+      "flags": {
+       "sr2e": {
+        "adrenalPump": true
+       }
+      },
+      "effects": [],
+      "_stats": {
+       "compendiumSource": "Compendium.sr2e-shadowtech.st-bioware.Item.acc48cba2abcfb40"
+      }
+     },
+     {
+      "_id": "cg00000000000003",
+      "name": "Damage Compensator",
+      "type": "bioware",
+      "img": "modules/sr2e-shadowtech/assets/item_icons/bioware/damage-compensator.webp",
+      "system": {
+       "bodySystem": "neural",
+       "grade": "standard",
+       "bodyCost": 0.4,
+       "rating": 2,
+       "cost": 50000,
+       "availability": "6/6 days",
+       "streetIndex": "2.5",
+       "legality": "6P-BA",
+       "installed": true,
+       "triggered": false,
+       "active": false,
+       "ratingStats": [
+        {
+         "rating": 1,
+         "bodyCost": 0.2,
+         "cost": 25000,
+         "availability": "6/6 days",
+         "streetIndex": "2.5",
+         "armorBallistic": 0,
+         "armorImpact": 0
+        },
+        {
+         "rating": 2,
+         "bodyCost": 0.4,
+         "cost": 50000,
+         "availability": "6/6 days",
+         "streetIndex": "2.5",
+         "armorBallistic": 0,
+         "armorImpact": 0
+        },
+        {
+         "rating": 3,
+         "bodyCost": 0.6,
+         "cost": 150000,
+         "availability": "10/6 days",
+         "streetIndex": "2.5",
+         "armorBallistic": 0,
+         "armorImpact": 0
+        },
+        {
+         "rating": 4,
+         "bodyCost": 0.8,
+         "cost": 200000,
+         "availability": "10/6 days",
+         "streetIndex": "2.5",
+         "armorBallistic": 0,
+         "armorImpact": 0
+        },
+        {
+         "rating": 5,
+         "bodyCost": 1,
+         "cost": 250000,
+         "availability": "10/6 days",
+         "streetIndex": "2.5",
+         "armorBallistic": 0,
+         "armorImpact": 0
+        },
+        {
+         "rating": 6,
+         "bodyCost": 1.2,
+         "cost": 600000,
+         "availability": "12/6 days",
+         "streetIndex": "2.5",
+         "armorBallistic": 0,
+         "armorImpact": 0
+        },
+        {
+         "rating": 7,
+         "bodyCost": 1.4,
+         "cost": 700000,
+         "availability": "12/6 days",
+         "streetIndex": "2.5",
+         "armorBallistic": 0,
+         "armorImpact": 0
+        },
+        {
+         "rating": 8,
+         "bodyCost": 1.6,
+         "cost": 800000,
+         "availability": "12/6 days",
+         "streetIndex": "2.5",
+         "armorBallistic": 0,
+         "armorImpact": 0
+        },
+        {
+         "rating": 9,
+         "bodyCost": 1.8,
+         "cost": 900000,
+         "availability": "12/6 days",
+         "streetIndex": "2.5",
+         "armorBallistic": 0,
+         "armorImpact": 0
+        }
+       ],
+       "armorBallistic": 0,
+       "armorImpact": 0,
+       "attributeMods": {
+        "body": 0,
+        "quickness": 0,
+        "strength": 0,
+        "charisma": 0,
+        "intelligence": 0,
+        "willpower": 0,
+        "reaction": 0,
+        "initiativeDice": 0
+       },
+       "noReactionBonus": false,
+       "activeSkillDice": 0,
+       "damageCompensator": true,
+       "ignoresStunPenalty": false,
+       "citation": {
+        "book": "st",
+        "page": "7"
+       }
+      },
+      "flags": {},
+      "effects": [],
+      "_stats": {
+       "compendiumSource": "Compendium.sr2e-shadowtech.st-bioware.Item.10673ff02109f3b8"
+      }
+     },
+     {
+      "_id": "cg00000000000004",
+      "name": "Pain Editor",
+      "type": "bioware",
+      "img": "modules/sr2e-shadowtech/assets/item_icons/bioware/pain-editor.webp",
+      "system": {
+       "bodySystem": "neural",
+       "grade": "standard",
+       "bodyCost": 0.6,
+       "rating": 1,
+       "cost": 60000,
+       "availability": "6/6 days",
+       "streetIndex": "1.2",
+       "legality": "6P-BA",
+       "installed": true,
+       "triggered": true,
+       "active": false,
+       "ratingStats": [],
+       "armorBallistic": 0,
+       "armorImpact": 0,
+       "attributeMods": {
+        "body": 0,
+        "quickness": 0,
+        "strength": 0,
+        "charisma": 0,
+        "intelligence": -1,
+        "willpower": 1,
+        "reaction": 0,
+        "initiativeDice": 0
+       },
+       "noReactionBonus": false,
+       "activeSkillDice": 0,
+       "damageCompensator": false,
+       "ignoresStunPenalty": true,
+       "citation": {
+        "book": "st",
+        "page": "26"
+       }
+      },
+      "flags": {},
+      "effects": [],
+      "_stats": {
+       "compendiumSource": "Compendium.sr2e-shadowtech.st-bioware.Item.14250c00e975634e"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "ruleset": "core",
+   "name": "Bio d",
+   "attributes": {
+    "body": 6,
+    "quickness": 6,
+    "strength": 6,
+    "charisma": 3,
+    "intelligence": 5,
+    "willpower": 4
+   },
+   "reaction": 6,
+   "initiativeDice": 1,
+   "essence": 3.45,
+   "bodyIndex": 2.2,
+   "pools": {
+    "combat": 7,
+    "magic": 0,
+    "astral": 6,
+    "control": 0,
+    "hacking": 0,
+    "task": 0
+   },
+   "armor": {
+    "ballistic": 0,
+    "impact": 0
+   },
+   "activeSkillDice": 0,
+   "articulation": null,
+   "items": {
+    "cg00000000000002": {
+     "bodyCost": 0.8,
+     "cost": 45000
+    },
+    "cg00000000000003": {
+     "bodyCost": 1.4,
+     "cost": 50000
+    }
+   },
+   "source": {
+    "name": "Bio d",
+    "type": "character",
+    "system": {
+     "race": "human",
+     "magic": {
+      "type": "full_magician",
+      "tradition": "none",
+      "totem": ""
+     },
+     "body": {
+      "base": 5
+     },
+     "quickness": {
+      "base": 4
+     },
+     "strength": {
+      "base": 4
+     },
+     "charisma": {
+      "base": 3
+     },
+     "intelligence": {
+      "base": 5
+     },
+     "willpower": {
+      "base": 4
+     },
+     "lifestyle": "streets",
+     "chargen": {
+      "inProgress": false,
+      "priorityMethod": "standard",
+      "priorities": {
+       "race": "",
+       "magic": "",
+       "attributes": "",
+       "skills": "",
+       "resources": ""
+      }
+     }
+    },
+    "items": [
+     {
+      "_id": "cg00000000000001",
+      "name": "Cyberhand",
+      "type": "cyberware",
+      "img": "modules/sr2e-cybertechnology/assets/item_icons/cyberware/cyberhand.webp",
+      "system": {
+       "location": "cyberlimb",
+       "grade": "standard",
+       "essenceCost": 0.35,
+       "rating": 1,
+       "cost": 45000,
+       "availability": "3/4 days",
+       "streetIndex": "1",
+       "legality": "Legal",
+       "installed": true,
+       "attributeMods": {
+        "body": 0,
+        "quickness": 0,
+        "strength": 0,
+        "charisma": 0,
+        "intelligence": 0,
+        "willpower": 0,
+        "reaction": 0,
+        "initiativeDice": 0
+       },
+       "ratingStats": [],
+       "capacity": 0,
+       "modules": [],
+       "citation": {
+        "book": "ct",
+        "page": "30"
+       },
+       "side": "right"
+      },
+      "flags": {
+       "sr2e": {
+        "source": {
+         "book": "Cybertechnology",
+         "code": "FASA7119",
+         "page": 98
+        },
+        "rule": "limb:hand"
+       }
+      },
+      "effects": [],
+      "_stats": {
+       "compendiumSource": "Compendium.sr2e-cybertechnology.ct-cyberlimbs.Item.ba51d7fb0b2ad878"
+      }
+     },
+     {
+      "_id": "cg00000000000002",
+      "name": "Muscle Augmentation",
+      "type": "bioware",
+      "img": "modules/sr2e-shadowtech/assets/item_icons/bioware/muscle-augmentation.webp",
+      "system": {
+       "bodySystem": "structural",
+       "grade": "standard",
+       "bodyCost": 0.8,
+       "rating": 1,
+       "cost": 45000,
+       "availability": "6/6 days",
+       "streetIndex": ".9",
+       "legality": "4P-BC/D",
+       "installed": true,
+       "triggered": false,
+       "active": false,
+       "ratingStats": [
+        {
+         "rating": 1,
+         "bodyCost": 0.8,
+         "cost": 45000,
+         "availability": "6/6 days",
+         "streetIndex": ".9",
+         "armorBallistic": 0,
+         "armorImpact": 0
+        },
+        {
+         "rating": 2,
+         "bodyCost": 1.6,
+         "cost": 90000,
+         "availability": "6/6 days",
+         "streetIndex": ".9",
+         "armorBallistic": 0,
+         "armorImpact": 0
+        },
+        {
+         "rating": 3,
+         "bodyCost": 2.4,
+         "cost": 135000,
+         "availability": "6/6 days",
+         "streetIndex": ".9",
+         "armorBallistic": 0,
+         "armorImpact": 0
+        },
+        {
+         "rating": 4,
+         "bodyCost": 3.2,
+         "cost": 180000,
+         "availability": "6/6 days",
+         "streetIndex": ".9",
+         "armorBallistic": 0,
+         "armorImpact": 0
+        }
+       ],
+       "armorBallistic": 0,
+       "armorImpact": 0,
+       "attributeMods": {
+        "body": 0,
+        "quickness": 1,
+        "strength": 1,
+        "charisma": 0,
+        "intelligence": 0,
+        "willpower": 0,
+        "reaction": 0,
+        "initiativeDice": 0
+       },
+       "noReactionBonus": false,
+       "activeSkillDice": 0,
+       "damageCompensator": false,
+       "ignoresStunPenalty": false,
+       "citation": {
+        "book": "st",
+        "page": "35"
+       }
+      },
+      "flags": {},
+      "effects": [],
+      "_stats": {
+       "compendiumSource": "Compendium.sr2e-shadowtech.st-bioware.Item.f29c412ec9f800eb"
+      }
+     },
+     {
+      "_id": "cg00000000000003",
+      "name": "Suprathyroid Gland",
+      "type": "bioware",
+      "img": "modules/sr2e-shadowtech/assets/item_icons/bioware/suprathyroid-gland.webp",
+      "system": {
+       "bodySystem": "endocrine",
+       "grade": "standard",
+       "bodyCost": 1.4,
+       "rating": 1,
+       "cost": 50000,
+       "availability": "8/12 days",
+       "streetIndex": "2.5",
+       "legality": "6P-BB",
+       "installed": true,
+       "triggered": false,
+       "active": false,
+       "ratingStats": [],
+       "armorBallistic": 0,
+       "armorImpact": 0,
+       "attributeMods": {
+        "body": 1,
+        "quickness": 1,
+        "strength": 1,
+        "charisma": 0,
+        "intelligence": 0,
+        "willpower": 0,
+        "reaction": 1,
+        "initiativeDice": 0
+       },
+       "noReactionBonus": false,
+       "activeSkillDice": 0,
+       "damageCompensator": false,
+       "ignoresStunPenalty": false,
+       "citation": {
+        "book": "st",
+        "page": "20"
+       }
+      },
+      "flags": {},
+      "effects": [],
+      "_stats": {
+       "compendiumSource": "Compendium.sr2e-shadowtech.st-bioware.Item.fc58c133d4a51a68"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "ruleset": "core",
+   "name": "Bio e",
+   "attributes": {
+    "body": 6,
+    "quickness": 4,
+    "strength": 3,
+    "charisma": 3,
+    "intelligence": 5,
+    "willpower": 4
+   },
+   "reaction": 4,
+   "initiativeDice": 1,
+   "essence": 3,
+   "bodyIndex": 0.6,
+   "pools": {
+    "combat": 6,
+    "magic": 0,
+    "astral": 0,
+    "control": 0,
+    "hacking": 0,
+    "task": 0
+   },
+   "armor": {
+    "ballistic": 0,
+    "impact": 0
+   },
+   "activeSkillDice": 1,
+   "articulation": {
+    "lost": true,
+    "why": "3 limb positions are cyber",
+    "unknownSides": 0
+   },
+   "items": {
+    "cg00000000000004": {
+     "bodyCost": 0.6,
+     "cost": 40000
+    }
+   },
+   "source": {
+    "name": "Bio e",
+    "type": "character",
+    "system": {
+     "race": "human",
+     "magic": {
+      "type": "none",
+      "tradition": "none",
+      "totem": ""
+     },
+     "body": {
+      "base": 5
+     },
+     "quickness": {
+      "base": 4
+     },
+     "strength": {
+      "base": 4
+     },
+     "charisma": {
+      "base": 3
+     },
+     "intelligence": {
+      "base": 5
+     },
+     "willpower": {
+      "base": 4
+     },
+     "lifestyle": "streets",
+     "chargen": {
+      "inProgress": false,
+      "priorityMethod": "standard",
+      "priorities": {
+       "race": "",
+       "magic": "",
+       "attributes": "",
+       "skills": "",
+       "resources": ""
+      }
+     }
+    },
+    "items": [
+     {
+      "_id": "cg00000000000001",
+      "name": "Cyberarm",
+      "type": "cyberware",
+      "img": "modules/sr2e-cybertechnology/assets/item_icons/cyberware/cyberarm.webp",
+      "system": {
+       "location": "cyberlimb",
+       "grade": "standard",
+       "essenceCost": 1,
+       "rating": 1,
+       "cost": 100000,
+       "availability": "4/4 days",
+       "streetIndex": "1",
+       "legality": "Legal",
+       "installed": true,
+       "attributeMods": {
+        "body": 0,
+        "quickness": 0,
+        "strength": 0,
+        "charisma": 0,
+        "intelligence": 0,
+        "willpower": 0,
+        "reaction": 0,
+        "initiativeDice": 0
+       },
+       "ratingStats": [],
+       "capacity": 0,
+       "modules": [],
+       "citation": {
+        "book": "ct",
+        "page": "30"
+       },
+       "side": "left"
+      },
+      "flags": {
+       "sr2e": {
+        "source": {
+         "book": "Cybertechnology",
+         "code": "FASA7119",
+         "page": 98
+        },
+        "rule": "limb:arm"
+       }
+      },
+      "effects": [],
+      "_stats": {
+       "compendiumSource": "Compendium.sr2e-cybertechnology.ct-cyberlimbs.Item.7e6d3687835bf26c"
+      }
+     },
+     {
+      "_id": "cg00000000000002",
+      "name": "Cyberarm",
+      "type": "cyberware",
+      "img": "modules/sr2e-cybertechnology/assets/item_icons/cyberware/cyberarm.webp",
+      "system": {
+       "location": "cyberlimb",
+       "grade": "standard",
+       "essenceCost": 1,
+       "rating": 1,
+       "cost": 100000,
+       "availability": "4/4 days",
+       "streetIndex": "1",
+       "legality": "Legal",
+       "installed": true,
+       "attributeMods": {
+        "body": 0,
+        "quickness": 0,
+        "strength": 0,
+        "charisma": 0,
+        "intelligence": 0,
+        "willpower": 0,
+        "reaction": 0,
+        "initiativeDice": 0
+       },
+       "ratingStats": [],
+       "capacity": 0,
+       "modules": [],
+       "citation": {
+        "book": "ct",
+        "page": "30"
+       },
+       "side": "right"
+      },
+      "flags": {
+       "sr2e": {
+        "source": {
+         "book": "Cybertechnology",
+         "code": "FASA7119",
+         "page": 98
+        },
+        "rule": "limb:arm"
+       }
+      },
+      "effects": [],
+      "_stats": {
+       "compendiumSource": "Compendium.sr2e-cybertechnology.ct-cyberlimbs.Item.7e6d3687835bf26c"
+      }
+     },
+     {
+      "_id": "cg00000000000003",
+      "name": "Cyberleg",
+      "type": "cyberware",
+      "img": "modules/sr2e-cybertechnology/assets/item_icons/cyberware/cyberleg.webp",
+      "system": {
+       "location": "cyberlimb",
+       "grade": "standard",
+       "essenceCost": 1,
+       "rating": 1,
+       "cost": 100000,
+       "availability": "4/4 days",
+       "streetIndex": "1",
+       "legality": "Legal",
+       "installed": true,
+       "attributeMods": {
+        "body": 0,
+        "quickness": 0,
+        "strength": 0,
+        "charisma": 0,
+        "intelligence": 0,
+        "willpower": 0,
+        "reaction": 0,
+        "initiativeDice": 0
+       },
+       "ratingStats": [],
+       "capacity": 0,
+       "modules": [],
+       "citation": {
+        "book": "ct",
+        "page": "30"
+       },
+       "side": "left"
+      },
+      "flags": {
+       "sr2e": {
+        "source": {
+         "book": "Cybertechnology",
+         "code": "FASA7119",
+         "page": 98
+        },
+        "rule": "limb:leg"
+       }
+      },
+      "effects": [],
+      "_stats": {
+       "compendiumSource": "Compendium.sr2e-cybertechnology.ct-cyberlimbs.Item.66dfefbc29609f2c"
+      }
+     },
+     {
+      "_id": "cg00000000000004",
+      "name": "Enhanced Articulation",
+      "type": "bioware",
+      "img": "modules/sr2e-shadowtech/assets/item_icons/bioware/enhanced-articulation.webp",
+      "system": {
+       "bodySystem": "structural",
+       "grade": "standard",
+       "bodyCost": 0.6,
+       "rating": 1,
+       "cost": 40000,
+       "availability": "5/6 days",
+       "streetIndex": "1.5",
+       "legality": "Legal",
+       "installed": true,
+       "triggered": false,
+       "active": false,
+       "ratingStats": [],
+       "armorBallistic": 0,
+       "armorImpact": 0,
+       "attributeMods": {
+        "body": 0,
+        "quickness": 0,
+        "strength": 0,
+        "charisma": 0,
+        "intelligence": 0,
+        "willpower": 0,
+        "reaction": 1,
+        "initiativeDice": 0
+       },
+       "noReactionBonus": false,
+       "activeSkillDice": 1,
+       "damageCompensator": false,
+       "ignoresStunPenalty": false,
+       "citation": {
+        "book": "st",
+        "page": "34"
+       }
+      },
+      "flags": {},
+      "effects": [],
+      "_stats": {
+       "compendiumSource": "Compendium.sr2e-shadowtech.st-bioware.Item.339597bae36eceb8"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "ruleset": "core",
+   "name": "Bio f",
+   "attributes": {
+    "body": 6,
+    "quickness": 4,
+    "strength": 3,
+    "charisma": 3,
+    "intelligence": 5,
+    "willpower": 4
+   },
+   "reaction": 5,
+   "initiativeDice": 1,
+   "essence": 4,
+   "bodyIndex": 2,
+   "pools": {
+    "combat": 6,
+    "magic": 0,
+    "astral": 0,
+    "control": 0,
+    "hacking": 0,
+    "task": 0
+   },
+   "armor": {
+    "ballistic": 0,
+    "impact": 0
+   },
+   "activeSkillDice": 1,
+   "articulation": {
+    "lost": false,
+    "why": null,
+    "unknownSides": 0
+   },
+   "items": {
+    "cg00000000000003": {
+     "bodyCost": 0.6,
+     "cost": 40000
+    },
+    "cg00000000000004": {
+     "bodyCost": 1.4,
+     "cost": 50000
+    }
+   },
+   "source": {
+    "name": "Bio f",
+    "type": "character",
+    "system": {
+     "race": "human",
+     "magic": {
+      "type": "none",
+      "tradition": "none",
+      "totem": ""
+     },
+     "body": {
+      "base": 5
+     },
+     "quickness": {
+      "base": 4
+     },
+     "strength": {
+      "base": 4
+     },
+     "charisma": {
+      "base": 3
+     },
+     "intelligence": {
+      "base": 5
+     },
+     "willpower": {
+      "base": 4
+     },
+     "lifestyle": "streets",
+     "chargen": {
+      "inProgress": false,
+      "priorityMethod": "standard",
+      "priorities": {
+       "race": "",
+       "magic": "",
+       "attributes": "",
+       "skills": "",
+       "resources": ""
+      }
+     }
+    },
+    "items": [
+     {
+      "_id": "cg00000000000001",
+      "name": "Cyberarm",
+      "type": "cyberware",
+      "img": "modules/sr2e-cybertechnology/assets/item_icons/cyberware/cyberarm.webp",
+      "system": {
+       "location": "cyberlimb",
+       "grade": "standard",
+       "essenceCost": 1,
+       "rating": 1,
+       "cost": 100000,
+       "availability": "4/4 days",
+       "streetIndex": "1",
+       "legality": "Legal",
+       "installed": true,
+       "attributeMods": {
+        "body": 0,
+        "quickness": 0,
+        "strength": 0,
+        "charisma": 0,
+        "intelligence": 0,
+        "willpower": 0,
+        "reaction": 0,
+        "initiativeDice": 0
+       },
+       "ratingStats": [],
+       "capacity": 0,
+       "modules": [],
+       "citation": {
+        "book": "ct",
+        "page": "30"
+       },
+       "side": "left"
+      },
+      "flags": {
+       "sr2e": {
+        "source": {
+         "book": "Cybertechnology",
+         "code": "FASA7119",
+         "page": 98
+        },
+        "rule": "limb:arm"
+       }
+      },
+      "effects": [],
+      "_stats": {
+       "compendiumSource": "Compendium.sr2e-cybertechnology.ct-cyberlimbs.Item.7e6d3687835bf26c"
+      }
+     },
+     {
+      "_id": "cg00000000000002",
+      "name": "Cyberarm",
+      "type": "cyberware",
+      "img": "modules/sr2e-cybertechnology/assets/item_icons/cyberware/cyberarm.webp",
+      "system": {
+       "location": "cyberlimb",
+       "grade": "standard",
+       "essenceCost": 1,
+       "rating": 1,
+       "cost": 100000,
+       "availability": "4/4 days",
+       "streetIndex": "1",
+       "legality": "Legal",
+       "installed": true,
+       "attributeMods": {
+        "body": 0,
+        "quickness": 0,
+        "strength": 0,
+        "charisma": 0,
+        "intelligence": 0,
+        "willpower": 0,
+        "reaction": 0,
+        "initiativeDice": 0
+       },
+       "ratingStats": [],
+       "capacity": 0,
+       "modules": [],
+       "citation": {
+        "book": "ct",
+        "page": "30"
+       },
+       "side": "right"
+      },
+      "flags": {
+       "sr2e": {
+        "source": {
+         "book": "Cybertechnology",
+         "code": "FASA7119",
+         "page": 98
+        },
+        "rule": "limb:arm"
+       }
+      },
+      "effects": [],
+      "_stats": {
+       "compendiumSource": "Compendium.sr2e-cybertechnology.ct-cyberlimbs.Item.7e6d3687835bf26c"
+      }
+     },
+     {
+      "_id": "cg00000000000003",
+      "name": "Enhanced Articulation",
+      "type": "bioware",
+      "img": "modules/sr2e-shadowtech/assets/item_icons/bioware/enhanced-articulation.webp",
+      "system": {
+       "bodySystem": "structural",
+       "grade": "standard",
+       "bodyCost": 0.6,
+       "rating": 1,
+       "cost": 40000,
+       "availability": "5/6 days",
+       "streetIndex": "1.5",
+       "legality": "Legal",
+       "installed": true,
+       "triggered": false,
+       "active": false,
+       "ratingStats": [],
+       "armorBallistic": 0,
+       "armorImpact": 0,
+       "attributeMods": {
+        "body": 0,
+        "quickness": 0,
+        "strength": 0,
+        "charisma": 0,
+        "intelligence": 0,
+        "willpower": 0,
+        "reaction": 1,
+        "initiativeDice": 0
+       },
+       "noReactionBonus": false,
+       "activeSkillDice": 1,
+       "damageCompensator": false,
+       "ignoresStunPenalty": false,
+       "citation": {
+        "book": "st",
+        "page": "34"
+       }
+      },
+      "flags": {},
+      "effects": [],
+      "_stats": {
+       "compendiumSource": "Compendium.sr2e-shadowtech.st-bioware.Item.339597bae36eceb8"
+      }
+     },
+     {
+      "_id": "cg00000000000004",
+      "name": "Suprathyroid Gland",
+      "type": "bioware",
+      "img": "modules/sr2e-shadowtech/assets/item_icons/bioware/suprathyroid-gland.webp",
+      "system": {
+       "bodySystem": "endocrine",
+       "grade": "standard",
+       "bodyCost": 1.4,
+       "rating": 1,
+       "cost": 50000,
+       "availability": "8/12 days",
+       "streetIndex": "2.5",
+       "legality": "6P-BB",
+       "installed": true,
+       "triggered": false,
+       "active": false,
+       "ratingStats": [],
+       "armorBallistic": 0,
+       "armorImpact": 0,
+       "attributeMods": {
+        "body": 1,
+        "quickness": 1,
+        "strength": 1,
+        "charisma": 0,
+        "intelligence": 0,
+        "willpower": 0,
+        "reaction": 1,
+        "initiativeDice": 0
+       },
+       "noReactionBonus": false,
+       "activeSkillDice": 0,
+       "damageCompensator": false,
+       "ignoresStunPenalty": false,
+       "citation": {
+        "book": "st",
+        "page": "20"
+       }
+      },
+      "flags": {},
+      "effects": [],
+      "_stats": {
+       "compendiumSource": "Compendium.sr2e-shadowtech.st-bioware.Item.fc58c133d4a51a68"
+      }
+     }
+    ]
+   }
+  }
+ ]
+}

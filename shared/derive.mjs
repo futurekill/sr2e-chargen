@@ -5,8 +5,8 @@
  * character at creation can hold is composed here (no in-play state, no sourcebook ware); each step names the
  * CharacterData method it matches.
  */
-import { TABLES, combatSenseDice, karmaPoolCapacity, karmaPoolAvailable, reactionBase, wornArmorTotals, heavyArmorPoolPenalty, astralCombatPool, strengthMinWeaponStats, naturalAttribute, racialProfile, shapeshifterOf, formModifiers, qualityEffects, bodyIndexTotal, wareRule, rigBonuses, unarmedDamageCode, secondhandDead, limbStats, lacingArmor } from "./rules.mjs";
-import { essenceOf, limbModelOf } from "./purchase.mjs";
+import { TABLES, combatSenseDice, karmaPoolCapacity, karmaPoolAvailable, reactionBase, wornArmorTotals, heavyArmorPoolPenalty, astralCombatPool, strengthMinWeaponStats, naturalAttribute, racialProfile, shapeshifterOf, formModifiers, qualityEffects, wareRule, rigBonuses, unarmedDamageCode, secondhandDead, limbStats, lacingArmor, pumpEfficiency, cyberPositions, taskPoolDice, compensatedWoundPenalty } from "./rules.mjs";
+import { essenceOf, limbModelOf, bodyIndexOfItems } from "./purchase.mjs";
 
 /** Foundry's UNARMED_STRIKE_DATA (module/migrations.mjs): every character's fist, (Str)M Stun (p.255, p.100–101). */
 export const UNARMED_STRIKE = Object.freeze({ _id: "unarmedStrike000", name: "Unarmed Strike", type: "weapon", img: "icons/skills/melee/unarmed-punch-fist.webp",
@@ -16,6 +16,21 @@ export const UNARMED_STRIKE = Object.freeze({ _id: "unarmedStrike000", name: "Un
 export const ATTRS = ["body", "quickness", "strength", "charisma", "intelligence", "willpower"];
 const num = (v) => Number(v) || 0;
 
+/**
+ * The Injury Modifier (p.112) as Foundry's `woundPenalty`: a working Damage Compensator hides a track up to its Rating
+ * (Shadowtech p.24), an active Pain Editor ignores Stun (p.26) — PLAN-M5k code review r1 #3.
+ */
+export function injuryPenalty(actor) {
+  let compensator = 0, ignoreStun = false;
+  for (const i of actor.items ?? []) {
+    const s = i.system;
+    if (i.type !== "bioware" || s.installed === false || s.destroyed || (Number(s.damage) || 0) >= 6) continue;
+    if (s.damageCompensator) compensator = Math.max(compensator, Number(s.rating) || 0);
+    if (s.ignoresStunPenalty && (!s.triggered || s.active)) ignoreStun = true;
+  }
+  const cm = actor.system.conditionMonitor ?? {};
+  return compensatedWoundPenalty(cm.physical?.value ?? 0, cm.stun?.value ?? 0, { compensator, ignoreStun });
+}
 /** @param {{ actor: object, options?: { moreMetahumans?: boolean } }} input */
 export function derive({ actor, options = {} }) {
   const sys = actor.system, items = actor.items ?? [];
@@ -43,16 +58,28 @@ export function derive({ actor, options = {} }) {
   // Adept powers are kept apart too: they work only in human form (Companion p.36), so a shapeshifter's animal form
   // leaves them out (code review M5c r1 #1).
   const adept = Object.fromEntries(Object.keys(mods).map(k => [k, 0]));
-  // Bioware (Shadowtech; PLAN-M5e): installed, untriggered implants' attribute bonuses × rating, as _collectItemModifiers.
-  let bioQuickness = 0;
-  for (const i of items.filter(i => i.type === "bioware" && i.system.installed !== false && !i.system.triggered)) {
-    const r = Math.max(1, num(i.system.rating) || 1);
-    for (const [k, v] of Object.entries(i.system.attributeMods ?? {})) if (k in mods) mods[k] += num(v) * r;
-    bioQuickness += num(i.system.attributeMods?.quickness) * r;
-  }
   // Cyberlimbs (PLAN-M5j; _limbEssenceAndModel): the model over the cyberware; a complete pair's Body joins the mods.
   const limbModel = limbModelOf(items), limbs0 = limbStats(limbModel);
   mods.body += limbs0.pairBody;
+  // Bioware (Shadowtech; PLAN-M5e, M5k), as _collectItemModifiers: installed, working implants (a triggered one only
+  // while active) — each bonus × rating, a pump's or suprathyroid's × its efficiency beside cyberware, rounded down
+  // (Cybertechnology p.56–57: only major replacements stop the suprathyroid, the book's own words).
+  const ruleOf = (i) => wareRule(i.flags, i._stats?.compendiumSource ?? null) ?? "";
+  const effPump = pumpEfficiency(limbModel, { enhancer: enhancer > 0, mbw: mbwLevel > 0 }), effSupra = pumpEfficiency(limbModel, { major: true, mbw: mbwLevel > 0 });
+  let bioQuickness = 0, articulation = 0, activeSkillDice = 0;
+  const bioWorking = items.filter(i => i.type === "bioware" && i.system.installed !== false && !i.system.destroyed && (Number(i.system.damage) || 0) < 6);
+  for (const i of bioWorking.filter(i => !i.system.triggered || i.system.active)) {
+    const r = Math.max(1, num(i.system.rating) || 1), rule = ruleOf(i);
+    const eff = rule === "adrenal-pump" ? effPump : rule === "suprathyroid" ? effSupra : 1;
+    const amt = (v) => eff === 1 ? num(v) * r : Math.floor(num(v) * r * eff + 1e-9);
+    for (const [k, v] of Object.entries(i.system.attributeMods ?? {})) {
+      if (k === "reaction" && rule === "enhanced-articulation") { articulation += amt(v); continue; }   // decided after the limb averages (p.56)
+      if (k in mods) mods[k] += amt(v);
+      if (k === "quickness") bioQuickness += amt(v);
+    }
+    if (i.system.noReactionBonus) exemptQuickness += amt(i.system.attributeMods?.quickness);
+    activeSkillDice += num(i.system.activeSkillDice) * r;
+  }
   if (mtype === "physical_adept") for (const p of items.filter(i => i.type === "adept_power")) {
     const lvl = Math.max(1, num(p.system.level) || 1);
     for (const [k, v] of Object.entries(p.system.attributeMods ?? {})) if (k in mods) { mods[k] += num(v) * lvl; adept[k] += num(v) * lvl; }
@@ -80,7 +107,12 @@ export function derive({ actor, options = {} }) {
   // four positions' averages, capped by unaugmented Body and natural Quickness (+ bioware).
   const limbs = limbStats(limbModel, { naturalStrength: attributes.strength, naturalQuickness: attributes.quickness,
     reactionExemptQuickness: exemptQuickness, naturalBody: natural.body, quicknessCapBase: natural.quickness + bioQuickness, troll: race === "troll" });
+  const preQuickness = attributes.quickness;
   if (limbs.anyCyber) { attributes.strength = limbs.avgStrength; attributes.quickness = limbs.avgQuickness; }
+  // _applyArticulation (p.56): lost when the cyberlimbs raise Reaction, or more than two known limb positions are cyber.
+  const articulationLost = !!articulation && ((limbs.anyCyber && reactionBase(limbs.avgQuicknessReaction, attributes.intelligence, 0)
+    > reactionBase(preQuickness, attributes.intelligence, exemptQuickness)) || cyberPositions(limbModel).count > 2);
+  if (articulation && !articulationLost) mods.reaction += articulation;
   const forms = shifter ? Object.fromEntries(["human", "animal"].map(form => {
     const f = formOf(form), m = (k) => mods[k] - (form === "animal" ? adept[k] : 0);
     const at = Object.fromEntries(ATTRS.map(a => [a, Math.max(1, naturalIn(a, form) + m(a))]));
@@ -90,7 +122,7 @@ export function derive({ actor, options = {} }) {
 
   // Essence and Magic (p.45): 6 − installed cyberware (with the cybereye allowance); Magic = Essence rounded down.
   // Body Index (Shadowtech p.6): the Awakened pay it in Essence too.
-  const bodyIndex = bodyIndexTotal(items.filter(i => i.type === "bioware").map(i => ({ installed: i.system.installed !== false, bodyCost: i.system.bodyCost, grade: i.system.grade, bodySystem: i.system.bodySystem })));
+  const bodyIndex = bodyIndexOfItems(items);   // the muscle discount and culturing per item (PLAN-M5k)
   // Rounded to the thousandth only (float noise): cultured bioware (×0.75) gives three decimals, as Foundry keeps them.
   const essence = Math.round((6 - installed.reduce((t, i) => t + essenceOf(i, items, race), 0) - (mtype !== "none" ? bodyIndex : 0)) * 1000) / 1000;
   const magic = mtype === "none" ? 0 : Math.max(0, Math.min(6, Math.floor(essence + 1e-9)));
@@ -118,15 +150,19 @@ export function derive({ actor, options = {} }) {
     control: vcr > 0 ? Math.floor((attributes.quickness + attributes.intelligence) / 2) + 2 * vcr : 0,   // core rules (not Rigger 2)
     // Rigger 2 (p.16–18) is Foundry's WORLD setting, which the app can't know: both are given (PLAN-M5i Draft 3).
     controlRigger2: rigBonuses({ vcr, mbw: mbwLevel, reaction: reactionBase(limbs.anyCyber ? limbs.avgQuicknessReaction : natural.quickness, attributes.intelligence, 0) }).controlPool,
-    hacking: mpcp > 0 ? skill("computer") + reaction : 0
+    hacking: mpcp > 0 ? skill("computer") + reaction : 0,
+    // Rigger 2's Task Pool (a world setting): the working encephalon's and cerebral booster's levels (PLAN-M5k).
+    taskRigger2: taskPoolDice({ encephalon: Math.max(0, ...working.filter(i => ruleOf(i) === "encephalon").map(i => num(i.system.rating))),
+      cerebralBooster: Math.max(0, ...bioWorking.filter(i => ruleOf(i) === "cerebral-booster").map(i => num(i.system.rating))) })
   };
 
   // _calculateArmor: worn (highest + layered) plus implant armor.
   const wornT = wornArmorTotals(worn);
   // Bone lacing loses armor to complete cyber replacements (Cybertechnology p.50).
   const implant = (i, k) => num(i.system.unarmedPowerBonus) > 0 ? lacingArmor(num(i.system[k]), limbs0.laceReplacements) : num(i.system[k]);
-  const armor = { ballistic: wornT.ballistic + working.reduce((t, i) => t + implant(i, "armorBallistic"), 0),
-    impact: wornT.impact + working.reduce((t, i) => t + implant(i, "armorImpact"), 0) };
+  // Bioware armor (Orthoskin, Shadowtech p.17) adds on top too, while it works.
+  const armor = { ballistic: wornT.ballistic + working.reduce((t, i) => t + implant(i, "armorBallistic"), 0) + bioWorking.reduce((t, i) => t + num(i.system.armorBallistic), 0),
+    impact: wornT.impact + working.reduce((t, i) => t + implant(i, "armorImpact"), 0) + bioWorking.reduce((t, i) => t + num(i.system.armorImpact), 0) };
 
   // Attacks: the weapon's damage as Foundry prepares it (bows by Strength Minimum, p.96).
   // Cyber weapons (installed isWeapon cyberware) are weapons too, as Foundry treats them (PLAN-M5f Draft 2).
@@ -141,7 +177,7 @@ export function derive({ actor, options = {} }) {
     concealability: i.system.concealability ?? null, reach: i.system.reach ?? 0 }));
 
   return {
-    attributes, natural, reaction, initiativeDice, essence, magic, pools, armor, weapons, vcr, mpcp, forms, enhancerExcess, mbwLevel, limbs,
+    attributes, natural, reaction, initiativeDice, essence, magic, pools, armor, weapons, vcr, mpcp, forms, enhancerExcess, mbwLevel, limbs, activeSkillDice, articulation: articulation ? { value: articulation, lost: articulationLost } : null,
     bodyIndex: { value: Math.round(bodyIndex * 1000) / 1000, max: natural.body, raw: bodyIndex },
     monitors: { physical: 10, stun: 10, overflow: natural.body + edges.willToLive },   // p.112; overflow against NATURAL Body
     // The Karma Pool (p.191): the starting pool + one-tenth of Total Karma, less what is burned (PLAN-M4a Draft 2).
