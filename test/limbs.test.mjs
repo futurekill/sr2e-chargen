@@ -88,3 +88,12 @@ test("code review r1: a rated core option on a partial limb is priced for its pl
   assert.equal(ok.actor.items.at(-1).system.side, "right");
 });
 
+
+test("walk-through fix: choosing point-based stores Foundry's initials, so the rules check has a nuyen tier", () => {
+  let b = run(newCharacter("Points"), [{ op: "setBooks", books: ["sc"] }, { op: "setMethod", method: "points" }]);
+  const ch = b.actor.system.chargen;
+  assert.deepEqual([ch.buildingPoints, ch.nuyenTier, ch.forcePointTrade, ch.qualitiesUseBP], [100, 500, 0, false]);
+  assert.ok(!validate(b).problems.some(p => /nuyen tier/.test(p.text)));
+  b = run(b, [{ op: "setPoints", buildingPoints: 120, nuyenTier: 5000, forcePointTrade: 0, qualitiesUseBP: true }, { op: "setMethod", method: "standard" }, { op: "setMethod", method: "points" }]);
+  assert.deepEqual([b.actor.system.chargen.buildingPoints, b.actor.system.chargen.nuyenTier], [120, 5000], "a switch back keeps the GM's numbers");
+});

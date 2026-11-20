@@ -161,6 +161,10 @@ export function applyOp(body, op, lookup = () => null, { roll = null, now = 0, s
       if (!["standard", "sumto10", "points"].includes(op.method)) throw new Refusal("Standard, sum-to-10 or point-based.", 20);
       if (op.method !== "standard" && !booksOf(b).includes("sc")) throw new Refusal("That method is the Shadowrun Companion's: turn it on first.", 20);
       sys.chargen.priorityMethod = op.method;
+      // Foundry's schema initials (actor-data.mjs), which Foundry always holds and the system's budget reads: without them
+      // a new point-based character showed 100 BP / 500¥ but the rules check said "Choose a nuyen tier".
+      if (op.method === "points") Object.assign(sys.chargen, { buildingPoints: 100, nuyenTier: 500, forcePointTrade: 0, qualitiesUseBP: false,
+        ...Object.fromEntries(["buildingPoints", "nuyenTier", "forcePointTrade", "qualitiesUseBP"].filter(k => sys.chargen[k] !== undefined).map(k => [k, sys.chargen[k]])) });
       break;
     case "setPoints": {   // point-based design's choices (Companion p.20–21; PLAN-M5h)
       const ch = sys.chargen, int = (v, lo, hi) => Number.isInteger(v) && v >= lo && v <= hi;

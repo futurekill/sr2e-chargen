@@ -55,7 +55,7 @@
 </script>
 
 <h1>Your library</h1>
-<p class="muted">Characters are built step by step with the core book's Priority system. Drafts are free-text notes.</p>
+<p class="muted">Characters are built step by step: the core book's Priority system, or, with the Companion, sum-to-10 or Building Points. Drafts are free-text notes.</p>
 {#if error}<p class="notice bad" role="alert">{error}</p>{/if}
 
 <form class="row" onsubmit={create}>
@@ -63,7 +63,7 @@
   <label><span>Kind</span><select bind:value={kind}><option value="character">Character</option><option value="draft">Draft</option></select></label>
   <button disabled={busy || !name.trim()}>Start</button>
 </form>
-<p class="muted small"><label class="button quiet" aria-disabled={busy}>Import a character from Foundry…<input type="file" accept="application/json,.json" class="sr-only" disabled={busy} onchange={importFoundry}></label>
+<p class="muted small import"><label class="button quiet" aria-disabled={busy}>Import a character from Foundry…<input type="file" accept="application/json,.json" class="sr-only" disabled={busy} onchange={importFoundry}></label>
   Use Foundry's <strong>Export Data</strong> on a finished character.</p>
 
 {#if docs === null}
@@ -97,3 +97,7 @@
     {/each}
   </ul>
 {/if}
+
+<style>
+  .import { margin-top: .75rem; }
+</style>

@@ -120,6 +120,13 @@ notes come from it.
   restore, admin commands. README and OPERATIONS updated for the beta.
 
 ### Fixed
+- **Point-based design starts with the GM's defaults** (100 Building Points, 500¥): choosing the method stored none,
+  so the rules check said "Choose a nuyen tier" while the page showed 500¥.
+- **Library**: the Foundry import is a proper button (the file chooser showed as the browser's grey default), with a
+  focus ring and space above it; the intro names all three creation methods.
+- **Character page**: the Sourcebooks note no longer says only weapons, armor, gear and spells are offered; a long
+  checkbox label wraps beside its box; with the GM's Building Points option on, Edges and Flaws say they cost Building
+  Points instead of "balance to 0".
 - **Attributes floor at 1**, as in Foundry: a troll's Charisma of 1 (racial −2) showed 0.
 - **The fist survives the trip to Foundry**: Foundry's Import Data replaces a new actor's items, so a character
   from the app arrived without the Unarmed Strike every Foundry character has. The export now carries one, and the

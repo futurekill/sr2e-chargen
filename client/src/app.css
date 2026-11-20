@@ -61,3 +61,7 @@ dl > div { display: flex; gap: .5rem; justify-content: space-between; border-bot
 dt { color: var(--muted); }
 dd { margin: 0; text-align: right; overflow-wrap: anywhere; }
 .shell:has(.sheet) { max-width: 72rem; }
+
+/* Visually hidden, still read and focusable (file inputs inside a styled label). */
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+label.button:has(.sr-only:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }

@@ -104,6 +104,8 @@
   // Edges and Flaws (Companion p.22–35; PLAN-M5d): their own list on the Concept tab, with the same choice controls.
   const qualitiesBought = $derived(Object.entries(body.creation.items).filter(([, r]) => r.type === "quality").sort(([a], [b]) => (a < b ? -1 : 1))
     .map(([id, r]) => ({ id, r, spec: choiceSpec(r), item: body.actor.items.find(i => i._id === id) })));
+  // Under point-based design the GM may price Edges and Flaws in Building Points (Companion p.22–23; PLAN-M5h).
+  const asBP = $derived(body?.actor?.system?.chargen?.priorityMethod === "points" && !!body?.actor?.system?.chargen?.qualitiesUseBP);
   const qualityTotals = $derived(qualitiesBought.reduce((t, x) => { const v = Number(x.item?.system.pointValue) || 0; return v > 0 ? { ...t, edges: t.edges + v } : { ...t, flaws: t.flaws + v }; }, { edges: 0, flaws: 0 }));
   // The books with Edges and Flaws: the Companion, Cyberpirates, Rigger 2.
   const QUALITY_BOOKS = ["sc", "cp", "r2"];
@@ -569,7 +571,7 @@
       {#if sourcebooks.length}
         <fieldset class="books">
           <legend>Sourcebooks</legend>
-          <p class="muted small">The books your table uses. The core book is always on. From a sourcebook the app offers weapons, armor, ammunition, gear and spells for now; the rest of each book comes later.</p>
+          <p class="muted small">The books your table uses. The core book is always on. Each book shows how many of its entries the app offers now; the rest come later.</p>
           <label class="row inline"><input type="checkbox" class="check" checked={sourcebooks.every(x => booksOf(body).includes(x.key))} onchange={(ev) => setBooksTo(ev.currentTarget.checked ? sourcebooks.map(x => x.key) : [])}><span><strong>All</strong></span></label>
           <label class="row inline"><input type="checkbox" class="check" checked disabled><span>{catalogBookList.find(x => x.key === "sr2")?.title ?? "Core book"}</span></label>
           {#each sourcebooks as x (x.key)}
@@ -579,8 +581,8 @@
       {/if}
       {#if booksOf(body).some(k => QUALITY_BOOKS.includes(k))}
         <fieldset class="stack quals"><legend>Edges and Flaws</legend>
-          <p class="muted small">Optional, the GM's call: take any Edges and Flaws whose values add up to 0. A Bonus Attribute Point past the racial maximum costs 2. <span class="cite">Companion p.22–35</span></p>
-          <p>Edges <strong>+{qualityTotals.edges}</strong>, Flaws <strong>{qualityTotals.flaws}</strong>: {qualityTotals.edges + qualityTotals.flaws === 0 ? "balanced" : `${qualityTotals.edges + qualityTotals.flaws > 0 ? "+" : ""}${qualityTotals.edges + qualityTotals.flaws} to balance`}.</p>
+          <p class="muted small">Optional, the GM's call: {asBP ? "Edges cost Building Points and Flaws add them (the GM's option, Priorities step)." : "take any Edges and Flaws whose values add up to 0."} A Bonus Attribute Point past the racial maximum costs 2. <span class="cite">Companion p.22–35</span></p>
+          <p>Edges <strong>+{qualityTotals.edges}</strong>, Flaws <strong>{qualityTotals.flaws}</strong>{#if asBP}: {qualityTotals.edges + qualityTotals.flaws} Building Points.{:else}: {qualityTotals.edges + qualityTotals.flaws === 0 ? "balanced" : `${qualityTotals.edges + qualityTotals.flaws > 0 ? "+" : ""}${qualityTotals.edges + qualityTotals.flaws} to balance`}.{/if}</p>
           {#if !finished}
             <div class="row adders">
               <label class="grow"><span>Add an Edge or Flaw</span>
@@ -1057,7 +1059,8 @@
   table.grid th[scope="row"] { text-align: left; font-weight: 400; }
   table.grid thead th { color: var(--muted); font-weight: 400; font-size: .9rem; }
   table.attrs input { width: 3.75rem; text-align: right; padding: .3rem .45rem; }
-  label.inline { display: flex; gap: .5rem; margin: 0 0 1rem; }
+  label.inline { display: flex; flex-wrap: nowrap; align-items: flex-start; gap: .5rem; margin: 0 0 1rem; }   /* a long label wraps beside its box, not under it */
+  label.inline > input { flex: none; }
   label.notes { margin-top: 1rem; }
   .table-rows { margin-bottom: .5rem; font-size: .9rem; }
   .later { margin-top: 2.5rem; }
@@ -1089,5 +1092,4 @@
   label.choice input:not([type="number"]) { width: 8rem; padding: .25rem .4rem; }
   label.choice select { padding: .25rem .35rem; max-width: 10rem; }
   td.price { white-space: nowrap; text-align: right; }
-  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 </style>
