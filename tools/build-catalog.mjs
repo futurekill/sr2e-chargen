@@ -212,6 +212,7 @@ export function assemble(repos, books) {
       entries.push(entry);
     }
   }
+  pairImplantWeapons(entries, problems);
   if (problems.length) throw new Error(`the catalog can't be built:\n  ${[...new Set(problems)].slice(0, 60).join("\n  ")}${problems.length > 60 ? `\n  … and ${problems.length - 60} more` : ""}`);
   entries.sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
   const count = (key) => entries.reduce((m, e) => { m[e[key]] = (m[e[key]] ?? 0) + 1; return m; }, {});
@@ -222,6 +223,26 @@ export function assemble(repos, books) {
     types: Object.entries(count("type")).sort(([a], [b]) => (a < b ? -1 : 1)).map(([type, n]) => ({ type, count: n })),
     entries
   };
+}
+
+/**
+ * Implant weapons (docs/PLAN-M5l.md Draft 2): an implant's `pairedWeapon` "pkg:w-x" names the weapon whose `pairedWare`
+ * is "pkg:x", in the same package; exactly one match each way, or the build fails. The implant gains `pairedWeaponId`.
+ */
+export function pairImplantWeapons(entries, problems) {
+  const weapons = entries.filter(e => e.type === "weapon" && typeof e.flags?.sr2e?.pairedWare === "string");
+  const implants = entries.filter(e => e.type === "cyberware" && typeof e.flags?.sr2e?.pairedWeapon === "string");
+  for (const imp of implants) {
+    const key = imp.flags.sr2e.pairedWeapon, m = /^([a-z0-9]+):w-(.+)$/.exec(key);
+    const hits = m ? weapons.filter(w => w.package === imp.package && w.flags.sr2e.pairedWare === `${m[1]}:${m[2]}`) : [];
+    if (hits.length !== 1) { problems.push(`${imp.id}: its paired weapon "${key}" matches ${hits.length} weapons`); continue; }
+    imp.pairedWeaponId = hits[0].id;
+    hits[0].pairedWareId = imp.id;
+  }
+  for (const w of weapons) {
+    const n = implants.filter(i => i.pairedWeaponId === w.id).length;
+    if (n !== 1) problems.push(`${w.id}: its paired ware "${w.flags.sr2e.pairedWare}" matches ${n} implants`);
+  }
 }
 
 /**

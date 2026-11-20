@@ -121,8 +121,9 @@ function limbReason(entry, inPlay) {
   if (inPlay) return "A cyberlimb option is bought at creation here; after that, fit it in Foundry.";
   const kind = optionKindOf(entry);
   if (LIMB_KINDS_OFFERED.has(kind) || (kind === "other" && LIMB_OTHER_OFFERED.has(srcOf(entry)))) return null;
+  if (kind === "weapon" && entry.pairedWeaponId) return null;   // cyberguns and the taser bring their weapon (PLAN-M5l)
   return kind === "device" ? "A built-in device costs four times the device's own price: not yet."
-    : kind === "weapon" ? "A cybergun or taser needs its weapon added with it: not yet."
+    : kind === "weapon" ? "This limb weapon has no weapon item to go with it."
     : "This cyberlimb option has its own rules the app doesn't compute yet.";
 }
 /**

@@ -18,13 +18,13 @@ const add = (b, book, name) => run(b, [{ op: "addItem", catalogId: cy(book, name
 const errs = (b) => validate(b).problems.filter(p => p.severity === "error").map(p => p.text);
 const warns = (b) => validate(b).problems.filter(p => p.severity === "warning").map(p => p.text);
 
-test("the gate: typed limbs and the checked options offered; device, cyberdeck, cyberguns, taser, simple replacement and in-limb implants wait; options not in play", () => {
+test("the gate: typed limbs and the checked options offered; device, cyberdeck, simple replacement and in-limb implants wait; options not in play", () => {
   for (const n of ["Cyberarm", "Cyberleg", "Cyber Forearm", "Cyberhand", "Cyberfoot", "Cybertorso", "Cyberskull", "Cyberarm Gyromount", "Strength Enhancement +3",
     "Quickness Enhancement +2", "Body Enhancement +1", "Built-In Smartgun Link", "External Mount", "Semi-natural Covering (Arm/Leg)", "Direct Neural Interface", "Magnetic Cyberlimb System"])
     assert.equal(offerReason(cy("ct", n), ["ct"]), null, n);
   assert.match(offerReason(cy("ct", "Built-In Device (Cyberlimb)"), ["ct"]), /four times/);
-  assert.match(offerReason(cy("ct", "Cybergun (Light Pistol)"), ["ct"]), /weapon added/);
-  assert.match(offerReason(cy("ct", "Cyberarm Taser"), ["ct"]), /weapon added/);
+  assert.equal(offerReason(cy("ct", "Cybergun (Light Pistol)"), ["ct"]), null);   // PLAN-M5l: with its weapon
+  assert.equal(offerReason(cy("ct", "Cyberarm Taser"), ["ct"]), null);
   for (const n of ["Cyberarm Cyberdeck", "Simple Replacement Limb", "Hydraulic Jack", "Foot Anchor"]) assert.match(offerReason(cy("ct", n), ["ct"]) ?? "", /own rules/, n);
   assert.equal(offerReason(cy("sr2", "Cyberarm (Full)"), [], { inPlay: true }), null, "a limb is a spare in play (M4c)");
   assert.match(offerReason(cy("sr2", "Increased Strength (Cyberlimb)"), [], { inPlay: true }), /at creation/);

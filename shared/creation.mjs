@@ -8,7 +8,7 @@
  * A character is the Foundry system's own `character` source shapes (`actor`), so the system's functions read it
  * unchanged; the app's own record sits beside it (`creation`).
  */
-import { TABLES, BP_NUYEN_TIERS, SHAPESHIFTER_PRIORITIES, humanFormMod, shapeshifterOf, qualityAudit, qualityEffects, bonusAttributeCost, attributeEdgeViolations, qualityRule, overstressPenalty, wareRule, placementFacts, racialProfile, metavariantFrom, isMetavariantItem, ONI_SOURCE, chargenBudget, damageUpdateFor, surgeryCategory, surgeryEssencePct, surgeonTN, karmaTransition, advancementOptions, saleQuoteOf, streetPrice, ratedStreetIndex, startingMoney, startingKarmaPool, adeptPowerBudget, label, skillTiersFromAllocation, validateSkillAllocation } from "./rules.mjs";
+import { TABLES, BP_NUYEN_TIERS, SHAPESHIFTER_PRIORITIES, humanFormMod, shapeshifterOf, qualityAudit, qualityEffects, bonusAttributeCost, attributeEdgeViolations, qualityRule, overstressPenalty, wareRule, placementFacts, OUTSIDE_LIMB_ESSENCE, racialProfile, metavariantFrom, isMetavariantItem, ONI_SOURCE, chargenBudget, damageUpdateFor, surgeryCategory, surgeryEssencePct, surgeonTN, karmaTransition, advancementOptions, saleQuoteOf, streetPrice, ratedStreetIndex, startingMoney, startingKarmaPool, adeptPowerBudget, label, skillTiersFromAllocation, validateSkillAllocation } from "./rules.mjs";
 import { defaultChoices, checkChoices, offerReason, RATING_UP_TO_BODY, project, price, eyeRow, essenceOf, isCybereye, powerKeyOf, sensesOf, limbTypeOf, optionKindOf, pricedItems, limbModelOf, bodyIndexOfItems } from "./purchase.mjs";
 import { derive } from "./derive.mjs";
 
@@ -277,11 +277,14 @@ export function applyOp(body, op, lookup = () => null, { roll = null, now = 0, s
       if (rec.type === "adept_power" && powerKeyOf(rec) !== "improved_ability"
         && Object.values(b.creation.items).some(r => r.type === "adept_power" && once(r) === once(rec)))
         throw new Refusal(`${rec.name} is already bought: raise its level instead.`, 125);
-      addRecord(b, { ...rec, choices: defaultChoices(rec) });
+      const added = addRecord(b, { ...rec, choices: defaultChoices(rec) });
+      const w = pairedEntry(e, lookup);   // an implant weapon brings its weapon (PLAN-M5l): one op, both records
+      if (w) { const wr = recordOf(w); addRecord(b, { ...wr, choices: defaultChoices(wr), pairedTo: added }); }
       break;
     }
     case "setItem": {
       const id = ownId(b, op.itemId, r => r.type !== "skill", "item");
+      if (b.creation.items[id].pairedTo) throw new Refusal("This weapon is part of its implant: change the implant.");
       const rec = b.creation.items[id], checked = checkChoices(rec, op.choices);
       if (checked.reason) throw new Refusal(checked.reason);
       const into = checked.choices.in;
@@ -381,7 +384,9 @@ export function applyOp(body, op, lookup = () => null, { roll = null, now = 0, s
     }
     case "removeItem": {
       const id = ownId(b, op.itemId, r => r.type !== "skill", "item");
+      if (b.creation.items[id].pairedTo && Object.hasOwn(b.creation.items, b.creation.items[id].pairedTo)) throw new Refusal("This weapon is part of its implant: remove the implant.");
       const gone = new Set([id]);
+      for (const [k, r] of Object.entries(b.creation.items)) if (r.pairedTo === id) gone.add(k);   // an implant's weapon goes with it (PLAN-M5l)
       for (const [k, r] of Object.entries(b.creation.items)) if (r.choices?.in === id) gone.add(k);   // its accessories go with an eye
       for (const r of Object.values(b.creation.items)) if (r.choices?.weapon === id) r.choices.weapon = "";   // its focus is unbonded
       for (const k of gone) delete b.creation.items[k];
@@ -540,13 +545,25 @@ function moneyOp(b, op, lookup, now, saleMode) {
     const flags = { ...projected.flags, sr2e: { ...(projected.flags.sr2e ?? {}), paid: price, ...(rec.type === "ammo" ? { acquiredQuantity: s.quantity } : {}) } };
     const item = { _id: id, name: rec.name, type: rec.type, img: rec.img, system: s, flags, effects: [], _stats: { compendiumSource: rec.source } };
     b.actor.items.push(item);
+    // An implant weapon brings its 0¥ weapon, linked by flag (PLAN-M5l Draft 2): both in this one ledger entry.
+    const w = pairedEntry(e, lookup);
+    let paired = null;
+    if (w) {
+      const wid = freshItemId(b), wr = recordOf(w), wp = project(wr, defaultChoices(wr, { inPlay: true }), b.creation.items);
+      const witem = { _id: wid, name: w.name, type: "weapon", img: wr.img, system: wp.system, flags: { ...wp.flags, sr2e: { ...(wp.flags.sr2e ?? {}), pairedItem: id } }, effects: [], _stats: { compendiumSource: wr.source } };
+      b.actor.items.push(witem);
+      paired = { itemId: wid, source: structuredClone(witem) };
+    }
     sys.nuyen = have - price;
-    ledgerAdd(b, now, { kind: "buy", summary: `Bought ${rec.name} for ${yen(price)} (street price ${yen(street)})`, record: { itemId: id, source: structuredClone(item), price, street } });
+    ledgerAdd(b, now, { kind: "buy", summary: `Bought ${rec.name} for ${yen(price)} (street price ${yen(street)})`, record: { itemId: id, source: structuredClone(item), price, street, ...(paired ? { paired } : {}) } });
     return b;
   }
   // sellItem (p.188, R6): the server's sale mode; the client's quote must match it.
   const item = typeof op.itemId === "string" ? b.actor.items.find(i => i._id === op.itemId) : null;
   if (!item || !PLAY_GEAR.includes(item.type)) throw new Refusal("That isn't something to sell.");
+  const owner = item.flags?.sr2e?.pairedItem;   // an implant weapon goes with its implant (PLAN-M5l)
+  if (owner && b.actor.items.some(i => i._id === owner)) throw new Refusal("This weapon is part of its implant: sell the implant.");
+  const pairedWeapon = b.actor.items.find(i => i.type === "weapon" && i.flags?.sr2e?.pairedItem === item._id) ?? null;
   if (item.type === "cyberware" && item.system.installed !== false) throw new Refusal("Installed cyberware comes out by surgery, not a sale.", 114);
   if (op.shownMode !== saleMode) throw new Refusal("The GM changed how selling works: look at the price again.");
   if (saleMode === "fence" && op.pct == null) throw new Refusal("A fence sale needs the agreed percentage.", 188);
@@ -554,10 +571,10 @@ function moneyOp(b, op, lookup, now, saleMode) {
   const q = saleQuoteOf(priced.find(i => i._id === item._id), { mode: saleMode, pct: op.pct ?? 30, items: priced });
   if (q.price == null) throw new Refusal("A fence pays 10–50%, in steps of 5 (p.188).", 188);
   if (q.price !== op.quoted) throw new Refusal("The price changed: sell again to see the new one.");
-  b.actor.items = b.actor.items.filter(i => i._id !== item._id);
+  b.actor.items = b.actor.items.filter(i => i._id !== item._id && i._id !== pairedWeapon?._id);
   sys.nuyen = have + q.price;
   ledgerAdd(b, now, { kind: "sell", summary: `Sold ${item.name} for ${yen(q.price)}${saleMode === "fence" ? ` (a fence, ${op.pct}%)` : " (refund)"}`,
-    record: { source: structuredClone(item), price: q.price, mode: saleMode, pct: saleMode === "fence" ? op.pct : null } });
+    record: { source: structuredClone(item), price: q.price, mode: saleMode, pct: saleMode === "fence" ? op.pct : null, ...(pairedWeapon ? { pairedSource: structuredClone(pairedWeapon) } : {}) } });
   return b;
 }
 /** The street price shown for a purchase (p.184): list × the rating's Street Index. */
@@ -572,17 +589,22 @@ function undoMoney(b, e, now) {
     if (have - r.amount < 0) throw new Refusal("That money is already spent: undo the later change first.");
     sys.nuyen = have - r.amount;
   } else if (e.kind === "buy") {
-    const item = b.actor.items.find(i => i._id === r.itemId);
-    if (!item || !sameJson(item, r.source)) throw new Refusal("The item has changed since it was bought: that can't be undone now.");
-    b.actor.items = b.actor.items.filter(i => i._id !== r.itemId);
+    const item = b.actor.items.find(i => i._id === r.itemId), w = r.paired ? b.actor.items.find(i => i._id === r.paired.itemId) : null;
+    if (!item || !sameJson(item, r.source) || (r.paired && (!w || !sameJson(w, r.paired.source)))) throw new Refusal("The item has changed since it was bought: that can't be undone now.");
+    b.actor.items = b.actor.items.filter(i => i._id !== r.itemId && i._id !== r.paired?.itemId);
     sys.nuyen = have + r.price;
   } else {
     if (have < r.price) throw new Refusal("That money is already spent: undo the later change first.");
     const book = r.source.system?.citation?.book;
     if (book && book !== CORE && !booksOf(b).includes(book)) throw new Refusal("That item's sourcebook is turned off: turn it back on first.");   // M5a r1 #10
     const back = structuredClone(r.source);
-    if (b.actor.items.some(i => i._id === back._id)) back._id = freshItemId(b);
-    b.actor.items.push(back);
+    if (r.pairedSource) {   // an implant and its weapon come back together, with their ids (the link names them; PLAN-M5l)
+      if (b.actor.items.some(i => i._id === back._id || i._id === r.pairedSource._id)) throw new Refusal("Something else holds that implant's place now: that can't be undone.");
+      b.actor.items.push(back, structuredClone(r.pairedSource));
+    } else {
+      if (b.actor.items.some(i => i._id === back._id)) back._id = freshItemId(b);
+      b.actor.items.push(back);
+    }
     sys.nuyen = have - r.price;
   }
   ledgerAdd(b, now, { kind: "revert", summary: `Undone: ${e.summary}`, record: { of: e.kind }, undoes: e.id });
@@ -725,6 +747,14 @@ function addRecord(b, rec) {
   while (Object.hasOwn(b.creation.items, itemId(n)) || taken.has(itemId(n))) n++;
   b.creation.nextItem = n + 1;
   b.creation.items[itemId(n)] = { ...rec, snapshot: structuredClone(rec.snapshot), flags: structuredClone(rec.flags ?? {}) };
+  return itemId(n);
+}
+/** An implant weapon's 0¥ weapon entry (PLAN-M5l), or null; refused when the catalog lacks it. */
+function pairedEntry(e, lookup) {
+  if (!e.pairedWeaponId) return null;
+  const w = lookup(e.pairedWeaponId);
+  if (!w || w.type !== "weapon") throw new Refusal(`${e.name}'s weapon isn't in this server's catalog.`);
+  return w;
 }
 const recordOf = (e) => ({ type: e.type, name: e.name, img: e.img ?? null, source: e._stats?.compendiumSource ?? null, flags: e.flags ?? {}, catalogId: e.id, snapshot: e.system });
 const ITEM_ID = /^cg[0-9a-z]{14}$/;
@@ -770,6 +800,8 @@ function rebuildItems(b) {
       rows.get(eye).push(eyeRow(id, r, { system }));
       continue;
     }
+    // An implant weapon's link to its implant, kept on the item so it survives export and import (PLAN-M5l r1 #3).
+    if (r.pairedTo) flags.sr2e = { ...(flags.sr2e ?? {}), pairedItem: r.pairedTo };
     out.push({ _id: id, name: r.name, type: r.type, img: r.img, system, flags, effects: [], _stats: { compendiumSource: r.source } });
   }
   for (const item of out) if (item.type === "cyberware" && (item.system.capacity ?? 0) > 0) item.system.modules = rows.get(item._id) ?? [];
@@ -852,7 +884,12 @@ function limbChecks(actor, add, creation) {
     else if (!l.sideKnown) add("resources", sev, `${l.name}: choose its side (left or right).`, 30, "ct");
   }
   for (const c of model.conflicts) add("resources", sev, `${c.ids.map(name).join(" and ")} overlap on the ${c.side === "none" ? "body" : c.side} (${c.slot}).`, 30, "ct");
-  for (const o of model.orphans) add("resources", sev, `${o.name}: ${o.reason}.`, 31, "ct");
+  for (const o of model.orphans) {
+    // A cybergun with no link sits in a natural limb: legal, at the p.52 table's Essence (PLAN-M5l Draft 2).
+    const src = actor.items.find(i => i._id === o.id)?._stats?.compendiumSource;
+    if (!o.linkedLimbId && Object.hasOwn(OUTSIDE_LIMB_ESSENCE, src ?? "")) add("resources", "note", `${o.name}: in a natural limb, ${OUTSIDE_LIMB_ESSENCE[src]} Essence (build it into a cyberlimb for 0).`, 52, "ct");
+    else add("resources", sev, `${o.name}: ${o.reason}.`, 31, "ct");
+  }
   const d = derive({ actor });
   for (const r of d.limbs.selection?.rejected ?? []) add("resources", "warning", `${name(r.id)}: ${r.reason}.`, 31, "ct");
   for (const c of d.limbs.caps) add("resources", "warning", `The limbs' average ${c.attr} ${c.was} is over its limit: ${c.cap} counts.`, 51, "ct");

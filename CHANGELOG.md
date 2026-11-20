@@ -6,6 +6,11 @@ notes come from it.
 ## Unreleased
 
 ### Added
+- **Implant weapons** (docs/PLAN-M5l.md): the six cyberguns and the Cyberarm Taser can be bought, and every implant
+  weapon (cyberguns, taser, CyberSquirt, oral gun and dart, eye gun, dart and tool laser) now comes with its weapon, so
+  its attack shows on the sheet and travels to Foundry. A cybergun in a natural limb costs the p.52 table's Essence; in a
+  cyberlimb none. In play an implant and its weapon are bought, sold and undone together; a spare's weapon has no attack
+  until surgery.
 - **Bioware with its own rules** (docs/PLAN-M5k.md): the Synaptic Accelerator, Muscle Augmentation, Orthoskin, the
   Suprathyroid Gland, the Adrenal Pump, Enhanced Articulation, the Cerebral Booster, the Damage Compensator and the
   Pain Editor. Cyberware cuts a pump's or suprathyroid's bonus (Cybertechnology p.56–57), muscle augmentation beside
@@ -127,6 +132,8 @@ notes come from it.
   restore, admin commands. README and OPERATIONS updated for the beta.
 
 ### Fixed
+- **An implant weapon had no attack**: the CyberSquirt, oral gun and dart and the eye weapons were bought without
+  their weapon item.
 - **Point-based design starts with the GM's defaults** (100 Building Points, 500¥): choosing the method stored none,
   so the rules check said "Choose a nuyen tier" while the page showed 500¥.
 - **Library**: the Foundry import is a proper button (the file chooser showed as the browser's grey default), with a

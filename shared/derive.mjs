@@ -169,7 +169,10 @@ export function derive({ actor, options = {} }) {
   // Every Foundry character has an innate Unarmed Strike (sr2e.mjs preCreate, UNARMED_STRIKE_DATA); the app's export
   // carries one when the character has none (shared/foundry.mjs), so the sheet shows it too (code review M5i r1 #1).
   const withFist = items.some(i => i.type === "weapon" && i.name === "Unarmed Strike") ? items : [...items, UNARMED_STRIKE];
-  const weapons = withFist.filter(i => i.type === "weapon" || (i.type === "cyberware" && i.system.isWeapon && i.system.installed !== false && !secondhandDead(i))).map(i => ({ id: i._id, name: i.name,
+  // An implant weapon works only while its implant does (a spare before surgery, a failed part: no attack; PLAN-M5l).
+  const implantOf = (w) => { const id = w.flags?.sr2e?.pairedItem; return id ? items.find(i => i._id === id) ?? null : undefined; };
+  const armed = (w) => { const imp = implantOf(w); return imp === undefined || (imp !== null && imp.system.installed !== false && !secondhandDead(imp)); };
+  const weapons = withFist.filter(i => (i.type === "weapon" && armed(i)) || (i.type === "cyberware" && i.system.isWeapon && i.system.installed !== false && !secondhandDead(i))).map(i => ({ id: i._id, name: i.name,
     // Bone lacing (Shadowtech p.42) or cyberhands/feet (Cybertechnology p.49), the higher, raise the Unarmed Strike from its
     // authored code, as _applyUnarmedPower.
     damageCode: i.type === "weapon" && i.name === "Unarmed Strike" ? unarmedDamageCode(i.system.damageCode, Math.max(lacing, limbs0.handPower))

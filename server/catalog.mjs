@@ -35,6 +35,15 @@ export function loadCatalog(dir, { pins = null } = {}) {
     if (byId.has(e.id)) throw new CatalogError(`duplicate catalog id ${e.id}`);
     byId.set(e.id, e);
   }
+  // Implant weapons (PLAN-M5l, code review r1 #3): every paired implant names its weapon and the weapon names it back,
+  // so a catalog built before the pairing (or tampered with) can't quietly sell implants without their weapons.
+  for (const e of catalog.entries) {
+    if (e.type === "cyberware" && typeof e.flags?.sr2e?.pairedWeapon === "string") {
+      const w = byId.get(e.pairedWeaponId);
+      if (w?.type !== "weapon" || w.pairedWareId !== e.id) throw new CatalogError(`${e.id}: its paired weapon is missing; rebuild the catalog`);
+    }
+    if (e.pairedWareId !== undefined && byId.get(e.pairedWareId)?.pairedWeaponId !== e.id) throw new CatalogError(`${e.id}: its paired implant is missing; rebuild the catalog`);
+  }
   // The manifest is what the routes hand out: it must be exactly what the checked catalog body implies — never
   // trusted on its own (its checksum line only proves the BODY).
   const { entries, ...rest } = catalog, implied = { ...rest, entries: entries.length };

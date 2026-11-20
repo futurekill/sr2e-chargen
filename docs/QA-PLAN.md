@@ -178,3 +178,9 @@ bonding (p.46, p.137), refusals.
 - Muscle Augmentation beside two full cyberarms: Body Cost and price × .6.
 - Orthoskin 2 with an Armor Vest: armor adds. Enhanced Articulation beside three cyber limb positions: no Reaction bonus.
 - `test/fixtures/parity/bioware-v0.161.0.json` is Foundry's prepared values; regenerate it when the pin moves.
+
+## Implant weapons (M5l)
+- With Cybertechnology on, buy an Oral Gun: its weapon appears beside it (no remove button) and the sheet lists its
+  attack. Remove the Oral Gun: both go.
+- A Cybergun (Heavy Pistol) on its own: a note "in a natural limb, 1 Essence"; built into a cyberarm: 0 Essence.
+- In play, buy an Oral Gun: one history entry; the attack appears only after surgery; sell it: both go; undo: both back.

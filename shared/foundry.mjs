@@ -95,6 +95,22 @@ export function fromFoundryActor(json, { pinnedVersion, now = 0 }) {
       if (e != null && !(typeof e === "number" && e >= 0 && e <= 20)) throw new Refusal(`${i.name}: its Essence isn't a number from 0 to 20.`);
     ids.add(i._id);
   }
+  // Implant weapons (PLAN-M5l, code review r1 #1–#2): a link must name a cyberware item, one weapon per implant; a pair
+  // assembled in Foundry (the compendium's pairedWeapon / pairedWare flags, no link) is linked here, in item order.
+  const byIdItem = new Map(items.map(i => [i._id, i])), linked = new Set();
+  for (const i of items) {
+    const to = i.flags?.sr2e?.pairedItem;
+    if (to === undefined) continue;
+    if (i.type !== "weapon" || typeof to !== "string" || byIdItem.get(to)?.type !== "cyberware" || linked.has(to)) throw new Refusal(`${i.name}: its implant link is broken.`);
+    linked.add(to);
+  }
+  const links = new Map();
+  for (const w of items.filter(i => i.type === "weapon" && i.flags?.sr2e?.pairedItem === undefined && typeof i.flags?.sr2e?.pairedWare === "string")) {
+    const [pkg, x] = w.flags.sr2e.pairedWare.split(/:(.*)/s);
+    const imp = items.find(i => i.type === "cyberware" && !linked.has(i._id) && i.flags?.sr2e?.pairedWeapon === `${pkg}:w-${x}`);
+    if (!imp) throw new Refusal(`${w.name}: there's no implant left for this implant weapon — remove the extra weapon in Foundry.`);   // r2 #1
+    linked.add(imp._id); links.set(w._id, imp._id);
+  }
   const body = newCharacter(json.name);
   body.actor = {
     name: body.name, type: "character", system: structuredClone(sys),
@@ -105,7 +121,8 @@ export function fromFoundryActor(json, { pinnedVersion, now = 0 }) {
         s.specialization = { name: "", rating: 0, ...(s.specialization ?? {}) };
       }
       return { _id: i._id, name: String(i.name).slice(0, 200), type: i.type, img: typeof i.img === "string" ? i.img : null, system: s,
-        flags: structuredClone(i.flags ?? {}), effects: [], _stats: { compendiumSource: i._stats?.compendiumSource ?? null } };
+        flags: links.has(i._id) ? { ...structuredClone(i.flags ?? {}), sr2e: { ...structuredClone(i.flags?.sr2e ?? {}), pairedItem: links.get(i._id) } } : structuredClone(i.flags ?? {}),
+        effects: [], _stats: { compendiumSource: i._stats?.compendiumSource ?? null } };
     }),
     flags: structuredClone(json.flags ?? {})
   };

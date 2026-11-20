@@ -10,7 +10,7 @@ export { chargenSpend, chargenBudget, saleQuoteOf, itemListValue, fenceValue, FE
 export { QUALITY_VALUES, PER_SUBJECT, qualityValuesFor, bonusAttributeCost, qualityEffects, qualityAudit, qualityRule } from "../content/sr2e-foundryvtt/module/rules/quality-rules.mjs";
 export { SHAPESHIFTER_PRIORITIES, SHAPESHIFTER_SPECIES, formModifiers, shapeshifterOf, humanFormMod } from "../content/sr2e-foundryvtt/module/rules/shapeshift-rules.mjs";
 export { limbRole, resolveLimbType, resolveOptionKind, limbModel, forLimbRules, SIDED } from "../content/sr2e-foundryvtt/module/rules/limb-rules.mjs";
-export { limbStats, limbEssence, lacingArmor, placementFacts, limbOptionPrice } from "../content/sr2e-foundryvtt/module/rules/limb-stats.mjs";
+export { limbStats, limbEssence, lacingArmor, placementFacts, limbOptionPrice, OUTSIDE_LIMB_ESSENCE } from "../content/sr2e-foundryvtt/module/rules/limb-stats.mjs";
 export { rigBonuses } from "../content/sr2e-foundryvtt/module/rules/vehicle-r2-rules.mjs";
 export { wareCtx, wareRule, containerEssence, eyeAccessoryKind, rowsListValue, muscleFactor, ceil2, pumpEfficiency, cyberPositions } from "../content/sr2e-foundryvtt/module/rules/ware-rules.mjs";
 

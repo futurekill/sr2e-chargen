@@ -80,8 +80,14 @@
     }, 250);
   }
   searchShop();
+  /** An entry and, for an implant weapon, its paired weapon (PLAN-M5l): the reducer adds both. */
+  async function fetchEntry(id) {
+    if (!entries.has(id)) entries.set(id, await get(`/api/catalog/entries/${encodeURIComponent(id)}`));
+    const w = entries.get(id)?.pairedWeaponId;
+    if (w && !entries.has(w)) entries.set(w, await get(`/api/catalog/entries/${encodeURIComponent(w)}`));
+  }
   async function buy(id) {
-    try { if (!entries.has(id)) entries.set(id, await get(`/api/catalog/entries/${encodeURIComponent(id)}`)); }
+    try { await fetchEntry(id); }
     catch (err) { if (!gone) error = err.message; return; }
     if (!gone) change(entries.get(id)?.type === "vehicle" ? { op: "addVehicle", catalogId: id } : { op: "addItem", catalogId: id });
   }
@@ -92,6 +98,9 @@
     return { id, r, spec: choiceSpec(r), price: price(r, projected, body.actor.items), essence: item && r.type === "cyberware" ? essenceOf(item, body.actor.items, body.actor.system.race) : null };
   }));
   const eyes = $derived(bought.filter(x => isCybereye(x.r)));
+  // What can be sold in play: gear, spare cyberware; an implant's weapon goes with its implant (PLAN-M5l).
+  const sellable = $derived(body.actor.items.filter(i => PLAY_GEAR.includes(i.type) && !(i.type === "cyberware" && i.system.installed !== false)
+    && !(i.flags?.sr2e?.pairedItem && body.actor.items.some(x => x._id === i.flags.sr2e.pairedItem))));
   const cyberlimbs = $derived(bought.filter(x => x.r.type === "cyberware" && !x.r.snapshot.limbOption && limbTypeOf(x.r)));   // PLAN-M5j
   /** A bioware row's Body Cost after its grade (Shadowtech p.7), as the Body Index counts it. */
   const bioCost = (id) => { const it = body.actor.items.find(i => i._id === id); return it ? Math.round(bodyCostOf(it, body.actor.items) * 1000) / 1000 : "—"; };
@@ -165,7 +174,7 @@
   searchPlay();
   /** Start buying an entry: its in-play choices with defaults, the street price shown, the price agreed prefilled. */
   async function startBuy(id) {
-    try { if (!entries.has(id)) entries.set(id, await get(`/api/catalog/entries/${encodeURIComponent(id)}`)); }
+    try { await fetchEntry(id); }
     catch (err) { if (!gone) error = err.message; return; }
     const e = entries.get(id), rec = { type: e.type, name: e.name, snapshot: e.system, flags: e.flags ?? {}, source: e._stats?.compendiumSource ?? null, catalogId: e.id };
     const choices = defaultChoices(rec, { inPlay: true });
@@ -435,9 +444,9 @@
           {#if buying.rec.type === "cyberware"}<p class="muted small">Cyberware bought now is a spare: install it with surgery on the Condition step.</p>{/if}
         {/if}
         <h3>Sell</h3>
-        {#if body.actor.items.some(i => PLAY_GEAR.includes(i.type) && !(i.type === "cyberware" && i.system.installed !== false))}
+        {#if sellable.length}
           <ul class="shop">
-            {#each body.actor.items.filter(i => PLAY_GEAR.includes(i.type) && !(i.type === "cyberware" && i.system.installed !== false)) as it (it._id)}
+            {#each sellable as it (it._id)}
               <li><span class="name">{it.name}{it.type === "cyberware" && it.system.installed === false ? " (spare)" : ""}</span>
                 {#if saleMode === "fence"}<select aria-label={`${it.name}: agreed percentage`} value={sellPct[it._id] ?? 30} onchange={(ev) => { sellPct = { ...sellPct, [it._id]: Number(ev.currentTarget.value) }; }}>{#each FENCE_STEPS as p}<option value={p}>{p}%</option>{/each}</select>{/if}
                 <span class="muted small">{nuyen(quoteFor(it).price ?? 0)}</span>
@@ -876,11 +885,11 @@
           <tbody>
             {#each bought as x (x.id)}
               <tr>
-                <th scope="row">{x.r.name}<br><span class="muted small">{TYPE_NAME[x.r.type]}{x.essence != null ? ` · Essence ${x.essence}` : ""}{x.r.type === "bioware" ? ` · Body Cost ${bioCost(x.id)}` : ""}{x.r.choices.in ? " · in cybereyes" : ""}</span></th>
-                <td class="choices">{@render choiceControls(x)}
+                <th scope="row">{x.r.name}<br><span class="muted small">{TYPE_NAME[x.r.type]}{x.essence != null ? ` · Essence ${x.essence}` : ""}{x.r.type === "bioware" ? ` · Body Cost ${bioCost(x.id)}` : ""}{x.r.choices.in ? " · in cybereyes" : ""}{x.r.pairedTo ? ` · with ${body.creation.items[x.r.pairedTo]?.name ?? "its implant"}` : ""}</span></th>
+                <td class="choices">{#if !x.r.pairedTo}{@render choiceControls(x)}{/if}
                 </td>
                 <td class="price">{x.r.type === "contact" ? contactPrice(x) : x.r.type === "adept_power" ? `${check.budgets?.powerPoints?.costs[x.id] ?? "—"} PP` : x.r.type === "spell" ? `${x.r.choices.force} FP` : nuyen(x.price)}{#if x.r.choices.in}<br><span class="muted small">in the eyes' price</span>{/if}</td>
-                <td><button type="button" class="quiet" disabled={finished} aria-label={`Remove ${x.r.name}`} onclick={() => change({ op: "removeItem", itemId: x.id })}>✕</button></td>
+                <td>{#if !x.r.pairedTo}<button type="button" class="quiet" disabled={finished} aria-label={`Remove ${x.r.name}`} onclick={() => change({ op: "removeItem", itemId: x.id })}>✕</button>{/if}</td>
               </tr>
             {/each}
           </tbody>
