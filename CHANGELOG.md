@@ -3,7 +3,7 @@
 Every change people can see goes under **Unreleased** in the same commit. A release retitles that section and its
 notes come from it.
 
-## Unreleased
+## 0.1.0-beta.2 — 2026-11-20
 
 ### Added
 - **Implant weapons** (docs/PLAN-M5l.md): the six cyberguns and the Cyberarm Taser can be bought, and every implant
