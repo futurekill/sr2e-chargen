@@ -3,7 +3,7 @@
 Every change people can see goes under **Unreleased** in the same commit. A release retitles that section and its
 notes come from it.
 
-## Unreleased
+## 0.1.0-beta.4 — 2026-11-20
 - Added: the Reflex Recorder (General and Concentration, Shadowtech p.27). Choose the Active skill it learns; the
   Concentration size learns that skill's concentration. Two recorders on one skill are refused (not cumulative).
 - Added: the Toxin Exhaler (Shadowtech p.32). Choose its toxin; the price is 30,000¥ + 100 doses of it (RULINGS R14).
