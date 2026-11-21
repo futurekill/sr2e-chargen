@@ -4,8 +4,8 @@
     {
       "dir": "sr2e-foundryvtt",
       "repo": "futurekill/sr2e-foundryvtt",
-      "tag": "v0.160.99",
-      "commit": "729d93b4749749eaeae608bdbe426eea30e44fb4"
+      "tag": "v0.161.0",
+      "commit": "093e76cdcab668635d34f6b9bf81c698a820460b"
     },
     {
       "dir": "sr2e-corporate-security",
@@ -64,8 +64,8 @@
     {
       "dir": "sr2e-shadowtech",
       "repo": "futurekill/sr2e-shadowtech",
-      "tag": "v0.9.0",
-      "commit": "385f7868590c344bc76fa288a47fc183d81cfbc5"
+      "tag": "v0.10.0",
+      "commit": "5d382df4e88388189ad72ed549da37d729447286"
     },
     {
       "dir": "sr2e-street-samurai-catalog",

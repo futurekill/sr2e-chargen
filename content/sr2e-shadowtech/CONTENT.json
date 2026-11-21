@@ -1,10 +1,10 @@
 {
   "dir": "sr2e-shadowtech",
   "repo": "futurekill/sr2e-shadowtech",
-  "tag": "v0.9.0",
-  "commit": "385f7868590c344bc76fa288a47fc183d81cfbc5",
+  "tag": "v0.10.0",
+  "commit": "5d382df4e88388189ad72ed549da37d729447286",
   "files": {
-    "module.json": "33f8f271f352403631f90aa7c460f9aad693bf54",
+    "module.json": "568d950486b33268f90346b4639ed870a96475de",
     "packs-src/st-bioware/Adrenal_Pump_acc48cba2abcfb40.json": "523e5f1595dd740f9c5c0ae46e9c6cf711f7e078",
     "packs-src/st-bioware/Cerebral_Booster_bca4fdaee6a77912.json": "ba879052ce7ec8dc4a2705121d7502d58102cd5d",
     "packs-src/st-bioware/Damage_Compensator_10673ff02109f3b8.json": "8f1edcb51faa869fee609df15c4e02371799ecd7",
@@ -17,7 +17,8 @@
     "packs-src/st-bioware/Pain_Editor_14250c00e975634e.json": "59afaa85ab21d4d00a6e7417e68d22bcbd67d551",
     "packs-src/st-bioware/Pathogenic_Defense_64b5f0dc8dc701c3.json": "fe825d3eb3539c201a2844fca15d9ac93b47fc22",
     "packs-src/st-bioware/Platelet_Factory_5dc14144cc981b03.json": "5c6bd7e9861fb04341ef61e72478dcb87d9aee8e",
-    "packs-src/st-bioware/Reflex_Recorder_General__6fac01c3ca92526c.json": "3dbe1af92270a72da726215a7e6e264e0c65d9ac",
+    "packs-src/st-bioware/Reflex_Recorder_Concentration__38d465de93ce58dd.json": "309494160ddc276e53520fdd95a6273bf062c600",
+    "packs-src/st-bioware/Reflex_Recorder_General__6fac01c3ca92526c.json": "0527020d7e15f2dbed01cca28c0fb892ed5999e5",
     "packs-src/st-bioware/Suprathyroid_Gland_fc58c133d4a51a68.json": "e07f3c576d5f7da2675e4f2fc3979b5e628803a1",
     "packs-src/st-bioware/Symbiotes_bd018f149cbf3def.json": "86903856adf3721b1d1c7628b4dc0b5223a0c336",
     "packs-src/st-bioware/Synaptic_Accelerator_abf83fc461cdb66a.json": "ea3cc364fff98bb13e731f9643823f6e5d7444ea",
