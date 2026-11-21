@@ -48,7 +48,8 @@ export function choiceSpec(rec, { inPlay = false } = {}) {
     }
     case "bioware": {   // PLAN-M5e: a rating row (≤ 6 at creation) and the grade; neural is always cultured (no choice)
       const grade = s.bodySystem === "neural" ? {} : { grade: oneOf(["standard", "cultured"]) };
-      return { ...(rows.length > 1 ? { rating: oneOf(rows) } : {}), ...grade, ...(isRecorder(rec) ? { skill: text() } : {}) };
+      return { ...(rows.length > 1 ? { rating: oneOf(rows) } : {}), ...grade, ...(isRecorder(rec) ? { skill: text() } : {}),
+        ...(rec.source === TOXIN_EXHALER ? { toxin: oneOf(["", ...Object.keys(EXHALER_TOXINS)]) } : {}) };
     }
     case "quality": {   // Edges and Flaws (Companion p.22–35, PLAN-M5d): the table's values, an attribute, a detail
       const v = QUALITY_VALUES[rec.source] ?? {}, rule = qualityRule(rec.snapshot?.rule, rec.source);
@@ -200,8 +201,15 @@ export function refusalFor(entry) {
  */
 export const BOOK_TYPES = ["weapon", "armor", "ammo", "gear", "spell"];
 const ST = (id) => `Compendium.sr2e-shadowtech.st-bioware.Item.${id}`;
-/** Bioware that needs a choice the app doesn't record yet (PLAN-M5e Draft 2): Toxin Exhaler's toxin. */
-const BIOWARE_WAITS = new Set([ST("9f7e371475559ce1")]);
+/**
+ * The Toxin Exhaler (Shadowtech p.32): 30,000¥ + 100 × one dose of the toxin chosen before implantation. Its toxins are
+ * the catalog's compounds that deal damage and are priced per dose (docs/RULINGS.md R14); test/bioware pins the prices.
+ */
+export const TOXIN_EXHALER = ST("9f7e371475559ce1");
+export const EXHALER_TOXINS = {
+  "Cyanide": { dose: 360, book: "st", page: 97 }, "Hyper": { dose: 180, book: "st", page: 98 },
+  "MAO": { dose: 280, book: "st", page: 100 }, "Atropine": { dose: 600, book: "st", page: 96 },
+  "Gamma-Scopolamine": { dose: 300, book: "csh", page: 81 } };
 /** A Reflex Recorder (Shadowtech p.27): its `skill` choice is a skill record of the character (docs/PLAN-M5m.md). */
 export const isRecorder = (rec) => rec.type === "bioware" && wareRule(rec.flags, rec.source ?? null) === "reflex-recorder";
 /** Rated at most the unaugmented Body (their entries; PLAN-M5e Draft 2): Toxin Extractor, Pathogenic Defense, Mnemonic Enhancer. */
@@ -231,7 +239,7 @@ export function offerReason(entry, books = [], { inPlay = false } = {}) {
     if (inPlay) return "Bioware goes in by surgery: buy it at creation for now.";
     // PLAN-M5k: the bioware rules derive computes as Foundry does (an allow list); two still wait for their choice.
     const rule = wareRule(entry.flags, entry._stats?.compendiumSource ?? null);
-    if ((rule && !BIOWARE_RULES_OFFERED.has(rule)) || BIOWARE_WAITS.has(entry._stats?.compendiumSource))
+    if (rule && !BIOWARE_RULES_OFFERED.has(rule))
       return "This bioware has its own rules the app doesn't compute yet.";
     return refusalFor(entry);
   }
@@ -316,6 +324,10 @@ export function project(rec, c, recs = {}) {
     if (Array.isArray(c.archetypes)) s.archetypes = c.archetypes;
   }
   if (rec.type === "lifestyle" && "months" in c) s.monthsPaid = c.months;
+  if (rec.source === TOXIN_EXHALER && EXHALER_TOXINS[c.toxin]) {   // the toxin is part of the implant's price (R14)
+    s.cost = (Number(rec.snapshot.cost) || 0) + 100 * EXHALER_TOXINS[c.toxin].dose;
+    s.notes = `<p>Toxin: ${c.toxin}.</p>${s.notes ?? ""}`;
+  }
   if (isRecorder(rec) && "skill" in c) {   // the system matches by NAME (and the concentration's name), re-resolved every rebuild
     const sk = recs[c.skill]?.type === "skill" ? recs[c.skill] : null;
     s.recordedSkill = sk?.name ?? "";

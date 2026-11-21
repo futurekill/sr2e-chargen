@@ -5,7 +5,7 @@ import { readFileSync } from "node:fs";
 import { buildCatalog } from "../tools/build-catalog.mjs";
 import { newCharacter, applyOp, validate } from "../shared/creation.mjs";
 import { derive } from "../shared/derive.mjs";
-import { offerReason, priceInput } from "../shared/purchase.mjs";
+import { offerReason, priceInput, EXHALER_TOXINS } from "../shared/purchase.mjs";
 import { budgetItemInput, chargenItemCost } from "../shared/rules.mjs";
 
 const root = new URL("../", import.meta.url);
@@ -27,7 +27,6 @@ test("the gate: plain and rule-bearing bioware offered (M5k); the choice-needing
   assert.equal(offerReason(bio("Tailored Pheromones"), ["st"]), null);
   for (const n of ["Adrenal Pump", "Pain Editor", "Damage Compensator", "Enhanced Articulation", "Orthoskin", "Muscle Augmentation", "Synaptic Accelerator", "Suprathyroid Gland", "Cerebral Booster"])
     assert.equal(offerReason(bio(n), ["st"]), null, n);
-  for (const n of ["Toxin Exhaler"]) assert.match(offerReason(bio(n), ["st"]) ?? "", /own rules/, n);
   assert.match(offerReason(bio("Tailored Pheromones"), []) ?? "", /isn't turned on/);
 });
 
@@ -120,4 +119,23 @@ test("M5m: a Reflex Recorder learns one Active skill of this character; the expo
   // Removing the skill leaves the recorder pointing nowhere.
   b = run(b, [{ op: "removeSkill", itemId: fire }]);
   assert.match(probs(b), /no longer on this character/);
+});
+
+test("M5m: the Toxin Exhaler costs 30,000¥ + 100 doses of its toxin, chosen before implantation (Shadowtech p.32)", () => {
+  for (const [name, t] of Object.entries(EXHALER_TOXINS)) {   // the list's dose prices are the catalog's (R14)
+    const e = catalog.entries.find(x => x.type === "gear" && x.name === name && x.book === t.book);
+    assert.equal(e?.system.cost, t.dose, name);
+  }
+  assert.equal(offerReason(bio("Toxin Exhaler"), ["st"]), null);
+  let b = buy(start(), "Toxin Exhaler");
+  const probs = () => validate(b).problems.filter(p => /Toxin Exhaler/.test(p.text)).map(p => p.text).join(" | ");
+  assert.match(probs(), /choose the toxin/);
+  b = run(b, [{ op: "setItem", itemId: rec(b, "Toxin Exhaler"), choices: { ...b.creation.items[rec(b, "Toxin Exhaler")].choices, toxin: "Cyanide" } }]);
+  assert.equal(item(b, "Toxin Exhaler").system.cost, 30000 + 36000);
+  assert.match(item(b, "Toxin Exhaler").system.notes, /Toxin: Cyanide/);
+  assert.equal(probs(), "");
+  b = run(b, [{ op: "setItem", itemId: rec(b, "Toxin Exhaler"), choices: { ...b.creation.items[rec(b, "Toxin Exhaler")].choices, toxin: "Gamma-Scopolamine", grade: "cultured" } }]);
+  assert.equal(item(b, "Toxin Exhaler").system.cost, 30000 + 30000);
+  assert.equal(chargenItemCost(budgetItemInput(item(b, "Toxin Exhaler"), b.actor.items)), 4 * 60000, "cultured: ×4 on the whole price");
+  assert.match(probs(), /isn't turned on/);
 });

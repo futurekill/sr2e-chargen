@@ -9,7 +9,7 @@
  * unchanged; the app's own record sits beside it (`creation`).
  */
 import { TABLES, BP_NUYEN_TIERS, SHAPESHIFTER_PRIORITIES, humanFormMod, shapeshifterOf, qualityAudit, qualityEffects, bonusAttributeCost, attributeEdgeViolations, qualityRule, overstressPenalty, wareRule, placementFacts, OUTSIDE_LIMB_ESSENCE, racialProfile, metavariantFrom, isMetavariantItem, ONI_SOURCE, chargenBudget, damageUpdateFor, surgeryCategory, surgeryEssencePct, surgeonTN, karmaTransition, advancementOptions, saleQuoteOf, streetPrice, ratedStreetIndex, startingMoney, startingKarmaPool, adeptPowerBudget, label, skillTiersFromAllocation, validateSkillAllocation } from "./rules.mjs";
-import { defaultChoices, isRecorder, checkChoices, offerReason, RATING_UP_TO_BODY, project, price, eyeRow, essenceOf, isCybereye, powerKeyOf, sensesOf, limbTypeOf, optionKindOf, pricedItems, limbModelOf, bodyIndexOfItems } from "./purchase.mjs";
+import { defaultChoices, isRecorder, TOXIN_EXHALER, EXHALER_TOXINS, checkChoices, offerReason, RATING_UP_TO_BODY, project, price, eyeRow, essenceOf, isCybereye, powerKeyOf, sensesOf, limbTypeOf, optionKindOf, pricedItems, limbModelOf, bodyIndexOfItems } from "./purchase.mjs";
 import { derive } from "./derive.mjs";
 
 export const SCHEMA = "sr2e-chargen-character", SCHEMA_VERSION = 1;
@@ -1046,6 +1046,11 @@ export function validate(body) {
       else if (items.some(o => o !== i && o.type === "bioware" && o.system.recordedSkill === i.system.recordedSkill && (o.system.recorderSize === "concentration") === conc
         && (!conc || o.system.recordedConcentration === i.system.recordedConcentration) && items.indexOf(o) < items.indexOf(i)))
         add("resources", "error", `${i.name}: ${i.system.recordedSkill}${conc ? ` (${i.system.recordedConcentration})` : ""} already has a recorder; they aren't cumulative.`, 27, "st");
+    }
+    if (i.type === "bioware" && i._stats?.compendiumSource === TOXIN_EXHALER) {   // Shadowtech p.32: chosen before implantation
+      const t = EXHALER_TOXINS[c.toxin];
+      if (!t) add("resources", "todo", `${i.name}: choose the toxin it makes.`, 32, "st");
+      else if (!booksOf(body).includes(t.book)) add("resources", "error", `${i.name}: ${c.toxin} is from a sourcebook that isn't turned on.`, t.page, t.book);
     }
     if (i.type === "adept_power") {
       const key = powerKeyOf(body.creation.items[i._id] ?? i);
