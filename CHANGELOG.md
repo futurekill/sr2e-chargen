@@ -3,7 +3,12 @@
 Every change people can see goes under **Unreleased** in the same commit. A release retitles that section and its
 notes come from it.
 
-## 0.1.0-beta.2 — 2026-11-20
+## 0.1.0-beta.3 — 2026-11-20
+The 0.1.0-beta.2 build did not publish (its CI failed); this release carries all of beta.2 below.
+- Fixed: an item's notes on the printed sheet lose a broken tag fragment too, not only whole tags.
+- Tests: the implant-weapon loader test builds its own catalog, so it runs without a local `catalog/`.
+
+## 0.1.0-beta.2 — 2026-11-20 (not published)
 
 ### Added
 - **Implant weapons** (docs/PLAN-M5l.md): the six cyberguns and the Cyberarm Taser can be bought, and every implant

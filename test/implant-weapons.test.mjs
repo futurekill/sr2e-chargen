@@ -96,9 +96,10 @@ test("code review r1: a pair assembled in Foundry is linked on import; a broken 
   assert.throws(() => fromFoundryActor(twice, { pinnedVersion: "0.161.0" }), /no implant left/);
   // The loader: the real built catalog loads; the same body without one pairing (checksum fixed) is refused.
   const { loadCatalog } = await import("../server/catalog.mjs");
-  const { mkdtempSync, cpSync, writeFileSync, readFileSync: rf } = await import("node:fs");
+  const { mkdtempSync, writeFileSync, readFileSync: rf } = await import("node:fs");
   const { tmpdir } = await import("node:os"), { join } = await import("node:path"), { createHash } = await import("node:crypto");
-  const dir = mkdtempSync(join(tmpdir(), "cat-")); cpSync(new URL("../catalog", import.meta.url).pathname, dir, { recursive: true });
+  const { writeCatalog } = await import("../tools/build-catalog.mjs");
+  const dir = mkdtempSync(join(tmpdir(), "cat-")); writeCatalog(catalog, dir);   // catalog/ is gitignored: build it here
   assert.ok(loadCatalog(dir).size > 1000);
   const body = JSON.parse(rf(join(dir, "catalog.json"), "utf8"));
   delete body.entries.find(e => e.pairedWeaponId).pairedWeaponId;

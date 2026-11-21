@@ -102,7 +102,7 @@ export function sheetModel(body) {
     bioware: of("bioware").map(i => [plain(i.name), i.system.rating ? `R${i.system.rating}` : "", `${i.system.grade || "standard"} · BC ${num(bodyCostOf(i, items))}`, cite(i.system)]),
     qualities: of("quality").map(i => [plain(i.name) + (i.system.attribute ? ` (${ATTR_NAMES[i.system.attribute] ?? i.system.attribute}${i.system.attributeBonus ? ` +${i.system.attributeBonus}` : ""})` : ""),
       (i.system.pointValue > 0 ? "+" : "") + String(i.system.pointValue ?? 0),
-      plain(String(i.system.notes ?? "").replace(/<[^>]*>/g, ""), 80), cite(i.system)]),
+      plain(String(i.system.notes ?? "").replace(/<[^>]*>/g, " ").replace(/[<>]/g, ""), 80), cite(i.system)]),
     foci: of("focus").map(i => [plain(i.name), `F${i.system.force}`, i.system.boundSpellId ? plain(items.find(x => x._id === i.system.boundSpellId)?.name ?? "", 80) : "", cite(i.system)]),
     // The third column carries the power's choice: Improved Ability's skill, the senses named (p.125).
     // Vehicles bought at creation (S9): the core stats from the kept source (Handling, Speed, Body, Armor, Signature, Pilot).
