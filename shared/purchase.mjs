@@ -62,8 +62,8 @@ export function choiceSpec(rec, { inPlay = false } = {}) {
     default: return {};
   }
 }
-/** Cyberware grades the app offers at creation (SSC p.98): delta waits for its own page. */
-export const CYBER_GRADES = ["standard", "alpha", "beta"];
+/** Cyberware grades offered at creation: alpha and beta (SSC p.98), delta (Cybertechnology p.44; the GM's, a warning). */
+export const CYBER_GRADES = ["standard", "alpha", "beta", "delta"];
 /** The attributes an attribute Edge may name (p.24: not Essence, Reaction or Magic). */
 export const QUALITY_ATTRS = ["body", "quickness", "strength", "charisma", "intelligence", "willpower"];
 /** A new purchase's choices: the entry's own values where it has them. */

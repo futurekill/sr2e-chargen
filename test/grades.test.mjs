@@ -56,3 +56,16 @@ test("an accessory inside a cybereye takes the eye's grade; a cyber weapon shows
   assert.ok(cardModel(b, [razors]).attacks.some(r => /Hand Razors/.test(r[0])), "the card can carry a cyber weapon's attack");
   for (const e of catalog.entries.filter(x => x.type === "cyberware" && x.book !== "sr2" && /skillwire/i.test(x.name))) assert.match(offerReason(e, BOOKS) ?? "", /own rules/, e.name);
 });
+
+test("M5m: a delta Datajack: Essence ×.5, price ×10 (Cybertechnology p.44); Cybertechnology on; a warning for the GM", () => {
+  let b = run(newCharacter("Delta"), [{ op: "addItem", catalogId: cy("sr2", "Datajack").id }]);
+  const std = chargenItemCost(priceInput(item(b, "Datajack"), b.actor.items));
+  b = grade(b, "Datajack", "delta");
+  assert.equal(essenceOf(item(b, "Datajack"), b.actor.items), 0.1);
+  assert.equal(chargenItemCost(priceInput(item(b, "Datajack"), b.actor.items)), 10 * std);
+  assert.match(resErrors(b).join(), /Cybertechnology — turn it on/);
+  b = run(b, [{ op: "setBooks", books: ["ct"] }]);
+  assert.deepEqual(resErrors(b), []);
+  assert.ok(validate(b).problems.some(p => p.severity === "warning" && /delta clinic/.test(p.text) && p.cite.book === "ct"));
+  assert.throws(() => run(b, [{ op: "setBooks", books: [] }]), /comes from ct/);
+});

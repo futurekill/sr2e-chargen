@@ -7,6 +7,8 @@ notes come from it.
 - Added: the Reflex Recorder (General and Concentration, Shadowtech p.27). Choose the Active skill it learns; the
   Concentration size learns that skill's concentration. Two recorders on one skill are refused (not cumulative).
 - Added: the Toxin Exhaler (Shadowtech p.32). Choose its toxin; the price is 30,000¥ + 100 doses of it (RULINGS R14).
+- Added: the delta cyberware grade (Cybertechnology p.44): Essence ×.5, price ×10, with Cybertechnology on. A warning
+  says the GM decides: only a delta clinic installs it, and a corp has to want the character there.
 
 ## 0.1.0-beta.3 — 2026-11-20
 The 0.1.0-beta.2 build did not publish (its CI failed); this release carries all of beta.2 below.

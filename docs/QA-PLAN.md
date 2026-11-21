@@ -193,3 +193,4 @@ bonding (p.46, p.137), refusals.
 - In Foundry, the exported character's Firearms rolls get the +1 die (the system's rule).
 - Buy a Toxin Exhaler: a to-do "choose the toxin". Choose Cyanide: price 66,000¥. Cultured: ×4. Gamma-Scopolamine
   without the Corporate Security Handbook on: an error.
+- A delta Datajack: Essence .1, price ×10; an error until Cybertechnology is on, then a warning "Ask the GM".

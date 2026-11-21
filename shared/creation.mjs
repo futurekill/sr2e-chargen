@@ -633,7 +633,8 @@ function booksInUse(b, lookup) {
   // A graded implant keeps the Street Samurai Catalog in use (PLAN-M5f Draft 2).
   const graded = b.creation.finished ? (b.actor.items ?? []).filter(i => i.type === "cyberware").map(i => i.system?.grade)
     : Object.values(b.creation.items ?? {}).filter(r => r.type === "cyberware").map(r => r.choices?.grade);
-  if (graded.some(g => g && g !== "standard")) used.add("ssc");
+  if (graded.some(g => g === "alpha" || g === "beta")) used.add("ssc");
+  if (graded.includes("delta")) used.add("ct");   // delta is Cybertechnology's (p.44)
   used.delete(CORE); used.delete(undefined); used.delete(null);
   return used;
 }
@@ -984,7 +985,10 @@ export function validate(body) {
   // Cyberware grades (SSC p.98; PLAN-M5f): the book on; an accessory inside an eye takes the eye's grade.
   for (const [id, r] of Object.entries(body.creation.items)) {
     if (r.type !== "cyberware" || !r.choices?.grade || r.choices.grade === "standard") continue;
-    if (!(opts.books ?? []).includes("ssc")) add("resources", "error", `${r.name} is ${r.choices.grade}: alpha and beta grades come from the Street Samurai Catalog — turn it on.`, 98, "ssc");
+    if (r.choices.grade === "delta") {   // Cybertechnology p.44: "far more difficult to acquire" — a corp has to want you there
+      if (!(opts.books ?? []).includes("ct")) add("resources", "error", `${r.name} is delta: the delta grade comes from Cybertechnology — turn it on.`, 44, "ct");
+      else add("resources", "warning", `${r.name} is delta: only a delta clinic installs it, and a corp has to want the character there. Ask the GM.`, 44, "ct");
+    } else if (!(opts.books ?? []).includes("ssc")) add("resources", "error", `${r.name} is ${r.choices.grade}: alpha and beta grades come from the Street Samurai Catalog — turn it on.`, 98, "ssc");
     if (r.choices.in) add("resources", "error", `${r.name} is inside a cybereye: it takes the eye's grade, not its own.`, 98, "ssc");
     void id;
   }

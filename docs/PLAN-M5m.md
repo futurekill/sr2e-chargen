@@ -15,3 +15,8 @@ Codex round. The system computes the +1 die in play (sr2e 0.161.0); the app reco
 - Choice `toxin`, one of `EXHALER_TOXINS` (RULINGS R14). The projection sets `cost` = 30,000 + 100 × the dose price
   (so Foundry's own pricing agrees) and adds "Toxin: X" to the notes. validate: none → to-do; the toxin's book off → error.
 - Out of scope: the immunity (double natural Body) and the attack (Quickness (4), range ½ Body): the GM's in Foundry.
+
+## The delta grade (Cybertechnology p.44, rendered 2026-11-20)
+- `CYBER_GRADES` adds `delta` (the system's table: Essence ×.5, cost ×10). It needs Cybertechnology on (not the SSC);
+  a delta implant keeps that book in use. A warning, not an error: p.44 makes the clinic the GM's ("a player
+  character cannot just make an appointment"). Medical fees (×200) are surgery in play: Foundry's.
