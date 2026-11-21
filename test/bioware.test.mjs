@@ -27,7 +27,7 @@ test("the gate: plain and rule-bearing bioware offered (M5k); the choice-needing
   assert.equal(offerReason(bio("Tailored Pheromones"), ["st"]), null);
   for (const n of ["Adrenal Pump", "Pain Editor", "Damage Compensator", "Enhanced Articulation", "Orthoskin", "Muscle Augmentation", "Synaptic Accelerator", "Suprathyroid Gland", "Cerebral Booster"])
     assert.equal(offerReason(bio(n), ["st"]), null, n);
-  for (const n of ["Reflex Recorder (General)", "Toxin Exhaler"]) assert.match(offerReason(bio(n), ["st"]) ?? "", /own rules/, n);
+  for (const n of ["Toxin Exhaler"]) assert.match(offerReason(bio(n), ["st"]) ?? "", /own rules/, n);
   assert.match(offerReason(bio("Tailored Pheromones"), []) ?? "", /isn't turned on/);
 });
 
@@ -93,4 +93,31 @@ test("M5k code review r1: the sheet's Body Cost has the muscle discount; the Mar
   assert.ok(m.pools.some(([k, v]) => k === "Active skill dice" && v === "+1"));
   const actor = { system: { conditionMonitor: { physical: { value: 2 }, stun: { value: 0 } } }, items: [{ type: "bioware", system: { damageCompensator: true, rating: 2, installed: true } }] };
   assert.equal(injuryPenalty(actor), 0, "a Rating 2 compensator hides 2 Physical boxes (Shadowtech p.24)");
+});
+
+test("M5m: a Reflex Recorder learns one Active skill of this character; the export names it (Shadowtech p.27)", () => {
+  let b = run(start(), [{ op: "addSkill", catalogId: "sr2e.skills.2e45bcab9ddd0ceb" }, { op: "addSkill", catalogId: "sr2e.skills.0ac1eaba103bb924" }]);
+  const fire = rec(b, "Firearms"), know = rec(b, "Parazoology");
+  b = buy(b, "Reflex Recorder (General)");
+  const probs = (x) => validate(x).problems.filter(p => /Reflex Recorder/.test(p.text)).map(p => p.text).join(" | ");
+  assert.match(probs(b), /choose the skill/);
+  assert.throws(() => buy(b, "Reflex Recorder (General)", { skill: know }), /Active skills/);
+  b = run(b, [{ op: "setItem", itemId: rec(b, "Reflex Recorder (General)"), choices: { ...b.creation.items[rec(b, "Reflex Recorder (General)")].choices, skill: fire } }]);
+  assert.equal(item(b, "Reflex Recorder (General)").system.recordedSkill, "Firearms");
+  assert.equal(probs(b), "");
+  // The Concentration size takes the skill's concentration; none yet is an error.
+  b = buy(b, "Reflex Recorder (Concentration)", { skill: fire });
+  assert.match(probs(b), /give Firearms a concentration/);
+  b = run(b, [{ op: "setSkill", itemId: fire, allocated: 3, concentration: "Pistols", specialization: "", freeLanguage: "" }]);
+  assert.equal(item(b, "Reflex Recorder (Concentration)").system.recordedConcentration, "Pistols");
+  assert.equal(item(b, "Reflex Recorder (General)").system.recordedConcentration, "");
+  assert.equal(probs(b), "");
+  // Two General recorders on one skill: not cumulative.
+  b = run(b, [{ op: "addItem", catalogId: bio("Reflex Recorder (General)").id }]);
+  const second = Object.keys(b.creation.items).filter(k => b.creation.items[k].name === "Reflex Recorder (General)").at(-1);
+  b = run(b, [{ op: "setItem", itemId: second, choices: { ...b.creation.items[second].choices, skill: fire } }]);
+  assert.match(probs(b), /already has a recorder/);
+  // Removing the skill leaves the recorder pointing nowhere.
+  b = run(b, [{ op: "removeSkill", itemId: fire }]);
+  assert.match(probs(b), /no longer on this character/);
 });

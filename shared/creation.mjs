@@ -9,7 +9,7 @@
  * unchanged; the app's own record sits beside it (`creation`).
  */
 import { TABLES, BP_NUYEN_TIERS, SHAPESHIFTER_PRIORITIES, humanFormMod, shapeshifterOf, qualityAudit, qualityEffects, bonusAttributeCost, attributeEdgeViolations, qualityRule, overstressPenalty, wareRule, placementFacts, OUTSIDE_LIMB_ESSENCE, racialProfile, metavariantFrom, isMetavariantItem, ONI_SOURCE, chargenBudget, damageUpdateFor, surgeryCategory, surgeryEssencePct, surgeonTN, karmaTransition, advancementOptions, saleQuoteOf, streetPrice, ratedStreetIndex, startingMoney, startingKarmaPool, adeptPowerBudget, label, skillTiersFromAllocation, validateSkillAllocation } from "./rules.mjs";
-import { defaultChoices, checkChoices, offerReason, RATING_UP_TO_BODY, project, price, eyeRow, essenceOf, isCybereye, powerKeyOf, sensesOf, limbTypeOf, optionKindOf, pricedItems, limbModelOf, bodyIndexOfItems } from "./purchase.mjs";
+import { defaultChoices, isRecorder, checkChoices, offerReason, RATING_UP_TO_BODY, project, price, eyeRow, essenceOf, isCybereye, powerKeyOf, sensesOf, limbTypeOf, optionKindOf, pricedItems, limbModelOf, bodyIndexOfItems } from "./purchase.mjs";
 import { derive } from "./derive.mjs";
 
 export const SCHEMA = "sr2e-chargen-character", SCHEMA_VERSION = 1;
@@ -314,6 +314,11 @@ export function applyOp(body, op, lookup = () => null, { roll = null, now = 0, s
       if (skill && skill !== rec.choices.skill) {
         if (!Object.hasOwn(b.creation.items, skill) || b.creation.items[skill].type !== "skill") throw new Refusal("Choose one of this character's skills.", 125);
         if (Object.entries(b.creation.items).some(([k, r]) => k !== id && r.type === "adept_power" && r.choices?.skill === skill)) throw new Refusal("That skill already has Improved Ability: raise its dice instead.", 125);
+      }
+      const rs = isRecorder(rec) ? checked.choices.skill : null;   // a Reflex Recorder learns one ACTIVE skill of this character (p.27)
+      if (rs && rs !== rec.choices.skill) {
+        const sk = Object.hasOwn(b.creation.items, rs) ? b.creation.items[rs] : null;
+        if (sk?.type !== "skill" || sk.snapshot?.category !== "active") throw new Refusal("Choose one of this character's Active skills (not Build/Repair, Knowledge or Language).");
       }
       rec.choices = checked.choices;
       break;
@@ -1032,6 +1037,15 @@ export function validate(body) {
       const w = items.find(x => x._id === c.weapon && x.type === "weapon" && x.system.weaponType === "melee");
       if (!w) add("resources", "todo", `${i.name}: choose the melee weapon it's bonded to.`, 137);
       else if ((w.system.quantity ?? 1) > 1) add("resources", "error", `${i.name}: a focus is one weapon, but ${w.name} has quantity ${w.system.quantity}.`, 137);
+    }
+    if (i.type === "bioware" && isRecorder(body.creation.items[i._id] ?? { type: i.type, flags: i.flags, source: i._stats?.compendiumSource })) {
+      const conc = i.system.recorderSize === "concentration";   // Shadowtech p.27: one skill (or concentration), not cumulative
+      if (!c.skill && !i.system.recordedSkill) add("resources", "todo", `${i.name}: choose the skill it learns.`, 27, "st");
+      else if (!i.system.recordedSkill) add("resources", "error", `${i.name}: its skill is no longer on this character.`, 27, "st");
+      else if (conc && !i.system.recordedConcentration) add("resources", "error", `${i.name}: give ${i.system.recordedSkill} a concentration (it learns that concentration).`, 27, "st");
+      else if (items.some(o => o !== i && o.type === "bioware" && o.system.recordedSkill === i.system.recordedSkill && (o.system.recorderSize === "concentration") === conc
+        && (!conc || o.system.recordedConcentration === i.system.recordedConcentration) && items.indexOf(o) < items.indexOf(i)))
+        add("resources", "error", `${i.name}: ${i.system.recordedSkill}${conc ? ` (${i.system.recordedConcentration})` : ""} already has a recorder; they aren't cumulative.`, 27, "st");
     }
     if (i.type === "adept_power") {
       const key = powerKeyOf(body.creation.items[i._id] ?? i);

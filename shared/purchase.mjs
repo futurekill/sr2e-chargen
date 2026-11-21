@@ -48,7 +48,7 @@ export function choiceSpec(rec, { inPlay = false } = {}) {
     }
     case "bioware": {   // PLAN-M5e: a rating row (≤ 6 at creation) and the grade; neural is always cultured (no choice)
       const grade = s.bodySystem === "neural" ? {} : { grade: oneOf(["standard", "cultured"]) };
-      return { ...(rows.length > 1 ? { rating: oneOf(rows) } : {}), ...grade };
+      return { ...(rows.length > 1 ? { rating: oneOf(rows) } : {}), ...grade, ...(isRecorder(rec) ? { skill: text() } : {}) };
     }
     case "quality": {   // Edges and Flaws (Companion p.22–35, PLAN-M5d): the table's values, an attribute, a detail
       const v = QUALITY_VALUES[rec.source] ?? {}, rule = qualityRule(rec.snapshot?.rule, rec.source);
@@ -200,8 +200,10 @@ export function refusalFor(entry) {
  */
 export const BOOK_TYPES = ["weapon", "armor", "ammo", "gear", "spell"];
 const ST = (id) => `Compendium.sr2e-shadowtech.st-bioware.Item.${id}`;
-/** Bioware that needs a choice the app doesn't record yet (PLAN-M5e Draft 2): Reflex Recorder's skill, Toxin Exhaler's toxin. */
-const BIOWARE_WAITS = new Set([ST("6fac01c3ca92526c"), ST("9f7e371475559ce1")]);
+/** Bioware that needs a choice the app doesn't record yet (PLAN-M5e Draft 2): Toxin Exhaler's toxin. */
+const BIOWARE_WAITS = new Set([ST("9f7e371475559ce1")]);
+/** A Reflex Recorder (Shadowtech p.27): its `skill` choice is a skill record of the character (docs/PLAN-M5m.md). */
+export const isRecorder = (rec) => rec.type === "bioware" && wareRule(rec.flags, rec.source ?? null) === "reflex-recorder";
 /** Rated at most the unaugmented Body (their entries; PLAN-M5e Draft 2): Toxin Extractor, Pathogenic Defense, Mnemonic Enhancer. */
 /** Cyberware Foundry derives skills from (Skillwires, Cybertechnology): waits (PLAN-M5f Draft 2). */
 const CYBER_WAITS = new Set(["Compendium.sr2e-cybertechnology.ct-bodyware.Item.92554f491ab51021", "Compendium.sr2e-cybertechnology.ct-bodyware.Item.b888f9b91a131c29"]);
@@ -213,7 +215,7 @@ export const WARE_RULES_OFFERED = new Set(["wired-reflexes", "boosted-reflexes",
   "muscle-replacement", "dermal-plating", "dermal-sheath", "body-plating", "body-plating-hardened",
   "datajack", "improved-datajack", "comm-headware", "cyberear", "cranial-bomb", "designator-laser"]);
 /** Bioware rules derive computes at creation (docs/PLAN-M5k.md; Shadowtech, Cybertechnology p.56–57). */
-export const BIOWARE_RULES_OFFERED = new Set(["adrenal-pump", "suprathyroid", "synaptic-accelerator", "muscle-augmentation", "enhanced-articulation", "cerebral-booster", "orthoskin"]);
+export const BIOWARE_RULES_OFFERED = new Set(["adrenal-pump", "suprathyroid", "synaptic-accelerator", "muscle-augmentation", "enhanced-articulation", "cerebral-booster", "orthoskin", "reflex-recorder"]);
 export const RATING_UP_TO_BODY = new Set([ST("40958403d94eeef2"), ST("64b5f0dc8dc701c3"), ST("f3dc18a732f084d2")]);
 export const bookOf = (entry) => entry.book ?? entry.listBook ?? null;
 export function offerReason(entry, books = [], { inPlay = false } = {}) {
@@ -314,6 +316,11 @@ export function project(rec, c, recs = {}) {
     if (Array.isArray(c.archetypes)) s.archetypes = c.archetypes;
   }
   if (rec.type === "lifestyle" && "months" in c) s.monthsPaid = c.months;
+  if (isRecorder(rec) && "skill" in c) {   // the system matches by NAME (and the concentration's name), re-resolved every rebuild
+    const sk = recs[c.skill]?.type === "skill" ? recs[c.skill] : null;
+    s.recordedSkill = sk?.name ?? "";
+    s.recordedConcentration = sk && s.recorderSize === "concentration" ? sk.choices?.concentration ?? "" : "";
+  }
   if (rec.type === "quality") {   // PLAN-M5d: Foundry's own fields; a Bonus Attribute Point's price is set in rebuildItems
     if ("points" in c) s.pointValue = c.points;
     if ("attribute" in c) s.attribute = c.attribute;

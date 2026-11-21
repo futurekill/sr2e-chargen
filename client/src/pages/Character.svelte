@@ -126,7 +126,7 @@
     get(`/api/catalog/entries?type=quality&limit=100&offerable=creation${qb.split(",").map(k => `&book=${k}`).join("")}`).then(r => { if (!gone) qualityList = r.entries; }).catch(() => { /* the list stays empty */ });
   });
   const spells = $derived(bought.filter(x => x.r.type === "spell"));
-  const ownSkills = $derived(Object.entries(body.creation.items).filter(([, r]) => r.type === "skill").map(([id, r]) => ({ id, name: r.name })));
+  const ownSkills = $derived(Object.entries(body.creation.items).filter(([, r]) => r.type === "skill").map(([id, r]) => ({ id, name: r.name, active: r.snapshot?.category === "active" })));
   const melee = $derived(bought.filter(x => x.r.type === "weapon" && x.r.snapshot.weaponType === "melee"));
   const setChoice = (id, key, value) => change({ op: "setItem", itemId: id, choices: { [key]: value } });
 
@@ -541,8 +541,8 @@
                             <select value={x.r.choices.in} disabled={finished} aria-label={ctlName(x, "in")} onchange={(ev) => setChoice(x.id, "in", ev.currentTarget.value)}><option value="">On its own</option>{#each eyes as e (e.id)}<option value={e.id}>{e.r.name}</option>{/each}</select>
                           {:else if k === "spell"}
                             <select value={x.r.choices.spell} disabled={finished} aria-label={ctlName(x, "spell")} onchange={(ev) => setChoice(x.id, "spell", ev.currentTarget.value)}><option value="">Choose…</option>{#each spells as sp2 (sp2.id)}<option value={sp2.id}>{sp2.r.name}</option>{/each}</select>
-                          {:else if k === "skill" && x.r.type === "adept_power"}
-                            <select value={x.r.choices.skill} disabled={finished} aria-label={ctlName(x, "skill")} onchange={(ev) => setChoice(x.id, "skill", ev.currentTarget.value)}><option value="">Choose…</option>{#each ownSkills as sk (sk.id)}<option value={sk.id}>{sk.name}</option>{/each}</select>
+                          {:else if k === "skill" && (x.r.type === "adept_power" || x.r.type === "bioware")}
+                            <select value={x.r.choices.skill} disabled={finished} aria-label={ctlName(x, "skill")} onchange={(ev) => setChoice(x.id, "skill", ev.currentTarget.value)}><option value="">Choose…</option>{#each ownSkills.filter(sk => x.r.type !== "bioware" || sk.active) as sk (sk.id)}<option value={sk.id}>{sk.name}</option>{/each}</select>
                           {:else if k === "weapon"}
                             <select value={x.r.choices.weapon} disabled={finished} aria-label={ctlName(x, "weapon")} onchange={(ev) => setChoice(x.id, "weapon", ev.currentTarget.value)}><option value="">Choose…</option>{#each melee as w (w.id)}<option value={w.id}>{w.r.name} (Reach {w.r.snapshot.reach ?? 0}, {smallWeapon(w.r.snapshot) ? "small" : "large"})</option>{/each}</select>
                           {:else}

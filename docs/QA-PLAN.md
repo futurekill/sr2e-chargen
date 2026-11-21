@@ -184,3 +184,10 @@ bonding (p.46, p.137), refusals.
   attack. Remove the Oral Gun: both go.
 - A Cybergun (Heavy Pistol) on its own: a note "in a natural limb, 1 Essence"; built into a cyberarm: 0 Essence.
 - In play, buy an Oral Gun: one history entry; the attack appears only after surgery; sell it: both go; undo: both back.
+
+## Reflex Recorder (M5m)
+- With Shadowtech on, buy a Reflex Recorder (General): a to-do "choose the skill". The picker lists only Active skills.
+  Choose Firearms: the to-do goes; export: the item's `recordedSkill` is "Firearms".
+- A Reflex Recorder (Concentration) on Firearms with no concentration: an error; give Firearms "Pistols": it clears.
+- A second General recorder on Firearms: an error (not cumulative). Remove the skill: "no longer on this character".
+- In Foundry, the exported character's Firearms rolls get the +1 die (the system's rule).

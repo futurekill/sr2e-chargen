@@ -3,6 +3,10 @@
 Every change people can see goes under **Unreleased** in the same commit. A release retitles that section and its
 notes come from it.
 
+## Unreleased
+- Added: the Reflex Recorder (General and Concentration, Shadowtech p.27). Choose the Active skill it learns; the
+  Concentration size learns that skill's concentration. Two recorders on one skill are refused (not cumulative).
+
 ## 0.1.0-beta.3 — 2026-11-20
 The 0.1.0-beta.2 build did not publish (its CI failed); this release carries all of beta.2 below.
 - Fixed: an item's notes on the printed sheet lose a broken tag fragment too, not only whole tags.
