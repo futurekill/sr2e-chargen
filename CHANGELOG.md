@@ -3,7 +3,7 @@
 Every change people can see goes under **Unreleased** in the same commit. A release retitles that section and its
 notes come from it.
 
-## Unreleased
+## 0.1.0-beta.8 — 2026-11-25
 - **Fixed: exported magicians and adepts now carry their Magic Rating.** Foundry doesn't compute it, so a character
   made here arrived in Foundry with Magic 0 (an adept's powers then reported over budget). The export writes the
   Essence-based rating unless the character already holds one.
