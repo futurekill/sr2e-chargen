@@ -3,7 +3,8 @@
 Every change people can see goes under **Unreleased** in the same commit. A release retitles that section and its
 notes come from it.
 
-## Unreleased
+## 0.1.0-beta.6 — 2026-11-25
+The 0.1.0-beta.5 build did not publish (the image scan failed); this release carries all of beta.5 below.
 - Security: the image's base moves to the newest distroless Node 26 (Debian's zstd fix). Two OpenSSL QUIC findings
   with no fix yet are accepted until 2026-12-26 (`.trivyignore.yaml`): the app never uses QUIC.
 
