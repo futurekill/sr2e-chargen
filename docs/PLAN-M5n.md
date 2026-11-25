@@ -1,5 +1,5 @@
 # Plan: milestone 5n — the Grimoire's and the CSH's adept powers (sr2e 0.162.0)
-_2026-11-25. The system side was Codex-reviewed (sr2e-foundryvtt docs/PLAN-sourcebook-adept-powers.md + its review log:
+_2026-11-25. The system side was Codex-reviewed (sr2e-foundryvtt docs/archive/plans/PLAN-sourcebook-adept-powers.md + its review log:
 plan r1–r2, code r1–r2); this is the app's part (that plan's r1 #4), on the 0.162.0 pin._
 
 - **Offered** with their book on: Attribute Boost, Body Control, Missile Parry, Mystic Armor, Suspended State (Grimoire
