@@ -33,6 +33,7 @@ export function choiceSpec(rec, { inPlay = false } = {}) {
     case "cyberware": return { ...(rows.length > 1 ? { rating: oneOf(rows) } : s.costPerRating > 0 ? { rating: int(1, top) } : {}), ...(!inPlay && isEyeAccessory(rec) ? { in: text() } : {}),
       ...(SIDED.has(limbTypeOf(rec)) && !isLimbOption(rec) ? { side: oneOf(["", "left", "right"]) } : {}),   // in play too: surgery installs it (r1 #2)
       ...(!inPlay && isLimbOption(rec) ? { limb: text() } : {}),
+      ...(!inPlay && isLimbOption(rec) && optionKindOf(rec) === "device" ? { device: text() } : {}),   // core p.261 (docs/PLAN-M5m.md)
       ...(!inPlay && !String(rec.source ?? "").includes("sr2e-shadowtech") ? { grade: oneOf(CYBER_GRADES) } : {}) };
     case "spell": return { force: int(1, 6) };   // "no starting spell can have a Force greater than 6" (p.46)
     case "focus": return { ...(s.focusType === "spell_lock" ? {} : { force: int(1, 6) }), ...(s.focusType === "spell" ? { spell: text() } : {}),
@@ -102,6 +103,19 @@ export function checkChoices(rec, choices, opts) {
   return { choices: out };
 }
 
+/**
+ * Why a gear record can't be the device built into a cyberlimb (core p.261: "4 × Normal Cost"; RULINGS R15), or null.
+ * A flat-priced device, one of it; not chips, drugs, decks, services, papers or a price set per rating.
+ */
+const NOT_DEVICES = new Set(["skillsoft", "autosoft", "drug", "cyberdeck", "cyberware", "service", "documents", "explosive", "vehicle"]);
+export function deviceReason(rec) {
+  if (rec?.type !== "gear") return "Choose one of this character's gear items.";
+  if (NOT_DEVICES.has(rec.snapshot?.category)) return `A ${rec.snapshot.category} isn't a device built into a limb.`;
+  if (Number(rec.snapshot?.costPerRating) > 0) return "Its price is set per rating: build it in in Foundry.";
+  if ((Number(rec.choices?.quantity) || 1) !== 1) return "A built-in device is one item: set its quantity to 1.";
+  return null;
+}
+
 /* ── Cyberlimbs (docs/PLAN-M5j.md Draft 2) ─────────────────────────────────────────────────────────────────── */
 const CTL = (id) => `Compendium.sr2e-cybertechnology.ct-cyberlimbs.Item.${id}`;
 /** The "other" options checked against the book (Draft 2, r1 #8): coverings, External Mount, Magnetic System, DNI. */
@@ -123,8 +137,8 @@ function limbReason(entry, inPlay) {
   const kind = optionKindOf(entry);
   if (LIMB_KINDS_OFFERED.has(kind) || (kind === "other" && LIMB_OTHER_OFFERED.has(srcOf(entry)))) return null;
   if (kind === "weapon" && entry.pairedWeaponId) return null;   // cyberguns and the taser bring their weapon (PLAN-M5l)
-  return kind === "device" ? "A built-in device costs four times the device's own price: not yet."
-    : kind === "weapon" ? "This limb weapon has no weapon item to go with it."
+  if (kind === "device") return null;   // the device is one of the character's gear records (deviceReason)
+  return kind === "weapon" ? "This limb weapon has no weapon item to go with it."
     : "This cyberlimb option has its own rules the app doesn't compute yet.";
 }
 /**

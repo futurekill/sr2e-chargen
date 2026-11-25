@@ -20,3 +20,12 @@ Codex round. The system computes the +1 die in play (sr2e 0.161.0); the app reco
 - `CYBER_GRADES` adds `delta` (the system's table: Essence ×.5, cost ×10). It needs Cybertechnology on (not the SSC);
   a delta implant keeps that book in use. A warning, not an error: p.44 makes the clinic the GM's ("a player
   character cannot just make an appointment"). Medical fees (×200) are surgery in play: Foundry's.
+
+## The built-in device (core p.261; Cybertechnology p.98)
+- A limb option of kind `device` gets a `device` choice: a gear record of the character (`deviceReason`: one item, a
+  flat price, not a chip/drug/deck/service/papers/explosive/vehicle). One device per option, one option per device.
+- `rebuildItems` leaves the gear record out of the export and gives the option `cost` = the device's normal price
+  (its rating row, else its flat cost) and a "Device: X" note; Foundry's `limbOptionPrice` takes × 4
+  (`costMultiplierOfBase`). The page shows the gear row at 0¥.
+- validate: none chosen → to-do; gone → error; no longer eligible (e.g. quantity 2) → error, and the gear is exported
+  as its own item again.

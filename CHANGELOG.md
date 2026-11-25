@@ -3,6 +3,10 @@
 Every change people can see goes under **Unreleased** in the same commit. A release retitles that section and its
 notes come from it.
 
+## Unreleased
+- Added: the built-in device in a cyberlimb (core p.261). Choose one of the character's gear items; it goes inside the
+  limb option, which costs 4 × the device's price (RULINGS R15).
+
 ## 0.1.0-beta.4 — 2026-11-20
 - Added: the Reflex Recorder (General and Concentration, Shadowtech p.27). Choose the Active skill it learns; the
   Concentration size learns that skill's concentration. Two recorders on one skill are refused (not cumulative).

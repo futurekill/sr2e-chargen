@@ -194,3 +194,5 @@ bonding (p.46, p.137), refusals.
 - Buy a Toxin Exhaler: a to-do "choose the toxin". Choose Cyanide: price 66,000¥. Cultured: ×4. Gamma-Scopolamine
   without the Corporate Security Handbook on: an error.
 - A delta Datajack: Essence .1, price ×10; an error until Cybertechnology is on, then a warning "Ask the GM".
+- A Cyberarm (Full) with a Built-In Device (Cyberlimb) and a Micro-Transceiver: choose it as the device: the
+  option costs 10,000¥, the transceiver's row 0¥; the export has no separate transceiver. Quantity 2: an error.

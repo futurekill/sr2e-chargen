@@ -8,8 +8,8 @@
  * A character is the Foundry system's own `character` source shapes (`actor`), so the system's functions read it
  * unchanged; the app's own record sits beside it (`creation`).
  */
-import { TABLES, BP_NUYEN_TIERS, SHAPESHIFTER_PRIORITIES, humanFormMod, shapeshifterOf, qualityAudit, qualityEffects, bonusAttributeCost, attributeEdgeViolations, qualityRule, overstressPenalty, wareRule, placementFacts, OUTSIDE_LIMB_ESSENCE, racialProfile, metavariantFrom, isMetavariantItem, ONI_SOURCE, chargenBudget, damageUpdateFor, surgeryCategory, surgeryEssencePct, surgeonTN, karmaTransition, advancementOptions, saleQuoteOf, streetPrice, ratedStreetIndex, startingMoney, startingKarmaPool, adeptPowerBudget, label, skillTiersFromAllocation, validateSkillAllocation } from "./rules.mjs";
-import { defaultChoices, isRecorder, TOXIN_EXHALER, EXHALER_TOXINS, checkChoices, offerReason, RATING_UP_TO_BODY, project, price, eyeRow, essenceOf, isCybereye, powerKeyOf, sensesOf, limbTypeOf, optionKindOf, pricedItems, limbModelOf, bodyIndexOfItems } from "./purchase.mjs";
+import { TABLES, ratedRow, BP_NUYEN_TIERS, SHAPESHIFTER_PRIORITIES, humanFormMod, shapeshifterOf, qualityAudit, qualityEffects, bonusAttributeCost, attributeEdgeViolations, qualityRule, overstressPenalty, wareRule, placementFacts, OUTSIDE_LIMB_ESSENCE, racialProfile, metavariantFrom, isMetavariantItem, ONI_SOURCE, chargenBudget, damageUpdateFor, surgeryCategory, surgeryEssencePct, surgeonTN, karmaTransition, advancementOptions, saleQuoteOf, streetPrice, ratedStreetIndex, startingMoney, startingKarmaPool, adeptPowerBudget, label, skillTiersFromAllocation, validateSkillAllocation } from "./rules.mjs";
+import { defaultChoices, isRecorder, deviceReason, TOXIN_EXHALER, EXHALER_TOXINS, checkChoices, offerReason, RATING_UP_TO_BODY, project, price, eyeRow, essenceOf, isCybereye, powerKeyOf, sensesOf, limbTypeOf, optionKindOf, pricedItems, limbModelOf, bodyIndexOfItems } from "./purchase.mjs";
 import { derive } from "./derive.mjs";
 
 export const SCHEMA = "sr2e-chargen-character", SCHEMA_VERSION = 1;
@@ -314,6 +314,12 @@ export function applyOp(body, op, lookup = () => null, { roll = null, now = 0, s
       if (skill && skill !== rec.choices.skill) {
         if (!Object.hasOwn(b.creation.items, skill) || b.creation.items[skill].type !== "skill") throw new Refusal("Choose one of this character's skills.", 125);
         if (Object.entries(b.creation.items).some(([k, r]) => k !== id && r.type === "adept_power" && r.choices?.skill === skill)) throw new Refusal("That skill already has Improved Ability: raise its dice instead.", 125);
+      }
+      const dev = checked.choices.device;   // a built-in device: one gear record of this character, built into one option (R15)
+      if (dev && dev !== rec.choices.device) {
+        const g = Object.hasOwn(b.creation.items, dev) ? b.creation.items[dev] : null, why = deviceReason(g);
+        if (why) throw new Refusal(why);
+        if (Object.entries(b.creation.items).some(([k, r]) => k !== id && r.choices?.device === dev)) throw new Refusal("That item is already built into a limb.");
       }
       const rs = isRecorder(rec) ? checked.choices.skill : null;   // a Reflex Recorder learns one ACTIVE skill of this character (p.27)
       if (rs && rs !== rec.choices.skill) {
@@ -797,9 +803,12 @@ function rebuildItems(b) {
     + Object.values(recs).filter(r => r.type === "quality" && r.choices?.attribute === "intelligence").reduce((t, r) => t + (Number(r.choices.gain) || 0), 0);
   const ids = Object.keys(recs).sort();
   const rows = new Map(), out = [];
+  const builtIn = new Set(Object.values(recs).map(r => r.choices?.device).filter(d => d && Object.hasOwn(recs, d) && !deviceReason(recs[d])));
+  const devices = new Map();
   for (const id of ids) {
     const r = recs[id];
     const { system, flags } = r.type === "skill" ? { system: skillSystem(r, int), flags: {} } : project(r, r.choices, recs);
+    if (builtIn.has(id)) { devices.set(id, { name: r.name, system }); continue; }   // inside its limb option (R15)
     const eye = r.choices?.in;
     if (eye && Object.hasOwn(recs, eye) && isCybereye(recs[eye])) {
       if (!rows.has(eye)) rows.set(eye, []);
@@ -811,6 +820,13 @@ function rebuildItems(b) {
     out.push({ _id: id, name: r.name, type: r.type, img: r.img, system, flags, effects: [], _stats: { compendiumSource: r.source } });
   }
   for (const item of out) if (item.type === "cyberware" && (item.system.capacity ?? 0) > 0) item.system.modules = rows.get(item._id) ?? [];
+  // A built-in device (core p.261): the option carries the device's normal price; Foundry prices it × 4.
+  for (const item of out) {
+    const d = devices.get(recs[item._id]?.choices?.device);
+    if (!d) continue;
+    item.system.cost = ratedRow(d.system.ratingStats, d.system.rating)?.cost ?? (Number(d.system.cost) || 0);
+    item.system.notes = `<p>Device: ${d.name}${Number(d.system.rating) > 1 ? ` (Rating ${d.system.rating})` : ""}.</p>${item.system.notes ?? ""}`;
+  }
   // A Bonus Attribute Point's price (Companion p.24): 1 per +1 up to the ORIGINAL racial maximum, 2 past it.
   const maxes = racialProfile(sys0, TABLES).maxes;
   for (const item of out) if (item.type === "quality" && qualityRule(item.system.rule, item._stats?.compendiumSource) === "bonus-attribute-point" && item.system.attribute)
@@ -1050,6 +1066,12 @@ export function validate(body) {
       else if (items.some(o => o !== i && o.type === "bioware" && o.system.recordedSkill === i.system.recordedSkill && (o.system.recorderSize === "concentration") === conc
         && (!conc || o.system.recordedConcentration === i.system.recordedConcentration) && items.indexOf(o) < items.indexOf(i)))
         add("resources", "error", `${i.name}: ${i.system.recordedSkill}${conc ? ` (${i.system.recordedConcentration})` : ""} already has a recorder; they aren't cumulative.`, 27, "st");
+    }
+    if (i.type === "cyberware" && "device" in c) {   // a built-in device (core p.261, R15)
+      const g = c.device && Object.hasOwn(body.creation.items, c.device) ? body.creation.items[c.device] : null;
+      if (!c.device) add("resources", "todo", `${i.name}: choose the gear item built into the limb.`, 261);
+      else if (!g) add("resources", "error", `${i.name}: its device is no longer on this character.`, 261);
+      else if (deviceReason(g)) add("resources", "error", `${i.name}: ${g.name}: ${deviceReason(g)}`, 261);
     }
     if (i.type === "bioware" && i._stats?.compendiumSource === TOXIN_EXHALER) {   // Shadowtech p.32: chosen before implantation
       const t = EXHALER_TOXINS[c.toxin];

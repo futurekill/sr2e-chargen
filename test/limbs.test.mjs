@@ -22,7 +22,7 @@ test("the gate: typed limbs and the checked options offered; device, cyberdeck, 
   for (const n of ["Cyberarm", "Cyberleg", "Cyber Forearm", "Cyberhand", "Cyberfoot", "Cybertorso", "Cyberskull", "Cyberarm Gyromount", "Strength Enhancement +3",
     "Quickness Enhancement +2", "Body Enhancement +1", "Built-In Smartgun Link", "External Mount", "Semi-natural Covering (Arm/Leg)", "Direct Neural Interface", "Magnetic Cyberlimb System"])
     assert.equal(offerReason(cy("ct", n), ["ct"]), null, n);
-  assert.match(offerReason(cy("ct", "Built-In Device (Cyberlimb)"), ["ct"]), /four times/);
+  assert.equal(offerReason(cy("ct", "Built-In Device (Cyberlimb)"), ["ct"]), null);   // M5m: with its gear (R15)
   assert.equal(offerReason(cy("ct", "Cybergun (Light Pistol)"), ["ct"]), null);   // PLAN-M5l: with its weapon
   assert.equal(offerReason(cy("ct", "Cyberarm Taser"), ["ct"]), null);
   for (const n of ["Cyberarm Cyberdeck", "Simple Replacement Limb", "Hydraulic Jack", "Foot Anchor"]) assert.match(offerReason(cy("ct", n), ["ct"]) ?? "", /own rules/, n);
@@ -96,4 +96,27 @@ test("walk-through fix: choosing point-based stores Foundry's initials, so the r
   assert.ok(!validate(b).problems.some(p => /nuyen tier/.test(p.text)));
   b = run(b, [{ op: "setPoints", buildingPoints: 120, nuyenTier: 5000, forcePointTrade: 0, qualitiesUseBP: true }, { op: "setMethod", method: "standard" }, { op: "setMethod", method: "points" }]);
   assert.deepEqual([b.actor.system.chargen.buildingPoints, b.actor.system.chargen.nuyenTier], [120, 5000], "a switch back keeps the GM's numbers");
+});
+
+test("M5m: a built-in device is a gear record inside its limb option, priced 4 × the device (core p.261, R15)", async () => {
+  const { price } = await import("../shared/purchase.mjs");
+  const gear = (b, name) => run(b, [{ op: "addItem", catalogId: catalog.entries.find(e => e.type === "gear" && e.book === "sr2" && e.name === name).id }]);
+  let b = add(add(newCharacter("Dev"), "sr2", "Cyberarm (Full)"), "sr2", "Built-In Device (Cyberlimb)");
+  const [arm] = recs(b, "Cyberarm (Full)"), [opt] = recs(b, "Built-In Device (Cyberlimb)");
+  b = set(set(b, arm, { side: "left" }), opt, { limb: arm });
+  assert.ok(validate(b).problems.some(p => /choose the gear item/.test(p.text)));
+  b = gear(b, "Micro-Transceiver");
+  const [radio] = recs(b, "Micro-Transceiver");
+  assert.throws(() => set(b, opt, { device: arm }), /gear items/);
+  b = set(b, opt, { device: radio });
+  assert.ok(!b.actor.items.some(i => i.name === "Micro-Transceiver"), "the device is inside the option, not its own item");
+  const o = b.actor.items.find(i => i._id === opt);
+  assert.equal(o.system.cost, 2500);
+  assert.match(o.system.notes, /Device: Micro-Transceiver/);
+  assert.equal(price(b.creation.items[opt], o, b.actor.items), 10000, "4 × Normal Cost");
+  assert.deepEqual(errs(b).filter(e => /Device|device/.test(e)), []);
+  // Quantity 2: no longer one device: exported as gear again, the option reports it.
+  b = set(b, radio, { quantity: 2 });
+  assert.ok(b.actor.items.some(i => i.name === "Micro-Transceiver"));
+  assert.ok(errs(b).some(e => /quantity to 1/.test(e)));
 });

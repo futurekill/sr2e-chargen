@@ -95,7 +95,9 @@
   /** Every bought thing (eye accessories included), with what it costs and the Essence it takes. */
   const bought = $derived(Object.entries(body.creation.items).filter(([, r]) => r.type !== "skill" && r.type !== "quality").sort(([a], [b]) => (a < b ? -1 : 1)).map(([id, r]) => {
     const item = body.actor.items.find(i => i._id === id), projected = item ? { system: item.system, flags: item.flags } : project(r, r.choices, body.creation.items);
-    return { id, r, spec: choiceSpec(r), price: price(r, projected, body.actor.items), essence: item && r.type === "cyberware" ? essenceOf(item, body.actor.items, body.actor.system.race) : null };
+    // A gear record built into a limb (R15) is priced inside its option: 0 here.
+    const builtIn = !item && r.type === "gear" && Object.values(body.creation.items).some(o => o.choices?.device === id);
+    return { id, r, spec: choiceSpec(r), price: builtIn ? 0 : price(r, projected, body.actor.items), essence: item && r.type === "cyberware" ? essenceOf(item, body.actor.items, body.actor.system.race) : null };
   }));
   const eyes = $derived(bought.filter(x => isCybereye(x.r)));
   // What can be sold in play: gear, spare cyberware; an implant's weapon goes with its implant (PLAN-M5l).
@@ -543,6 +545,8 @@
                             <select value={x.r.choices.spell} disabled={finished} aria-label={ctlName(x, "spell")} onchange={(ev) => setChoice(x.id, "spell", ev.currentTarget.value)}><option value="">Choose…</option>{#each spells as sp2 (sp2.id)}<option value={sp2.id}>{sp2.r.name}</option>{/each}</select>
                           {:else if k === "skill" && (x.r.type === "adept_power" || x.r.type === "bioware")}
                             <select value={x.r.choices.skill} disabled={finished} aria-label={ctlName(x, "skill")} onchange={(ev) => setChoice(x.id, "skill", ev.currentTarget.value)}><option value="">Choose…</option>{#each ownSkills.filter(sk => x.r.type !== "bioware" || sk.active) as sk (sk.id)}<option value={sk.id}>{sk.name}</option>{/each}</select>
+                          {:else if k === "device"}
+                            <select value={x.r.choices.device} disabled={finished} aria-label={ctlName(x, "device")} onchange={(ev) => setChoice(x.id, "device", ev.currentTarget.value)}><option value="">Choose…</option>{#each Object.entries(body.creation.items).filter(([, r]) => r.type === "gear") as [gid, g] (gid)}<option value={gid}>{g.name}</option>{/each}</select>
                           {:else if k === "weapon"}
                             <select value={x.r.choices.weapon} disabled={finished} aria-label={ctlName(x, "weapon")} onchange={(ev) => setChoice(x.id, "weapon", ev.currentTarget.value)}><option value="">Choose…</option>{#each melee as w (w.id)}<option value={w.id}>{w.r.name} (Reach {w.r.snapshot.reach ?? 0}, {smallWeapon(w.r.snapshot) ? "small" : "large"})</option>{/each}</select>
                           {:else}

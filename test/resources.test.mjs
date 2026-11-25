@@ -89,7 +89,7 @@ test("spells and foci spend Force Points (p.46, p.137); only magicians", () => {
 });
 
 test("refused at creation: no fixed price, limb options, vehicles, sourcebooks", () => {
-  for (const n of ["Personal Computer (Pocket)", "DataSoft", "Smartgun System (Internal)", "Built-In Device (Cyberlimb)", "Unarmed Strike"])
+  for (const n of ["Personal Computer (Pocket)", "DataSoft", "Smartgun System (Internal)", "Unarmed Strike"])
     assert.throws(() => start(buy(n)), Refusal, n);
   for (const type of ["vehicle"]) {
     const e = catalog.entries.find(x => x.book === "sr2" && x.type === type);
