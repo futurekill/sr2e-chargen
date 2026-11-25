@@ -197,3 +197,10 @@ bonding (p.46, p.137), refusals.
 - A Cyberarm (Full) with a Built-In Device (Cyberlimb) and a Micro-Transceiver: choose it as the device: the
   option costs 10,000¥, the transceiver's row 0¥; the export has no separate transceiver. Quantity 2: an error.
 - A Simple Replacement (Limb): 1 Essence, 50,000¥, no side, no "set its limb type" error, no attribute change.
+
+## Sourcebook adept powers (M5n)
+- With the Grimoire and the CSH on, an adept buys Mystic Armor 2: the sheet's Impact armor +2. Export, import into
+  Foundry: Impact 2, Magic 6 (not 0), no power-point problem.
+- Enhanced Perception (Tier 1) level 3 + (Tier 2) level 3: 2.25 power points (human). Two Attribute Boosts on Body: an
+  error; change one to Strength: it clears. Enhanced Centering: refused (an initiate's power).
+- `test/fixtures/parity/powers-v0.162.0.json` is Foundry's prepared values; regenerate it when the pin moves.

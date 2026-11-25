@@ -10,7 +10,7 @@
  */
 import { TABLES, ratedRow, BP_NUYEN_TIERS, SHAPESHIFTER_PRIORITIES, humanFormMod, shapeshifterOf, qualityAudit, qualityEffects, bonusAttributeCost, attributeEdgeViolations, qualityRule, overstressPenalty, wareRule, placementFacts, OUTSIDE_LIMB_ESSENCE, racialProfile, metavariantFrom, isMetavariantItem, ONI_SOURCE, chargenBudget, damageUpdateFor, surgeryCategory, surgeryEssencePct, surgeonTN, karmaTransition, advancementOptions, saleQuoteOf, streetPrice, ratedStreetIndex, startingMoney, startingKarmaPool, adeptPowerBudget, label, skillTiersFromAllocation, validateSkillAllocation } from "./rules.mjs";
 import { defaultChoices, isRecorder, deviceReason, isSimpleReplacement, TOXIN_EXHALER, EXHALER_TOXINS, checkChoices, offerReason, RATING_UP_TO_BODY, project, price, eyeRow, essenceOf, isCybereye, powerKeyOf, sensesOf, limbTypeOf, optionKindOf, pricedItems, limbModelOf, bodyIndexOfItems } from "./purchase.mjs";
-import { derive } from "./derive.mjs";
+import { derive, magicRating } from "./derive.mjs";
 
 export const SCHEMA = "sr2e-chargen-character", SCHEMA_VERSION = 1;
 export const CATEGORIES = ["race", "magic", "attributes", "skills", "resources"];
@@ -30,6 +30,9 @@ export const FREE_LANGUAGES = ["", "native", "dialect"];
 const MAGICAL_SKILLS = ["sorcery", "conjuring"];
 export const MAX_ITEMS = 500;
 const CORE = "sr2";
+/** A power-budget report's page and book: the page it prints, its book by the name it gives (Grimoire, CSH), else core. */
+const budgetCite = (p) => /Grimoire|Attribute Boost|Mystic Armor|Enhanced Centering/.test(p) ? [34, "grim"]
+  : /CSH|Enhanced Perception/.test(p) ? [104, "csh"] : [Number(/p\.(\d+)/.exec(p)?.[1] ?? 125), CORE];
 const cite = (page) => ({ book: CORE, page: String(page) });
 
 export class Refusal extends Error {
@@ -273,8 +276,10 @@ export function applyOp(body, op, lookup = () => null, { roll = null, now = 0, s
       if (rec.type === "lifestyle") for (const [k, r] of Object.entries(b.creation.items)) if (r.type === "lifestyle") { delete b.creation.items[k]; b.actor.items = b.actor.items.filter(i => i._id !== k); }
       // A power is bought once: Improved Ability once per skill (chosen after), Killing Hands once per level — an adept
       // may hold (Str)L and (Str)D (p.126).
-      const once = (r) => (powerKeyOf(r) === "killing_hands" ? r.catalogId : powerKeyOf(r));
-      if (rec.type === "adept_power" && powerKeyOf(rec) !== "improved_ability"
+      // Attribute Boost once per attribute, Enhanced Centering once per category (Grimoire p.34): chosen after, so any
+      // number may be added and the budget reports a repeat; Enhanced Perception's tier items are separate entries.
+      const once = (r) => (["killing_hands", "enhanced_perception"].includes(powerKeyOf(r)) ? r.catalogId : powerKeyOf(r));
+      if (rec.type === "adept_power" && !["improved_ability", "attribute_boost", "enhanced_centering"].includes(powerKeyOf(rec))
         && Object.values(b.creation.items).some(r => r.type === "adept_power" && once(r) === once(rec)))
         throw new Refusal(`${rec.name} is already bought: raise its level instead.`, 125);
       const added = addRecord(b, { ...rec, choices: defaultChoices(rec) });
@@ -425,7 +430,7 @@ function validateInPlay(body, add, problems) {
   const sys = body.actor.system, items = body.actor.items, mtype = sys.magic.type;
   // Only INSTALLED cyberware takes Essence: a spare bought in play waits for surgery (PLAN-M4b Draft 3, r2 #2).
   const essence = Math.round((6 - items.filter(i => i.type === "cyberware" && i.system.installed !== false).reduce((t, i) => t + essenceOf(i, items, sys.race), 0) - (mtype !== "none" ? bodyIndexOf(items) : 0)) * 1000) / 1000;
-  const magic = mtype === "none" ? 0 : Math.max(0, Math.min(6, Math.floor(essence + 1e-9)));
+  const magic = magicRating(sys, essence);
   if (essence < 0) add("resources", "error", `Essence is ${essence}.`, 46);
   wareWarnings(items, add);
   limbChecks(body.actor, add, false);
@@ -439,6 +444,8 @@ function validateInPlay(body, add, problems) {
     const pb = adeptPowerBudget({ items, maxes: max, natural: Object.fromEntries(["body", "quickness", "strength"].map(a => [a, withRacial(sys, a, items) + formMod(sys, a)])), magic });
     budgets.powerPoints = { spent: pb.used, total: magic, over: pb.used > magic, costs: pb.costs };
     if (pb.used > magic) add("magic", "error", `${pb.used} power points used; the Magic Rating gives ${magic}: give up improvements to match.`, 126);
+    // The budget's other reports (a choice not made, a limit passed), as in play (sr2e 0.162.0's sourcebook powers too).
+    for (const p of pb.problems.filter(p => !/power points used/.test(p))) add("magic", "error", p, ...budgetCite(p));
   }
   return { budgets, essence, magic, problems, finishable: false };
 }
@@ -994,7 +1001,7 @@ export function validate(body) {
   // The Awakened pay the bioware Body Index in Essence too (Shadowtech p.6; PLAN-M5e).
   const bodyIndex = bodyIndexOf(items);
   const essence = Math.round((6 - items.filter(i => i.type === "cyberware").reduce((t, i) => t + essenceOf(i, items, sys.race), 0) - (mtype !== "none" ? bodyIndex : 0)) * 1000) / 1000;
-  const magic = mtype === "none" ? 0 : Math.max(0, Math.min(6, Math.floor(essence + 1e-9)));
+  const magic = magicRating(sys, essence);
   if (essence < 0) add("resources", "error", `Essence is ${essence}: cyberware can't take it below 0.`, 46);
   wareWarnings(items, add, true);
   limbChecks(body.actor, add, true);
@@ -1144,7 +1151,7 @@ export function validate(body) {
   if (mtype === "physical_adept") {
     const pb = adeptPowerBudget({ items, maxes: max, natural: Object.fromEntries(["body", "quickness", "strength"].map(a => [a, withRacial(sys, a, items) + formMod(sys, a)])), magic });
     spend.powerPoints = { spent: pb.used, total: magic, over: pb.used > magic, costs: pb.costs };
-    for (const p of pb.problems) add("magic", "error", p, Number(/p\.(\d+)/.exec(p)?.[1] ?? 125));
+    for (const p of pb.problems) add("magic", "error", p, ...budgetCite(p));
     if (pb.used < magic) add("magic", "warning", `${magic - pb.used} power point${magic - pb.used === 1 ? "" : "s"} unspent.`, 124);
   }
   return { budgets: spend, essence, magic, problems, finishable: !problems.some(p => p.severity !== "warning") };

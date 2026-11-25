@@ -1,0 +1,210 @@
+{
+  "$comment": "Foundry PREPARED values for an adept with the Grimoire/CSH powers (docs/PLAN-M5n.md), prepared 2026-11-25 in the local test world under the sr2e 0.162.0 code. Source BUILT by the app (ops) and exported by toFoundryActor. Regenerate when the pin moves.",
+  "version": "0.162.0",
+  "actors": [
+    {
+      "name": "Parity Adept",
+      "armor": {
+        "ballistic": 0,
+        "impact": 2
+      },
+      "magic": 6,
+      "powerPoints": 4.75,
+      "enhancedPerception": 5,
+      "bodyControlDice": 2,
+      "problems": [],
+      "source": {
+        "name": "Parity Adept",
+        "type": "character",
+        "system": {
+          "race": "human",
+          "magic": {
+            "type": "physical_adept",
+            "tradition": "none",
+            "totem": "",
+            "value": 6
+          },
+          "body": {
+            "base": 1
+          },
+          "quickness": {
+            "base": 1
+          },
+          "strength": {
+            "base": 1
+          },
+          "charisma": {
+            "base": 1
+          },
+          "intelligence": {
+            "base": 1
+          },
+          "willpower": {
+            "base": 1
+          },
+          "lifestyle": "streets",
+          "chargen": {
+            "inProgress": true,
+            "priorityMethod": "standard",
+            "priorities": {
+              "race": "",
+              "magic": "",
+              "attributes": "",
+              "skills": "",
+              "resources": ""
+            }
+          }
+        },
+        "items": [
+          {
+            "_id": "cg00000000000001",
+            "name": "Mystic Armor",
+            "type": "adept_power",
+            "img": "modules/sr2e-grimoire/assets/item_icons/adept_power/mystic-armor.webp",
+            "system": {
+              "pointCost": 1,
+              "level": 2,
+              "maxLevel": 6,
+              "attributeMods": {
+                "body": 0,
+                "quickness": 0,
+                "strength": 0,
+                "reaction": 0
+              },
+              "citation": {
+                "book": "grim",
+                "page": "34"
+              }
+            },
+            "flags": {},
+            "effects": [],
+            "_stats": {
+              "compendiumSource": "Compendium.sr2e-grimoire.grim-adept-powers.Item.52fa826e15730ecb"
+            }
+          },
+          {
+            "_id": "cg00000000000002",
+            "name": "Enhanced Perception (Tier 1)",
+            "type": "adept_power",
+            "img": "modules/sr2e-corporate-security/assets/item_icons/adept_power/enhanced-perception-tier-1.webp",
+            "system": {
+              "level": 3,
+              "attributeMods": {
+                "body": 0,
+                "quickness": 0,
+                "strength": 0,
+                "reaction": 0
+              },
+              "pointCost": 0.25,
+              "maxLevel": 9,
+              "citation": {
+                "book": "csh",
+                "page": "104"
+              }
+            },
+            "flags": {},
+            "effects": [],
+            "_stats": {
+              "compendiumSource": "Compendium.sr2e-corporate-security.csh-adept-powers.Item.728210b0653b6d85"
+            }
+          },
+          {
+            "_id": "cg00000000000003",
+            "name": "Enhanced Perception (Tier 3)",
+            "type": "adept_power",
+            "img": "modules/sr2e-corporate-security/assets/item_icons/adept_power/enhanced-perception-tier-3.webp",
+            "system": {
+              "level": 2,
+              "attributeMods": {
+                "body": 0,
+                "quickness": 0,
+                "strength": 0,
+                "reaction": 0
+              },
+              "pointCost": 1,
+              "maxLevel": 9,
+              "citation": {
+                "book": "csh",
+                "page": "104"
+              }
+            },
+            "flags": {},
+            "effects": [],
+            "_stats": {
+              "compendiumSource": "Compendium.sr2e-corporate-security.csh-adept-powers.Item.eb25a29169bb25a1"
+            }
+          },
+          {
+            "_id": "cg00000000000004",
+            "name": "Body Control",
+            "type": "adept_power",
+            "img": "modules/sr2e-grimoire/assets/item_icons/adept_power/body-control.webp",
+            "system": {
+              "pointCost": 0.5,
+              "level": 2,
+              "maxLevel": 6,
+              "attributeMods": {
+                "body": 0,
+                "quickness": 0,
+                "strength": 0,
+                "reaction": 0
+              },
+              "citation": {
+                "book": "grim",
+                "page": "34"
+              }
+            },
+            "flags": {},
+            "effects": [],
+            "_stats": {
+              "compendiumSource": "Compendium.sr2e-grimoire.grim-adept-powers.Item.ba2ae6d7b6371ee8"
+            }
+          },
+          {
+            "_id": "unarmedStrike000",
+            "name": "Unarmed Strike",
+            "type": "weapon",
+            "img": "icons/skills/melee/unarmed-punch-fist.webp",
+            "system": {
+              "weaponType": "melee",
+              "skill": "unarmed_combat",
+              "damageCode": "(Str)M",
+              "damageType": "stun",
+              "concealability": 0,
+              "reach": 0,
+              "cost": 0,
+              "notes": "SR2E Melee Weapons table (p.255), p.100–101: unarmed attacks do (Str)M Stun, resolved as opposed melee with the Unarmed Combat skill."
+            },
+            "flags": {},
+            "effects": [],
+            "_stats": {
+              "compendiumSource": null
+            }
+          }
+        ],
+        "effects": [],
+        "flags": {},
+        "prototypeToken": {
+          "name": "Parity Adept",
+          "actorLink": true,
+          "lockRotation": true
+        },
+        "_stats": {
+          "systemId": "sr2e",
+          "systemVersion": {
+            "pinnedVersion": "0.162.0"
+          },
+          "exportSource": {
+            "worldId": null,
+            "uuid": null,
+            "coreVersion": null,
+            "systemId": "sr2e",
+            "systemVersion": {
+              "pinnedVersion": "0.162.0"
+            }
+          }
+        }
+      }
+    }
+  ]
+}

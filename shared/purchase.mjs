@@ -45,7 +45,10 @@ export function choiceSpec(rec, { inPlay = false } = {}) {
       const key = powerKeyOf(rec);
       if (key === "improved_senses") return { senses: text() };
       const top = Number(s.maxLevel) || 1;
-      return { ...(top > 1 ? { level: int(1, top) } : {}), ...(key === "improved_ability" ? { skill: text() } : {}) };
+      return { ...(top > 1 && key !== "enhanced_centering" ? { level: int(1, top) } : {}), ...(key === "improved_ability" ? { skill: text() } : {}),
+        ...(key === "attribute_boost" ? { boostAttribute: oneOf(["", "body", "quickness", "strength"]) } : {}),   // Grimoire p.34
+        ...(key === "enhanced_centering" ? { centeringCategory: oneOf(["", "build_repair", "combat", "knowledge", "language", "magical", "social",
+          "technical", "vehicle", "special"]), centeringSkill: text() } : {}) };
     }
     case "bioware": {   // PLAN-M5e: a rating row (≤ 6 at creation) and the grade; neural is always cultured (no choice)
       const grade = s.bodySystem === "neural" ? {} : { grade: oneOf(["standard", "cultured"]) };
@@ -89,7 +92,7 @@ export function checkChoices(rec, choices, opts) {
   for (const k of Object.keys(choices)) if (!Object.hasOwn(spec, k)) return { reason: `${rec.name} has no choice "${k}".` };
   for (const [k, sp] of Object.entries(spec)) {
     // A record made before a choice existed takes its default (cyberware bought before grades: standard).
-    const v = Object.hasOwn(choices, k) ? choices[k] : rec.choices?.[k] ?? (k === "grade" ? "standard" : undefined);
+    const v = Object.hasOwn(choices, k) ? choices[k] : rec.choices?.[k] ?? (k === "grade" ? "standard" : defaultChoices(rec, opts)[k]);
     if (sp.kind === "int" && !(Number.isInteger(v) && v >= sp.lo && v <= sp.hi)) return { reason: `${rec.name}: ${k} is a whole number from ${sp.lo} to ${sp.hi}.` };
     if (sp.kind === "oneOf" && !sp.values.includes(v)) return { reason: `${rec.name}: ${k} is one of ${sp.values.join(", ")}${opts?.inPlay ? "" : " (no starting gear above 6, p.44)"}.` };
     if (sp.kind === "text") {
@@ -279,6 +282,9 @@ export function offerReason(entry, books = [], { inPlay = false } = {}) {
   }
   if (book !== "sr2") {
     if (!books.includes(book)) return "That sourcebook isn't turned on for this character.";
+    // The Grimoire's and the CSH's powers (sr2e 0.162.0; docs/PLAN-M5n.md): the ones the system prices and derives.
+    if (entry.type === "adept_power" && BOOK_POWERS.has(adeptPowerKey(entry) ?? ""))
+      return adeptPowerKey(entry) === "enhanced_centering" && !inPlay ? "An initiate's power (Grimoire p.34): after initiation, not at creation." : null;
     if (!BOOK_TYPES.includes(entry.type)) return "From a sourcebook, only weapons, armor, ammunition, gear and spells for now.";
     if (entry.effects?.length || entry.flags?.sr2e?.rule) return "It has special rules the app doesn't compute yet.";
     if (entry.flags?.sr2e?.drug || entry.system?.drug || entry.system?.category === "skillsoft") return "Drugs and skillsofts need rules the app doesn't have yet.";
@@ -292,6 +298,8 @@ export function offerReason(entry, books = [], { inPlay = false } = {}) {
 }
 
 /** Which book power a record is (the system's adeptPowerKey, from its compendium source or name). */
+const BOOK_POWERS = new Set(["attribute_boost", "body_control", "enhanced_centering", "missile_parry", "mystic_armor", "suspended_state",
+  "enhanced_perception", "extended_missile_parry"]);
 export const powerKeyOf = (rec) => adeptPowerKey({ name: rec.name, flags: rec.flags, _stats: { compendiumSource: rec.source } }) ?? "";
 
 /** Improved Physical Senses' named improvements: comma-separated, trimmed, no blanks. */
@@ -362,6 +370,7 @@ export function project(rec, c, recs = {}) {
   }
   if (rec.type === "adept_power") {
     if ("level" in c) s.level = c.level;
+    for (const k of ["boostAttribute", "centeringCategory", "centeringSkill"]) if (k in c) s[k] = c[k];
     // Improved Ability: the system matches the skill by NAME, re-resolved on every rebuild ("" once the skill is gone).
     if ("skill" in c) s.improvedSkill = recs[c.skill]?.type === "skill" ? recs[c.skill].name : "";
     if ("senses" in c) {   // the named improvements are the level (p.126), kept in the notes as Foundry does

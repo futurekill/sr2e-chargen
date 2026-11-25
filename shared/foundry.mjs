@@ -3,7 +3,7 @@
  * JSON — what the sidebar's "Import Data" reads and "Export Data" writes. No Foundry code is needed on either side.
  */
 import { newCharacter, Refusal, MAX_ITEMS } from "./creation.mjs";
-import { UNARMED_STRIKE } from "./derive.mjs";
+import { UNARMED_STRIKE, derive } from "./derive.mjs";
 
 const FOUNDRY_ID = /^[A-Za-z0-9]{16}$/;
 /** "0.161.0" → [0, 161, 0]; anything else → null. */
@@ -19,8 +19,13 @@ export function toFoundryActor(body, pinnedVersion) {
   const a = body.actor, version = body.creation?.finished?.imported?.systemVersion ?? pinnedVersion;
   // Foundry's Import Data REPLACES the new actor's items, its innate Unarmed Strike with them: carry one (M5i r1 #1).
   const fist = (a.items ?? []).some(i => i.type === "weapon" && i.name === "Unarmed Strike") || (a.items ?? []).some(i => i._id === UNARMED_STRIKE._id) ? [] : [UNARMED_STRIKE];
+  // Foundry stores the Magic Rating (the GM types it; only losses change it) and never computes it: write the app's
+  // (Essence-based, p.45) unless the character already holds one (imported, or lowered in play).
+  const system = structuredClone(a.system);
+  if (system.magic && (system.magic.type ?? "none") !== "none" && !Number.isInteger(system.magic.value))
+    system.magic.value = derive({ actor: a }).magic;
   return {
-    name: a.name, type: "character", system: structuredClone(a.system),
+    name: a.name, type: "character", system,
     items: [...(a.items ?? []), ...fist].map(i => ({ _id: i._id, name: i.name, type: i.type, img: i.img ?? null, system: structuredClone(i.system),
       flags: structuredClone(i.flags ?? {}), effects: structuredClone(i.effects ?? []), _stats: { compendiumSource: i._stats?.compendiumSource ?? null } })),
     effects: [], flags: structuredClone(a.flags ?? {}),

@@ -5,7 +5,7 @@
  * character at creation can hold is composed here (no in-play state, no sourcebook ware); each step names the
  * CharacterData method it matches.
  */
-import { TABLES, combatSenseDice, karmaPoolCapacity, karmaPoolAvailable, reactionBase, wornArmorTotals, heavyArmorPoolPenalty, astralCombatPool, strengthMinWeaponStats, naturalAttribute, racialProfile, shapeshifterOf, formModifiers, qualityEffects, wareRule, rigBonuses, unarmedDamageCode, secondhandDead, limbStats, lacingArmor, pumpEfficiency, cyberPositions, taskPoolDice, compensatedWoundPenalty } from "./rules.mjs";
+import { TABLES, adeptPowerKey, combatSenseDice, karmaPoolCapacity, karmaPoolAvailable, reactionBase, wornArmorTotals, heavyArmorPoolPenalty, astralCombatPool, strengthMinWeaponStats, naturalAttribute, racialProfile, shapeshifterOf, formModifiers, qualityEffects, wareRule, rigBonuses, unarmedDamageCode, secondhandDead, limbStats, lacingArmor, pumpEfficiency, cyberPositions, taskPoolDice, compensatedWoundPenalty } from "./rules.mjs";
 import { essenceOf, limbModelOf, bodyIndexOfItems } from "./purchase.mjs";
 
 /** Foundry's UNARMED_STRIKE_DATA (module/migrations.mjs): every character's fist, (Str)M Stun (p.255, p.100–101). */
@@ -32,6 +32,16 @@ export function injuryPenalty(actor) {
   return compensatedWoundPenalty(cm.physical?.value ?? 0, cm.stun?.value ?? 0, { compensator, ignoreStun });
 }
 /** @param {{ actor: object, options?: { moreMetahumans?: boolean } }} input */
+/**
+ * The Magic Rating: Essence-based (p.45, at most 6) unless the character HOLDS one (imported, or lowered in play), which
+ * counts capped by Essence as Foundry caps it. One rule for derive and both validate paths.
+ */
+export function magicRating(sys, essence) {
+  if ((sys.magic?.type ?? "none") === "none") return 0;
+  const held = sys.magic?.value, cap = Math.floor(essence + 1e-9);
+  return Number.isInteger(held) ? Math.max(0, Math.min(held, cap)) : Math.max(0, Math.min(6, cap));
+}
+
 export function derive({ actor, options = {} }) {
   const sys = actor.system, items = actor.items ?? [];
   const race = sys.race ?? "human", profile = racialProfile(sys, TABLES), racial = profile.mods;   // a metavariant's own (Companion p.39–44)
@@ -125,7 +135,7 @@ export function derive({ actor, options = {} }) {
   const bodyIndex = bodyIndexOfItems(items);   // the muscle discount and culturing per item (PLAN-M5k)
   // Rounded to the thousandth only (float noise): cultured bioware (×0.75) gives three decimals, as Foundry keeps them.
   const essence = Math.round((6 - installed.reduce((t, i) => t + essenceOf(i, items, race), 0) - (mtype !== "none" ? bodyIndex : 0)) * 1000) / 1000;
-  const magic = mtype === "none" ? 0 : Math.max(0, Math.min(6, Math.floor(essence + 1e-9)));
+  const magic = magicRating(sys, essence);
 
   // Reaction (p.45) and Initiative: Muscle Replacement's Quickness never feeds Reaction (p.249).
   // Lightning Reflexes +1 per 2 points; Will to Live +1 overflow box per point (Companion p.26–27; PLAN-M5d).
@@ -162,7 +172,10 @@ export function derive({ actor, options = {} }) {
   const implant = (i, k) => num(i.system.unarmedPowerBonus) > 0 ? lacingArmor(num(i.system[k]), limbs0.laceReplacements) : num(i.system[k]);
   // Bioware armor (Orthoskin, Shadowtech p.17) adds on top too, while it works.
   const armor = { ballistic: wornT.ballistic + working.reduce((t, i) => t + implant(i, "armorBallistic"), 0) + bioWorking.reduce((t, i) => t + num(i.system.armorBallistic), 0),
-    impact: wornT.impact + working.reduce((t, i) => t + implant(i, "armorImpact"), 0) + bioWorking.reduce((t, i) => t + num(i.system.armorImpact), 0) };
+    impact: wornT.impact + working.reduce((t, i) => t + implant(i, "armorImpact"), 0) + bioWorking.reduce((t, i) => t + num(i.system.armorImpact), 0)
+      // Mystic Armor (Grimoire p.34): a physical adept's, at most the Magic Rating — as Foundry's CharacterData.mysticArmor.
+      + (mtype === "physical_adept" ? Math.min(magic, items.filter(i => i.type === "adept_power" && adeptPowerKey(i) === "mystic_armor")
+        .reduce((t, i) => t + Math.max(1, num(i.system.level) || 1), 0)) : 0) };
 
   // Attacks: the weapon's damage as Foundry prepares it (bows by Strength Minimum, p.96).
   // Cyber weapons (installed isWeapon cyberware) are weapons too, as Foundry treats them (PLAN-M5f Draft 2).

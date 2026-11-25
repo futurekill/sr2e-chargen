@@ -3,6 +3,16 @@
 Every change people can see goes under **Unreleased** in the same commit. A release retitles that section and its
 notes come from it.
 
+## Unreleased
+- **Fixed: exported magicians and adepts now carry their Magic Rating.** Foundry doesn't compute it, so a character
+  made here arrived in Foundry with Magic 0 (an adept's powers then reported over budget). The export writes the
+  Essence-based rating unless the character already holds one.
+- Added: the Grimoire's and the Corporate Security Handbook's adept powers (sr2e 0.162.0): Attribute Boost (choose the
+  attribute), Body Control, Missile Parry, Mystic Armor (adds to Impact armor), Suspended State, Enhanced Perception
+  (its three tier items priced together) and Extended Missile Parry. Enhanced Centering waits for initiation.
+- Changed: the power-point budget's own reports (a choice not made, a limit passed) now show at creation, as in play.
+- Content: pinned to sr2e v0.162.0 and Grimoire v0.5.1.
+
 ## 0.1.0-beta.7 — 2026-11-25
 The 0.1.0-beta.5 and beta.6 builds did not publish (the image scan failed); this release carries all of beta.5 below.
 - Security: a zstd finding in the base image (Debian's fix not yet in distroless) is accepted until 2026-12-09: the
