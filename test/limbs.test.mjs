@@ -4,7 +4,8 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { buildCatalog } from "../tools/build-catalog.mjs";
 import { newCharacter, applyOp, validate } from "../shared/creation.mjs";
-import { offerReason, limbOptionCostOf, price, project, pricedItems } from "../shared/purchase.mjs";
+import { offerReason, limbOptionCostOf, price, project, pricedItems, essenceOf } from "../shared/purchase.mjs";
+import { derive } from "../shared/derive.mjs";
 
 const root = new URL("../", import.meta.url);
 const catalog = buildCatalog({ pins: JSON.parse(readFileSync(new URL("content-pins.json", root), "utf8")).content, contentDir: new URL("content", root).pathname });
@@ -25,7 +26,7 @@ test("the gate: typed limbs and the checked options offered; device, cyberdeck, 
   assert.equal(offerReason(cy("ct", "Built-In Device (Cyberlimb)"), ["ct"]), null);   // M5m: with its gear (R15)
   assert.equal(offerReason(cy("ct", "Cybergun (Light Pistol)"), ["ct"]), null);   // PLAN-M5l: with its weapon
   assert.equal(offerReason(cy("ct", "Cyberarm Taser"), ["ct"]), null);
-  for (const n of ["Cyberarm Cyberdeck", "Simple Replacement Limb", "Hydraulic Jack", "Foot Anchor"]) assert.match(offerReason(cy("ct", n), ["ct"]) ?? "", /own rules/, n);
+  for (const n of ["Cyberarm Cyberdeck", "Hydraulic Jack", "Foot Anchor"]) assert.match(offerReason(cy("ct", n), ["ct"]) ?? "", /own rules/, n);
   assert.equal(offerReason(cy("sr2", "Cyberarm (Full)"), [], { inPlay: true }), null, "a limb is a spare in play (M4c)");
   assert.match(offerReason(cy("sr2", "Increased Strength (Cyberlimb)"), [], { inPlay: true }), /at creation/);
 });
@@ -119,4 +120,14 @@ test("M5m: a built-in device is a gear record inside its limb option, priced 4 Ã
   b = set(b, radio, { quantity: 2 });
   assert.ok(b.actor.items.some(i => i.name === "Micro-Transceiver"));
   assert.ok(errs(b).some(e => /quantity to 1/.test(e)));
+});
+
+test("M5m: a simple replacement limb is plain cyberware: 1 Essence, 50,000Â¥, no limb rules (Cybertechnology p.49, R16)", () => {
+  assert.equal(offerReason(cy("ct", "Simple Replacement Limb"), ["ct"]), null);
+  let b = add(newCharacter("Simple"), "sr2", "Simple Replacement (Limb)");
+  const it = b.actor.items.find(i => i.name === "Simple Replacement (Limb)");
+  assert.ok(!("side" in b.creation.items[it._id].choices), "no side: it has no limb type");
+  assert.equal(essenceOf(it, b.actor.items), 1);
+  assert.deepEqual(errs(b), []);
+  assert.equal(derive({ actor: b.actor }).essence, 5);
 });

@@ -29,3 +29,8 @@ Codex round. The system computes the +1 die in play (sr2e 0.161.0); the app reco
   (`costMultiplierOfBase`). The page shows the gear row at 0¥.
 - validate: none chosen → to-do; gone → error; no longer eligible (e.g. quantity 2) → error, and the gear is exported
   as its own item again.
+
+## The simple replacement limb (Cybertechnology p.49, OCR + page read 2026-11-25)
+- p.49: the cyberlimb rules "apply to the latter type" (obviously cybernetic); a simple replacement has "no special
+  capabilities". So it is offered as plain cyberware (`SIMPLE_REPLACEMENT`, both sources), with no side choice, and
+  `limbChecks` doesn't ask for its limb type. Foundry gives an untyped limb no limb rule: no system change (RULINGS R16).

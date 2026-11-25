@@ -5,7 +5,7 @@ import { readFileSync } from "node:fs";
 import { buildCatalog } from "../tools/build-catalog.mjs";
 import { newCharacter, applyOp, validate } from "../shared/creation.mjs";
 import { derive } from "../shared/derive.mjs";
-import { offerReason, essenceOf, priceInput, WARE_RULES_OFFERED, limbTypeOf, optionKindOf } from "../shared/purchase.mjs";
+import { offerReason, essenceOf, priceInput, WARE_RULES_OFFERED, limbTypeOf, optionKindOf, isSimpleReplacement } from "../shared/purchase.mjs";
 import { chargenItemCost, wareRule, limbRole } from "../shared/rules.mjs";
 
 const root = new URL("../", import.meta.url);
@@ -35,7 +35,7 @@ test("the audit: every offered book cyberware has an allowed rule (or none) and 
     const s = e.system, src = e._stats?.compendiumSource ?? null, rule = wareRule(e.flags, src);
     assert.ok(!rule || WARE_RULES_OFFERED.has(rule.split(":")[0]), `${e.name}: ${rule}`);
     assert.ok(!s.isTacticalComputer && !s.skillwirePlus && !s.accessPorts && !s.cranialDeck && !(s.capacity > 0) && !e.effects?.length, e.name);
-    if (limbRole(s, e.flags ?? {}, src)) assert.ok(limbTypeOf(e) || optionKindOf(e), `${e.name}: a classified limb part (PLAN-M5j)`);
+    if (limbRole(s, e.flags ?? {}, src)) assert.ok(limbTypeOf(e) || optionKindOf(e) || isSimpleReplacement(e), `${e.name}: a classified limb part (PLAN-M5j; R16 exempt)`);
   }
 });
 

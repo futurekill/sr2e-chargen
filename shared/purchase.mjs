@@ -121,6 +121,9 @@ const CTL = (id) => `Compendium.sr2e-cybertechnology.ct-cyberlimbs.Item.${id}`;
 /** The "other" options checked against the book (Draft 2, r1 #8): coverings, External Mount, Magnetic System, DNI. */
 const LIMB_OTHER_OFFERED = new Set(["c95c853f0df4d549", "0c136ee98018d026", "5a2e9c5a1a71b5d8", "3f3a5f25f8f76a06", "3f225dc670d0102a", "a14f54f55d66846f"].map(CTL));
 const LIMB_KINDS_OFFERED = new Set(["strength", "quickness", "body", "smartlink"]);
+const SIMPLE_REPLACEMENT = new Set(["Compendium.sr2e.cyberware.Item.c7e13f9d5a8b0246", CTL("28b75743f206260b")]);
+/** A simple replacement limb (R16): untyped on purpose, so no "set its limb type" report. */
+export const isSimpleReplacement = (e) => !!e && SIMPLE_REPLACEMENT.has(srcOf(e));
 const srcOf = (e) => e._stats?.compendiumSource ?? e.source ?? null;
 /** A limb's resolved type (field, rule or known source; never `location`), or null. */
 export const limbTypeOf = (e) => resolveLimbType(e.system ?? e.snapshot ?? {}, e.flags ?? {}, srcOf(e)).type;
@@ -131,7 +134,9 @@ const isLimbOption = (e) => !!(e.system ?? e.snapshot)?.limbOption;
 function limbReason(entry, inPlay) {
   const role = limbRole(entry.system ?? {}, entry.flags ?? {}, srcOf(entry));
   if (!role) return undefined;
-  if (role === "limb") return limbTypeOf(entry) ? null : "This part of a cyberlimb has its own rules the app doesn't compute yet.";
+  // A simple replacement limb has "no special capabilities" (Cybertechnology p.49): plain cyberware, no limb rules,
+  // as Foundry (an untyped limb joins no limb rule). RULINGS R16.
+  if (role === "limb") return limbTypeOf(entry) || SIMPLE_REPLACEMENT.has(srcOf(entry)) ? null : "This part of a cyberlimb has its own rules the app doesn't compute yet.";
   // In play a limb is a spare until surgery (M4c); building an option into one is the GM's, in Foundry.
   if (inPlay) return "A cyberlimb option is bought at creation here; after that, fit it in Foundry.";
   const kind = optionKindOf(entry);

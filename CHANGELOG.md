@@ -6,6 +6,8 @@ notes come from it.
 ## Unreleased
 - Added: the built-in device in a cyberlimb (core p.261). Choose one of the character's gear items; it goes inside the
   limb option, which costs 4 × the device's price (RULINGS R15).
+- Added: the simple replacement limb (core p.249, Cybertechnology p.98): plain cyberware, 1 Essence, 50,000¥, with no
+  cyberlimb rules (Cybertechnology p.49; RULINGS R16).
 
 ## 0.1.0-beta.4 — 2026-11-20
 - Added: the Reflex Recorder (General and Concentration, Shadowtech p.27). Choose the Active skill it learns; the

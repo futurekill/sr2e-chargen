@@ -196,3 +196,4 @@ bonding (p.46, p.137), refusals.
 - A delta Datajack: Essence .1, price ×10; an error until Cybertechnology is on, then a warning "Ask the GM".
 - A Cyberarm (Full) with a Built-In Device (Cyberlimb) and a Micro-Transceiver: choose it as the device: the
   option costs 10,000¥, the transceiver's row 0¥; the export has no separate transceiver. Quantity 2: an error.
+- A Simple Replacement (Limb): 1 Essence, 50,000¥, no side, no "set its limb type" error, no attribute change.

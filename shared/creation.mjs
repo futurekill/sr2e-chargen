@@ -9,7 +9,7 @@
  * unchanged; the app's own record sits beside it (`creation`).
  */
 import { TABLES, ratedRow, BP_NUYEN_TIERS, SHAPESHIFTER_PRIORITIES, humanFormMod, shapeshifterOf, qualityAudit, qualityEffects, bonusAttributeCost, attributeEdgeViolations, qualityRule, overstressPenalty, wareRule, placementFacts, OUTSIDE_LIMB_ESSENCE, racialProfile, metavariantFrom, isMetavariantItem, ONI_SOURCE, chargenBudget, damageUpdateFor, surgeryCategory, surgeryEssencePct, surgeonTN, karmaTransition, advancementOptions, saleQuoteOf, streetPrice, ratedStreetIndex, startingMoney, startingKarmaPool, adeptPowerBudget, label, skillTiersFromAllocation, validateSkillAllocation } from "./rules.mjs";
-import { defaultChoices, isRecorder, deviceReason, TOXIN_EXHALER, EXHALER_TOXINS, checkChoices, offerReason, RATING_UP_TO_BODY, project, price, eyeRow, essenceOf, isCybereye, powerKeyOf, sensesOf, limbTypeOf, optionKindOf, pricedItems, limbModelOf, bodyIndexOfItems } from "./purchase.mjs";
+import { defaultChoices, isRecorder, deviceReason, isSimpleReplacement, TOXIN_EXHALER, EXHALER_TOXINS, checkChoices, offerReason, RATING_UP_TO_BODY, project, price, eyeRow, essenceOf, isCybereye, powerKeyOf, sensesOf, limbTypeOf, optionKindOf, pricedItems, limbModelOf, bodyIndexOfItems } from "./purchase.mjs";
 import { derive } from "./derive.mjs";
 
 export const SCHEMA = "sr2e-chargen-character", SCHEMA_VERSION = 1;
@@ -902,7 +902,7 @@ function limbChecks(actor, add, creation) {
   if (!actor.items.some(i => i.type === "cyberware" && (i.system.limbOption || i.system.location === "cyberlimb"))) return;
   const model = limbModelOf(actor.items), sev = creation ? "error" : "warning", name = (id) => actor.items.find(i => i._id === id)?.name ?? "a part";
   for (const l of model.limbs) {
-    if (!l.classified) add("resources", sev, `${l.name}: set its limb type (Foundry's sheet), or its rules don't apply.`, 30, "ct");   // r1 #4
+    if (!l.classified && !isSimpleReplacement(actor.items.find(i => i._id === l.id))) add("resources", sev, `${l.name}: set its limb type (Foundry's sheet), or its rules don't apply.`, 30, "ct");   // r1 #4
     else if (!l.sideKnown) add("resources", sev, `${l.name}: choose its side (left or right).`, 30, "ct");
   }
   for (const c of model.conflicts) add("resources", sev, `${c.ids.map(name).join(" and ")} overlap on the ${c.side === "none" ? "body" : c.side} (${c.slot}).`, 30, "ct");
