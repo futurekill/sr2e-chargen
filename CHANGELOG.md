@@ -3,7 +3,7 @@
 Every change people can see goes under **Unreleased** in the same commit. A release retitles that section and its
 notes come from it.
 
-## Unreleased
+## 0.1.0-beta.5 — 2026-11-25
 - Added: the built-in device in a cyberlimb (core p.261). Choose one of the character's gear items; it goes inside the
   limb option, which costs 4 × the device's price (RULINGS R15).
 - Added: the simple replacement limb (core p.249, Cybertechnology p.98): plain cyberware, 1 Essence, 50,000¥, with no
