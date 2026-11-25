@@ -4,8 +4,8 @@
     {
       "dir": "sr2e-foundryvtt",
       "repo": "futurekill/sr2e-foundryvtt",
-      "tag": "v0.161.0",
-      "commit": "093e76cdcab668635d34f6b9bf81c698a820460b"
+      "tag": "v0.162.0",
+      "commit": "9c90e4d6dc4b31b8095417c2dea23994fc6f1af3"
     },
     {
       "dir": "sr2e-corporate-security",
@@ -34,8 +34,8 @@
     {
       "dir": "sr2e-grimoire",
       "repo": "futurekill/sr2e-grimoire",
-      "tag": "v0.5.0",
-      "commit": "a64ad487051b751923ee1fa639df684dbccfd8e3"
+      "tag": "v0.5.1",
+      "commit": "64665c623969d6f7be407d4c1163aa518c804d89"
     },
     {
       "dir": "sr2e-neo-anarchists",

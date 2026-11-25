@@ -5,7 +5,7 @@ import { readFileSync } from "node:fs";
 import { derive, UNARMED_STRIKE } from "../shared/derive.mjs";
 import { newCharacter, validate } from "../shared/creation.mjs";
 
-const fixture = JSON.parse(readFileSync(new URL("fixtures/parity/ware-v0.161.0.json", import.meta.url), "utf8"));
+const fixture = JSON.parse(readFileSync(new URL("fixtures/parity/ware-v0.162.0.json", import.meta.url), "utf8"));
 
 for (const want of fixture.actors) {
   test(`ware parity: ${want.name} (${want.ruleset})`, () => {

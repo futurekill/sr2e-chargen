@@ -5,7 +5,7 @@ import assert from "node:assert/strict";
 import { readFileSync, readdirSync } from "node:fs";
 import { derive, UNARMED_STRIKE } from "../shared/derive.mjs";
 
-const fixture = JSON.parse(readFileSync(new URL("fixtures/parity/runners-v0.161.0.json", import.meta.url), "utf8"));
+const fixture = JSON.parse(readFileSync(new URL("fixtures/parity/runners-v0.162.0.json", import.meta.url), "utf8"));
 const dir = new URL("../content/sr2e-foundryvtt/packs-src/runners/", import.meta.url);
 const sources = Object.fromEntries(readdirSync(dir).filter(f => f.endsWith(".json")).map(f => { const a = JSON.parse(readFileSync(new URL(f, dir), "utf8")); return [a._id, a]; }));
 const system = JSON.parse(readFileSync(new URL("../content/sr2e-foundryvtt/system.json", import.meta.url), "utf8"));

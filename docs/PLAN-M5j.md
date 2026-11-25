@@ -47,7 +47,7 @@ Warnings: a rejected duplicate option ("only one … counts; it still costs its 
 pair, an average over its cap.
 
 ## Proof
-A parity fixture `test/fixtures/parity/limbs-v0.161.0.json`, exported from the local Foundry (the M5i recipe):
+A parity fixture `test/fixtures/parity/limbs-v0.162.0.json`, exported from the local Foundry (the M5i recipe):
 (a) a pair of CT cyberarms with Strength +3 (left), Quickness +2 (right), Body +2 (left), and Muscle Replacement 1;
 (b) a troll: core Cyberarm (Full) left + Increased Strength 2 + a Cybergun (Light Pistol) + a Built-In Smartlink;
 (c) right Cyberhand + right Cyber Forearm with Strength +2 (adjacent) + left Cyberleg + Bone Lacing (Plastic);

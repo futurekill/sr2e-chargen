@@ -41,7 +41,7 @@ Active Effects. An unknown future rule key is refused (an allow list, not a deny
 Unchanged: the M5f grade path (`wareEssence`, `itemBaseCost`); Shadowtech ware standard only.
 
 ## Proof
-- A **parity fixture** `test/fixtures/parity/ware-v0.161.0.json`: three test actors built in the local Foundry
+- A **parity fixture** `test/fixtures/parity/ware-v0.162.0.json`: three test actors built in the local Foundry
   (0.161.0) from the compendium items, their prepared values exported (attributes, Reaction, Initiative dice,
   Essence, pools, armor, monitors, weapons):
   (a) Wired Reflexes 2 + Reaction Enhancer +6 + Muscle Replacement 2 + Dermal Sheath 1 + Datajack (Improved);

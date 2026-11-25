@@ -33,7 +33,7 @@ The gate becomes an allow list of rule keys / fields, as M5i's.
 - Adrenal pump / suprathyroid with move-by-wire: the M5i warning ("doesn't work").
 
 ## Proof
-Parity fixture `test/fixtures/parity/bioware-v0.161.0.json`, built by the app's ops and prepared by the local Foundry:
+Parity fixture `test/fixtures/parity/bioware-v0.162.0.json`, built by the app's ops and prepared by the local Foundry:
 (a) Synaptic Accelerator 2 + Muscle Augmentation 2 (cultured) + Orthoskin 2 + Cerebral Booster 1;
 (b) a pair of cyberarms + Muscle Augmentation 1 + Suprathyroid Gland + Enhanced Articulation (lost: limbs);
 (c) Enhanced Articulation alone (kept) + Adrenal Pump 1 (off) + Damage Compensator 2 + Pain Editor (off);

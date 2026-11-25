@@ -5,7 +5,7 @@ import { readFileSync } from "node:fs";
 import { derive } from "../shared/derive.mjs";
 import { essenceOf, limbOptionCostOf } from "../shared/purchase.mjs";
 
-const fixture = JSON.parse(readFileSync(new URL("fixtures/parity/limbs-v0.161.0.json", import.meta.url), "utf8"));
+const fixture = JSON.parse(readFileSync(new URL("fixtures/parity/limbs-v0.162.0.json", import.meta.url), "utf8"));
 
 for (const want of fixture.actors) {
   test(`limb parity: ${want.name} (${want.ruleset})`, () => {
