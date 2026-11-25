@@ -1,2 +1,13 @@
 # Accepted Trivy findings (docs/PLAN-release.md): each with an id, a reason and an expiry, like osv-scanner.toml.
-vulnerabilities: []
+vulnerabilities:
+  - id: CVE-2026-107494
+    statement: >-
+      OpenSSL QUIC denial of service in the distroless base's libssl3t64 (no Debian fix yet, 2026-11-25). The app never
+      uses QUIC: Fastify serves HTTP/1.1 behind the operator's TLS proxy, and Node's QUIC is experimental and off
+      without --experimental-quic (not set). Look again when Debian ships a fix.
+    expired_at: 2026-12-26
+  - id: CVE-2026-124709
+    statement: >-
+      OpenSSL QUIC memory leak (denial of service) in the same libssl3t64, no fix yet (2026-11-25). Same reason: no QUIC
+      in the app.
+    expired_at: 2026-12-26

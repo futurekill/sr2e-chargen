@@ -23,7 +23,7 @@ RUN node tools/build-catalog.mjs catalog && node tools/check-catalog.mjs catalog
 RUN npm ci --omit=dev && mkdir /data /backups
 
 # --- run: distroless (no shell, no package manager), non-root, only /data writable ---
-FROM gcr.io/distroless/nodejs26-debian13:nonroot@sha256:1d736cf8b5716c07a245301f92717143215d248fd55771ee1936ef4b3302e531
+FROM gcr.io/distroless/nodejs26-debian13:nonroot@sha256:ffa8a7545403036c94ec76674b5dbac2d425af2d679147cdf3e30180071487b7
 ENV NODE_ENV=production DATABASE_URL=sqlite:///data/chargen.db PORT=3000 HOST=0.0.0.0
 WORKDIR /app
 COPY --from=build --chown=nonroot:nonroot /data /data
