@@ -12,7 +12,9 @@ export class CatalogError extends Error {}
 const SUMMARY = ["id", "name", "type", "kind", "book", "listBook", "package", "citation", "cost", "category"];
 const summary = (e) => ({ ...Object.fromEntries(SUMMARY.map(k => [k, e[k]])),
   // An Edge or Flaw's kind and printed value, for the picker (PLAN-M5d).
-  ...(e.type === "quality" ? { quality: { kind: e.system?.kind ?? "", value: Number(e.system?.pointValue) || 0 } } : {}) });
+  ...(e.type === "quality" ? { quality: { kind: e.system?.kind ?? "", value: Number(e.system?.pointValue) || 0 } } : {}),
+  // A weapon's type, for the Garage's mount picker (docs/PLAN-garage.md 4; code review r1 #2).
+  ...(e.type === "weapon" ? { weaponType: e.system?.weaponType ?? "" } : {}) });
 
 /**
  * Load `dir/catalog.json` and `dir/manifest.json`. Throws CatalogError when it is absent, damaged (the manifest's

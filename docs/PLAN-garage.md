@@ -13,7 +13,7 @@ the core rules, keep its gear, attach it to characters, print it, and export it 
    the Foundry shape): `{ schema: "sr2e-chargen-vehicle", schemaVersion: 1, name, notes, catalogId, actor }`, where
    `actor` is the vehicle actor source (from the catalog's `vehicles.json`) whose `items` hold the mounted weapons and
    the gear; a mounted weapon carries `flags.sr2e.mount = "hardpoint" | "firmpoint"`. Each added item gets its OWN
-   16-character id from the reducer's counter (`gv…`, like the character's `cg…` ids; r1 #8), kept forever. It
+   16-character id from the reducer's counter (`gv…`, like the character's `cg…` ids; r1 #8), unique within the vehicle at all times (a revision restore may reuse one; code review r1 #7). It
    changes ONLY through operations in a shared reducer (`shared/vehicle.mjs`: `newVehicle`, `applyVehicleOp`,
    `validateVehicle`, `vehicleActor`). Same quotas, revisions, idempotency, archive/delete as every document.
    Caps (r1 #11): 30 items on one vehicle; the mounts by the printed points.

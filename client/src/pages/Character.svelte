@@ -92,7 +92,16 @@
     catch (err) { if (!gone) error = err.message; return; }
     if (!gone) change(entries.get(id)?.type === "vehicle" ? { op: "addVehicle", catalogId: id } : { op: "addItem", catalogId: id });
   }
-  const vehicles = $derived(Object.keys(body.creation.vehicles ?? {}).sort().map(k => ({ id: k, v: body.creation.vehicles[k].source })));
+  // The Garage (docs/PLAN-garage.md 7): your live vehicle documents; buying snapshots one, linking points at it.
+  let garage = $state([]);
+  (async () => {   // every page: a library holds up to 200 documents, 100 per page (code review r1 #6)
+    const out = [];
+    for (let offset = 0; offset < 1000; offset += 100) { const page = (await get(`/api/documents?limit=100&offset=${offset}`)).documents; out.push(...page); if (page.length < 100) break; }
+    garage = out.filter(d => d.kind === "vehicle");
+  })().catch(() => { /* the panel stays empty */ });
+  const garageBought = $derived(new Set(Object.values(body.creation.vehicles ?? {}).map(v => v.garageId).filter(Boolean)));
+  const links = $derived(Array.isArray(body.links) ? body.links : []);
+  const vehicles = $derived(Object.keys(body.creation.vehicles ?? {}).sort().map(k => ({ id: k, v: body.creation.vehicles[k].source, cost: body.creation.vehicles[k].cost ?? body.creation.vehicles[k].source.system?.cost, garage: !!body.creation.vehicles[k].garageId })));
   /** Every bought thing (eye accessories included), with what it costs and the Essence it takes. */
   const bought = $derived(Object.entries(body.creation.items).filter(([, r]) => r.type !== "skill" && r.type !== "quality").sort(([a], [b]) => (a < b ? -1 : 1)).map(([id, r]) => {
     const item = body.actor.items.find(i => i._id === id), projected = item ? { system: item.system, flags: item.flags } : project(r, r.choices, body.creation.items);
@@ -908,11 +917,29 @@
           <thead><tr><th scope="col">Vehicle</th><th scope="col">Handling · Speed · Body · Armor</th><th scope="col">Price</th><th scope="col"><span class="sr-only">Remove</span></th></tr></thead>
           <tbody>
             {#each vehicles as x (x.id)}
-              <tr><th scope="row">{x.v.name}</th><td>{x.v.system.handling} · {x.v.system.speed} · {x.v.system.body} · {x.v.system.armor}</td><td class="price">{nuyen(x.v.system.cost)}</td>
+              <tr><th scope="row">{x.v.name}</th><td>{x.v.system.handling} · {x.v.system.speed} · {x.v.system.body} · {x.v.system.armor}</td><td class="price">{nuyen(x.cost)}</td>
                 <td><button type="button" class="quiet" disabled={finished} aria-label={`Remove ${x.v.name}`} onclick={() => change({ op: "removeVehicle", vehicleId: x.id })}>✕</button></td></tr>
             {/each}
           </tbody>
         </table></div>
+      {/if}
+      <h3>From your garage</h3>
+      {#if !garage.length && !links.length}
+        <p class="muted">No vehicles in your garage yet: start one from the Library (Kind: Vehicle).</p>
+      {:else}
+        <ul class="list">
+          {#each garage as g (g.id)}
+            <li><a class="name" href={`/doc/${g.id}`}>{g.name}</a>
+              {#if garageBought.has(g.id)}<span class="meta">bought</span>{/if}
+              {#if !finished && !garageBought.has(g.id)}<button type="button" class="quiet" onclick={() => send({ op: "buyGarageVehicle", garageId: g.id })}>Buy at creation</button>{/if}
+              {#if links.includes(g.id)}<button type="button" class="quiet" onclick={() => change({ op: "detachVehicle", garageId: g.id })}>Unlink</button>
+              {:else}<button type="button" class="quiet" onclick={() => send({ op: "attachVehicle", garageId: g.id })}>Link</button>{/if}</li>
+          {/each}
+          {#each links.filter(id => !garage.some(g => g.id === id)) as id (id)}
+            <li><span class="name muted">Vehicle unavailable (deleted or archived)</span><button type="button" class="quiet" onclick={() => change({ op: "detachVehicle", garageId: id })}>Unlink</button></li>
+          {/each}
+        </ul>
+        <p class="muted small">Buying pays the vehicle's whole price now (its mounted weapons count double, p.251) and keeps a copy with this character. Linking costs nothing: the sheet shows the vehicle as it stands in your garage.</p>
       {/if}
       <datalist id="archetypes">{#each ARCHETYPES as a}<option value={a}></option>{/each}</datalist>
       {#if !finished}

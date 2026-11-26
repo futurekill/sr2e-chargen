@@ -106,7 +106,10 @@ export function sheetModel(body) {
     foci: of("focus").map(i => [plain(i.name), `F${i.system.force}`, i.system.boundSpellId ? plain(items.find(x => x._id === i.system.boundSpellId)?.name ?? "", 80) : "", cite(i.system)]),
     // The third column carries the power's choice: Improved Ability's skill, the senses named (p.125).
     // Vehicles bought at creation (S9): the core stats from the kept source (Handling, Speed, Body, Armor, Signature, Pilot).
-    vehicles: Object.keys(body.creation?.vehicles ?? {}).sort().map(k => body.creation.vehicles[k].source).map(v => [plain(v.name),
+    // Garage vehicles (docs/PLAN-garage.md 8): a bought one is its snapshot above; a live linked one comes in `_linked`
+    // (read by the route, never stored). Mounted weapons follow the name.
+    vehicles: [...Object.keys(body.creation?.vehicles ?? {}).sort().map(k => body.creation.vehicles[k].source), ...(body._linked ?? []).map(l => l.source)].map(v => [
+      plain([v.name, (v.items ?? []).filter(i => i.flags?.sr2e?.mount).map(i => `${i.name} (${i.flags.sr2e.mount})`).join(", ")].filter(Boolean).join(" — "), 200),
       `Hand ${v.system?.handling ?? "–"} · Speed ${v.system?.speed ?? "–"}`, `Body ${v.system?.body ?? "–"} · Armor ${v.system?.armor ?? "–"} · Sig ${v.system?.signature ?? "–"} · Pilot ${v.system?.pilot ?? "–"}`, cite(v.system)]),
     powers: of("adept_power").map(i => [plain(i.name), `L${i.system.level}`, plain(i.system.improvedSkill || (/^Senses: /.test(i.system.notes ?? "") ? i.system.notes.slice(8) : ""), 80), cite(i.system)]),
     // The history after creation (Karma and money, docs/PLAN-M4b Draft 3): the GM reads it from the sheet.

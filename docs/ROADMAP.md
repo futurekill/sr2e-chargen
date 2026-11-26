@@ -43,7 +43,8 @@ Each milestone gives something you can use. Each has a short plan, a Codex revie
    the `assets` table (portraits): restore tests compare each asset's bytes and `sha256` (docs/PLAN-portrait.md).
 7. **Foundry connector (optional).** _Done._ Export a character from the app and import it into Foundry as a new actor.
    Export a settled character from Foundry to the app. No in-play state.
-8. **Later:** Vehicle Workshop, more themes and sheet styles, NPC builder, social login. _Site themes done
+8. **Later:** Vehicle Workshop, more themes and sheet styles, NPC builder, social login. _Vehicle Workshop part 1, the
+   Garage, done 2026-11-26 (docs/PLAN-garage.md); part 2, Rigger 2 design from scratch, next._ _Site themes done
    (2026-11-25: Terminal, Cyberpunk, Cybernoir, GeoCities retro; an account preference). Sheet styles Printout and
    Dossier done (2026-11-26, docs/PLAN-sheet-styles.md); Fohawk is the default style._
    - **Done 2026-11-26 (docs/CODE-REVIEW-LOG-landing.md): a livelier landing / sign-in page**, designed with Codex. Inspiration: the mood of

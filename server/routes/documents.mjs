@@ -1,6 +1,7 @@
 /** The library's routes (docs/PLAN-M3.md §5). Every one goes through the session and `ownedDocument`. */
 import * as L from "../library.mjs";
 import { OPS, cardIds } from "../../shared/creation.mjs";
+import { VEHICLE_OPS, vehicleActor } from "../../shared/vehicle.mjs";
 import { entryOf } from "../catalog.mjs";
 import { toFoundryActor, vehicleToFoundry } from "../../shared/foundry.mjs";
 import { renderSheetPdf, processPortraitJob } from "../sheet/index.mjs";
@@ -19,6 +20,7 @@ const updateBody = { ...L.DRAFT_SCHEMA, required: ["name", "revision"], properti
 const noQuery = { type: "object", additionalProperties: false };   // a mutation takes no query: nothing outside the fingerprint (review 1 #9)
 const BIG = { bodyLimit: 2.5 * 1024 * 1024 };
 const characterBody = { type: "object", additionalProperties: false, required: ["name"], properties: { name: { type: "string", minLength: 1, maxLength: 200 } } };
+const vehicleBody = { type: "object", additionalProperties: false, required: ["catalogId"], properties: { catalogId: { type: "string", maxLength: 200 }, name: { type: "string", maxLength: 200 } } };
 /** Each operation's exact fields, from the reducer's own list (the reducer checks the values). */
 const FIELD = { books: { type: "array", maxItems: 20, uniqueItems: true, items: { type: "string", pattern: "^[a-z0-9-]{1,16}$" } }, string: { type: "string", maxLength: 20000 }, boolean: { type: "boolean" }, integer: { type: "integer", minimum: -1000, maximum: 1000 },
   // A purchase's choices: a few small values; the reducer checks the keys and values per item type (PLAN-M2c §1).
@@ -43,8 +45,13 @@ const BOUNDS = { setMethod: { method: { enum: ["standard", "sumto10", "points"] 
   setAllergy: { substance: short, rarity: choice("uncommon", "common"), severity: choice("nuisance", "mild", "moderate", "severe"),
     rarityBonus: choice("attributes", "skills", "force", "nuyen"), severityBonus: choice("attributes", "skills", "force", "nuyen") } };
 /** Fields an op may leave out (the reducer decides when they are needed): a refund sale has no percentage. */
+const garageId = { type: "string", pattern: UUID };
+Object.assign(BOUNDS, { buyGarageVehicle: { garageId }, attachVehicle: { garageId }, detachVehicle: { garageId },
+  mountWeapon: { kind: { enum: ["hardpoint", "firmpoint"] }, catalogId: { type: "string", maxLength: 200 } }, addGear: { quantity: { type: "integer", minimum: 1, maximum: 99 }, catalogId: { type: "string", maxLength: 200 } },
+  unmountWeapon: { itemId: { type: "string", pattern: "^[A-Za-z0-9]{16}$" } }, removeGear: { itemId: { type: "string", pattern: "^[A-Za-z0-9]{16}$" } } });
 const OPTIONAL = { sellItem: ["pct"], installWare: ["fee", "wound"], setMetatype: ["variant"] };
-const opSchema = { oneOf: Object.entries(OPS).map(([op, fields]) => ({ type: "object", additionalProperties: false, required: ["op", ...Object.keys(fields).filter(k => !OPTIONAL[op]?.includes(k))],
+// One schema for both kinds' operations (the reducer of the document's kind decides); shared names share their fields.
+const opSchema = { oneOf: Object.entries({ ...VEHICLE_OPS, ...OPS }).map(([op, fields]) => ({ type: "object", additionalProperties: false, required: ["op", ...Object.keys(fields).filter(k => !OPTIONAL[op]?.includes(k))],
   properties: { op: { const: op }, ...Object.fromEntries(Object.entries(fields).map(([k, t]) => [k, BOUNDS[op]?.[k] ?? FIELD[t]])) } })) };
 const opsBody = { type: "object", additionalProperties: false, required: ["revision", "ops"],
   properties: { revision: { type: "integer", minimum: 1 }, ops: { type: "array", minItems: 1, maxItems: 50, items: opSchema } } };
@@ -61,6 +68,7 @@ export default async function documentRoutes(app) {
   app.post("/characters/import", { ...BIG, schema: { headers: keyHeader, querystring: noQuery, body: { type: "object" } } },
     (req) => L.importCharacter(req.ctx, me(req), req.body, key(req), pinned()));
   app.post("/characters", { schema: { headers: keyHeader, querystring: noQuery, body: characterBody } }, (req) => L.createCharacter(req.ctx, me(req), req.body, key(req)));
+  app.post("/vehicles", { schema: { headers: keyHeader, querystring: noQuery, body: vehicleBody } }, (req) => L.createVehicle(req.ctx, me(req), req.body, key(req), (cid) => entryOf(app.catalog, cid)));
   app.post("/:id/ops", { schema: { params: idParams, headers: keyHeader, querystring: noQuery, body: opsBody } }, (req) => L.applyOps(req.ctx, me(req), req.params.id, req.body, key(req), (cid) => entryOf(app.catalog, cid), req.session.user.username, (app.catalog?.manifest?.books ?? []).map(x => x.key)));
   app.get("/:id", { schema: { params: idParams } }, (req) => L.getDocument(req.ctx, me(req), req.params.id));
   app.put("/:id", { ...BIG, schema: { params: idParams, headers: keyHeader, querystring: noQuery, body: updateBody } }, (req) => L.updateDraft(req.ctx, me(req), req.params.id, req.body, key(req)));
@@ -80,6 +88,7 @@ export default async function documentRoutes(app) {
     if (document.kind !== "character") return reply.code(409).send({ error: "Only a character has a sheet.", code: "wrong-kind" });
     const font = req.query.font ?? (req.session.user.prefs?.readableFont ? "readable" : "standard");   // the user's preference by default
     const portrait = await L.portraitOf(req.ctx, me(req), req.params.id, body);   // the body already fetched (r1 #4, r2 #4)
+    body._linked = await L.linkedVehicles(req.ctx.db, me(req), body);   // read now, never stored (PLAN-garage 7)
     const pdf = await renderSheetPdf(body, { paper: req.query.paper ?? "letter", font, style: req.query.style ?? SHEET_STYLE_KEYS[0], portrait });
     reply.header("content-disposition", `inline; filename="sheet-${document.id}.pdf"`).header("cache-control", "no-store").type("application/pdf");
     return pdf;
@@ -153,14 +162,16 @@ export default async function documentRoutes(app) {
   app.get("/:id/statblock.md", { schema: { params: idParams } }, async (req, reply) => {
     const { document, body } = await L.getDocument(req.ctx, me(req), req.params.id);
     if (document.kind !== "character") return reply.code(409).send({ error: "Only a character has a stat block.", code: "wrong-kind" });
+    body._linked = await L.linkedVehicles(req.ctx.db, me(req), body);
     reply.header("content-disposition", `attachment; filename="statblock-${document.id}.md"`).type("text/markdown; charset=utf-8");
     return statBlock(sheetModel(body));
   });
   const fileName = (n) => String(n).replace(/[^A-Za-z0-9 _-]+/g, "").trim().replace(/\s+/g, "-").slice(0, 60) || "character";
   app.get("/:id/foundry", { schema: { params: idParams } }, async (req, reply) => {
     const { document, body } = await L.getDocument(req.ctx, me(req), req.params.id);
-    if (document.kind !== "character") return reply.code(404).send({ error: "Only a character exports to Foundry.", code: "not-found" });
     reply.header("content-disposition", `attachment; filename="fvtt-Actor-${fileName(body.name)}.json"`).type("application/json");
+    if (document.kind === "vehicle") return vehicleToFoundry(vehicleActor(body), pinned());   // the Garage (PLAN-garage 8)
+    if (document.kind !== "character") return reply.code(404).send({ error: "Only a character or a vehicle exports to Foundry.", code: "not-found" });
     return toFoundryActor(body, pinned());
   });
   app.get("/:id/foundry/vehicles/:key", { schema: { params: { type: "object", required: ["id", "key"], properties: { id: idParams.properties.id, key: { type: "string", pattern: "^v[0-9a-z]{5}$" } } } } }, async (req, reply) => {

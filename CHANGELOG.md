@@ -4,6 +4,10 @@ Every change people can see goes under **Unreleased** in the same commit. A rele
 notes come from it.
 
 ## Unreleased
+- Added: **the Garage**. Vehicles are their own documents in the library: start one from a core-book vehicle, mount
+  weapons on its hardpoints and firmpoints by the core rules (p.251–253; a mounted weapon costs double), load cargo,
+  write notes, and export it to Foundry. A character can **buy** a garage vehicle at creation (its whole price) or
+  **link** one at any time; linked vehicles print on the sheet and the stat block.
 - Content: pinned to sr2e v0.166.0 (core vehicle weapon mounts, for the Garage).
 - Changed: the greeting is **"Hoi, chummer!"**, with the comma English puts before a word of direct address.
 - Changed: **a new sign-in page**: original painted art of a runner team on a rainy Seattle street beside the

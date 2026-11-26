@@ -2,6 +2,9 @@
   import { get, mutate } from "../lib/api.js";
   import { go } from "../lib/router.svelte.js";
   let docs = $state(null), trash = $state([]), archived = $state([]), error = $state(""), name = $state(""), kind = $state("character"), busy = $state(false);
+  // The Garage (docs/PLAN-garage.md): a vehicle starts from one of the core book's vehicles (p.264).
+  let coreVehicles = $state([]), vehicleId = $state("");
+  get("/api/catalog/entries?type=vehicle&book=sr2&limit=100").then(r => { coreVehicles = r.entries; }).catch(() => { /* the choice stays empty */ });
   const when = (ms) => new Date(ms).toLocaleString();
 
   /** Every page of a listing (a library holds up to 200; the API hands out 100 at a time). */
@@ -22,7 +25,11 @@
   async function create(ev) {
     ev.preventDefault();
     busy = true;
-    try { const { document } = await mutate("POST", kind === "character" ? "/api/documents/characters" : "/api/documents", { name: name.trim() }); go(`/doc/${document.id}`); }
+    try {
+      const { document } = kind === "vehicle" ? await mutate("POST", "/api/documents/vehicles", { catalogId: vehicleId, name: name.trim() })
+        : await mutate("POST", kind === "character" ? "/api/documents/characters" : "/api/documents", { name: name.trim() });
+      go(`/doc/${document.id}`);
+    }
     catch (err) {
       // No answer doesn't mean it didn't happen. Pressing Start again with the same name is safe: it replays.
       if (err.code === "network") error = "The line dropped. Press Start again — if it already went through, you'll get that one, not a second.";
@@ -55,13 +62,19 @@
 </script>
 
 <h1>Your library</h1>
-<p class="muted">Characters are built step by step: the core book's Priority system, or, with the Companion, sum-to-10 or Building Points. Drafts are free-text notes.</p>
+<p class="muted">Characters are built step by step: the core book's Priority system, or, with the Companion, sum-to-10 or Building Points. Vehicles live in your garage: weapons on their mounts, cargo, then bought or linked by your characters. Drafts are free-text notes.</p>
 {#if error}<p class="notice bad" role="alert">{error}</p>{/if}
 
 <form class="row" onsubmit={create}>
   <label class="grow"><span>Name</span><input bind:value={name} maxlength={kind === "character" ? 120 : 200} placeholder="Street name" required></label>
-  <label><span>Kind</span><select bind:value={kind}><option value="character">Character</option><option value="draft">Draft</option></select></label>
-  <button disabled={busy || !name.trim()}>Start</button>
+  <label><span>Kind</span><select bind:value={kind}><option value="character">Character</option><option value="vehicle">Vehicle</option><option value="draft">Draft</option></select></label>
+  {#if kind === "vehicle"}
+    <label><span>Model</span><select bind:value={vehicleId} required>
+      <option value="" disabled>Choose…</option>
+      {#each coreVehicles as v (v.id)}<option value={v.id}>{v.name}</option>{/each}
+    </select></label>
+  {/if}
+  <button disabled={busy || !name.trim() || (kind === "vehicle" && !vehicleId)}>Start</button>
 </form>
 <p class="muted small import"><label class="button quiet" aria-disabled={busy}>Import a character from Foundry…<input type="file" accept="application/json,.json" class="sr-only" disabled={busy} onchange={importFoundry}></label>
   Use Foundry's <strong>Export Data</strong> on a finished character.</p>

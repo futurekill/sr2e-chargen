@@ -92,6 +92,10 @@ export const OPS = Object.freeze({
   // Vehicles (docs/PLAN-S9-vehicles.md): the catalog's complete source is kept; the actor gets the system's receipt.
   addVehicle: { catalogId: "string" },
   removeVehicle: { vehicleId: "string" },
+  // The Garage (docs/PLAN-garage.md): a garage vehicle bought at creation is a snapshot; a link is a soft reference.
+  buyGarageVehicle: { garageId: "string" },
+  attachVehicle: { garageId: "string" },
+  detachVehicle: { garageId: "string" },
   // After creation (docs/PLAN-M4a.md): Karma, through the system's karmaTransition; every change is a ledger entry.
   awardKarma: { amount: "integer", note: "string" },
   spendKarma: { target: "karmaTarget" },
@@ -133,9 +137,9 @@ const OPTIONS = ["moreMetahumans", "oniPriority"];   // oniPriority: Companion p
  * could have); rules a player may break while building are reported by `validate`, never refused. A finished
  * character takes no creation operation (changes after creation are milestone 4's).
  */
-export function applyOp(body, op, lookup = () => null, { roll = null, now = 0, saleMode = "refund", by = "", catalogBooks = [] } = {}) {
+export function applyOp(body, op, lookup = () => null, { roll = null, now = 0, saleMode = "refund", by = "", catalogBooks = [], garage = () => null } = {}) {
   if (!op || typeof op !== "object" || typeof op.op !== "string" || !Object.hasOwn(OPS, op.op)) throw new Refusal("Unknown operation.");
-  if (body.creation.finished && !["setName", "setNotes", "setCard", "setBooks", ...PLAY_OPS].includes(op.op)) throw new Refusal("This character is finished: creation can't change it (use the Karma step).");
+  if (body.creation.finished && !["setName", "setNotes", "setCard", "setBooks", "attachVehicle", "detachVehicle", ...PLAY_OPS].includes(op.op)) throw new Refusal("This character is finished: creation can't change it (use the Karma step).");
   const b = structuredClone(body), sys = b.actor.system;
   if (PLAY_OPS.includes(op.op)) return playOp(b, op, lookup, now, saleMode, by);
   // Name and notes are metadata: they never rebuild the items, so a finished character's data stays as finished (M2d r1 #2).
@@ -155,6 +159,17 @@ export function applyOp(body, op, lookup = () => null, { roll = null, now = 0, s
     return b;
   }
   if (op.op === "setBooks") return setBooks(b, op, catalogBooks, lookup);   // metadata: never rebuilds the items (Draft 3)
+  // Links to garage vehicles are metadata too (docs/PLAN-garage.md 7): checked against the garage now, resolved again on
+  // every read, so a later delete, archive or revision restore can't leak or break anything.
+  if (op.op === "attachVehicle" || op.op === "detachVehicle") {
+    const links = Array.isArray(b.links) ? b.links.filter(x => typeof x === "string") : [];
+    if (op.op === "detachVehicle") { b.links = links.filter(x => x !== op.garageId); return b; }
+    if (!garage(op.garageId)) throw new Refusal("That vehicle isn't in your garage.");
+    if (links.includes(op.garageId)) throw new Refusal("That vehicle is already linked.");
+    if (links.length >= MAX_VEHICLES) throw new Refusal(`A character links at most ${MAX_VEHICLES} garage vehicles.`);
+    b.links = [...links, op.garageId];
+    return b;
+  }
   fillLegacyRecords(b);   // before the operation looks records up (r1 #2)
   switch (op.op) {
     case "setOption":
@@ -345,6 +360,20 @@ export function applyOp(body, op, lookup = () => null, { roll = null, now = 0, s
       let n = b.creation.nextVehicle ?? 1;
       while (Object.hasOwn(b.creation.vehicles, vehicleKey(n))) n++;
       b.creation.vehicles[vehicleKey(n)] = { catalogId: e.id, uuid: e.uuid ?? "", source: structuredClone(e.actorSource) };
+      b.creation.nextVehicle = n + 1;
+      break;
+    }
+    case "buyGarageVehicle": {   // the garage vehicle as it stands, at its whole price (p.251, p.264; PLAN-garage 6, 7)
+      const g = garage(op.garageId);
+      if (!g) throw new Refusal("That vehicle isn't in your garage.");
+      // The vehicle itself must have a list price (code review r1 #1): mounted weapons don't make a "Restricted" one buyable.
+      if (!(Number(g.source?.system?.cost) > 0) || !(g.price > 0)) throw new Refusal(`${g.name} has no list price (the book prints “Restricted”): it can't be bought at creation.`, 264);
+      if (!b.creation.vehicles) { b.creation.vehicles = {}; b.creation.vehicleBase = structuredClone(sys.chargen.vehicles ?? []); }
+      if (Object.values(b.creation.vehicles).some(v => v.garageId === op.garageId)) throw new Refusal(`${g.name} is already bought.`);
+      if (Object.keys(b.creation.vehicles).length >= MAX_VEHICLES) throw new Refusal(`A character buys at most ${MAX_VEHICLES} vehicles here.`);
+      let n = b.creation.nextVehicle ?? 1;
+      while (Object.hasOwn(b.creation.vehicles, vehicleKey(n))) n++;
+      b.creation.vehicles[vehicleKey(n)] = { garageId: op.garageId, garageRevision: g.revision, uuid: "", source: structuredClone(g.source), cost: g.price };
       b.creation.nextVehicle = n + 1;
       break;
     }
@@ -846,7 +875,8 @@ function rebuildItems(b) {
   // Vehicles bought here become the system's receipts (S9), in id order; a character the app didn't make keeps its own.
   if (b.creation.vehicles) b.actor.system.chargen.vehicles = [...(b.creation.vehicleBase ?? []), ...Object.keys(b.creation.vehicles).sort().map(k => {
     const v = b.creation.vehicles[k];
-    return { name: v.source.name, source: v.source._stats?.compendiumSource || v.uuid, cost: Number(v.source.system?.cost) || 0 };
+    // A garage purchase carries its frozen whole price (PLAN-garage 7); a catalog purchase is its list price (S9).
+    return { name: v.source.name, source: v.source._stats?.compendiumSource || v.uuid, cost: Number(v.cost ?? v.source.system?.cost) || 0 };
   })];
   // The lifestyle bought, or the street (p.46: no lifestyle bought = living on the street), never Foundry's "low".
   b.actor.system.lifestyle = b.actor.items.find(i => i.type === "lifestyle")?.system.level || "streets";

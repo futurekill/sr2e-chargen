@@ -2,6 +2,7 @@
   import { get, mutate } from "../lib/api.js";
   import { go } from "../lib/router.svelte.js";
   import Character from "./Character.svelte";
+  import Vehicle from "./Vehicle.svelte";
   let { id } = $props();
   let doc = $state(null), name = $state(""), notes = $state(""), revisions = $state([]), error = $state(""), saved = $state(""), busy = $state(false);
   let lost = null;   // the save that got no answer (it may or may not have landed)
@@ -55,6 +56,8 @@
   {#if !error}<p class="muted prompt">Loading…</p>{/if}
 {:else if doc.document.kind === "character"}
   <Character {doc} onDeleted={remove} />
+{:else if doc.document.kind === "vehicle"}
+  <Vehicle {doc} />
 {:else}
   <h1>{doc.document.name}</h1>
   <p class="muted">{doc.document.kind} · revision {doc.document.revision} · saved {when(doc.document.updatedAt)}</p>

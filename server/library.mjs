@@ -2,8 +2,9 @@
  * The library (docs/PLAN-M3.md §5): documents with revisions. Authorization lives in ONE place (`ownedDocument`);
  * every mutation is idempotent (a key + a fingerprint of the request) and conditional on the revision the client read;
  * quotas are counters changed in the mutation's own transaction.
- * Two kinds: a DRAFT (free text, edited whole) and a CHARACTER (docs/PLAN-M2.md: changed only by operations through
- * the shared reducer, so the server stays the authority on what a character holds).
+ * Three kinds: a DRAFT (free text, edited whole), a CHARACTER (docs/PLAN-M2.md) and a VEHICLE (the Garage,
+ * docs/PLAN-garage.md); characters and vehicles change only by operations through their shared reducers, so the
+ * server stays the authority on what they hold.
  */
 import { randomUUID, randomInt } from "node:crypto";
 import { writeTx, changed } from "./db/fence.mjs";
@@ -11,6 +12,7 @@ import { Refused } from "./auth/accounts.mjs";
 import { sha256 } from "./auth/tokens.mjs";
 import { newCharacter, applyOp, Refusal, diceFor, validate } from "../shared/creation.mjs";
 import { fromFoundryActor } from "../shared/foundry.mjs";
+import { newVehicle, applyVehicleOp, vehicleActor, vehiclePrice } from "../shared/vehicle.mjs";
 import { derive } from "../shared/derive.mjs";
 import { sheetModel } from "./sheet/model.mjs";
 import { getSaleMode } from "./rules-settings.mjs";
@@ -117,8 +119,44 @@ async function current(trx, userId, id, revision, kind) {
   const doc = await ownedDocument(trx, userId, id);
   if (!doc) throw GONE();
   if (doc.revision !== revision || doc.deleted_at != null) throw STALE();   // a deleted document isn't editable
-  if (doc.kind !== kind) throw new Refused(kind === "draft" ? "A character changes only step by step." : "That isn't a character.", 409, "wrong-kind");
+  const kinds = Array.isArray(kind) ? kind : [kind];
+  if (!kinds.includes(doc.kind)) throw new Refused(kind === "draft" ? "A character or vehicle changes only step by step." : "That isn't a character.", 409, "wrong-kind");
   return doc;
+}
+
+/**
+ * Garage vehicles by id, as an operation or a read may use them (docs/PLAN-garage.md 7): only this user's LIVE vehicle
+ * documents (not deleted, not archived). `{ id: { name, revision, source, price } }`; anything else is simply absent.
+ */
+export async function garageOf(db, userId, ids) {
+  const want = [...new Set(ids)].filter(x => typeof x === "string" && /^[0-9a-f-]{36}$/.test(x));
+  if (!want.length) return {};
+  const rows = await db.selectFrom("documents").select(["id", "revision", "body"]).where("owner_id", "=", userId).where("kind", "=", "vehicle")
+    .where("deleted_at", "is", null).where("archived_at", "is", null).where("id", "in", want).execute();
+  return Object.fromEntries(rows.map(r => { const b = decodeBody(r.body); return [r.id, { name: b.name, revision: r.revision, source: vehicleActor(b), price: vehiclePrice(b).total }]; }));
+}
+/**
+ * The character's linked garage vehicles not also bought (a bought one shows once, as the purchase; r2 #2). A link to a
+ * vehicle that is gone (deleted, archived, never yours) is a placeholder with no contents (code review r1 #4).
+ */
+export async function linkedVehicles(db, userId, body) {
+  const bought = new Set(Object.values(body.creation?.vehicles ?? {}).map(v => v.garageId).filter(Boolean));
+  const links = (Array.isArray(body.links) ? body.links : []).filter(x => typeof x === "string" && !bought.has(x));
+  const g = await garageOf(db, userId, links);
+  return links.map(id => ({ garageId: id, source: g[id]?.source ?? { name: "Vehicle unavailable (deleted or archived)", system: {}, items: [] } }));
+}
+
+export function createVehicle(ctx, userId, { catalogId, name }, key, lookup = () => null) {
+  return idempotent(ctx, userId, key, fingerprint("POST", "/documents/vehicles", { catalogId, name }), async trx => {
+    let body;
+    try { body = newVehicle(lookup(catalogId), name); } catch (e) { throw refusal(e); }
+    const id = randomUUID(), now = ctx.now(), text = encode(body);
+    await charge(trx, userId, { docs: 1 });
+    const doc = { id, owner_id: userId, kind: "vehicle", name: body.name, revision: 1, body: text, bytes: Buffer.byteLength(text), created_at: now, updated_at: now, deleted_at: null };
+    await trx.insertInto("documents").values(doc).execute();
+    await appendRevision(trx, ctx, doc, 1, body, "created");
+    return { ...(await answer(trx, userId, id)), body };
+  });
 }
 
 export function createCharacter(ctx, userId, { name }, key) {
@@ -157,15 +195,25 @@ export function importCharacter(ctx, userId, json, key, pinnedVersion) {
 /** Apply creation operations, in order, as ONE new revision; any refusal refuses them all. */
 export function applyOps(ctx, userId, id, { revision, ops }, key, lookup = () => null, by = "", catalogBooks = []) {
   return idempotent(ctx, userId, key, fingerprint("POST", `/documents/${id}/ops`, { revision, ops }), async trx => {
-    const doc = await current(trx, userId, id, revision, "character");
+    const doc = await current(trx, userId, id, revision, ["character", "vehicle"]);
     let body = decodeBody(doc.body);
+    if (doc.kind === "vehicle") {
+      try { for (const op of ops) body = applyVehicleOp(body, op, lookup); } catch (e) { throw refusal(e); }
+      const text = encode(body);
+      await bump(trx, ctx, userId, id, revision, { name: body.name, body: text, bytes: Buffer.byteLength(text) });
+      await appendRevision(trx, ctx, { id, owner_id: userId }, revision + 1, body, ops.map(o => o.op).join(", ").slice(0, 200));
+      return { ...(await answer(trx, userId, id)), body, usedBy: await usersOfVehicle(trx, userId, id) };   // r1 #9
+    }
+    // Garage vehicles the ops name, read in THIS transaction (docs/PLAN-garage.md 7): a purchase snapshots them.
+    const garageIds = ops.filter(o => o.op === "buyGarageVehicle" || o.op === "attachVehicle").map(o => o.garageId);
+    const garage = await garageOf(trx, userId, garageIds);
     // A gang's members and the finish roll (docs/PLAN-M2d.md Draft 2): rolled HERE, inside the idempotent write and
     // after its replay check, never taken from the request. ctx.randomInt lets tests fix the dice.
     const d6 = () => (ctx.randomInt ?? randomInt)(1, 7);
     const roll = (n) => Array.from({ length: n }, d6).reduce((t, x) => t + x, 0);
     // The GM's sale mode, read INSIDE this transaction (PLAN-M4b Draft 3, r2 #5): never a value the client sent.
     const saleMode = ops.some(o => o.op === "sellItem") ? await getSaleMode(trx) : "refund";
-    try { for (const op of ops) body = applyOp(body, op, lookup, { roll: diceFor(op) ? roll(diceFor(op)) : null, now: ctx.now(), saleMode, by, catalogBooks }); } catch (e) { throw refusal(e); }
+    try { for (const op of ops) body = applyOp(body, op, lookup, { roll: diceFor(op) ? roll(diceFor(op)) : null, now: ctx.now(), saleMode, by, catalogBooks, garage: (gid) => garage[gid] ?? null }); } catch (e) { throw refusal(e); }
     const text = encode(body);
     await bump(trx, ctx, userId, id, revision, { name: body.name, body: text, bytes: Buffer.byteLength(text) });
     await appendRevision(trx, ctx, { id, owner_id: userId }, revision + 1, body, ops.map(o => o.op).join(", ").slice(0, 200));
@@ -236,7 +284,15 @@ export async function listDocuments(ctx, userId, { deleted = false, archived = f
 export async function getDocument(ctx, userId, id) {
   const d = await ownedDocument(ctx.db, userId, id);
   if (!d) throw GONE();
-  return { document: meta(d), body: decodeBody(d.body) };
+  return { document: meta(d), body: decodeBody(d.body), ...(d.kind === "vehicle" ? { usedBy: await usersOfVehicle(ctx.db, userId, id) } : {}) };
+}
+/** The owner's live characters that bought or link a garage vehicle (the vehicle page shows them; PLAN-garage 9). */
+async function usersOfVehicle(db, userId, vid) {
+  const rows = await db.selectFrom("documents").select(["id", "name", "body"]).where("owner_id", "=", userId).where("kind", "=", "character").where("deleted_at", "is", null).execute();
+  return rows.map(r => {
+    const b = decodeBody(r.body), buy = Object.values(b.creation?.vehicles ?? {}).find(v => v.garageId === vid);
+    return (buy || (Array.isArray(b.links) && b.links.includes(vid))) ? { id: r.id, name: r.name, bought: buy?.garageRevision ?? null } : null;
+  }).filter(Boolean);
 }
 export async function listRevisions(ctx, userId, id) {
   if (!(await ownedDocument(ctx.db, userId, id))) throw GONE();
