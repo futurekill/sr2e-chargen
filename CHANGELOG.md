@@ -3,7 +3,7 @@
 Every change people can see goes under **Unreleased** in the same commit. A release retitles that section and its
 notes come from it.
 
-## Unreleased
+## 0.1.0-beta.11 — 2026-11-26
 - Added: **the Workshop** (Vehicle Workshop part 2). Design a vehicle from scratch by the Rigger 2 rules (p.108–146):
   chassis, power plant, design options, modifications and Mark-Up, with a live summary, priced by the same engine as
   Foundry's Vehicle Workshop. The download opens in Foundry's Workshop. A character buys a finished design at creation
