@@ -10,8 +10,8 @@ notes come from it.
 - Changed: **Fohawk is the default sheet style** (sheet, card and Print tab). The Print tab asks once more on each
   device: its old saved style was written even when nobody chose it. A character too large for Fohawk still gets the
   message to print it in Classic.
-- Added: **three new site themes**, Cyberpunk, Cybernoir and GeoCities retro (light), beside Terminal. Choose one under
-  **Account → Look**; it follows you to other devices. Every theme passes the WCAG AA contrast checks.
+- Added: **three new site themes**, Cyberpunk (now the default), Cybernoir and GeoCities retro (light), beside
+  Terminal. Choose one under **Account → Look**; it follows you to other devices. Every theme passes the WCAG AA contrast checks.
 - Content: pinned to sr2e v0.164.3. The core weapons now match the book: the Ingram Smartgun costs 950¥ with
   Concealability 5; the Ares Light Fire 75 is the printed Light Fire 70; the H&K VP225, Combat Knife and Baseball Bat
   are gone (no book prints them; use the Knife for a combat knife). A draft that already holds one of them keeps it.

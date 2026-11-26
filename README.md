@@ -478,7 +478,7 @@ On the **Print** tab, choose the style, paper and font, then:
 
 ### Your account
 
-**Account** holds your password, the site's **theme** (Terminal, Cyberpunk, Cybernoir or GeoCities retro) and the
+**Account** holds your password, the site's **theme** (Cyberpunk, the default; Terminal, Cybernoir or GeoCities retro) and the
 **readable font** option (Atkinson Hyperlegible). Both change the site at once and follow you to other devices; the
 font is also the sheets' default.
 

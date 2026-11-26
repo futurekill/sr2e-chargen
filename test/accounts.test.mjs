@@ -216,7 +216,7 @@ test("preferences: the readable font is stored per user, comes with the session,
   const res = await app.inject({ method: "POST", url: "/api/redeem", headers: { origin: ORIGIN }, payload: { secret, username: "Boss", password: PW } });
   const cookie = res.headers["set-cookie"].split(";")[0];
   const s = (await app.inject({ url: "/api/session", headers: { cookie } })).json();
-  assert.deepEqual(s.user.prefs, { readableFont: false, theme: "terminal" });
+  assert.deepEqual(s.user.prefs, { readableFont: false, theme: "cyberpunk" });
   const put = (body) => app.inject({ method: "PUT", url: "/api/account/prefs", headers: { origin: ORIGIN, cookie, "x-csrf-token": s.csrf }, payload: body });
   assert.equal((await put({ readableFont: true })).statusCode, 200);
   assert.equal((await put({ readableFont: "yes" })).statusCode, 400);
