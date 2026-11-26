@@ -3,7 +3,7 @@
 Every change people can see goes under **Unreleased** in the same commit. A release retitles that section and its
 notes come from it.
 
-## Unreleased
+## 0.1.0-beta.10 — 2026-11-26
 - Added: **the Garage**. Vehicles are their own documents in the library: start one from a core-book vehicle, mount
   weapons on its hardpoints and firmpoints by the core rules (p.251–253; a mounted weapon costs double), load cargo,
   write notes, and export it to Foundry. A character can **buy** a garage vehicle at creation (its whole price) or
