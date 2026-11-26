@@ -30,20 +30,21 @@ Each milestone gives something you can use. Each has a short plan, a Codex revie
 
 1. **Catalog.** _Done._ Build the item catalog from the system and the content modules at pinned versions. Browse and
    search it in the app, with page references. (This was M3b's first item.)
-2. **Create a character (core book).** _In progress: M2a–M2c done (2026-11-18); adept powers and M2d next._ The Priority system, step by step: priorities, metatype, magic, attributes,
+2. **Create a character (core book).** _Done (M2a–M2d, 2026-11-19)._ The Priority system, step by step: priorities, metatype, magic, attributes,
    skills, resources, contacts, lifestyle. A rules panel shows the budget and each error with its page reference.
    The app computes derived values (attributes, Essence, Reaction, Initiative, pools, armor, monitors) with the
    system's pure rules.
    - **Parity test:** the app's values for the seven pregens must equal the values Foundry computes. A small
      script exports those values from Foundry one time, as test data.
-3. **Printable sheet.** PDF in the Classic style, sized for paper, with the fit rules (no text cut off).
-4. **Manage a character.** Karma and advancement, nuyen, purchases, damage, ammo, history.
-5. **Sourcebooks.** Book toggles, alternate creation methods, book metatypes, Edges and Flaws.
-6. **Release.** Backups, image scan, signature. Then invite the group. Backups and any cross-database copy include
+3. **Printable sheet.** _Done._ PDF in the Classic style, sized for paper, with the fit rules (no text cut off).
+4. **Manage a character.** _Done._ Karma and advancement, nuyen, purchases, damage, ammo, history.
+5. **Sourcebooks.** _Done._ Book toggles, alternate creation methods, book metatypes, Edges and Flaws.
+6. **Release.** _Done._ Backups, image scan, signature. Then invite the group. Backups and any cross-database copy include
    the `assets` table (portraits): restore tests compare each asset's bytes and `sha256` (docs/PLAN-portrait.md).
-7. **Foundry connector (optional).** Export a character from the app and import it into Foundry as a new actor.
+7. **Foundry connector (optional).** _Done._ Export a character from the app and import it into Foundry as a new actor.
    Export a settled character from Foundry to the app. No in-play state.
-8. **Later:** Vehicle Workshop, more themes and sheet styles, NPC builder, social login.
+8. **Later:** Vehicle Workshop, more themes and sheet styles, NPC builder, social login. _Site themes done
+   (2026-11-25: Terminal, Cyberpunk, Cybernoir, GeoCities retro; an account preference)._
 
 ## What is kept from the work done so far
 - The app skeleton (M3a): accounts, library, revisions, Docker, CI on four databases. All of it applies.

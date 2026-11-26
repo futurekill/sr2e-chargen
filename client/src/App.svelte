@@ -1,6 +1,6 @@
 <script>
   import { route, go } from "./lib/router.svelte.js";
-  import { session, post, forgetSession, applyFont } from "./lib/api.js";
+  import { session, post, forgetSession, applyFont, applyTheme } from "./lib/api.js";
   import SignIn from "./pages/SignIn.svelte";
   import Redeem from "./pages/Redeem.svelte";
   import Library from "./pages/Library.svelte";
@@ -14,7 +14,7 @@
   const docId = $derived(/^\/doc\/([0-9a-f-]{36})$/.exec(route.path)?.[1] ?? null);
 
   async function refresh() {
-    try { user = await session(); down = ""; if (user?.prefs) applyFont(user.prefs.readableFont); } catch (err) { down = err.message; }
+    try { user = await session(); down = ""; if (user?.prefs) { applyFont(user.prefs.readableFont); applyTheme(user.prefs.theme); } } catch (err) { down = err.message; }
     ready = true;
   }
   async function signOut() {

@@ -1,0 +1,20 @@
+/*
+ * Theme: GeoCities retro — an earnest personal homepage, ink and link-blue on cream, no blinking (docs/GRAPHICS.md §3).
+ * Tokens only (docs/PLAN-M3.md §6); test/theme-contrast.test.mjs checks every pair.
+ */
+:root[data-theme="geocities"] {
+  color-scheme: light;
+  --bg: #fff9e8;
+  --surface: #ffffff;
+  --line: #7a6f9e;
+  --ink: #202030;
+  --muted: #5b5470;
+  --accent: #2537a8;
+  --danger: #b0213a;
+  --ok: #22663a;
+  --on-accent: #ffffff;
+  --font-body: Verdana, Geneva, Tahoma, sans-serif;
+  --font-head: "Trebuchet MS", Verdana, sans-serif;
+  --radius: 0;
+  --caps: none;
+}

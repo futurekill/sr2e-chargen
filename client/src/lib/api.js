@@ -1,3 +1,4 @@
+import { THEME_KEYS } from "../../../shared/themes.mjs";
 /** The API client: same-origin JSON, the session's CSRF token on every change, a fresh Idempotency-Key per action. */
 let csrf = null;
 
@@ -25,6 +26,14 @@ export const get = (url) => request("GET", url);
 export const post = (url, body = {}) => request("POST", url, body);
 export const del = (url) => request("DELETE", url);
 export const put = (url, body = {}) => request("PUT", url, body);
+/** Apply a theme (shared/themes.mjs) to the page, and remember it for the next visit's first paint. */
+export function applyTheme(theme) {
+  const t = THEME_KEYS.includes(theme) ? theme : THEME_KEYS[0];
+  document.documentElement.dataset.theme = t;
+  // The browser's own toolbar colour follows the theme's background (code review r1 #3).
+  document.querySelector('meta[name="theme-color"]')?.setAttribute("content", getComputedStyle(document.documentElement).getPropertyValue("--bg").trim());
+  try { localStorage.setItem("theme", t); } catch { /* not remembered in private mode */ }
+}
 /** Apply the readable-font preference to the page, and remember it for the next visit's sign-in page. */
 export function applyFont(readable) {
   if (readable) document.documentElement.dataset.font = "readable"; else delete document.documentElement.dataset.font;

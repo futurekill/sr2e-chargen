@@ -1,0 +1,20 @@
+/*
+ * Theme: cyberpunk — night transit signage, magenta and cyan on blue-black (docs/GRAPHICS.md §3). Tokens only
+ * (docs/PLAN-M3.md §6); test/theme-contrast.test.mjs checks every pair.
+ */
+:root[data-theme="cyberpunk"] {
+  color-scheme: dark;
+  --bg: #11131a;
+  --surface: #1a1d27;
+  --line: #6a6f86;
+  --ink: #f4f4f7;
+  --muted: #a9adc2;
+  --accent: #ff67b5;
+  --danger: #ff8f6b;
+  --ok: #64dfea;
+  --on-accent: #11131a;
+  --font-body: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-head: "Arial Narrow", "Roboto Condensed", "Helvetica Neue", Arial, sans-serif;
+  --radius: 0;
+  --caps: uppercase;
+}

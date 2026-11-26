@@ -2,6 +2,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync, readdirSync } from "node:fs";
+import { THEME_KEYS } from "../shared/themes.mjs";
 
 const lum = (hex) => { const [r, g, b] = [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16) / 255).map(c => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4)); return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
 const ratio = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p); return (x + 0.05) / (y + 0.05); };
@@ -21,3 +22,9 @@ for (const file of readdirSync(dir).filter(f => f.endsWith(".css"))) {
     }
   });
 }
+
+test("every listed theme has its file, every file is listed", () => {
+  const files = readdirSync(dir).filter(f => f.endsWith(".css")).map(f => f.slice(0, -4)).sort();
+  assert.deepEqual(files, [...THEME_KEYS].sort());
+  for (const k of THEME_KEYS) assert.match(readFileSync(new URL(`${k}.css`, dir), "utf8"), new RegExp(`:root\\[data-theme="${k}"\\]`), `${k}.css styles its own key`);
+});

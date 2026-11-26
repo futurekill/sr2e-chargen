@@ -3,6 +3,7 @@
  * layout in app.css reads the tokens and nothing else. test/theme-contrast.test.mjs checks every pair below (WCAG AA).
  */
 :root[data-theme="terminal"] {
+  color-scheme: dark;
   --bg: #14110d;
   --surface: #1e1a13;
   --line: #7d6b4a;
@@ -16,10 +17,4 @@
   --font-head: var(--font-body);
   --radius: 0;
   --caps: uppercase;
-}
-/* The readable-font setting (U22) overrides EVERY theme's fonts: Atkinson Hyperlegible Next, self-hosted (main.js). */
-:root[data-font="readable"] {
-  --font-body: "Atkinson Hyperlegible Next", system-ui, -apple-system, "Segoe UI", Verdana, Arial, sans-serif;
-  --font-head: var(--font-body);
-  --caps: none;
 }

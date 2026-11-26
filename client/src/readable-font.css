@@ -1,0 +1,7 @@
+/* The readable-font setting (U22) overrides EVERY theme's fonts (imported after the themes in
+ * main.js: the selectors are equally specific, so the later rule wins): Atkinson Hyperlegible Next, self-hosted. */
+:root[data-font="readable"] {
+  --font-body: "Atkinson Hyperlegible Next", system-ui, -apple-system, "Segoe UI", Verdana, Arial, sans-serif;
+  --font-head: var(--font-body);
+  --caps: none;
+}

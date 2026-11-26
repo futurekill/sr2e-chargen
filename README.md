@@ -477,8 +477,9 @@ On the **Print** tab, choose the style, paper and font, then:
 
 ### Your account
 
-**Account** holds your password and the **readable font** option (Atkinson Hyperlegible): it changes the site at once,
-follows you to other devices, and is the sheets' default font.
+**Account** holds your password, the site's **theme** (Terminal, Cyberpunk, Cybernoir or GeoCities retro) and the
+**readable font** option (Atkinson Hyperlegible). Both change the site at once and follow you to other devices; the
+font is also the sheets' default.
 
 ### Not in this beta
 
@@ -519,8 +520,6 @@ sourcebook modules at the releases in `content-pins.json`). A daily workflow pro
 - **Export**: Foundry JSON (characters with their vehicles, spirits and images), printable PDF sheets in several
   styles (Classic and Fohawk, with an ink-saver option), a Markdown stat block and a one-page table card.
 - **Shadowland banter** while you build: in-character commentary from street handles, never printed on sheets.
-- **Themes**: old-school terminal, cyberpunk, cybernoir and GeoCities retro, plus a dyslexia-friendly font option for
-  the site and the sheets.
 
 ## How it fits with Foundry
 
@@ -563,14 +562,15 @@ The approved order is in [docs/ROADMAP.md](docs/ROADMAP.md) (standalone first, r
 | Milestone | What | Status |
 |---|---|---|
 | M0 | Capture the creation rules from the books | done |
-| — | App skeleton: Docker, accounts, library, one theme | done |
+| — | App skeleton: Docker, accounts, library, the first theme | done |
 | 1 | Catalog: browse and search every item, with page references | done |
-| 2 | Create a character, core book ([docs/PLAN-M2.md](docs/PLAN-M2.md), [docs/PLAN-M2c.md](docs/PLAN-M2c.md)) | M2a–M2c done (in the beta); adept powers built, out with the next system release; then M2d |
+| 2 | Create a character, core book ([docs/PLAN-M2.md](docs/PLAN-M2.md), [docs/PLAN-M2c.md](docs/PLAN-M2c.md)) | done (M2a–M2d) |
 | 3 | Printable sheet ([docs/PLAN-sheet.md](docs/PLAN-sheet.md)) | done: Classic, Fohawk and ink-saver styles, Markdown stat block, table card, portraits |
 | 4 | Manage a character: Karma, nuyen, purchases, damage, history | done (M4a–M4c) |
-| 5 | Sourcebooks, alternate methods, Edges and Flaws | done (M5a–M5j) |
+| 5 | Sourcebooks, alternate methods, Edges and Flaws | done (M5a–M5n) |
 | 6 | Release ([docs/PLAN-release.md](docs/PLAN-release.md)) | done: backups, image scan, SBOM, signed image; first beta v0.1.0-beta.1 |
 | 7 | Foundry connector (optional) ([docs/PLAN-M7.md](docs/PLAN-M7.md)) | simple form done: Foundry actor JSON both ways |
+| 8 | Later: themes and sheet styles, Vehicle Workshop, NPC builder, social login | site themes done (four); the rest not started |
 
 Each milestone goes plan → review → build → code review → release.
 

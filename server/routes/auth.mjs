@@ -1,8 +1,8 @@
 /** Sign-in, links and the account (docs/PLAN-M3.md §4). */
 import { getSaleMode } from "../rules-settings.mjs";
 import * as A from "../auth/accounts.mjs";
-import { writeTx } from "../db/fence.mjs";
-import { deleteSession, deleteUserSessions } from "../auth/sessions.mjs";
+import { writeTx, updateLock } from "../db/fence.mjs";
+import { deleteSession, deleteUserSessions, readPrefs, THEMES } from "../auth/sessions.mjs";
 
 const str = (max, min = 1) => ({ type: "string", minLength: min, maxLength: max });
 const body = (properties) => ({ type: "object", additionalProperties: false, required: Object.keys(properties), properties });
@@ -40,12 +40,16 @@ export default async function authRoutes(app) {
   });
   // Per-user preferences (docs/PLAN-sheet.md slice 2): the readable font, on the site and as the sheet default.
   app.get("/account/prefs", { onRequest: app.needSession }, async (req) => req.session.user.prefs);
-  app.put("/account/prefs", { onRequest: app.needSession, schema: { body: { type: "object", additionalProperties: false, required: ["readableFont"], properties: { readableFont: { type: "boolean" } } } } },
-    async (req) => {
-      const prefs = { readableFont: req.body.readableFont };
-      await writeTx(req.ctx, trx => trx.updateTable("users").set({ prefs: JSON.stringify(prefs) }).where("id", "=", req.session.user.id).execute());
+  // A partial update: each field given replaces that field; the rest are re-read in the same transaction, so a font save
+  // and a theme save from two devices don't undo each other.
+  app.put("/account/prefs", { onRequest: app.needSession, schema: { body: { type: "object", additionalProperties: false, minProperties: 1,
+    properties: { readableFont: { type: "boolean" }, theme: { type: "string", enum: [...THEMES] } } } } },
+    async (req) => writeTx(req.ctx, async trx => {
+      const row = await updateLock(req.ctx, trx.selectFrom("users").select("prefs").where("id", "=", req.session.user.id)).executeTakeFirst();
+      const prefs = { ...readPrefs(row?.prefs), ...req.body };
+      await trx.updateTable("users").set({ prefs: JSON.stringify(prefs) }).where("id", "=", req.session.user.id).execute();
       return prefs;
-    });
+    }));
   app.post("/account/password", { config: AUTH_LIMIT, onRequest: app.needSession, schema: { body: body({ current: str(256), next: str(256) }) } }, async (req, reply) => {
     await A.changePassword(req.ctx, { userId: req.session.user.id, ...req.body, ip: req.ip });
     app.clearSessionCookie(reply);   // every session ended, this one too: sign in again

@@ -6,6 +6,7 @@
 import { randomUUID } from "node:crypto";
 import { newSecret, sha256, sameHash } from "./tokens.mjs";
 import { writeTx, Maintenance } from "../db/fence.mjs";
+import { THEME_KEYS } from "../../shared/themes.mjs";
 
 export const IDLE_MS = 7 * 86400e3, ABSOLUTE_MS = 30 * 86400e3, TOUCH_MS = 60e3;
 export const csrfFor = (secret) => sha256(`csrf:${secret}`);
@@ -19,11 +20,12 @@ export async function createSession(trx, ctx, userId) {
 }
 
 /** A user's preferences, with defaults; anything unknown or damaged in the column reads as the default. */
-export const PREF_DEFAULTS = Object.freeze({ readableFont: false });
+export const THEMES = THEME_KEYS;
+export const PREF_DEFAULTS = Object.freeze({ readableFont: false, theme: THEMES[0] });
 export function readPrefs(raw) {
   let p;
   try { p = typeof raw === "string" ? JSON.parse(raw) : raw; } catch { p = null; }
-  return { readableFont: p?.readableFont === true };
+  return { readableFont: p?.readableFont === true, theme: THEMES.includes(p?.theme) ? p.theme : THEMES[0] };
 }
 
 /** The live session for a cookie secret: `{ session, user, csrf }`, or null (unknown, expired, idle, disabled). */

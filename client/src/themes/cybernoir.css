@@ -1,0 +1,20 @@
+/*
+ * Theme: cybernoir — a municipal dossier under rain-dark glass, brass on charcoal (docs/GRAPHICS.md §3). Tokens only
+ * (docs/PLAN-M3.md §6); test/theme-contrast.test.mjs checks every pair.
+ */
+:root[data-theme="cybernoir"] {
+  color-scheme: dark;
+  --bg: #151719;
+  --surface: #1e2124;
+  --line: #75736c;
+  --ink: #eeeae2;
+  --muted: #b3ada0;
+  --accent: #ddb777;
+  --danger: #f08c7c;
+  --ok: #a7c79a;
+  --on-accent: #151719;
+  --font-body: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-head: Georgia, "Iowan Old Style", "Palatino Linotype", "Times New Roman", serif;
+  --radius: 2px;
+  --caps: none;
+}
