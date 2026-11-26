@@ -11,9 +11,3 @@ vulnerabilities:
       OpenSSL QUIC memory leak (denial of service) in the same libssl3t64, no fix yet (2026-11-25). Same reason: no QUIC
       in the app.
     expired_at: 2026-12-26
-  - id: CVE-2026-124851
-    statement: >-
-      zstd information disclosure in the distroless base's libzstd1; Debian has the fix (1.5.7+dfsg-1+deb13u1) but the
-      newest distroless image (2026-11-25) does not carry it yet. The app never loads libzstd1: Node uses its own
-      bundled zstd. Short expiry: move to the rebuilt base image as soon as it ships.
-    expired_at: 2026-12-09

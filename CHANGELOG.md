@@ -7,6 +7,8 @@ notes come from it.
 - Content: pinned to sr2e v0.164.3. The core weapons now match the book: the Ingram Smartgun costs 950¥ with
   Concealability 5; the Ares Light Fire 75 is the printed Light Fire 70; the H&K VP225, Combat Knife and Baseball Bat
   are gone (no book prints them; use the Knife for a combat knife). A draft that already holds one of them keeps it.
+- Docker: the runtime base image is the rebuilt distroless Node 26 image, which carries Debian's zstd fix
+  (CVE-2026-124851); its Trivy exception is removed.
 
 ## 0.1.0-beta.8 — 2026-11-25
 - **Fixed: exported magicians and adepts now carry their Magic Rating.** Foundry doesn't compute it, so a character
