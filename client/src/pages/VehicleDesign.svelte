@@ -6,8 +6,8 @@
    * design"; mods save at once with their own operations, as in Foundry.
    */
   import { get } from "../lib/api.js";
-  import { blankDesign, designVehicle, engineMods, modBuildContext, designModProblems } from "../../../shared/rules.mjs";
-  import { modRated } from "../../../shared/vehicle.mjs";
+  import { blankDesign, modBuildContext, designModProblems, mountOf, weaponClassOf, fitProblem, kitFor, removalProblem, CONVERSION_KITS } from "../../../shared/rules.mjs";
+  import { modRated, designResult, MAX_VEHICLE_ITEMS } from "../../../shared/vehicle.mjs";
   let { body, busy, send, tables, tablesError = "" } = $props();
 
   const CATEGORIES = { bike: "Bikes", car: "Cars", hovercraft: "Hovercraft", boat: "Boats", fixedWing: "Fixed-wing", rotor: "Rotor craft", vector: "Vectored thrust", special: "Special" };
@@ -34,11 +34,29 @@
     if (now !== savedJson) { if (JSON.stringify(work) === savedJson) work = $state.snapshot(body.design.choices); savedJson = now; }
   });
   const dirty = $derived(JSON.stringify(work) !== savedJson);
-  const installed = $derived(body.actor.items.filter(i => i.flags?.sr2e?.designMod));
+  const installed = $derived(body.actor.items.filter(i => i.flags?.sr2e?.designMod && !i.flags?.sr2e?.kitFor));
+  // Weapon mounts (R2 p.131–135; docs/PLAN-workshop-mounts.md): each mount, what it holds, and what may go on it.
+  const mounts = $derived(installed.filter(i => mountOf(i)).map(m => ({ item: m, spec: mountOf(m),
+    weapons: body.actor.items.filter(w => w.type === "weapon" && w.flags?.sr2e?.mountId === m._id) })));
+  let weaponsCatalog = $state([]), pickFor = $state({});
+  (async () => {
+    const out = [];
+    for (const book of ["sr2", "r2"]) for (let offset = 0; offset < 1000; offset += 100) {
+      const page = (await get(`/api/catalog/entries?type=weapon&book=${book}&limit=100&offset=${offset}`)).entries;
+      out.push(...page); if (page.length < 100) break;
+    }
+    weaponsCatalog = out.filter(e => Number(e.cost) > 0 && weaponClassOf({ flags: { sr2e: { catalogId: e.id } } }));
+  })().catch(err => { catalogError = err.message; });
+  const fitsOn = (mt) => weaponsCatalog.map(e => { const cls = weaponClassOf({ flags: { sr2e: { catalogId: e.id } } });
+    const need = 1 + (kitFor(mt.spec, cls) ? 1 : 0);   // the weapon, and its kit (code review r1 #4)
+    const full = body.actor.items.length + need > MAX_VEHICLE_ITEMS ? `the vehicle holds at most ${MAX_VEHICLE_ITEMS} items` : "";
+    return { e, why: fitProblem(mt.spec, cls, mt.weapons.map(w => weaponClassOf(w))) || full }; });
+  const kitOf = (w) => body.actor.items.find(k => k.flags?.sr2e?.kitFor === w._id);
   const ch = $derived(tables?.chassis?.[work.chassisKey] ?? null), pp = $derived(tables?.powerPlants?.[work.powerPlantKey] ?? null);
   let category = $state("car");
   $effect(() => { if (ch) category = ch.category; });
-  const r = $derived(tables ? designVehicle(work, tables, { mods: engineMods(installed.map(i => ({ name: i.name, system: i.system }))) }) : null);
+  // The preview: the server's own design result (engine + mounts) on the WORKING design.
+  const r = $derived(tables ? designResult({ ...body, design: { choices: work } }, tables) : null);
   const s = $derived(r?.stats ?? {});
   const fmtH = (h) => (h == null ? "–" : typeof h === "object" ? `${h.onRoad}/${h.offRoad}` : h);
   const nuyen = (n) => `${Math.round(num(n)).toLocaleString("en-US")}¥`;
@@ -60,7 +78,8 @@
 
   const bc = $derived(ch && pp ? modBuildContext(work, ch, pp, installed.map(i => ({ system: i.system }))) : null);
   const offered = $derived(catalog.filter(m => !filter.trim() || m.name.toLowerCase().includes(filter.trim().toLowerCase())).slice(0, 60)
-    .map(m => ({ ...m, why: bc ? designModProblems(m.system, bc, num(ratingFor[m.id]) || null).join("; ") : "pick a chassis and a power plant first" })));
+    .map(m => ({ ...m, why: Object.values(CONVERSION_KITS).includes(m.id) ? "added for you when you mount a personal firearm on a fixed mount or turret"
+      : bc ? designModProblems(m.system, bc, num(ratingFor[m.id]) || null).join("; ") : "pick a chassis and a power plant first" })));
   // An emptied number field reads as null: it means 0 (the design's fields are all numbers there).
   const clean = (o) => (o === null ? 0 : typeof o === "object" ? Object.fromEntries(Object.entries(o).map(([k, v]) => [k, clean(v)])) : o);
   const save = () => send([{ op: "setDesign", design: clean($state.snapshot(work)) }]);
@@ -136,14 +155,35 @@
     {#if installed.length}
       <ul class="list">
         {#each installed as m (m._id)}
+          {@const blocked = removalProblem(body.actor.items, m._id)}
           <li><span class="name">{m.name}</span>
             {#if modRated(m.system)}<label class="inline"><span class="sr-only">{m.name} rating</span><input type="number" min="1" max="20" value={m.system.rating}
               onchange={(e) => send([{ op: "setDesignMod", itemId: m._id, rating: Math.floor(num(e.currentTarget.value)) }])} disabled={busy}></label>
             {:else}<span class="meta">rating {m.system.rating ?? 1}</span>{/if}
-            <button type="button" class="quiet" disabled={busy} onclick={() => send([{ op: "removeDesignMod", itemId: m._id }])}>Remove</button></li>
+            <button type="button" class="quiet" disabled={busy || !!blocked} title={blocked} onclick={() => send([{ op: "removeDesignMod", itemId: m._id }])}>Remove</button>
+            {#if blocked}<span class="muted small">Unmount its weapons first.</span>{/if}</li>
         {/each}
       </ul>
     {:else}<p class="muted">None installed.</p>{/if}
+    {#if mounts.length}
+      <h4>Weapons on the mounts <span class="muted small">(p.131–135; weapons bought separately at list price)</span></h4>
+      {#each mounts as mt (mt.item._id)}
+        <div class="mount">
+          <p><strong>{mt.item.name}</strong> <span class="muted small">{mt.spec.kind === "turret" ? `Weapon Value ${mt.weapons.reduce((t, w) => t + (weaponClassOf(w)?.wv ?? 0), 0)} of ${mt.spec.wv}${mt.spec.house ? " (house ruling)" : ""}` : mt.spec.point}{mt.spec.kit ? " · personal firearms need a conversion kit" : " · no conversion kit needed"}</span></p>
+          {#if mt.weapons.length}<ul class="list">
+            {#each mt.weapons as w (w._id)}<li><span class="name">{w.name}</span><span class="meta">{Number(w.system?.cost || 0).toLocaleString("en-US")}¥{kitOf(w) ? ` · ${kitOf(w).name}` : ""}</span>
+              <button type="button" class="quiet" disabled={busy} onclick={() => send([{ op: "unmountWeapon", itemId: w._id }])}>Unmount</button></li>{/each}
+          </ul>{/if}
+          <div class="row">
+            <label class="grow"><span>Mount a weapon on {mt.item.name}</span><select bind:value={pickFor[mt.item._id]}>
+              <option value="">Choose…</option>
+              {#each fitsOn(mt) as f (f.e.id)}<option value={f.e.id} disabled={!!f.why}>{f.e.name} — {Number(f.e.cost).toLocaleString("en-US")}¥{f.why ? ` (${f.why})` : ""}</option>{/each}
+            </select></label>
+            <button type="button" disabled={busy || dirty || !pickFor[mt.item._id]} onclick={() => send([{ op: "mountDesignWeapon", catalogId: pickFor[mt.item._id], mountId: mt.item._id }]).then(() => { pickFor[mt.item._id] = ""; })}>Mount</button>
+          </div>
+        </div>
+      {/each}
+    {/if}
     {#if dbw && work.dbwSplit}
       <fieldset class="row"><legend>Drive-by-wire's +10% split (p.124; whole percents, 10 in all)</legend>
         <label><span>Acceleration %</span><input type="number" min="0" max="10" step="1" bind:value={work.dbwSplit.acceleration}></label>
@@ -198,5 +238,6 @@
   .inline input { width: 4.5rem; }
   fieldset { border: 1px solid var(--line); margin: .5rem 0; }
   .dp td { padding: .1rem .6rem .1rem 0; }
+  .mount { border-left: 3px solid var(--line); padding-left: .7rem; margin: .6rem 0; }
   .dp .n { text-align: right; font-variant-numeric: tabular-nums; }
 </style>

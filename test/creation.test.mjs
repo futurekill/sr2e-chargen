@@ -42,7 +42,7 @@ test("the rules closure: only static file imports, no forbidden construct, nothi
   const files = { "system.json": "{}", "lang/en.json": "{}", "module/config.mjs": `import "./rules/sr2e-rules.mjs";`,
     "module/rules/sr2e-rules.mjs": `export { a } from "./ware-rules.mjs";`, "module/rules/ware-rules.mjs": "export const a = 1;",
     "module/rules/shapeshift-rules.mjs": "export const s = 1;", "module/rules/vehicle-mounts.mjs": "export const m = 1;",
-    "module/rules/vehicle-design.mjs": "export const d = 1;", "module/rules/vehicle-workshop-rules.mjs": `import { d } from "./vehicle-design.mjs";`, "module/rules/unused.mjs": "export const b = 2;", "module/rules/books.mjs": "export const BOOKS = {};" };
+    "module/rules/vehicle-design.mjs": "export const d = 1;", "module/rules/vehicle-workshop-rules.mjs": `import { d } from "./vehicle-design.mjs";`, "module/rules/vehicle-mounts-r2.mjs": "export const r = 1;", "module/rules/unused.mjs": "export const b = 2;", "module/rules/books.mjs": "export const BOOKS = {};" };
   const kept = selectPaths(Object.keys(files), (p) => files[p]);
   assert.ok(!kept.includes("module/rules/unused.mjs"), "a module nothing imports is not copied");
   assert.ok(kept.includes("module/rules/ware-rules.mjs") && kept.includes("lang/en.json"));

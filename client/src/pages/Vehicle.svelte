@@ -127,7 +127,8 @@
   {#if designed}<div><dt>Design (Rigger 2 p.114)</dt><dd>{price.unfinished ? "Unfinished" : nuyen(price.vehicle)}</dd></div>
   {:else}<div><dt>Vehicle (p.264)</dt><dd>{price.vehicle ? nuyen(price.vehicle) : "Restricted"}</dd></div>{/if}
   {#if price.points}<div><dt>Firmpoints fitted (p.251)</dt><dd>{nuyen(price.points)}</dd></div>{/if}
-  {#if !designed}<div><dt>Weapons (adapted ×2, p.251; vehicle weapons at list)</dt><dd>{nuyen(price.weapons)}</dd></div>{/if}
+  {#if designed}<div><dt>Weapons on the mounts (list price, R20)</dt><dd>{nuyen(price.weapons)}</dd></div>
+  {:else}<div><dt>Weapons (adapted ×2, p.251; vehicle weapons at list)</dt><dd>{nuyen(price.weapons)}</dd></div>{/if}
   <div><dt>Cargo</dt><dd>{nuyen(price.cargo)}</dd></div>
   <div><dt><strong>Total</strong></dt><dd><strong>{price.vehicle ? nuyen(price.total) : designed ? "Unfinished" : "Restricted"}</strong></dd></div>
 </dl>

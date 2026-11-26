@@ -489,7 +489,9 @@ page then has a **Design** section with the steps of Foundry's Vehicle Workshop:
 the Design Points, the price and anything that keeps the design from being finished, as you change it. Press **Save
 design** to keep the changes; modifications save as you add them. The same engine as Foundry's prices it, and the
 download opens in Foundry's Workshop for more work. A character can buy a design only when it is finished, and needs
-Rigger 2 (and the book of each modification) turned on.
+Rigger 2 (and the book of each modification) turned on. Install a weapon mount (a fixed mount, a pintle, a ring mount or a turret) as a modification, then put weapons on it:
+each mount lists what it holds and which weapons fit (R2 p.131–135). A pistol or rifle on a fixed mount or in a turret
+adds its Firearm Conversion Kit for you; unmount the weapon to remove both.
 
 On a character's **Resources** step, **From your garage** lets you **buy** a vehicle at creation (you pay its whole
 price; the character keeps a copy of it as it was) or **link** one (free, any time; the sheet shows it as it stands in

@@ -58,7 +58,8 @@ const designLeaf = { anyOf: [{ type: "number" }, { type: "boolean" }, { type: "s
 const designLevel = (inner) => ({ type: "object", maxProperties: 40, propertyNames: { pattern: "^[A-Za-z]{1,40}$" }, additionalProperties: inner });
 const modItemId = { type: "string", pattern: "^[A-Za-z0-9]{16}$" }, modRating = { type: "integer", minimum: 1, maximum: 20 };
 Object.assign(BOUNDS, { setDesign: { design: designLevel({ anyOf: [designLeaf, designLevel({ anyOf: [designLeaf, designLevel(designLeaf)] })] }) },
-  addDesignMod: { catalogId: { type: "string", maxLength: 200 }, rating: modRating }, setDesignMod: { itemId: modItemId, rating: modRating }, removeDesignMod: { itemId: modItemId } });
+  addDesignMod: { catalogId: { type: "string", maxLength: 200 }, rating: modRating }, setDesignMod: { itemId: modItemId, rating: modRating }, removeDesignMod: { itemId: modItemId },
+  mountDesignWeapon: { catalogId: { type: "string", maxLength: 200 }, mountId: modItemId } });
 const OPTIONAL = { sellItem: ["pct"], installWare: ["fee", "wound"], setMetatype: ["variant"] };
 // One schema for both kinds' operations (the reducer of the document's kind decides); shared names share their fields.
 const opSchema = { oneOf: Object.entries({ ...VEHICLE_OPS, ...OPS }).map(([op, fields]) => ({ type: "object", additionalProperties: false, required: ["op", ...Object.keys(fields).filter(k => !OPTIONAL[op]?.includes(k))],

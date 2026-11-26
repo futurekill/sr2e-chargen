@@ -3,6 +3,14 @@
 Every change people can see goes under **Unreleased** in the same commit. A release retitles that section and its
 notes come from it.
 
+## 0.1.0-beta.13 — 2026-11-26
+- Added: **weapons on a design's Rigger 2 mounts** (Vehicle Workshop part 3; R2 p.131–135). Each fixed mount, pintle,
+  ring mount or turret on a design lists what it holds and takes a weapon by the book's rules: hardpoints and
+  firmpoints, one weapon per fixed, pintle or ring mount, a turret's Weapon Value. A personal firearm on a fixed mount
+  or a turret brings its Firearm Conversion Kit (its Design Points count); a weapon on a fixed mount weighs on the
+  Load. Weapons are bought at their list price. Core-book weapons and Rigger 2's vehicle weapons for now.
+- Content: pinned to sr2e v0.169.0 (the mount rules) and Rigger 2 v0.12.3 (conversion kit prices).
+
 ## 0.1.0-beta.12 — 2026-11-26
 - Fixed: the Rigger 2 design tables were left out of the repository (an ignore rule meant for the app's data folder
   matched them), so the beta.11 build had no tables and failed.

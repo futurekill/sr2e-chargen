@@ -1,8 +1,8 @@
 {
   "dir": "sr2e-foundryvtt",
   "repo": "futurekill/sr2e-foundryvtt",
-  "tag": "v0.168.0",
-  "commit": "aa2a68d528218bfc6ae2204ed51d4aed1d4ca0b5",
+  "tag": "v0.169.0",
+  "commit": "5726fedb006ac489297eba7ea278a0050f264974",
   "files": {
     "assets/pregen_portraits/glitch.webp": "d755a662065cf7ef209e114aab076e44ab813440",
     "assets/pregen_portraits/hexen.webp": "8bb0b8aad3f732fe85a2f700fe9b77c914e6475d",
@@ -20,7 +20,8 @@
     "module/rules/quality-rules.mjs": "12d33f6965373d7ac05aa79da549d59bfd904824",
     "module/rules/shapeshift-rules.mjs": "1ceafa60b2b8a62508b2604c71f0d795ca7145b2",
     "module/rules/sr2e-rules.mjs": "8f539bac8b9538fd0774dd12481b2a41021855bd",
-    "module/rules/vehicle-design.mjs": "b3b4fd5cbc265878628c5cbfebfc0c479a3e828b",
+    "module/rules/vehicle-design.mjs": "4f846a7df72e6925dbb4195214731e3007881c33",
+    "module/rules/vehicle-mounts-r2.mjs": "9d249aa73f6573cbaf041a23fb8f7d246a43ff9c",
     "module/rules/vehicle-mounts.mjs": "88fa26bcdbf12b9aa3688c080f11694f24fe1592",
     "module/rules/vehicle-r2-rules.mjs": "a836dd3ca3bdcd110f6f26e18a0580ac48f5f11b",
     "module/rules/vehicle-workshop-rules.mjs": "6e2f269f94f47d7931c58915ba6b2b59a7d2d6af",
@@ -643,7 +644,7 @@
     "packs-src/weapons/Club_d527c4c61ac29e8a.json": "59500f51e390ad4111c6814c984da21fc8b2368b",
     "packs-src/weapons/Colt_America_L36_7fd3c8e5a36db979.json": "4b4735131d0ea838b1c1fdccf63fbbf8d1894d11",
     "packs-src/weapons/Colt_M22A2_e773cae1c764f4a9.json": "6c7fb67fb2dc0b84422666bbd6967149df1de3a4",
-    "packs-src/weapons/Colt_Manhunter_31c9b3945bca4e80.json": "d0ad1bf1e69a95c1fc6f6e91baaa9159c5e026a4",
+    "packs-src/weapons/Colt_Manhunter_31c9b3945bca4e80.json": "ad355063d8533ca096274f793df3b0a459884a3c",
     "packs-src/weapons/Concussion_Grenade_2c3f7e337b33f07b.json": "3bc954f26487ee50a0353596b0267159dc58a02a",
     "packs-src/weapons/Defensive_Grenade_cd409a2f6a8e4684.json": "4da76195fe39b5f521f9737a61e14e65b71abe19",
     "packs-src/weapons/Defiance_Super_Shock_f74b7e73167d6dbb.json": "6d69c670c307d53a11b15a9865204739a9a66e77",
@@ -661,7 +662,7 @@
     "packs-src/weapons/Heckler_Koch_HK227_S_760798fc72bcd2e8.json": "cba47150ceb2494f37ebb257793d09d32235bdba",
     "packs-src/weapons/High-Explosive_Missile_78ae7600f07b2a2b.json": "0114b672e0040ff0495543b33991448fb060309b",
     "packs-src/weapons/High-Explosive_Rocket_52b9bec9fe94e9a7.json": "7ae6499c8e3c558bee1fd53593a6e3f754883a18",
-    "packs-src/weapons/Ingram_Smartgun_8c0e1af0d5c3e6e3.json": "20d01242ef4c50e2a626bbb5fbb1402337c97e00",
+    "packs-src/weapons/Ingram_Smartgun_8c0e1af0d5c3e6e3.json": "0ea04c5b7578e67de2c0c262bfcd1554e9a17d6f",
     "packs-src/weapons/Ingram_Valiant_8ee88fc80bdff8f4.json": "0594cdb1cb992256d788b431f5b7e1b0db959e40",
     "packs-src/weapons/Katana_4fd5ed7433f70fb3.json": "3fefa1fd466b9af831dbf021357b813d2971cfd8",
     "packs-src/weapons/Knife_3b4c6e3be368b93f.json": "95ede039519845278890d8e9f8eb4c6de393e45a",
@@ -712,6 +713,6 @@
     "packs-src/weapons/_subfolder_sniper_rifle_6d8b9811f947bd91.json": "f856b44d9d800069ef4e688d0b01889ef7e1033f",
     "packs-src/weapons/_subfolder_sport_rifle_c07931b8ddd4ff16.json": "4440a910975a6325eba9bc702e1015ed8d1e7e4e",
     "packs-src/weapons/_subfolder_taser_a6839df7cd4a9019.json": "0e5430599874bf68eeef7dbf2cbfeab2dc5fa420",
-    "system.json": "113d70da0469213f9b4809e1f1277fb8cd75f7b3"
+    "system.json": "36ed8d24612014c3d03b733c1afe2ed46db3d80c"
   }
 }
