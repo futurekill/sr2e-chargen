@@ -3,7 +3,13 @@
 Every change people can see goes under **Unreleased** in the same commit. A release retitles that section and its
 notes come from it.
 
-## 0.1.0-beta.11 — 2026-11-26
+## 0.1.0-beta.12 — 2026-11-26
+- Fixed: the Rigger 2 design tables were left out of the repository (an ignore rule meant for the app's data folder
+  matched them), so the beta.11 build had no tables and failed.
+
+The 0.1.0-beta.11 build did not publish (its CI failed); this release carries all of beta.11 below.
+
+## 0.1.0-beta.11 — 2026-11-26 (not published)
 - Added: **the Workshop** (Vehicle Workshop part 2). Design a vehicle from scratch by the Rigger 2 rules (p.108–146):
   chassis, power plant, design options, modifications and Mark-Up, with a live summary, priced by the same engine as
   Foundry's Vehicle Workshop. The download opens in Foundry's Workshop. A character buys a finished design at creation
