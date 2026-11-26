@@ -2,15 +2,14 @@
   /** A garage vehicle (docs/PLAN-garage.md): its stats, weapons on its mounts (core p.251–253), cargo, notes, price. */
   import { get, mutate } from "../lib/api.js";
   import { go } from "../lib/router.svelte.js";
-  import { mountsOf, vehiclePrice } from "../../../shared/vehicle.mjs";
-  import { mountKindFor, LAUNCHER_MUNITIONS } from "../../../shared/rules.mjs";
+  import { mountsOf, vehiclePrice, docIdOf } from "../../../shared/vehicle.mjs";
+  import { mountKindFor, mountedWeaponCost, LAUNCHER_MUNITIONS } from "../../../shared/rules.mjs";
   let { doc } = $props();
   let server = $state(doc), error = $state(""), busy = $state(false), notes = $state(doc.body.notes), name = $state(doc.body.name);
   const body = $derived(server.body), sys = $derived(server.body.actor.system ?? {});
   const mounts = $derived(mountsOf(body)), price = $derived(vehiclePrice(body));
   const weapons = $derived(body.actor.items.filter(i => i.flags?.sr2e?.mount)), cargo = $derived(body.actor.items.filter(i => i.flags?.sr2e?.cargo));
   const nuyen = (n) => `${Number(n || 0).toLocaleString("en-US")}¥`;
-  const docIdOf = (cid) => String(cid).split(".").pop();
 
   // What can go on: the core book's weapons by mount kind, its gear and the launcher's ammunition (p.251, p.255).
   let mountable = $state({ hardpoint: [], firmpoint: [] }), cargoable = $state([]);
@@ -77,7 +76,7 @@
   {#if weapons.length}
     <ul class="list">
       {#each weapons as w (w._id)}
-        <li><span class="name">{w.name}</span><span class="meta">{w.flags.sr2e.mount} · {nuyen(2 * Number(w.system?.cost))} adapted</span>
+        <li><span class="name">{w.name}</span><span class="meta">{w.flags.sr2e.mount} · {nuyen(mountedWeaponCost(w.system?.cost, docIdOf(w.flags.sr2e.catalogId)))}</span>
           <button type="button" class="quiet" disabled={busy} onclick={() => send([{ op: "unmountWeapon", itemId: w._id }])}>Remove</button></li>
       {/each}
     </ul>
@@ -86,8 +85,8 @@
     <form class="row" onsubmit={mount}>
       <label class="grow"><span>Mount a weapon</span><select bind:value={pickWeapon} required>
         <option value="" disabled>Choose…</option>
-        {#if free("hardpoint") > 0}<optgroup label="Hardpoint (heavy weapons)">{#each mountable.hardpoint as e (e.id)}<option value={e.id}>{e.name} — {nuyen(2 * Number(e.cost))}</option>{/each}</optgroup>{/if}
-        {#if free("firmpoint") > 0}<optgroup label="Firmpoint (firearms)">{#each mountable.firmpoint as e (e.id)}<option value={e.id}>{e.name} — {nuyen(2 * Number(e.cost))}</option>{/each}</optgroup>{/if}
+        {#if free("hardpoint") > 0}<optgroup label="Hardpoint (heavy weapons)">{#each mountable.hardpoint as e (e.id)}<option value={e.id}>{e.name} — {nuyen(mountedWeaponCost(e.cost, docIdOf(e.id)))}</option>{/each}</optgroup>{/if}
+        {#if free("firmpoint") > 0}<optgroup label="Firmpoint (firearms)">{#each mountable.firmpoint as e (e.id)}<option value={e.id}>{e.name} — {nuyen(mountedWeaponCost(e.cost, docIdOf(e.id)))}</option>{/each}</optgroup>{/if}
       </select></label>
       <button disabled={busy || !pickWeapon}>Mount</button>
     </form>
@@ -116,7 +115,7 @@
 <dl>
   <div><dt>Vehicle (p.264)</dt><dd>{price.vehicle ? nuyen(price.vehicle) : "Restricted"}</dd></div>
   {#if price.points}<div><dt>Firmpoints fitted (p.251)</dt><dd>{nuyen(price.points)}</dd></div>{/if}
-  <div><dt>Weapons, adapted ×2 (p.251)</dt><dd>{nuyen(price.weapons)}</dd></div>
+  <div><dt>Weapons (adapted ×2, p.251; vehicle weapons at list)</dt><dd>{nuyen(price.weapons)}</dd></div>
   <div><dt>Cargo</dt><dd>{nuyen(price.cargo)}</dd></div>
   <div><dt><strong>Total</strong></dt><dd><strong>{price.vehicle ? nuyen(price.total) : "Restricted"}</strong></dd></div>
 </dl>

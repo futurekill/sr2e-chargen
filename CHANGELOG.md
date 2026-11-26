@@ -3,6 +3,11 @@
 Every change people can see goes under **Unreleased** in the same commit. A release retitles that section and its
 notes come from it.
 
+## Unreleased
+- Added: the core **Vehicle Weapons** (Autocannon, Vehicle Launcher, Water Cannon; p.253) in the Garage's hardpoint
+  list. They are built for vehicles, so a mount doesn't double their price.
+- Content: pinned to sr2e v0.167.0 (the Vehicle Weapons).
+
 ## 0.1.0-beta.10 — 2026-11-26
 - Added: **the Garage**. Vehicles are their own documents in the library: start one from a core-book vehicle, mount
   weapons on its hardpoints and firmpoints by the core rules (p.251–253; a mounted weapon costs double), load cargo,

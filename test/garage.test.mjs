@@ -48,6 +48,13 @@ test("a garage vehicle: mounts by the printed points and the weapon's kind (p.25
   assert.throws(() => op(newVehicle(lookup(SCOOT)), { op: "mountWeapon", catalogId: VALIANT, kind: "firmpoint" }), /no firmpoints/);
 });
 
+test("a core Vehicle Weapon (p.253, p.265) goes on a hardpoint at its list price: built for a mount, not adapted", () => {
+  let p = newVehicle(lookup(PATROL));
+  p = op(p, { op: "mountWeapon", catalogId: "sr2e.weapons.3384fb676d8924f5", kind: "hardpoint" });   // Autocannon
+  p = op(p, { op: "mountWeapon", catalogId: VALIANT, kind: "firmpoint" });
+  assert.equal(vehiclePrice(p).weapons, 12000 + 2 * Number(lookup(VALIANT).system.cost));
+});
+
 test("the price: list + the Scorpion's points + weapons doubled + cargo × quantity (p.251, p.264)", () => {
   let b = newVehicle(lookup(SCORPION));
   b = op(b, { op: "mountWeapon", catalogId: VALIANT, kind: "firmpoint" });

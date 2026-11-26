@@ -29,7 +29,7 @@ function cleanName(name) {
   return n;
 }
 /** A catalog id is `package.pack.documentId`; the system's mount tables key on the document id (core pack only). */
-const docIdOf = (catalogId) => (String(catalogId ?? "").startsWith("sr2e.") ? String(catalogId).split(".").pop() : "");
+export const docIdOf = (catalogId) => (String(catalogId ?? "").startsWith("sr2e.") ? String(catalogId).split(".").pop() : "");
 const itemKey = (n) => `gv${String(n).padStart(14, "0")}`;   // 16 characters, as Foundry's ids; fixed width keeps order
 
 /** A new vehicle from a catalog vehicle entry (core book only, as at creation; sourcebooks come with a book toggle). */
@@ -109,13 +109,13 @@ export function applyVehicleOp(body, op, lookup = () => null) {
 /**
  * What the vehicle costs as it stands (docs/PLAN-garage.md 6): its list price (p.264; 0 = "Restricted", no price),
  * the Scorpion's price per firmpoint fitted (p.251), each mounted weapon at twice its list price ("Adaptation … doubles
- * its cost", p.251) and each cargo item at list price × its quantity. `{ total, vehicle, points, weapons, cargo }`.
+ * its cost", p.251; a core Vehicle Weapon at list price, it is built for a mount) and each cargo item at list price × its quantity. `{ total, vehicle, points, weapons, cargo }`.
  */
 export function vehiclePrice(body) {
   const vehicle = Number(body.actor.system?.cost) || 0;
   const m = mountsOf(body);
   const points = m.pointCost * (m.firmpoint.used + m.hardpoint.used);
-  const weapons = body.actor.items.filter(i => i.flags?.sr2e?.mount).reduce((t, i) => t + mountedWeaponCost(i.system?.cost), 0);
+  const weapons = body.actor.items.filter(i => i.flags?.sr2e?.mount).reduce((t, i) => t + mountedWeaponCost(i.system?.cost, docIdOf(i.flags.sr2e.catalogId)), 0);
   const cargo = body.actor.items.filter(i => i.flags?.sr2e?.cargo).reduce((t, i) => t + (Number(i.system?.cost) || 0) * (i.flags.sr2e.quantity ?? 1), 0);
   return { total: vehicle + points + weapons + cargo, vehicle, points, weapons, cargo };
 }

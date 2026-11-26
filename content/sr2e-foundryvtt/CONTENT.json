@@ -1,8 +1,8 @@
 {
   "dir": "sr2e-foundryvtt",
   "repo": "futurekill/sr2e-foundryvtt",
-  "tag": "v0.166.0",
-  "commit": "f20c6aac7fe705d942dcfed74df2e129eee06ad7",
+  "tag": "v0.167.0",
+  "commit": "833384f6abb512b636c88b7aeaf4b1027df9fa3e",
   "files": {
     "assets/pregen_portraits/glitch.webp": "d755a662065cf7ef209e114aab076e44ab813440",
     "assets/pregen_portraits/hexen.webp": "8bb0b8aad3f732fe85a2f700fe9b77c914e6475d",
@@ -20,7 +20,7 @@
     "module/rules/quality-rules.mjs": "12d33f6965373d7ac05aa79da549d59bfd904824",
     "module/rules/shapeshift-rules.mjs": "1ceafa60b2b8a62508b2604c71f0d795ca7145b2",
     "module/rules/sr2e-rules.mjs": "8f539bac8b9538fd0774dd12481b2a41021855bd",
-    "module/rules/vehicle-mounts.mjs": "e1628fefe1d49556e1f4792343a852bf34076b01",
+    "module/rules/vehicle-mounts.mjs": "88fa26bcdbf12b9aa3688c080f11694f24fe1592",
     "module/rules/vehicle-r2-rules.mjs": "a836dd3ca3bdcd110f6f26e18a0580ac48f5f11b",
     "module/rules/vr2-options.mjs": "54c2fe521741c7ecd0f649bb2c30e3d84e7b2700",
     "module/rules/ware-rules.mjs": "e1edff2da1eed764b03cce4f4349d1651bdbfc8d",
@@ -634,6 +634,7 @@
     "packs-src/weapons/Ares_Light_Fire_70_f1e9b06afa79c233.json": "b7288379a12f077b98ba36aae7574da249723e34",
     "packs-src/weapons/Ares_Predator_238ee9d5c429d332.json": "82067df8d7e31933314d371e2b86d94962a7f3eb",
     "packs-src/weapons/Ares_Viper_Slivergun_40bbb83f5f8bfa0b.json": "f21c3c16df5e0175d4ff43947b8fffbbd027fbba",
+    "packs-src/weapons/Autocannon_3384fb676d8924f5.json": "f831c8e03d1d1f09373ae0b6b9e448801f1269be",
     "packs-src/weapons/Beretta_Model_101T_87f7bdd470f76b3e.json": "409705b9075d8a8fbb98cf4b1d5421fb73792dbc",
     "packs-src/weapons/Bow_2668e5889f9904a4.json": "92b82b0da43bd1caa3d34b3d06f1107125a66092",
     "packs-src/weapons/Browning_Max_Power_57171263c74c8131.json": "f78891fa2151b4423e79c3908f29a2a2fbc0638a",
@@ -686,7 +687,9 @@
     "packs-src/weapons/Throwing_Knife_e8390bfcab06bb91.json": "4ba7331a1cc800e6f0a8a87984747970a74150cc",
     "packs-src/weapons/Unarmed_Strike_f5a6b7c8d9e00b53.json": "ffa629fd54e3fdf79d4ad650dc3feb06995970b9",
     "packs-src/weapons/Uzi_III_015cebdcf70442c3.json": "a4f324f0e7bbdf897a773fa20ae7eadbdcd67e75",
+    "packs-src/weapons/Vehicle_Launcher_40cf40b8a58e4f42.json": "accc8b9f2c9ee54d1b7844704dbc434ce398612c",
     "packs-src/weapons/Walther_Palm_Pistol_0a8d5df14974178d.json": "37c36c9ab505e124e955bf584f9c3a536e53b2ed",
+    "packs-src/weapons/Water_Cannon_9c67c3aea5c5a4d2.json": "e2c687f295fde6fff848198a7631464c0f886c58",
     "packs-src/weapons/_folder_firearm_2044fc9483242570.json": "0bbc4275b9e2bf4becfe4d00634543a617bee5cf",
     "packs-src/weapons/_folder_grenade_dbec753ba06e68f9.json": "72ba44aee6b8b7846f0ee0e858d4ce733e63c510",
     "packs-src/weapons/_folder_heavy_8fe2f01d4ecaee2d.json": "4d2b09cc30b5a8ea1eb868f7007ed9cb32fe77a2",
@@ -707,6 +710,6 @@
     "packs-src/weapons/_subfolder_sniper_rifle_6d8b9811f947bd91.json": "f856b44d9d800069ef4e688d0b01889ef7e1033f",
     "packs-src/weapons/_subfolder_sport_rifle_c07931b8ddd4ff16.json": "4440a910975a6325eba9bc702e1015ed8d1e7e4e",
     "packs-src/weapons/_subfolder_taser_a6839df7cd4a9019.json": "0e5430599874bf68eeef7dbf2cbfeab2dc5fa420",
-    "system.json": "d6881089bdb1881586a1685bbf34967112cf9fa3"
+    "system.json": "6e7a89e36f8c698e1dfc198361c582d2d18d44fd"
   }
 }
