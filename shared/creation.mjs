@@ -8,7 +8,7 @@
  * A character is the Foundry system's own `character` source shapes (`actor`), so the system's functions read it
  * unchanged; the app's own record sits beside it (`creation`).
  */
-import { TABLES, ratedRow, BP_NUYEN_TIERS, SHAPESHIFTER_PRIORITIES, humanFormMod, shapeshifterOf, qualityAudit, qualityEffects, bonusAttributeCost, attributeEdgeViolations, qualityRule, overstressPenalty, wareRule, placementFacts, OUTSIDE_LIMB_ESSENCE, racialProfile, metavariantFrom, isMetavariantItem, ONI_SOURCE, chargenBudget, damageUpdateFor, surgeryCategory, surgeryEssencePct, surgeonTN, karmaTransition, advancementOptions, saleQuoteOf, streetPrice, ratedStreetIndex, startingMoney, startingKarmaPool, adeptPowerBudget, label, skillTiersFromAllocation, validateSkillAllocation } from "./rules.mjs";
+import { TABLES, ratedRow, BP_NUYEN_TIERS, SHAPESHIFTER_PRIORITIES, humanFormMod, shapeshifterOf, qualityAudit, qualityEffects, bonusAttributeCost, attributeEdgeViolations, qualityRule, overstressPenalty, wareRule, placementFacts, OUTSIDE_LIMB_ESSENCE, racialProfile, metavariantFrom, isMetavariantItem, ONI_SOURCE, chargenBudget, damageUpdateFor, surgeryCategory, surgeryEssencePct, surgeonTN, karmaTransition, advancementOptions, saleQuoteOf, streetPrice, ratedStreetIndex, vehicleStreetIndex, fenceValue, startingMoney, startingKarmaPool, adeptPowerBudget, label, skillTiersFromAllocation, validateSkillAllocation } from "./rules.mjs";
 import { defaultChoices, isRecorder, deviceReason, isSimpleReplacement, TOXIN_EXHALER, EXHALER_TOXINS, checkChoices, offerReason, RATING_UP_TO_BODY, project, price, eyeRow, essenceOf, isCybereye, powerKeyOf, sensesOf, limbTypeOf, optionKindOf, pricedItems, limbModelOf, bodyIndexOfItems } from "./purchase.mjs";
 import { derive, magicRating } from "./derive.mjs";
 
@@ -108,10 +108,13 @@ export const OPS = Object.freeze({
   damage: { track: "string", boxes: "integer" },
   heal: { track: "string", boxes: "integer" },
   useAmmo: { itemId: "string", rounds: "integer" },
-  installWare: { itemId: "string", successes: "integer", fee: "boolean", wound: "boolean" }
+  installWare: { itemId: "string", successes: "integer", fee: "boolean", wound: "boolean" },
+  // Vehicles after creation (docs/PLAN-play-vehicles.md): one of catalogId / garageId; a play vehicle sold.
+  buyVehicle: { catalogId: "string", garageId: "string", price: "money" },
+  sellVehicle: { vehicleKey: "string", pct: "integer", shownMode: "string", quoted: "money" }
 });
 /** The ops a FINISHED character takes (besides name, notes, card). */
-const PLAY_OPS = ["awardKarma", "spendKarma", "undo", "buyItem", "sellItem", "nuyen", "damage", "heal", "useAmmo", "installWare"];
+const PLAY_OPS = ["awardKarma", "spendKarma", "undo", "buyItem", "sellItem", "nuyen", "damage", "heal", "useAmmo", "installWare", "buyVehicle", "sellVehicle"];
 /** What money buys and sells in play (PLAN-M4b Draft 2, r1 #3): property, not spells, foci, powers, contacts or homes. */
 export const PLAY_GEAR = ["weapon", "armor", "gear", "ammo", "cyberware", "program"];
 const MAX_MONEY = 10_000_000;
@@ -141,7 +144,7 @@ export function applyOp(body, op, lookup = () => null, { roll = null, now = 0, s
   if (!op || typeof op !== "object" || typeof op.op !== "string" || !Object.hasOwn(OPS, op.op)) throw new Refusal("Unknown operation.");
   if (body.creation.finished && !["setName", "setNotes", "setCard", "setBooks", "attachVehicle", "detachVehicle", ...PLAY_OPS].includes(op.op)) throw new Refusal("This character is finished: creation can't change it (use the Karma step).");
   const b = structuredClone(body), sys = b.actor.system;
-  if (PLAY_OPS.includes(op.op)) return playOp(b, op, lookup, now, saleMode, by);
+  if (PLAY_OPS.includes(op.op)) return playOp(b, op, lookup, now, saleMode, by, garage);
   // Name and notes are metadata: they never rebuild the items, so a finished character's data stays as finished (M2d r1 #2).
   if (op.op === "setName") { b.name = b.actor.name = cleanName(op.name); return b; }
   if (op.op === "setNotes") {
@@ -374,7 +377,7 @@ export function applyOp(body, op, lookup = () => null, { roll = null, now = 0, s
       const missing = (g.books ?? []).filter(k => k !== CORE && !booksOf(b).includes(k));
       if (missing.length) throw new Refusal(`${g.name} needs ${missing.join(", ")} turned on for this character.`);
       if (!b.creation.vehicles) { b.creation.vehicles = {}; b.creation.vehicleBase = structuredClone(sys.chargen.vehicles ?? []); }
-      if (Object.values(b.creation.vehicles).some(v => v.garageId === op.garageId)) throw new Refusal(`${g.name} is already bought.`);
+      if (garagePurchases(b).has(op.garageId)) throw new Refusal(`${g.name} is already bought.`);
       if (Object.keys(b.creation.vehicles).length >= MAX_VEHICLES) throw new Refusal(`A character buys at most ${MAX_VEHICLES} vehicles here.`);
       let n = b.creation.nextVehicle ?? 1;
       while (Object.hasOwn(b.creation.vehicles, vehicleKey(n))) n++;
@@ -521,10 +524,11 @@ function ledgerAdd(b, now, entry) {
 
 /** Who is making the change (the server's signed-in handle; PLAN-M4b Draft 2's audit), set for one playOp call. */
 const LEDGER_BY = { value: "" };
-function playOp(b, op, lookup, now, saleMode, by = "") {
+function playOp(b, op, lookup, now, saleMode, by = "", garage = () => null) {
   LEDGER_BY.value = typeof by === "string" ? by.slice(0, 32) : "";
   if (!b.creation.finished) throw new Refusal("Karma and money after creation start once the character is finished.", 190);
   if (op.op === "buyItem" || op.op === "sellItem" || op.op === "nuyen") return moneyOp(b, op, lookup, now, saleMode);
+  if (op.op === "buyVehicle" || op.op === "sellVehicle") return vehicleMoneyOp(b, op, lookup, now, saleMode, garage);
   if (op.op === "damage" || op.op === "heal") return woundOp(b, op);
   if (op.op === "useAmmo") return ammoOp(b, op);
   if (op.op === "installWare") return surgeryOp(b, op, now);
@@ -532,6 +536,7 @@ function playOp(b, op, lookup, now, saleMode, by = "") {
     const e = undoable(b);
     if (!e || e.id !== op.entryId) throw new Refusal("Only the latest change that isn't undone can be undone.");
     if (["buy", "sell", "nuyen"].includes(e.kind)) return undoMoney(b, e, now);
+    if (e.kind === "buyVehicle" || e.kind === "sellVehicle") return undoVehicleMoney(b, e, now);
     if (e.kind === "surgery") return undoSurgery(b, e, now);
   }
   const source = karmaSource(b), ctx = karmaContext(b);
@@ -663,6 +668,93 @@ function undoMoney(b, e, now) {
   return b;
 }
 
+/* ── Vehicles after creation (docs/PLAN-play-vehicles.md, R21) ─────────────────────────────────────────────── */
+
+/** The garage vehicles this character holds, bought at creation or in play (one combined check: PLAN-play-vehicles 1.2). */
+export function garagePurchases(b) {
+  return new Set([...Object.values(b.creation?.vehicles ?? {}), ...Object.values(b.vehicles ?? {})].map(v => v.garageId).filter(Boolean));
+}
+const MAX_VEHICLE_MONEY = 1_000_000_000;   // a vehicle's whole price can pass the gear cap (code review r1 #1)
+const playVehicleKey = (n) => `w${n.toString(36).padStart(5, "0")}`;
+/** The street price of a vehicle's whole list value (core p.264's Street Index). */
+export const vehicleStreet = (listValue) => Math.round(streetPrice(listValue, vehicleStreetIndex(listValue)));
+
+function vehicleMoneyOp(b, op, lookup, now, saleMode, garage) {
+  const sys = b.actor.system, have = nuyenOf(b), yen = (n) => `${n.toLocaleString("en-US")}¥`;
+  b.vehicles ??= {};
+  if (op.op === "buyVehicle") {
+    const hasC = typeof op.catalogId === "string" && op.catalogId !== "", hasG = typeof op.garageId === "string" && op.garageId !== "";
+    if (hasC === hasG) throw new Refusal("Buy a vehicle from the catalog or from your garage: one of the two.");
+    let rec;
+    if (hasC) {   // as addVehicle at creation (p.264)
+      const e = lookup(op.catalogId);
+      if (!e || e.type !== "vehicle") throw new Refusal("That isn't a vehicle in the catalog.");
+      if (e.book !== CORE) throw new Refusal("Only the core book's vehicles for now.", 264);
+      if (!e.actorSource) throw new Refusal("This vehicle's full data isn't available on this server.");
+      const list = Number(e.actorSource.system?.cost);
+      if (!(list > 0)) throw new Refusal(`${e.name} has no list price (the book prints “Restricted”): it can't be bought here.`, 264);
+      rec = { catalogId: e.id, uuid: e.uuid ?? "", source: structuredClone(e.actorSource), listValue: list, books: [] };
+    } else {   // as buyGarageVehicle at creation (PLAN-garage 7, PLAN-workshop 3.2), read in this transaction
+      const g = garage(op.garageId);
+      if (!g) throw new Refusal("That vehicle isn't in your garage.");
+      if (g.unfinished) throw new Refusal(`${g.name} is an unfinished design: finish it in the Workshop first.`, 108);
+      if (!(Number(g.source?.system?.cost) > 0) || !(g.price > 0)) throw new Refusal(`${g.name} has no list price (the book prints “Restricted”): it can't be bought here.`, 264);
+      const missing = (g.books ?? []).filter(k => k !== CORE && !booksOf(b).includes(k));
+      if (missing.length) throw new Refusal(`${g.name} needs ${missing.join(", ")} turned on for this character.`);
+      if (garagePurchases(b).has(op.garageId)) throw new Refusal(`${g.name} is already bought.`);
+      rec = { garageId: op.garageId, garageRevision: g.revision, source: structuredClone(g.source), listValue: g.price, books: [...(g.books ?? [])] };
+    }
+    if (Object.keys(b.creation.vehicles ?? {}).length + Object.keys(b.vehicles).length >= MAX_VEHICLES) throw new Refusal(`A character holds at most ${MAX_VEHICLES} vehicles here.`);
+    const price = op.price;
+    if (!Number.isInteger(price) || price < 0 || price > MAX_VEHICLE_MONEY) throw new Refusal(`A price is a whole number of nuyen from 0 to ${MAX_VEHICLE_MONEY.toLocaleString("en-US")}.`);
+    if (price > have) throw new Refusal(`${yen(price)} needed, ${yen(have)} to spend.`);
+    let n = b.nextPlayVehicle ?? 1;
+    while (Object.hasOwn(b.vehicles, playVehicleKey(n))) n++;
+    const key = playVehicleKey(n);
+    b.nextPlayVehicle = n + 1;   // never reused, so an undone sale always finds its key free
+    b.vehicles[key] = { ...rec, paid: price };
+    sys.nuyen = have - price;
+    const street = vehicleStreet(rec.listValue);
+    ledgerAdd(b, now, { kind: "buyVehicle", summary: `Bought ${rec.source.name} for ${yen(price)} (street price ${yen(street)})`,
+      record: { key, vehicle: structuredClone(b.vehicles[key]), paid: price, street } });
+    return b;
+  }
+  // sellVehicle (p.188, R6/R21): a play vehicle; refund = what was paid, fence = the percentage of its whole list value.
+  const key = op.vehicleKey, v = typeof key === "string" && Object.hasOwn(b.vehicles, key) ? b.vehicles[key] : null;
+  if (!v) throw new Refusal("No such vehicle bought in play (a vehicle bought at creation is part of the character as built).");
+  if (op.shownMode !== saleMode) throw new Refusal("The GM changed how selling works: look at the price again.");
+  if (saleMode === "fence" && op.pct == null) throw new Refusal("A fence sale needs the agreed percentage.", 188);
+  const price = saleMode === "fence" ? fenceValue(v.listValue, op.pct) : v.paid;
+  if (price == null) throw new Refusal("A fence pays 10–50%, in steps of 5 (p.188).", 188);
+  if (price !== op.quoted) throw new Refusal("The price changed: sell again to see the new one.");
+  delete b.vehicles[key];
+  sys.nuyen = have + price;
+  ledgerAdd(b, now, { kind: "sellVehicle", summary: `Sold ${v.source.name} for ${yen(price)}${saleMode === "fence" ? ` (a fence, ${op.pct}%)` : " (refund)"}`,
+    record: { key, vehicle: structuredClone(v), price, mode: saleMode, pct: saleMode === "fence" ? op.pct : null } });
+  return b;
+}
+/** Undo a vehicle purchase or sale (the latest entry only, as every undo): its own inverse, from the ledger's snapshot. */
+function undoVehicleMoney(b, e, now) {
+  const sys = b.actor.system, have = nuyenOf(b), r = e.record;
+  b.vehicles ??= {};
+  if (e.kind === "buyVehicle") {
+    if (!sameJson(b.vehicles[r.key], r.vehicle)) throw new Refusal("The vehicle has changed since it was bought: that can't be undone now.");
+    delete b.vehicles[r.key];
+    sys.nuyen = have + r.paid;
+  } else {
+    if (have < r.price) throw new Refusal("That money is already spent: undo the later change first.");
+    const off = [...(r.vehicle.books ?? []), r.vehicle.source?.system?.citation?.book].filter(k => k && k !== CORE && !booksOf(b).includes(k));
+    if (off.length) throw new Refusal(`That vehicle's sourcebook is turned off (${off.join(", ")}): turn it back on first.`);
+    if (Object.hasOwn(b.vehicles, r.key)) throw new Refusal("Something else holds that vehicle's place now: that can't be undone.");
+    if (r.vehicle.garageId && garagePurchases(b).has(r.vehicle.garageId)) throw new Refusal("That garage vehicle has been bought again since: that can't be undone.");
+    if (Object.keys(b.creation.vehicles ?? {}).length + Object.keys(b.vehicles).length >= MAX_VEHICLES) throw new Refusal(`A character holds at most ${MAX_VEHICLES} vehicles here.`);
+    b.vehicles[r.key] = structuredClone(r.vehicle);   // the snapshot: the garage isn't read (it may have changed or gone)
+    sys.nuyen = have - r.price;
+  }
+  ledgerAdd(b, now, { kind: "revert", summary: `Undone: ${e.summary}`, record: { of: e.kind }, undoes: e.id });
+  return b;
+}
+
 /* ── Sourcebooks (docs/PLAN-M5a.md) ───────────────────────────────────────────────────────────────────────── */
 
 /** The sourcebooks turned on for this character (core is always on, never listed). */
@@ -673,7 +765,7 @@ function booksInUse(b, lookup) {
   // After finishing the actor is the authority: a record whose item was sold no longer holds its book (code r1 #1).
   if (!b.creation.finished) for (const r of Object.values(b.creation.items ?? {})) used.add(lookup(r.catalogId)?.book ?? r.snapshot?.citation?.book);
   for (const i of b.actor.items ?? []) used.add(i.system?.citation?.book);
-  for (const v of Object.values(b.creation.vehicles ?? {})) { used.add(v.source?.system?.citation?.book); for (const k of v.books ?? []) used.add(k); }
+  for (const v of [...Object.values(b.creation.vehicles ?? {}), ...Object.values(b.vehicles ?? {})]) { used.add(v.source?.system?.citation?.book); for (const k of v.books ?? []) used.add(k); }
   if (b.actor.system.metavariant?.name) used.add(b.actor.system.metavariant.book);   // PLAN-M5b r1 #6
   if (b.actor.system.race === "shapeshifter") used.add("sc");   // PLAN-M5c r1 #5
   if (["sumto10", "points"].includes(b.actor.system.chargen?.priorityMethod)) used.add("sc");   // sum-to-10 is the Companion's (M5g)

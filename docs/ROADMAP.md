@@ -46,7 +46,8 @@ Each milestone gives something you can use. Each has a short plan, a Codex revie
 8. **Later:** Vehicle Workshop, more themes and sheet styles, NPC builder, social login. _Vehicle Workshop part 1, the
    Garage, done 2026-11-26 (docs/PLAN-garage.md); part 2, Rigger 2 design from scratch, done 2026-11-26
    (docs/PLAN-workshop.md); part 3, weapons on a design's Rigger 2 mounts, done 2026-11-26
-   (docs/PLAN-workshop-mounts.md). Later: other books' weapons on mounts; missile mounts._ _Site themes done
+   (docs/PLAN-workshop-mounts.md); buying and selling vehicles in play, done 2026-11-26 (docs/PLAN-play-vehicles.md).
+   Later: other books' weapons on mounts; missile mounts._ _Site themes done
    (2026-11-25: Terminal, Cyberpunk, Cybernoir, GeoCities retro; an account preference). Sheet styles Printout and
    Dossier done (2026-11-26, docs/PLAN-sheet-styles.md); Fohawk is the default style._
    - **Done 2026-11-26 (docs/CODE-REVIEW-LOG-landing.md): a livelier landing / sign-in page**, designed with Codex. Inspiration: the mood of

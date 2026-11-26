@@ -3,6 +3,13 @@
 Every change people can see goes under **Unreleased** in the same commit. A release retitles that section and its
 notes come from it.
 
+## 0.1.0-beta.15 — 2026-11-26
+- Added: **buying and selling vehicles in play.** A finished character's Nuyen step buys a core vehicle or a finished
+  vehicle from the garage at the price agreed, with the street price shown (the vehicles' Street Index, core p.264),
+  and sells vehicles bought in play (refund, or a fence's percentage of the whole list value). Each is a history entry
+  with Undo, and each vehicle downloads for Foundry. Creation's vehicle budget doesn't change (R21).
+- Content: pinned to sr2e v0.170.0 (a vehicle's Street Index).
+
 ## 0.1.0-beta.14 — 2026-11-26
 - Added: the Admin page's user list shows how many characters, vehicles and drafts each user has made, and how many
   are in their trash (it showed one total).

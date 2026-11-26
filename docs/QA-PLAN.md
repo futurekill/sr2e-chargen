@@ -162,7 +162,7 @@ bonding (p.46, p.137), refusals.
 - Bone lacing with an Unarmed Strike: the sheet's attack shows (Str+N).
 - A VCR with move-by-wire or muscle replacement: the sheet shows "Control Pool X (Rigger 2 rules: Y)".
 - Invoked Memory Stimulator and Automatic-Medication are refused ("comes with a cybermantic operation").
-- `test/fixtures/parity/ware-v0.169.0.json` is Foundry's prepared values; regenerate it when the pin moves.
+- `test/fixtures/parity/ware-v0.170.0.json` is Foundry's prepared values; regenerate it when the pin moves.
 
 ## Cyberlimbs (M5j)
 - With Cybertechnology on, buy two Cyberarms: each asks for its side (an error until chosen). Buy a Strength
@@ -170,14 +170,14 @@ bonding (p.46, p.137), refusals.
 - Add a Body Enhancement to the same arm: its price shows the 10 % surcharge (a second enhancement type on one limb).
 - A Cyber Forearm on the same side as a Cyberarm: an overlap error. Remove the arm: the option's "its limb is gone".
 - A troll with a core Cyberarm (Full) and Increased Strength 2: Essence 0.8 for the option (p.51).
-- `test/fixtures/parity/limbs-v0.169.0.json` is Foundry's prepared values; regenerate it when the pin moves.
+- `test/fixtures/parity/limbs-v0.170.0.json` is Foundry's prepared values; regenerate it when the pin moves.
 
 ## Bioware with its own rules (M5k)
 - With Shadowtech on, buy a Synaptic Accelerator 2: Initiative +2D6. Add Wired Reflexes: an error (Shadowtech p.28).
 - Synaptic Accelerator 1 with Move-by-Wire 1: priced ×3; Level 2 with move-by-wire: an error (Cybertechnology p.57).
 - Muscle Augmentation beside two full cyberarms: Body Cost and price × .6.
 - Orthoskin 2 with an Armor Vest: armor adds. Enhanced Articulation beside three cyber limb positions: no Reaction bonus.
-- `test/fixtures/parity/bioware-v0.169.0.json` is Foundry's prepared values; regenerate it when the pin moves.
+- `test/fixtures/parity/bioware-v0.170.0.json` is Foundry's prepared values; regenerate it when the pin moves.
 
 ## Implant weapons (M5l)
 - With Cybertechnology on, buy an Oral Gun: its weapon appears beside it (no remove button) and the sheet lists its
@@ -203,7 +203,7 @@ bonding (p.46, p.137), refusals.
   Foundry: Impact 2, Magic 6 (not 0), no power-point problem.
 - Enhanced Perception (Tier 1) level 3 + (Tier 2) level 3: 2.25 power points (human). Two Attribute Boosts on Body: an
   error; change one to Strength: it clears. Enhanced Centering: refused (an initiate's power).
-- `test/fixtures/parity/powers-v0.169.0.json` is Foundry's prepared values; regenerate it when the pin moves.
+- `test/fixtures/parity/powers-v0.170.0.json` is Foundry's prepared values; regenerate it when the pin moves.
 
 ## The Workshop (docs/PLAN-workshop.md)
 Automatic: `test/workshop.test.mjs` (designs through the reducer and the server, the trust boundary, mods, books, price,
@@ -229,3 +229,10 @@ Points and no mount problem.
 Automatic: `test/admin-counts.test.mjs` (every database). Manual: as an admin, open Admin → Users: each user shows
 characters, vehicles and drafts (archived ones included) and "N in the trash" when there are any; delete a draft as that
 user and reload: one draft fewer, one more in the trash.
+
+## Vehicles in play (docs/PLAN-play-vehicles.md)
+Automatic: `test/play-vehicles.test.mjs` (every database). Manual: on a finished character with 50,000¥, Nuyen →
+Vehicles: pick Ford Americar (street 20,000¥), agree 18,000¥, Buy: 32,000¥ left, one history entry; Undo it in the Karma
+step. Buy a garage vehicle; the garage list no longer offers it; its page names the character. Sell it (refund = paid;
+with the GM's fence mode, 30% of its whole list value). Download "For Foundry": the file name has the character's id
+and the key.

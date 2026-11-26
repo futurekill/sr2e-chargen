@@ -10,7 +10,7 @@ import { randomUUID, randomInt } from "node:crypto";
 import { writeTx, changed } from "./db/fence.mjs";
 import { Refused } from "./auth/accounts.mjs";
 import { sha256 } from "./auth/tokens.mjs";
-import { newCharacter, applyOp, Refusal, diceFor, validate } from "../shared/creation.mjs";
+import { newCharacter, applyOp, Refusal, diceFor, validate, garagePurchases } from "../shared/creation.mjs";
 import { fromFoundryActor } from "../shared/foundry.mjs";
 import { newVehicle, newDesignedVehicle, applyVehicleOp, vehicleActor, vehiclePrice, vehicleBooks } from "../shared/vehicle.mjs";
 import { derive } from "../shared/derive.mjs";
@@ -142,7 +142,7 @@ export async function garageOf(db, userId, ids, tables = null) {
  * vehicle that is gone (deleted, archived, never yours) is a placeholder with no contents (code review r1 #4).
  */
 export async function linkedVehicles(db, userId, body) {
-  const bought = new Set(Object.values(body.creation?.vehicles ?? {}).map(v => v.garageId).filter(Boolean));
+  const bought = garagePurchases(body);   // at creation or in play (PLAN-play-vehicles 2)
   const links = (Array.isArray(body.links) ? body.links : []).filter(x => typeof x === "string" && !bought.has(x));
   const g = await garageOf(db, userId, links);
   return links.map(id => ({ garageId: id, source: g[id]?.source ?? { name: "Vehicle unavailable (deleted or archived)", system: {}, items: [] } }));
@@ -207,14 +207,14 @@ export function applyOps(ctx, userId, id, { revision, ops }, key, lookup = () =>
       return { ...(await answer(trx, userId, id)), body, usedBy: await usersOfVehicle(trx, userId, id) };   // r1 #9
     }
     // Garage vehicles the ops name, read in THIS transaction (docs/PLAN-garage.md 7): a purchase snapshots them.
-    const garageIds = ops.filter(o => o.op === "buyGarageVehicle" || o.op === "attachVehicle").map(o => o.garageId);
+    const garageIds = ops.filter(o => o.op === "buyGarageVehicle" || o.op === "attachVehicle" || (o.op === "buyVehicle" && o.garageId)).map(o => o.garageId);
     const garage = await garageOf(trx, userId, garageIds, tables);
     // A gang's members and the finish roll (docs/PLAN-M2d.md Draft 2): rolled HERE, inside the idempotent write and
     // after its replay check, never taken from the request. ctx.randomInt lets tests fix the dice.
     const d6 = () => (ctx.randomInt ?? randomInt)(1, 7);
     const roll = (n) => Array.from({ length: n }, d6).reduce((t, x) => t + x, 0);
     // The GM's sale mode, read INSIDE this transaction (PLAN-M4b Draft 3, r2 #5): never a value the client sent.
-    const saleMode = ops.some(o => o.op === "sellItem") ? await getSaleMode(trx) : "refund";
+    const saleMode = ops.some(o => o.op === "sellItem" || o.op === "sellVehicle") ? await getSaleMode(trx) : "refund";
     try { for (const op of ops) body = applyOp(body, op, lookup, { roll: diceFor(op) ? roll(diceFor(op)) : null, now: ctx.now(), saleMode, by, catalogBooks, garage: (gid) => garage[gid] ?? null }); } catch (e) { throw refusal(e); }
     const text = encode(body);
     await bump(trx, ctx, userId, id, revision, { name: body.name, body: text, bytes: Buffer.byteLength(text) });
@@ -292,7 +292,7 @@ export async function getDocument(ctx, userId, id) {
 async function usersOfVehicle(db, userId, vid) {
   const rows = await db.selectFrom("documents").select(["id", "name", "body"]).where("owner_id", "=", userId).where("kind", "=", "character").where("deleted_at", "is", null).execute();
   return rows.map(r => {
-    const b = decodeBody(r.body), buy = Object.values(b.creation?.vehicles ?? {}).find(v => v.garageId === vid);
+    const b = decodeBody(r.body), buy = [...Object.values(b.creation?.vehicles ?? {}), ...Object.values(b.vehicles ?? {})].find(v => v.garageId === vid);
     return (buy || (Array.isArray(b.links) && b.links.includes(vid))) ? { id: r.id, name: r.name, bought: buy?.garageRevision ?? null } : null;
   }).filter(Boolean);
 }

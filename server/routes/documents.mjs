@@ -59,8 +59,12 @@ const designLevel = (inner) => ({ type: "object", maxProperties: 40, propertyNam
 const modItemId = { type: "string", pattern: "^[A-Za-z0-9]{16}$" }, modRating = { type: "integer", minimum: 1, maximum: 20 };
 Object.assign(BOUNDS, { setDesign: { design: designLevel({ anyOf: [designLeaf, designLevel({ anyOf: [designLeaf, designLevel(designLeaf)] })] }) },
   addDesignMod: { catalogId: { type: "string", maxLength: 200 }, rating: modRating }, setDesignMod: { itemId: modItemId, rating: modRating }, removeDesignMod: { itemId: modItemId },
-  mountDesignWeapon: { catalogId: { type: "string", maxLength: 200 }, mountId: modItemId } });
-const OPTIONAL = { sellItem: ["pct"], installWare: ["fee", "wound"], setMetatype: ["variant"] };
+  mountDesignWeapon: { catalogId: { type: "string", maxLength: 200 }, mountId: modItemId },
+  // Vehicles in play (docs/PLAN-play-vehicles.md): exactly one id is the reducer's check.
+  // A vehicle's whole price can pass the gear money cap (a design with costly cargo): its own bound (code review r1 #1).
+  buyVehicle: { catalogId: { type: "string", maxLength: 200 }, garageId, price: { type: "integer", minimum: 0, maximum: 1000000000 } },
+  sellVehicle: { quoted: { type: "integer", minimum: 0, maximum: 1000000000 }, vehicleKey: { type: "string", pattern: "^w[0-9a-z]{5}$" }, pct: { enum: [10, 15, 20, 25, 30, 35, 40, 45, 50] }, shownMode: { enum: ["refund", "fence"] } } });
+const OPTIONAL = { sellItem: ["pct"], installWare: ["fee", "wound"], setMetatype: ["variant"], buyVehicle: ["catalogId", "garageId"], sellVehicle: ["pct"] };
 // One schema for both kinds' operations (the reducer of the document's kind decides); shared names share their fields.
 const opSchema = { oneOf: Object.entries({ ...VEHICLE_OPS, ...OPS }).map(([op, fields]) => ({ type: "object", additionalProperties: false, required: ["op", ...Object.keys(fields).filter(k => !OPTIONAL[op]?.includes(k))],
   properties: { op: { const: op }, ...Object.fromEntries(Object.entries(fields).map(([k, t]) => [k, BOUNDS[op]?.[k] ?? FIELD[t]])) } })) };
@@ -185,11 +189,14 @@ export default async function documentRoutes(app) {
     if (document.kind !== "character") return reply.code(404).send({ error: "Only a character or a vehicle exports to Foundry.", code: "not-found" });
     return toFoundryActor(body, pinned());
   });
-  app.get("/:id/foundry/vehicles/:key", { schema: { params: { type: "object", required: ["id", "key"], properties: { id: idParams.properties.id, key: { type: "string", pattern: "^v[0-9a-z]{5}$" } } } } }, async (req, reply) => {
+  app.get("/:id/foundry/vehicles/:key", { schema: { params: { type: "object", required: ["id", "key"], properties: { id: idParams.properties.id, key: { type: "string", pattern: "^[vw][0-9a-z]{5}$" } } } } }, async (req, reply) => {
     const { document, body } = await L.getDocument(req.ctx, me(req), req.params.id);
-    const v = document.kind === "character" && Object.hasOwn(body.creation?.vehicles ?? {}, req.params.key) ? body.creation.vehicles[req.params.key] : null;
+    // v… = bought at creation, w… = bought in play (PLAN-play-vehicles 2): each key looked up in its own store.
+    const store = req.params.key.startsWith("w") ? body.vehicles : body.creation?.vehicles;
+    const v = document.kind === "character" && Object.hasOwn(store ?? {}, req.params.key) ? store[req.params.key] : null;
     if (!v?.source) return reply.code(404).send({ error: "No such vehicle on this character.", code: "not-found" });
-    reply.header("content-disposition", `attachment; filename="fvtt-Actor-${fileName(v.source.name)}.json"`).type("application/json");
+    // The character's id and the key keep two same-name vehicles apart (PLAN-play-vehicles r2 #3).
+    reply.header("content-disposition", `attachment; filename="fvtt-Actor-${fileName(v.source.name)}-${document.id}-${req.params.key}.json"`).type("application/json");
     return vehicleToFoundry(v.source, pinned());
   });
   app.get("/:id/download", { schema: { params: idParams } }, async (req, reply) => {

@@ -109,7 +109,9 @@ export function sheetModel(body) {
     // Garage vehicles (docs/PLAN-garage.md 8): a bought one is its snapshot above; a live linked one comes in `_linked`
     // (read by the route, never stored). Mounted weapons follow the name.
     // The EFFECTIVE stats (base + installed mods, as Foundry's VehicleData shows them; PLAN-workshop 4.2).
-    vehicles: [...Object.keys(body.creation?.vehicles ?? {}).sort().map(k => body.creation.vehicles[k].source), ...(body._linked ?? []).map(l => l.source)].map(v => [
+    vehicles: [...Object.keys(body.creation?.vehicles ?? {}).sort().map(k => body.creation.vehicles[k].source),
+      ...Object.keys(body.vehicles ?? {}).sort().map(k => ({ ...body.vehicles[k].source, name: `${body.vehicles[k].source.name} (bought in play)` })),
+      ...(body._linked ?? []).map(l => l.source)].map(v => [
       plain([v.name, (v.items ?? []).filter(i => i.flags?.sr2e?.mount).map(i => `${i.name} (${i.flags.sr2e.mount})`).join(", ")].filter(Boolean).join(" — "), 200),
       ...vehicleStatCells(v), cite(v.system)]),
     powers: of("adept_power").map(i => [plain(i.name), `L${i.system.level}`, plain(i.system.improvedSkill || (/^Senses: /.test(i.system.notes ?? "") ? i.system.notes.slice(8) : ""), 80), cite(i.system)]),

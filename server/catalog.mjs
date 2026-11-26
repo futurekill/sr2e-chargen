@@ -107,7 +107,7 @@ export function entryOf(catalog, id) {
  */
 export function offeredBy(e, books, mode) {
   const core = (e.book ?? e.listBook) === "sr2";
-  if (e.type === "vehicle") return core && mode === "creation" && Number(e.cost) > 0;
+  if (e.type === "vehicle") return core && Number(e.cost) > 0;   // addVehicle at creation, buyVehicle in play (PLAN-play-vehicles 2)
   if (e.type === "skill") return core;
   return offerReason(e, books, { inPlay: mode === "play" }) === null;
 }

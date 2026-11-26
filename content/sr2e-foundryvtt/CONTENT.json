@@ -1,8 +1,8 @@
 {
   "dir": "sr2e-foundryvtt",
   "repo": "futurekill/sr2e-foundryvtt",
-  "tag": "v0.169.0",
-  "commit": "5726fedb006ac489297eba7ea278a0050f264974",
+  "tag": "v0.170.0",
+  "commit": "a95809024b0a9582281237564f4fc603de2accd3",
   "files": {
     "assets/pregen_portraits/glitch.webp": "d755a662065cf7ef209e114aab076e44ab813440",
     "assets/pregen_portraits/hexen.webp": "8bb0b8aad3f732fe85a2f700fe9b77c914e6475d",
@@ -19,7 +19,7 @@
     "module/rules/limb-stats.mjs": "8287f3a0e187e1fd8f3f0e86a9b01106468cae2b",
     "module/rules/quality-rules.mjs": "12d33f6965373d7ac05aa79da549d59bfd904824",
     "module/rules/shapeshift-rules.mjs": "1ceafa60b2b8a62508b2604c71f0d795ca7145b2",
-    "module/rules/sr2e-rules.mjs": "8f539bac8b9538fd0774dd12481b2a41021855bd",
+    "module/rules/sr2e-rules.mjs": "fc73481cf12599a230f2d390737297844a8cae73",
     "module/rules/vehicle-design.mjs": "4f846a7df72e6925dbb4195214731e3007881c33",
     "module/rules/vehicle-mounts-r2.mjs": "9d249aa73f6573cbaf041a23fb8f7d246a43ff9c",
     "module/rules/vehicle-mounts.mjs": "88fa26bcdbf12b9aa3688c080f11694f24fe1592",
@@ -713,6 +713,6 @@
     "packs-src/weapons/_subfolder_sniper_rifle_6d8b9811f947bd91.json": "f856b44d9d800069ef4e688d0b01889ef7e1033f",
     "packs-src/weapons/_subfolder_sport_rifle_c07931b8ddd4ff16.json": "4440a910975a6325eba9bc702e1015ed8d1e7e4e",
     "packs-src/weapons/_subfolder_taser_a6839df7cd4a9019.json": "0e5430599874bf68eeef7dbf2cbfeab2dc5fa420",
-    "system.json": "36ed8d24612014c3d03b733c1afe2ed46db3d80c"
+    "system.json": "00c16113b2d00912d1755b3ecaa93bc32c629090"
   }
 }

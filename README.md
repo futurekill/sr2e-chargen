@@ -498,6 +498,10 @@ On a character's **Resources** step, **From your garage** lets you **buy** a veh
 price; the character keeps a copy of it as it was) or **link** one (free, any time; the sheet shows it as it stands in
 your garage). A deleted or archived vehicle shows as "unavailable" on the characters that link it.
 
+After creation, the **Nuyen** step buys vehicles too: a core vehicle or a finished one from your garage, at the price
+you agreed (the street price is shown: list × .75 under 10,000¥, × 1 up to 50,000¥, × 2 above, core p.264). Vehicles
+bought this way sell back (a refund, or a fence's percentage of their list value) and download for Foundry one by one.
+
 ### Your account
 
 **Account** holds your password, the site's **theme** (Cyberpunk, the default; Terminal, Cybernoir or GeoCities retro) and the

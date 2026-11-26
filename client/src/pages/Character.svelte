@@ -11,7 +11,9 @@
   import { applyOp, validate, karmaOptions, undoable, surgeryPreview, booksOf, priorityTable, freeContacts, withRacial, formMod, edgeMax, PLAY_GEAR, cardIds, cardEligible, CARD_TYPES, CATEGORIES, CATEGORY_NAMES, LETTERS, METATYPES, MAGIC_TYPES, MAGIC_NAMES, TRADITIONS, ATTRIBUTES, ATTR_NAMES, CUSTOM_SKILL_CATEGORIES, totemNames } from "../../../shared/creation.mjs";
   import { TABLES, racialProfile, metavariantNotes, metavariantFrom, ONI_SOURCE, qualityEffects, BP_NUYEN_TIERS } from "../../../shared/rules.mjs";
   import { BUYABLE, choiceSpec, defaultChoices, project, price, essenceOf, isCybereye, smallWeapon, limbTypeOf, pricedItems, bodyCostOf } from "../../../shared/purchase.mjs";
-  import { saleQuoteOf, streetPrice, ratedStreetIndex, FENCE_STEPS, woundLevel } from "../../../shared/rules.mjs";
+  import { saleQuoteOf, streetPrice, ratedStreetIndex, FENCE_STEPS, woundLevel, fenceValue } from "../../../shared/rules.mjs";
+  import { garagePurchases, vehicleStreet } from "../../../shared/creation.mjs";
+  import { vehiclePrice, vehicleActor, vehicleBooks } from "../../../shared/vehicle.mjs";
   let { doc: initial, onDeleted } = $props();
 
   // Plain objects, not reactive proxies: the reducer clones them (structuredClone can't clone a proxy).
@@ -99,7 +101,31 @@
     for (let offset = 0; offset < 1000; offset += 100) { const page = (await get(`/api/documents?limit=100&offset=${offset}`)).documents; out.push(...page); if (page.length < 100) break; }
     garage = out.filter(d => d.kind === "vehicle");
   })().catch(() => { /* the panel stays empty */ });
-  const garageBought = $derived(new Set(Object.values(body.creation.vehicles ?? {}).map(v => v.garageId).filter(Boolean)));
+  const garageBought = $derived(garagePurchases(body));   // at creation or in play (PLAN-play-vehicles 2)
+  // Vehicles in play (docs/PLAN-play-vehicles.md, R21): the core vehicles on offer, a quote, and the ones bought.
+  let playVehicles = $state([]), carBuy = $state(null), carSellPct = $state({});
+  const loadPlayVehicles = () => get("/api/catalog/entries?type=vehicle&book=sr2&offerable=play&limit=100").then(r => { playVehicles = r.entries; }).catch(() => { /* the list stays empty */ });
+  /** A quote: a catalog vehicle by its list price; a garage vehicle by its whole price, read from its document (+ the
+   *  design tables for a design). The purchase itself is server-first (send): the server resolves the garage. */
+  async function quoteVehicle(kind, id) {
+    carBuy = null;   // a new choice clears the last quote first: a refused one never leaves a Buy behind (r2)
+    try {
+      if (kind === "catalog") { const e = playVehicles.find(x => x.id === id); carBuy = { kind, id, name: e.name, list: Number(e.cost) }; }
+      else {
+        const d = await get(`/api/documents/${id}`), tables = d.body.design ? await get("/api/catalog/design-tables") : null;
+        const p = vehiclePrice(d.body, tables);
+        if (p.unfinished) { error = `${d.body.name} is an unfinished design: finish it in the Workshop first.`; return; }
+        // As the server refuses (code review r1 #3): a base list price, and every book the vehicle needs turned on.
+        if (!(Number(vehicleActor(d.body).system?.cost) > 0)) { error = `${d.body.name} has no list price (the book prints “Restricted”): it can't be bought.`; return; }
+        const missing = vehicleBooks(d.body).filter(k => !booksOf(body).includes(k));
+        if (missing.length) { error = `${d.body.name} needs ${missing.join(", ")} turned on for this character.`; return; }
+        carBuy = { kind, id, name: d.body.name, list: p.total };
+      }
+      carBuy.price = vehicleStreet(carBuy.list);
+    } catch (err) { error = err.message; }
+  }
+  const playOwned = $derived(Object.keys(body.vehicles ?? {}).sort().map(k => ({ key: k, v: body.vehicles[k] })));
+  const carQuote = (v, key) => (saleMode === "fence" ? fenceValue(v.listValue, carSellPct[key] ?? 30) : v.paid);
   const links = $derived(Array.isArray(body.links) ? body.links : []);
   const vehicles = $derived(Object.keys(body.creation.vehicles ?? {}).sort().map(k => ({ id: k, v: body.creation.vehicles[k].source, cost: body.creation.vehicles[k].cost ?? body.creation.vehicles[k].source.system?.cost, garage: !!body.creation.vehicles[k].garageId })));
   /** Every bought thing (eye accessories included), with what it costs and the Essence it takes. */
@@ -466,6 +492,34 @@
             {/each}
           </ul>
         {:else}<p class="muted">Nothing to sell.</p>{/if}
+        <h3>Vehicles</h3>
+        <p class="muted small">The street price is the list price × the vehicles' Street Index: .75 under 10,000¥, 1 up to 50,000¥, 2 above. A garage vehicle counts its whole price. Selling: {saleMode === "fence" ? "a fence pays the agreed percentage of the whole list value" : "what was paid comes back"}. Vehicles bought at creation aren't sold here. <span class="cite">SR2 p.264, p.188</span></p>
+        <div class="row adders">
+          <label class="grow"><span>A core vehicle</span><select onfocus={() => { if (!playVehicles.length) loadPlayVehicles(); }} onchange={(ev) => { if (ev.currentTarget.value) quoteVehicle("catalog", ev.currentTarget.value); }}>
+            <option value="">Choose…</option>{#each playVehicles as e (e.id)}<option value={e.id}>{e.name} — list {nuyen(e.cost)}</option>{/each}</select></label>
+          <label class="grow"><span>Or one from your garage</span><select onchange={(ev) => { if (ev.currentTarget.value) quoteVehicle("garage", ev.currentTarget.value); }}>
+            <option value="">Choose…</option>{#each garage.filter(g => !garageBought.has(g.id)) as g (g.id)}<option value={g.id}>{g.name}</option>{/each}</select></label>
+        </div>
+        {#if carBuy}
+          <div class="row adders">
+            <strong>{carBuy.name}</strong>
+            <span class="muted small">list {nuyen(carBuy.list)} · street {nuyen(vehicleStreet(carBuy.list))}</span>
+            <label><span>Price agreed (¥)</span><input type="number" min="0" max="10000000" step="1" bind:value={carBuy.price}></label>
+            <button type="button" onclick={() => { send(carBuy.kind === "catalog" ? { op: "buyVehicle", catalogId: carBuy.id, price: Number(carBuy.price) } : { op: "buyVehicle", garageId: carBuy.id, price: Number(carBuy.price) }); carBuy = null; }}>Buy</button>
+            <button type="button" class="quiet" onclick={() => { carBuy = null; }}>Cancel</button>
+          </div>
+        {/if}
+        {#if playOwned.length}
+          <ul class="shop">
+            {#each playOwned as x (x.key)}
+              <li><span class="name">{x.v.source.name}</span><span class="muted small">paid {nuyen(x.v.paid)}</span>
+                <a class="button quiet" href={`/api/documents/${server.document.id}/foundry/vehicles/${x.key}`} download>For Foundry</a>
+                {#if saleMode === "fence"}<select aria-label={`${x.v.source.name}: agreed percentage`} value={carSellPct[x.key] ?? 30} onchange={(ev) => { carSellPct = { ...carSellPct, [x.key]: Number(ev.currentTarget.value) }; }}>{#each FENCE_STEPS as p}<option value={p}>{p}%</option>{/each}</select>{/if}
+                <span class="muted small">{nuyen(carQuote(x.v, x.key) ?? 0)}</span>
+                <button type="button" class="quiet" onclick={() => send({ op: "sellVehicle", vehicleKey: x.key, pct: carSellPct[x.key] ?? 30, shownMode: saleMode, quoted: carQuote(x.v, x.key) })}>Sell</button></li>
+            {/each}
+          </ul>
+        {/if}
         <p class="muted small">The history (with Undo) is in the Karma step. Installed cyberware isn't sold: it comes out by surgery.</p>
       </section>
 
