@@ -52,6 +52,12 @@ Each milestone gives something you can use. Each has a short plan, a Codex revie
      a copy or close imitation of the cover. In the default Cyberpunk theme first; it must read in all four themes and
      keep the sign-in form plain and accessible.
 
+9. **Accessibility pass (user, 2026-11-26: after the main features).** A full audit and fixes, the maintainer's call
+   on the means: keyboard-only use of every page, screen-reader names and live announcements (NVDA/VoiceOver), visible
+   focus, zoom to 200% and 400% reflow, contrast in every theme, reduced motion, forced-colors (Windows high contrast),
+   touch target sizes, form errors tied to their fields, and the PDF sheets (tagged PDF, reading order, real text).
+   WCAG 2.2 AA as the bar; automated checks (axe) in CI plus a manual screen-reader pass.
+
 ## What is kept from the work done so far
 - The app skeleton (M3a): accounts, library, revisions, Docker, CI on four databases. All of it applies.
 - The creation rules captured from the books (M0), and the banter.

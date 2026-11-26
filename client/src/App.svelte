@@ -26,7 +26,7 @@
 
 <div class="shell">
   <header class="top">
-    <a class="brand" href="/">Hoi chummer!</a>
+    <a class="brand" href="/">Hoi, chummer!</a>
     {#if user}
       <nav aria-label="Main">
         <a href="/" aria-current={route.path === "/" ? "page" : undefined}>Library</a>

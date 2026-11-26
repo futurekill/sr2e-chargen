@@ -4,6 +4,7 @@ Every change people can see goes under **Unreleased** in the same commit. A rele
 notes come from it.
 
 ## Unreleased
+- Changed: the greeting is **"Hoi, chummer!"**, with the comma English puts before a word of direct address.
 - Changed: **a new sign-in page**: original painted art of a runner team on a rainy Seattle street beside the
   "Jack in" form, in every theme; a banner above the form on phones. The form itself is unchanged.
 

@@ -1,6 +1,6 @@
 # sr2e-chargen
 
-**Hoi chummer!** A web app for building and running **Shadowrun, Second Edition** characters, in the spirit of D&D
+**Hoi, chummer!** A web app for building and running **Shadowrun, Second Edition** characters, in the spirit of D&D
 Beyond: a step-by-step, rules-accurate character generator that keeps managing the character as it grows in play.
 Characters move to and from the [SR2E Foundry VTT system](https://github.com/futurekill/sr2e-foundryvtt) as JSON with
 nothing lost in either direction.
@@ -338,7 +338,7 @@ re-enabling, and reset links.
 
 ## Building a character
 
-**Hoi chummer!** builds a Shadowrun, Second Edition character the way the core book does it, one step at a time.
+**Hoi, chummer!** builds a Shadowrun, Second Edition character the way the core book does it, one step at a time.
 The **Rules check** panel beside every step shows your budgets and anything still to do or against the rules, each
 with its page reference (`SR2 p.44`). Nothing stops you from saving a half-finished character: the check tells you
 what is left.
