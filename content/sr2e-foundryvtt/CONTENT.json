@@ -1,8 +1,8 @@
 {
   "dir": "sr2e-foundryvtt",
   "repo": "futurekill/sr2e-foundryvtt",
-  "tag": "v0.167.0",
-  "commit": "833384f6abb512b636c88b7aeaf4b1027df9fa3e",
+  "tag": "v0.168.0",
+  "commit": "aa2a68d528218bfc6ae2204ed51d4aed1d4ca0b5",
   "files": {
     "assets/pregen_portraits/glitch.webp": "d755a662065cf7ef209e114aab076e44ab813440",
     "assets/pregen_portraits/hexen.webp": "8bb0b8aad3f732fe85a2f700fe9b77c914e6475d",
@@ -710,6 +710,6 @@
     "packs-src/weapons/_subfolder_sniper_rifle_6d8b9811f947bd91.json": "f856b44d9d800069ef4e688d0b01889ef7e1033f",
     "packs-src/weapons/_subfolder_sport_rifle_c07931b8ddd4ff16.json": "4440a910975a6325eba9bc702e1015ed8d1e7e4e",
     "packs-src/weapons/_subfolder_taser_a6839df7cd4a9019.json": "0e5430599874bf68eeef7dbf2cbfeab2dc5fa420",
-    "system.json": "6e7a89e36f8c698e1dfc198361c582d2d18d44fd"
+    "system.json": "113d70da0469213f9b4809e1f1277fb8cd75f7b3"
   }
 }
