@@ -18,6 +18,15 @@ export default async function catalogRoutes(app) {
     reply.header("cache-control", "private, max-age=86400").header("x-content-type-options", "nosniff").type("image/webp");
     return webp;
   });
+  // Rigger 2's vehicle-design tables (docs/PLAN-workshop.md 1.4), for the Workshop's live preview; 404 when none.
+  app.get("/design-tables", async (req, reply) => {
+    if (!app.catalog) return none(reply);
+    const d = app.catalog.design;
+    if (!d) return reply.code(404).send({ error: "This server has no Rigger 2 design tables.", code: "not-found" });
+    reply.header("cache-control", "private, max-age=3600").header("etag", d.etag);
+    if (req.headers["if-none-match"] === d.etag) return reply.code(304).send();
+    return { pin: d.pin, chassis: d.chassis, powerPlants: d.powerPlants, fuel: d.fuel, markUp: d.markUp };
+  });
   app.get("/", async (_req, reply) => (app.catalog ? { ...app.catalog.manifest, offers: app.catalog.offers ?? {} } : none(reply)));
   app.get("/entries", { schema: { querystring: { type: "object", additionalProperties: false, properties: {
     book: list, type: list, q: { type: "string", maxLength: 64 }, offerable: { enum: ["creation", "play"] },

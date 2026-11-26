@@ -12,7 +12,7 @@ import { Refused } from "./auth/accounts.mjs";
 import { sha256 } from "./auth/tokens.mjs";
 import { newCharacter, applyOp, Refusal, diceFor, validate } from "../shared/creation.mjs";
 import { fromFoundryActor } from "../shared/foundry.mjs";
-import { newVehicle, applyVehicleOp, vehicleActor, vehiclePrice } from "../shared/vehicle.mjs";
+import { newVehicle, newDesignedVehicle, applyVehicleOp, vehicleActor, vehiclePrice, vehicleBooks } from "../shared/vehicle.mjs";
 import { derive } from "../shared/derive.mjs";
 import { sheetModel } from "./sheet/model.mjs";
 import { getSaleMode } from "./rules-settings.mjs";
@@ -126,14 +126,16 @@ async function current(trx, userId, id, revision, kind) {
 
 /**
  * Garage vehicles by id, as an operation or a read may use them (docs/PLAN-garage.md 7): only this user's LIVE vehicle
- * documents (not deleted, not archived). `{ id: { name, revision, source, price } }`; anything else is simply absent.
+ * documents (not deleted, not archived). `{ id: { name, revision, source, price, unfinished, books } }`, priced with the
+ * server's design tables in the caller's transaction (PLAN-workshop 3.2); anything else is simply absent.
  */
-export async function garageOf(db, userId, ids) {
+export async function garageOf(db, userId, ids, tables = null) {
   const want = [...new Set(ids)].filter(x => typeof x === "string" && /^[0-9a-f-]{36}$/.test(x));
   if (!want.length) return {};
   const rows = await db.selectFrom("documents").select(["id", "revision", "body"]).where("owner_id", "=", userId).where("kind", "=", "vehicle")
     .where("deleted_at", "is", null).where("archived_at", "is", null).where("id", "in", want).execute();
-  return Object.fromEntries(rows.map(r => { const b = decodeBody(r.body); return [r.id, { name: b.name, revision: r.revision, source: vehicleActor(b), price: vehiclePrice(b).total }]; }));
+  return Object.fromEntries(rows.map(r => { const b = decodeBody(r.body); const p = vehiclePrice(b, tables);
+    return [r.id, { name: b.name, revision: r.revision, source: vehicleActor(b), price: p.total, unfinished: p.unfinished, books: vehicleBooks(b) }]; }));
 }
 /**
  * The character's linked garage vehicles not also bought (a bought one shows once, as the purchase; r2 #2). A link to a
@@ -146,10 +148,10 @@ export async function linkedVehicles(db, userId, body) {
   return links.map(id => ({ garageId: id, source: g[id]?.source ?? { name: "Vehicle unavailable (deleted or archived)", system: {}, items: [] } }));
 }
 
-export function createVehicle(ctx, userId, { catalogId, name }, key, lookup = () => null) {
-  return idempotent(ctx, userId, key, fingerprint("POST", "/documents/vehicles", { catalogId, name }), async trx => {
+export function createVehicle(ctx, userId, { catalogId, name, design }, key, lookup = () => null, tables = null) {
+  return idempotent(ctx, userId, key, fingerprint("POST", "/documents/vehicles", { catalogId, name, design }), async trx => {
     let body;
-    try { body = newVehicle(lookup(catalogId), name); } catch (e) { throw refusal(e); }
+    try { body = design ? newDesignedVehicle(tables, name) : newVehicle(lookup(catalogId), name); } catch (e) { throw refusal(e); }
     const id = randomUUID(), now = ctx.now(), text = encode(body);
     await charge(trx, userId, { docs: 1 });
     const doc = { id, owner_id: userId, kind: "vehicle", name: body.name, revision: 1, body: text, bytes: Buffer.byteLength(text), created_at: now, updated_at: now, deleted_at: null };
@@ -193,12 +195,12 @@ export function importCharacter(ctx, userId, json, key, pinnedVersion) {
   });
 }
 /** Apply creation operations, in order, as ONE new revision; any refusal refuses them all. */
-export function applyOps(ctx, userId, id, { revision, ops }, key, lookup = () => null, by = "", catalogBooks = []) {
+export function applyOps(ctx, userId, id, { revision, ops }, key, lookup = () => null, by = "", catalogBooks = [], tables = null) {
   return idempotent(ctx, userId, key, fingerprint("POST", `/documents/${id}/ops`, { revision, ops }), async trx => {
     const doc = await current(trx, userId, id, revision, ["character", "vehicle"]);
     let body = decodeBody(doc.body);
     if (doc.kind === "vehicle") {
-      try { for (const op of ops) body = applyVehicleOp(body, op, lookup); } catch (e) { throw refusal(e); }
+      try { for (const op of ops) body = applyVehicleOp(body, op, lookup, { tables }); } catch (e) { throw refusal(e); }
       const text = encode(body);
       await bump(trx, ctx, userId, id, revision, { name: body.name, body: text, bytes: Buffer.byteLength(text) });
       await appendRevision(trx, ctx, { id, owner_id: userId }, revision + 1, body, ops.map(o => o.op).join(", ").slice(0, 200));
@@ -206,7 +208,7 @@ export function applyOps(ctx, userId, id, { revision, ops }, key, lookup = () =>
     }
     // Garage vehicles the ops name, read in THIS transaction (docs/PLAN-garage.md 7): a purchase snapshots them.
     const garageIds = ops.filter(o => o.op === "buyGarageVehicle" || o.op === "attachVehicle").map(o => o.garageId);
-    const garage = await garageOf(trx, userId, garageIds);
+    const garage = await garageOf(trx, userId, garageIds, tables);
     // A gang's members and the finish roll (docs/PLAN-M2d.md Draft 2): rolled HERE, inside the idempotent write and
     // after its replay check, never taken from the request. ctx.randomInt lets tests fix the dice.
     const d6 = () => (ctx.randomInt ?? randomInt)(1, 7);

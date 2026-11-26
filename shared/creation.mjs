@@ -367,13 +367,18 @@ export function applyOp(body, op, lookup = () => null, { roll = null, now = 0, s
       const g = garage(op.garageId);
       if (!g) throw new Refusal("That vehicle isn't in your garage.");
       // The vehicle itself must have a list price (code review r1 #1): mounted weapons don't make a "Restricted" one buyable.
+      // A design must be finished (PLAN-workshop 3.2): priced by the server's tables in this transaction.
+      if (g.unfinished) throw new Refusal(`${g.name} is an unfinished design: finish it in the Workshop first.`, 108);
       if (!(Number(g.source?.system?.cost) > 0) || !(g.price > 0)) throw new Refusal(`${g.name} has no list price (the book prints “Restricted”): it can't be bought at creation.`, 264);
+      // Every book the vehicle needs must be on the character (Rigger 2 for a design, each item's book; PLAN-workshop 3.2).
+      const missing = (g.books ?? []).filter(k => k !== CORE && !booksOf(b).includes(k));
+      if (missing.length) throw new Refusal(`${g.name} needs ${missing.join(", ")} turned on for this character.`);
       if (!b.creation.vehicles) { b.creation.vehicles = {}; b.creation.vehicleBase = structuredClone(sys.chargen.vehicles ?? []); }
       if (Object.values(b.creation.vehicles).some(v => v.garageId === op.garageId)) throw new Refusal(`${g.name} is already bought.`);
       if (Object.keys(b.creation.vehicles).length >= MAX_VEHICLES) throw new Refusal(`A character buys at most ${MAX_VEHICLES} vehicles here.`);
       let n = b.creation.nextVehicle ?? 1;
       while (Object.hasOwn(b.creation.vehicles, vehicleKey(n))) n++;
-      b.creation.vehicles[vehicleKey(n)] = { garageId: op.garageId, garageRevision: g.revision, uuid: "", source: structuredClone(g.source), cost: g.price };
+      b.creation.vehicles[vehicleKey(n)] = { garageId: op.garageId, garageRevision: g.revision, uuid: "", source: structuredClone(g.source), cost: g.price, books: [...(g.books ?? [])] };
       b.creation.nextVehicle = n + 1;
       break;
     }
@@ -668,7 +673,7 @@ function booksInUse(b, lookup) {
   // After finishing the actor is the authority: a record whose item was sold no longer holds its book (code r1 #1).
   if (!b.creation.finished) for (const r of Object.values(b.creation.items ?? {})) used.add(lookup(r.catalogId)?.book ?? r.snapshot?.citation?.book);
   for (const i of b.actor.items ?? []) used.add(i.system?.citation?.book);
-  for (const v of Object.values(b.creation.vehicles ?? {})) used.add(v.source?.system?.citation?.book);
+  for (const v of Object.values(b.creation.vehicles ?? {})) { used.add(v.source?.system?.citation?.book); for (const k of v.books ?? []) used.add(k); }
   if (b.actor.system.metavariant?.name) used.add(b.actor.system.metavariant.book);   // PLAN-M5b r1 #6
   if (b.actor.system.race === "shapeshifter") used.add("sc");   // PLAN-M5c r1 #5
   if (["sumto10", "points"].includes(b.actor.system.chargen?.priorityMethod)) used.add("sc");   // sum-to-10 is the Companion's (M5g)

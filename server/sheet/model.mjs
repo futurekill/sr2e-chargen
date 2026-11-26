@@ -5,7 +5,7 @@
 import { derive } from "../../shared/derive.mjs";
 import { validate, totemNames, CATEGORY_NAMES, ATTR_NAMES, MAGIC_NAMES } from "../../shared/creation.mjs";
 import { essenceOf, bodyCostOf } from "../../shared/purchase.mjs";
-import { TABLES, racialProfile, metavariantNotes } from "../../shared/rules.mjs";
+import { TABLES, racialProfile, metavariantNotes, vehicleEffective } from "../../shared/rules.mjs";
 
 /** Plain, printable text: no control characters, no bidi overrides/isolates, single spaces. */
 export function plain(v, max = Infinity) {
@@ -108,9 +108,10 @@ export function sheetModel(body) {
     // Vehicles bought at creation (S9): the core stats from the kept source (Handling, Speed, Body, Armor, Signature, Pilot).
     // Garage vehicles (docs/PLAN-garage.md 8): a bought one is its snapshot above; a live linked one comes in `_linked`
     // (read by the route, never stored). Mounted weapons follow the name.
+    // The EFFECTIVE stats (base + installed mods, as Foundry's VehicleData shows them; PLAN-workshop 4.2).
     vehicles: [...Object.keys(body.creation?.vehicles ?? {}).sort().map(k => body.creation.vehicles[k].source), ...(body._linked ?? []).map(l => l.source)].map(v => [
       plain([v.name, (v.items ?? []).filter(i => i.flags?.sr2e?.mount).map(i => `${i.name} (${i.flags.sr2e.mount})`).join(", ")].filter(Boolean).join(" — "), 200),
-      `Hand ${v.system?.handling ?? "–"} · Speed ${v.system?.speed ?? "–"}`, `Body ${v.system?.body ?? "–"} · Armor ${v.system?.armor ?? "–"} · Sig ${v.system?.signature ?? "–"} · Pilot ${v.system?.pilot ?? "–"}`, cite(v.system)]),
+      ...vehicleStatCells(v), cite(v.system)]),
     powers: of("adept_power").map(i => [plain(i.name), `L${i.system.level}`, plain(i.system.improvedSkill || (/^Senses: /.test(i.system.notes ?? "") ? i.system.notes.slice(8) : ""), 80), cite(i.system)]),
     // The history after creation (Karma and money, docs/PLAN-M4b Draft 3): the GM reads it from the sheet.
     history: (body.ledger ?? []).map(e => [e.at ? new Date(e.at).toISOString().slice(0, 10) : "", plain(e.summary, 160), plain([e.by, e.note].filter(Boolean).join(" · "), 120), e.undoneBy ? "undone" : ""]),
@@ -120,4 +121,13 @@ export function sheetModel(body) {
     rowIds: { attacks: d.weapons.map(w => w.id), skills: of("skill").map(i => i._id), cyberware: of("cyberware").map(i => i._id),
       spells: of("spell").map(i => i._id), powers: of("adept_power").map(i => i._id) }
   };
+}
+
+/** A vehicle's stat cells: the effective ratings, the one function Foundry's data model also uses (vehicleEffective). */
+function vehicleStatCells(v) {
+  const sys = v.system ?? {};
+  // A Workshop design stores BASE stats; any other vehicle's stored values are what it has.
+  const e = sys.design?.version === 2 ? { ...sys, ...vehicleEffective(sys, v.items ?? []).effective } : sys;
+  const f = (x) => (x ?? "–");
+  return [`Hand ${f(e.handling)} · Speed ${f(e.speed)}`, `Body ${f(e.body)} · Armor ${f(e.armor)} · Sig ${f(e.signature)} · Pilot ${f(e.pilot)}`];
 }

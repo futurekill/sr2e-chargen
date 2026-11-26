@@ -60,7 +60,7 @@ test("the price: list + the Scorpion's points + weapons doubled + cargo × quant
   b = op(b, { op: "mountWeapon", catalogId: VALIANT, kind: "firmpoint" });
   b = op(b, { op: "addGear", catalogId: gear.id, quantity: 3 });
   const valiant = Number(lookup(VALIANT).system.cost);
-  assert.deepEqual(vehiclePrice(b), { total: 15000 + 1000 + 2 * valiant + 3 * Number(gear.system.cost), vehicle: 15000, points: 1000, weapons: 2 * valiant, cargo: 3 * Number(gear.system.cost) });
+  assert.deepEqual(vehiclePrice(b), { total: 15000 + 1000 + 2 * valiant + 3 * Number(gear.system.cost), vehicle: 15000, points: 1000, weapons: 2 * valiant, cargo: 3 * Number(gear.system.cost), unfinished: false, problems: [] });
   b = op(b, { op: "addGear", catalogId: AVM, quantity: 2 });
   assert.equal(b.actor.items.at(-1).flags.sr2e.cargo, true, "missiles ride as the launcher's ammunition (cargo)");
   assert.throws(() => op(b, { op: "addGear", catalogId: gear.id, quantity: 0 }), /1 to 99/);

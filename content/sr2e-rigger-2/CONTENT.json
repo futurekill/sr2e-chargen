@@ -4,6 +4,9 @@
   "tag": "v0.12.2",
   "commit": "6d11e5629b1c7efb770c1afbd4abafac868fdcf2",
   "files": {
+    "data/design-chassis.json": "9e4cfae3f63b723a2b89e83d29c3b0e147faad10",
+    "data/design-powerplants.json": "ee24e5c2c5124d45ed2ac61f72504ab43024799d",
+    "data/design-rules.json": "cc9993e891ab71eb261c71cec3b054033fcb5e74",
     "module.json": "1e6f2ab435008b266d8a525fd9bf895fbc005775",
     "packs-src/r2-contacts/Mechanic_542ff542e37c94a8.json": "e52f94f3fdc26d335b4b69220d9518d469ae4365",
     "packs-src/r2-cyberware/.gitkeep": "e69de29bb2d1d6434b8b29ae775ad8c2e48c5391",

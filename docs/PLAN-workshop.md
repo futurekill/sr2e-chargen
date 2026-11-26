@@ -26,10 +26,12 @@ Foundry Workshop reopens and edits (`system.design.version 2`, `baseVersion 2`, 
    - `engineMods(design, mods)`: the preview transformation the Workshop applies before `designVehicle` (design mods'
      `custom.choice` cleared so `design.dbwSplit` rules), and `choiceFor(design, mod)` (DBW's split at save, else the
      item's `custom.choice`);
-   - `designFinished(result)`: `designVehicle` valid AND every resulting rating within its sane floor (Speed,
-     Acceleration, Handling, Load, Cargo, Signature ≥ 0 / ≥ 1 as the stat needs). The engine checks maxima, not
-     floors: with `speed: −10000` it returns Speed −9,925, valid, 4,000¥ (Codex r1 #3). The Workshop shows the
-     floor problems too: a small behavior change, called out in the system CHANGELOG as a fix.
+   - **As built (0.168.0, code review r1 #2):** the floors live in `designVehicle` itself, so every caller gets them
+     and "finished" is simply `valid`. They cover the ratings a design OPTION can buy below 0 — Speed, Acceleration,
+     Load, Cargo — which the engine's maxima don't bound (Codex r1 #3: Speed −9,925 was "valid" at 4,000¥).
+     Signature's options are 0 or more; only mods lower it, Rigger 2 prints no Signature floor, and a Signature under
+     the minimum target number acts as that minimum in play — so it isn't floored (Foundry's engine agrees: one
+     engine). Handling keeps its own floor (half the chassis', p.116).
    - `effectiveVehicleStats(actorSource)`: the effective stats Foundry's `VehicleData.prepareDerivedData` derives
      (category, traits, transport, the `build` context with Body and Pilot, tires, DBW split, then
      `applyModEffects` and `vehicleCapacity`), moved out of the data model into this file; the data model calls it,

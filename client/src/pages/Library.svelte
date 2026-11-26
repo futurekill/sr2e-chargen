@@ -5,6 +5,10 @@
   // The Garage (docs/PLAN-garage.md): a vehicle starts from one of the core book's vehicles (p.264).
   let coreVehicles = $state([]), vehicleId = $state("");
   get("/api/catalog/entries?type=vehicle&book=sr2&limit=100").then(r => { coreVehicles = r.entries; }).catch(() => { /* the choice stays empty */ });
+  // The Workshop (docs/PLAN-workshop.md): design from scratch, when this server has Rigger 2's tables.
+  const DESIGN = "design";
+  let canDesign = $state(false);
+  get("/api/catalog/design-tables").then(() => { canDesign = true; }).catch(() => { /* no tables: no designing */ });
   const when = (ms) => new Date(ms).toLocaleString();
 
   /** Every page of a listing (a library holds up to 200; the API hands out 100 at a time). */
@@ -26,7 +30,7 @@
     ev.preventDefault();
     busy = true;
     try {
-      const { document } = kind === "vehicle" ? await mutate("POST", "/api/documents/vehicles", { catalogId: vehicleId, name: name.trim() })
+      const { document } = kind === "vehicle" ? await mutate("POST", "/api/documents/vehicles", vehicleId === DESIGN ? { design: true, name: name.trim() } : { catalogId: vehicleId, name: name.trim() })
         : await mutate("POST", kind === "character" ? "/api/documents/characters" : "/api/documents", { name: name.trim() });
       go(`/doc/${document.id}`);
     }
@@ -71,6 +75,7 @@
   {#if kind === "vehicle"}
     <label><span>Model</span><select bind:value={vehicleId} required>
       <option value="" disabled>Choose…</option>
+      {#if canDesign}<option value={DESIGN}>Design from scratch (Rigger 2)</option>{/if}
       {#each coreVehicles as v (v.id)}<option value={v.id}>{v.name}</option>{/each}
     </select></label>
   {/if}

@@ -25,3 +25,5 @@ export const TABLES = {
 };
 /** A label the system names by key ("SR2E.Totems.Bear" → "Bear"); the key itself when unknown. */
 export const label = (key) => (typeof key === "string" && LABELS[key]) || key;
+export { designVehicle, applyModEffects, vehicleCapacity } from "../content/sr2e-foundryvtt/module/rules/vehicle-design.mjs";
+export { blankDesign, chassisArt, workshopUpdate, engineMods, choiceFor, modBuildContext, designModProblems, checkChoices, vehicleEffective } from "../content/sr2e-foundryvtt/module/rules/vehicle-workshop-rules.mjs";

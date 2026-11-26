@@ -20,7 +20,10 @@ const updateBody = { ...L.DRAFT_SCHEMA, required: ["name", "revision"], properti
 const noQuery = { type: "object", additionalProperties: false };   // a mutation takes no query: nothing outside the fingerprint (review 1 #9)
 const BIG = { bodyLimit: 2.5 * 1024 * 1024 };
 const characterBody = { type: "object", additionalProperties: false, required: ["name"], properties: { name: { type: "string", minLength: 1, maxLength: 200 } } };
-const vehicleBody = { type: "object", additionalProperties: false, required: ["catalogId"], properties: { catalogId: { type: "string", maxLength: 200 }, name: { type: "string", maxLength: 200 } } };
+const vehicleBody = { oneOf: [
+  { type: "object", additionalProperties: false, required: ["catalogId"], properties: { catalogId: { type: "string", maxLength: 200 }, name: { type: "string", maxLength: 200 } } },
+  // A vehicle designed from scratch (docs/PLAN-workshop.md 2.3).
+  { type: "object", additionalProperties: false, required: ["design"], properties: { design: { const: true }, name: { type: "string", maxLength: 200 } } }] };
 /** Each operation's exact fields, from the reducer's own list (the reducer checks the values). */
 const FIELD = { books: { type: "array", maxItems: 20, uniqueItems: true, items: { type: "string", pattern: "^[a-z0-9-]{1,16}$" } }, string: { type: "string", maxLength: 20000 }, boolean: { type: "boolean" }, integer: { type: "integer", minimum: -1000, maximum: 1000 },
   // A purchase's choices: a few small values; the reducer checks the keys and values per item type (PLAN-M2c §1).
@@ -49,6 +52,13 @@ const garageId = { type: "string", pattern: UUID };
 Object.assign(BOUNDS, { buyGarageVehicle: { garageId }, attachVehicle: { garageId }, detachVehicle: { garageId },
   mountWeapon: { kind: { enum: ["hardpoint", "firmpoint"] }, catalogId: { type: "string", maxLength: 200 } }, addGear: { quantity: { type: "integer", minimum: 1, maximum: 99 }, catalogId: { type: "string", maxLength: 200 } },
   unmountWeapon: { itemId: { type: "string", pattern: "^[A-Za-z0-9]{16}$" } }, removeGear: { itemId: { type: "string", pattern: "^[A-Za-z0-9]{16}$" } } });
+// A design (PLAN-workshop 2.3): the first, coarse check — plain values at most three levels deep, few keys; the reducer's
+// checkChoices is the real one.
+const designLeaf = { anyOf: [{ type: "number" }, { type: "boolean" }, { type: "string", maxLength: 64 }] };
+const designLevel = (inner) => ({ type: "object", maxProperties: 40, propertyNames: { pattern: "^[A-Za-z]{1,40}$" }, additionalProperties: inner });
+const modItemId = { type: "string", pattern: "^[A-Za-z0-9]{16}$" }, modRating = { type: "integer", minimum: 1, maximum: 20 };
+Object.assign(BOUNDS, { setDesign: { design: designLevel({ anyOf: [designLeaf, designLevel({ anyOf: [designLeaf, designLevel(designLeaf)] })] }) },
+  addDesignMod: { catalogId: { type: "string", maxLength: 200 }, rating: modRating }, setDesignMod: { itemId: modItemId, rating: modRating }, removeDesignMod: { itemId: modItemId } });
 const OPTIONAL = { sellItem: ["pct"], installWare: ["fee", "wound"], setMetatype: ["variant"] };
 // One schema for both kinds' operations (the reducer of the document's kind decides); shared names share their fields.
 const opSchema = { oneOf: Object.entries({ ...VEHICLE_OPS, ...OPS }).map(([op, fields]) => ({ type: "object", additionalProperties: false, required: ["op", ...Object.keys(fields).filter(k => !OPTIONAL[op]?.includes(k))],
@@ -68,8 +78,8 @@ export default async function documentRoutes(app) {
   app.post("/characters/import", { ...BIG, schema: { headers: keyHeader, querystring: noQuery, body: { type: "object" } } },
     (req) => L.importCharacter(req.ctx, me(req), req.body, key(req), pinned()));
   app.post("/characters", { schema: { headers: keyHeader, querystring: noQuery, body: characterBody } }, (req) => L.createCharacter(req.ctx, me(req), req.body, key(req)));
-  app.post("/vehicles", { schema: { headers: keyHeader, querystring: noQuery, body: vehicleBody } }, (req) => L.createVehicle(req.ctx, me(req), req.body, key(req), (cid) => entryOf(app.catalog, cid)));
-  app.post("/:id/ops", { schema: { params: idParams, headers: keyHeader, querystring: noQuery, body: opsBody } }, (req) => L.applyOps(req.ctx, me(req), req.params.id, req.body, key(req), (cid) => entryOf(app.catalog, cid), req.session.user.username, (app.catalog?.manifest?.books ?? []).map(x => x.key)));
+  app.post("/vehicles", { schema: { headers: keyHeader, querystring: noQuery, body: vehicleBody } }, (req) => L.createVehicle(req.ctx, me(req), req.body, key(req), (cid) => entryOf(app.catalog, cid), app.catalog?.design ?? null));
+  app.post("/:id/ops", { schema: { params: idParams, headers: keyHeader, querystring: noQuery, body: opsBody } }, (req) => L.applyOps(req.ctx, me(req), req.params.id, req.body, key(req), (cid) => entryOf(app.catalog, cid), req.session.user.username, (app.catalog?.manifest?.books ?? []).map(x => x.key), app.catalog?.design ?? null));
   app.get("/:id", { schema: { params: idParams } }, (req) => L.getDocument(req.ctx, me(req), req.params.id));
   app.put("/:id", { ...BIG, schema: { params: idParams, headers: keyHeader, querystring: noQuery, body: updateBody } }, (req) => L.updateDraft(req.ctx, me(req), req.params.id, req.body, key(req)));
   app.delete("/:id", { schema: { params: idParams, headers: keyHeader, querystring: noQuery, body: revisionBody } }, (req) => L.deleteDocument(req.ctx, me(req), req.params.id, req.body, key(req)));

@@ -3,11 +3,18 @@
   import { get, mutate } from "../lib/api.js";
   import { go } from "../lib/router.svelte.js";
   import { mountsOf, vehiclePrice, docIdOf } from "../../../shared/vehicle.mjs";
-  import { mountKindFor, mountedWeaponCost, LAUNCHER_MUNITIONS } from "../../../shared/rules.mjs";
+  import { mountKindFor, mountedWeaponCost, LAUNCHER_MUNITIONS, vehicleEffective } from "../../../shared/rules.mjs";
+  import VehicleDesign from "./VehicleDesign.svelte";
   let { doc } = $props();
   let server = $state(doc), error = $state(""), busy = $state(false), notes = $state(doc.body.notes), name = $state(doc.body.name);
   const body = $derived(server.body), sys = $derived(server.body.actor.system ?? {});
-  const mounts = $derived(mountsOf(body)), price = $derived(vehiclePrice(body));
+  // A designed vehicle (docs/PLAN-workshop.md): the Rigger 2 tables price it and drive its Design section.
+  let tables = $state(null), tablesError = $state("");
+  if (doc.body.design) get("/api/catalog/design-tables").then(t => { tables = t; }).catch(err => { tablesError = err.message; });
+  const designed = $derived(!!body.design);
+  // A design stores BASE stats; the page shows the EFFECTIVE ones (its mods applied), as Foundry does (PLAN-workshop 4.2).
+  const shown = $derived(designed && body.actor.system?.design?.version === 2 ? { ...sys, ...vehicleEffective(sys, body.actor.items).effective } : sys);
+  const mounts = $derived(mountsOf(body)), price = $derived(vehiclePrice(body, tables));
   const weapons = $derived(body.actor.items.filter(i => i.flags?.sr2e?.mount)), cargo = $derived(body.actor.items.filter(i => i.flags?.sr2e?.cargo));
   const nuyen = (n) => `${Number(n || 0).toLocaleString("en-US")}¥`;
 
@@ -55,18 +62,21 @@
 </script>
 
 <h1>{body.name}</h1>
-<p class="muted">Garage vehicle · revision {server.document.revision}{#if server.usedBy?.length} · used by {server.usedBy.map(u => u.bought ? `${u.name} (bought at revision ${u.bought})` : u.name).join(", ")}{/if}</p>
+<p class="muted">{designed ? "Designed vehicle" : "Garage vehicle"} · revision {server.document.revision}{#if server.usedBy?.length} · used by {server.usedBy.map(u => u.bought ? `${u.name} (bought at revision ${u.bought})` : u.name).join(", ")}{/if}</p>
 {#if error}<p class="notice bad" role="alert">{error}</p>{/if}
 
 <dl>
-  <div><dt>Handling</dt><dd>{sys.handling ?? "–"}</dd></div>
-  <div><dt>Speed</dt><dd>{sys.speed ?? "–"}</dd></div>
-  <div><dt>Body</dt><dd>{sys.body ?? "–"}</dd></div>
-  <div><dt>Armor</dt><dd>{sys.armor ?? "–"}</dd></div>
-  <div><dt>Signature</dt><dd>{sys.signature ?? "–"}</dd></div>
-  <div><dt>Pilot</dt><dd>{sys.pilot ?? "–"}</dd></div>
+  <div><dt>Handling</dt><dd>{shown.handling ?? "–"}</dd></div>
+  <div><dt>Speed</dt><dd>{shown.speed ?? "–"}</dd></div>
+  <div><dt>Body</dt><dd>{shown.body ?? "–"}</dd></div>
+  <div><dt>Armor</dt><dd>{shown.armor ?? "–"}</dd></div>
+  <div><dt>Signature</dt><dd>{shown.signature ?? "–"}</dd></div>
+  <div><dt>Pilot</dt><dd>{shown.pilot ?? "–"}</dd></div>
 </dl>
 
+{#if designed}
+  <VehicleDesign {body} {busy} {send} {tables} {tablesError} />
+{:else}
 <h2>Weapon mounts</h2>
 {#if !mounts.hardpoint.total && !mounts.firmpoint.total}
   <p class="muted">The core book gives this vehicle no hardpoints or firmpoints (p.251–253).</p>
@@ -92,6 +102,7 @@
     </form>
   {/if}
 {/if}
+{/if}
 
 <h2>Cargo</h2>
 {#if cargo.length}
@@ -113,11 +124,12 @@
 
 <h2>Price</h2>
 <dl>
-  <div><dt>Vehicle (p.264)</dt><dd>{price.vehicle ? nuyen(price.vehicle) : "Restricted"}</dd></div>
+  {#if designed}<div><dt>Design (Rigger 2 p.114)</dt><dd>{price.unfinished ? "Unfinished" : nuyen(price.vehicle)}</dd></div>
+  {:else}<div><dt>Vehicle (p.264)</dt><dd>{price.vehicle ? nuyen(price.vehicle) : "Restricted"}</dd></div>{/if}
   {#if price.points}<div><dt>Firmpoints fitted (p.251)</dt><dd>{nuyen(price.points)}</dd></div>{/if}
-  <div><dt>Weapons (adapted ×2, p.251; vehicle weapons at list)</dt><dd>{nuyen(price.weapons)}</dd></div>
+  {#if !designed}<div><dt>Weapons (adapted ×2, p.251; vehicle weapons at list)</dt><dd>{nuyen(price.weapons)}</dd></div>{/if}
   <div><dt>Cargo</dt><dd>{nuyen(price.cargo)}</dd></div>
-  <div><dt><strong>Total</strong></dt><dd><strong>{price.vehicle ? nuyen(price.total) : "Restricted"}</strong></dd></div>
+  <div><dt><strong>Total</strong></dt><dd><strong>{price.vehicle ? nuyen(price.total) : designed ? "Unfinished" : "Restricted"}</strong></dd></div>
 </dl>
 
 <h2>Name and notes</h2>

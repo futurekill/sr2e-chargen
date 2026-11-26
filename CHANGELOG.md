@@ -4,6 +4,12 @@ Every change people can see goes under **Unreleased** in the same commit. A rele
 notes come from it.
 
 ## Unreleased
+- Added: **the Workshop** (Vehicle Workshop part 2). Design a vehicle from scratch by the Rigger 2 rules (p.108–146):
+  chassis, power plant, design options, modifications and Mark-Up, with a live summary, priced by the same engine as
+  Foundry's Vehicle Workshop. The download opens in Foundry's Workshop. A character buys a finished design at creation
+  (Rigger 2 and each modification's book on) or links it.
+- Changed: a garage vehicle needs each of its items' books on the character that buys it, and those books stay in use.
+- Content: pinned to sr2e v0.168.0 (the Workshop's rules file); the Rigger 2 design tables join the catalog.
 - Added: the core **Vehicle Weapons** (Autocannon, Vehicle Launcher, Water Cannon; p.253) in the Garage's hardpoint
   list. They are built for vehicles, so a mount doesn't double their price.
 - Content: pinned to sr2e v0.167.0 (the Vehicle Weapons).

@@ -483,6 +483,14 @@ its stats and its weapon mounts as the book prints them (p.251–253): a **hardp
 **firmpoint** a smaller firearm, and a mounted weapon costs twice its list price. Load cargo (gear, or missiles for a
 launcher), name it, write notes, and download it for Foundry.
 
+**Design from scratch (Rigger 2).** In the Library, pick **Design from scratch (Rigger 2)** as the model. The vehicle's
+page then has a **Design** section with the steps of Foundry's Vehicle Workshop: a chassis (p.109), a power plant
+(p.112), the design options (p.115–118), modifications (p.118–146) and the Mark-Up (p.114). A summary shows the stats,
+the Design Points, the price and anything that keeps the design from being finished, as you change it. Press **Save
+design** to keep the changes; modifications save as you add them. The same engine as Foundry's prices it, and the
+download opens in Foundry's Workshop for more work. A character can buy a design only when it is finished, and needs
+Rigger 2 (and the book of each modification) turned on.
+
 On a character's **Resources** step, **From your garage** lets you **buy** a vehicle at creation (you pay its whole
 price; the character keeps a copy of it as it was) or **link** one (free, any time; the sheet shows it as it stands in
 your garage). A deleted or archived vehicle shows as "unavailable" on the characters that link it.
@@ -528,7 +536,7 @@ sourcebook modules at the releases in `content-pins.json`). A daily workflow pro
 - **Pick your books**: an ALL toggle for the sourcebooks; the core book is always on. Every item and rule shows where
   it comes from (`SSC p.59`, `R2 p.14`).
 - **Manage it in play**: Karma and advancement, nuyen, purchases, damage, ammo, with history and undo.
-- **Rigger 2 vehicle design**: design a vehicle from scratch by the Rigger 2 rules (the Garage covers core vehicles).
+- **Rigger 2 vehicle design**: design a vehicle from scratch by the Rigger 2 rules, or start from a core vehicle (the Garage).
 - **Export**: Foundry JSON (characters with their vehicles, spirits and images), printable PDF sheets in several
   styles (Classic and Fohawk, with an ink-saver option), a Markdown stat block and a one-page table card.
 - **Shadowland banter** while you build: in-character commentary from street handles, never printed on sheets.
@@ -582,7 +590,7 @@ The approved order is in [docs/ROADMAP.md](docs/ROADMAP.md) (standalone first, r
 | 5 | Sourcebooks, alternate methods, Edges and Flaws | done (M5a–M5n) |
 | 6 | Release ([docs/PLAN-release.md](docs/PLAN-release.md)) | done: backups, image scan, SBOM, signed image; first beta v0.1.0-beta.1 |
 | 7 | Foundry connector (optional) ([docs/PLAN-M7.md](docs/PLAN-M7.md)) | simple form done: Foundry actor JSON both ways |
-| 8 | Later: themes and sheet styles, Vehicle Workshop, NPC builder, social login | site themes, sheet styles Printout and Dossier, and the Garage (Vehicle Workshop part 1) done; Rigger 2 design, NPC builder and social login not started |
+| 8 | Later: themes and sheet styles, Vehicle Workshop, NPC builder, social login | site themes, sheet styles Printout and Dossier, the Garage and Rigger 2 design (Vehicle Workshop parts 1–2) done; NPC builder and social login not started |
 
 Each milestone goes plan → review → build → code review → release.
 

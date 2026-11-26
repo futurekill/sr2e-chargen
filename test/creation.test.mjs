@@ -41,12 +41,14 @@ test("the rules closure: only static file imports, no forbidden construct, nothi
   assert.deepEqual(importsOf("module/rules/a.mjs", `import "./x.mjs"; export{foo}from"./y.mjs"; export * from "../z.mjs";`), ["module/rules/x.mjs", "module/rules/y.mjs", "module/z.mjs"]);
   const files = { "system.json": "{}", "lang/en.json": "{}", "module/config.mjs": `import "./rules/sr2e-rules.mjs";`,
     "module/rules/sr2e-rules.mjs": `export { a } from "./ware-rules.mjs";`, "module/rules/ware-rules.mjs": "export const a = 1;",
-    "module/rules/shapeshift-rules.mjs": "export const s = 1;", "module/rules/vehicle-mounts.mjs": "export const m = 1;", "module/rules/unused.mjs": "export const b = 2;", "module/rules/books.mjs": "export const BOOKS = {};" };
+    "module/rules/shapeshift-rules.mjs": "export const s = 1;", "module/rules/vehicle-mounts.mjs": "export const m = 1;",
+    "module/rules/vehicle-design.mjs": "export const d = 1;", "module/rules/vehicle-workshop-rules.mjs": `import { d } from "./vehicle-design.mjs";`, "module/rules/unused.mjs": "export const b = 2;", "module/rules/books.mjs": "export const BOOKS = {};" };
   const kept = selectPaths(Object.keys(files), (p) => files[p]);
   assert.ok(!kept.includes("module/rules/unused.mjs"), "a module nothing imports is not copied");
   assert.ok(kept.includes("module/rules/ware-rules.mjs") && kept.includes("lang/en.json"));
   assert.throws(() => selectPaths(Object.keys(files), (p) => (p === "module/rules/ware-rules.mjs" ? "fetch('x')" : files[p])), /must not/);
-  assert.deepEqual(selectPaths(["module.json", "packs-src/a.json", "module/rules/x.mjs"], () => ""), ["module.json", "packs-src/a.json"], "a content module gives no code");
+  assert.deepEqual(selectPaths(["module.json", "packs-src/a.json", "module/rules/x.mjs", "data/design-rules.json", "data/other.json"], () => ""),
+    ["module.json", "packs-src/a.json", "data/design-rules.json"], "a content module gives no code; only the design tables of its data");
 });
 
 test("a new character: nothing chosen, every attribute 1, on the Streets, creation in progress", () => {

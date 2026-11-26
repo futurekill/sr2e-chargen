@@ -14,7 +14,9 @@ const summary = (e) => ({ ...Object.fromEntries(SUMMARY.map(k => [k, e[k]])),
   // An Edge or Flaw's kind and printed value, for the picker (PLAN-M5d).
   ...(e.type === "quality" ? { quality: { kind: e.system?.kind ?? "", value: Number(e.system?.pointValue) || 0 } } : {}),
   // A weapon's type, for the Garage's mount picker (docs/PLAN-garage.md 4; code review r1 #2).
-  ...(e.type === "weapon" ? { weaponType: e.system?.weaponType ?? "" } : {}) });
+  ...(e.type === "weapon" ? { weaponType: e.system?.weaponType ?? "" } : {}),
+  // A vehicle mod's rule data (no prose), for the Workshop's mod picker (docs/PLAN-workshop.md 1.5).
+  ...(e.type === "vehicle_mod" ? { system: e.system } : {}) });
 
 /**
  * Load `dir/catalog.json` and `dir/manifest.json`. Throws CatalogError when it is absent, damaged (the manifest's
@@ -49,7 +51,7 @@ export function loadCatalog(dir, { pins = null } = {}) {
   // The manifest is what the routes hand out: it must be exactly what the checked catalog body implies — never
   // trusted on its own (its checksum line only proves the BODY).
   const { entries, ...rest } = catalog, implied = { ...rest, entries: entries.length };
-  const claimed = { ...manifest }; delete claimed.sha256; delete claimed.vehiclesSha256;   // each file's checksum is checked on its own
+  const claimed = { ...manifest }; delete claimed.sha256; delete claimed.vehiclesSha256; delete claimed.designSha256;   // each file's checksum is checked on its own
   if (JSON.stringify(claimed) !== JSON.stringify(implied)) throw new CatalogError("the catalog's manifest doesn't describe its catalog");
   if (pins) {
     const key = (list) => JSON.stringify(list.map(p => [p.dir, p.tag, p.commit]));
@@ -73,10 +75,22 @@ export function loadCatalog(dir, { pins = null } = {}) {
       vehicles.set(id, src);
     }
   }
+  // Rigger 2's vehicle-design tables (docs/PLAN-workshop.md 1.2), checked like vehicles.json; none = no designing.
+  let design = null;
+  const df = join(dir, "design-tables.json");
+  if (!manifest.designSha256 && existsSync(df)) throw new CatalogError("design-tables.json is there but the manifest has no checksum for it");
+  if (manifest.designSha256) {
+    if (!existsSync(df)) throw new CatalogError("the manifest names design-tables.json but it is missing");
+    const dbody = readFileSync(df);
+    if (createHash("sha256").update(dbody).digest("hex") !== manifest.designSha256) throw new CatalogError("design-tables.json doesn't match its manifest's checksum");
+    design = JSON.parse(dbody.toString("utf8"));
+    if (!design?.chassis || !design.powerPlants || !design.fuel || !design.markUp || !design.pin?.commit) throw new CatalogError("design-tables.json is misshapen");
+    design.etag = `"${manifest.designSha256.slice(0, 32)}"`;
+  }
   // Search index: name and category, lower-cased once. Sorted by name for stable pages.
   const sorted = [...catalog.entries].sort((a, b) => a.name.localeCompare(b.name, "en") || (a.id < b.id ? -1 : 1));
   const index = sorted.map(e => ({ e, hay: `${e.name}\n${(e.category ?? []).join("\n")}`.toLowerCase() }));
-  return { manifest, byId, index, vehicles, size: catalog.entries.length, offers: bookOffers(catalog.entries, catalog.books.map(x => x.key)) };
+  return { manifest, byId, index, vehicles, design, size: catalog.entries.length, offers: bookOffers(catalog.entries, catalog.books.map(x => x.key)) };
 }
 
 /** One entry, as the routes and the ops reducer see it: a vehicle carries its complete actor source (S9). */

@@ -17,14 +17,17 @@ export const REPO = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/;
 export const COMMIT = /^[0-9a-f]{40}$/;
 export const RECORD = "CONTENT.json";
 /** What the catalog reads from each repository. The book table only matters in the system's (the first pin). */
-export const WANTED = ["system.json", "module.json", "packs-src", "module/rules/books.mjs", "module/config.mjs", "module/rules", "lang/en.json", "assets/pregen_portraits"];
+/** Rigger 2's vehicle-design tables (docs/PLAN-workshop.md 1.1): only sr2e-rigger-2 has them. */
+export const DESIGN_TABLES = ["data/design-chassis.json", "data/design-powerplants.json", "data/design-rules.json"];
+export const WANTED = ["system.json", "module.json", "packs-src", "module/rules/books.mjs", "module/config.mjs", "module/rules", "lang/en.json", "assets/pregen_portraits", ...DESIGN_TABLES];
 /** The premade portraits players can pick (docs/PLAN-portrait.md, stock portraits): the system's pregen art, WebP only. */
 export const STOCK_PORTRAITS = /^assets\/pregen_portraits\/[a-z0-9-]{1,40}\.webp$/;
 /**
  * The system code the app RUNS (docs/PLAN-M2.md §1): these entry modules and every module they import, nothing else.
  * Plus the English labels the tables name by key. Only the system (the repository with system.json) provides them.
  */
-export const RULES_ENTRIES = ["module/config.mjs", "module/rules/sr2e-rules.mjs", "module/rules/ware-rules.mjs", "module/rules/shapeshift-rules.mjs", "module/rules/vehicle-mounts.mjs"];
+export const RULES_ENTRIES = ["module/config.mjs", "module/rules/sr2e-rules.mjs", "module/rules/ware-rules.mjs", "module/rules/shapeshift-rules.mjs", "module/rules/vehicle-mounts.mjs",
+  "module/rules/vehicle-design.mjs", "module/rules/vehicle-workshop-rules.mjs"];
 export const LABELS = "lang/en.json";
 /**
  * Constructs copied code may not use: it must stay plain, side-effect-free rules. Checked on the PARSED module
@@ -87,7 +90,7 @@ export function importsOf(path, src) {
  * module, or an import that leaves the listed files, fails.
  */
 export function selectPaths(paths, read) {
-  const listed = new Set(paths), keep = paths.filter(p => p === "system.json" || p === "module.json" || p.startsWith("packs-src/") || p === "module/rules/books.mjs");
+  const listed = new Set(paths), keep = paths.filter(p => p === "system.json" || p === "module.json" || p.startsWith("packs-src/") || p === "module/rules/books.mjs" || DESIGN_TABLES.includes(p));
   if (!listed.has("system.json")) return keep;
   const seen = new Set(), queue = [...RULES_ENTRIES];
   while (queue.length) {

@@ -11,7 +11,7 @@ import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { readVendored, shapeRepo, checkContentRoot } from "./content.mjs";
+import { readVendored, shapeRepo, checkContentRoot, DESIGN_TABLES } from "./content.mjs";
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const PATHS = JSON.parse(readFileSync(join(ROOT, "tools/string-paths.json"), "utf8"));
@@ -258,14 +258,31 @@ export function vehicleSources({ pins, contentDir }) {
   return Object.fromEntries(Object.entries(out).sort(([a], [b]) => (a < b ? -1 : 1)));   // byte-stable
 }
 
+/**
+ * Rigger 2's vehicle-design tables (docs/PLAN-workshop.md 1.2), keyed as the system's registerVehicleDesignTables keys
+ * them, from the one pin that has them; null when none does. `pin` records where they came from.
+ */
+export function designTables({ pins, contentDir }) {
+  for (const pin of pins) {
+    const files = readVendored(contentDir, pin);
+    if (!DESIGN_TABLES.every(f => files.has(f))) continue;
+    const [c, p, rules] = DESIGN_TABLES.map(f => JSON.parse(files.get(f).toString("utf8")));
+    const keyed = (rows) => Object.fromEntries(rows.map(r => [r.key, r]));
+    if (!Array.isArray(c?.chassis) || !Array.isArray(p?.powerPlants) || !rules?.fuel || !rules?.markUp) throw new Error(`${pin.dir}: the design tables are misshapen`);
+    return { pin: { dir: pin.dir, tag: pin.tag, commit: pin.commit }, chassis: keyed(c.chassis), powerPlants: keyed(p.powerPlants), fuel: rules.fuel, markUp: rules.markUp };
+  }
+  return null;
+}
+
 /** The manifest a catalog implies: everything but the entries (their count instead). The server recomputes it. */
 export function manifestOf(catalog) {
   const { entries, ...rest } = catalog;
   return { ...rest, entries: entries.length };
 }
 
-/** Write {catalog.json, manifest.json} (and vehicles.json when given) into `outDir`; the manifest carries each file's SHA-256. */
-export function writeCatalog(catalog, outDir, vehicles = null) {
+/** Write {catalog.json, manifest.json} (and vehicles.json, design-tables.json when given) into `outDir`; the manifest
+ *  carries each file's SHA-256. */
+export function writeCatalog(catalog, outDir, vehicles = null, design = null) {
   mkdirSync(outDir, { recursive: true });
   const body = JSON.stringify(catalog);
   writeFileSync(join(outDir, "catalog.json"), body);
@@ -274,6 +291,11 @@ export function writeCatalog(catalog, outDir, vehicles = null) {
     const v = JSON.stringify(vehicles);
     writeFileSync(join(outDir, "vehicles.json"), v);
     manifest.vehiclesSha256 = createHash("sha256").update(v).digest("hex");
+  }
+  if (design) {
+    const d = JSON.stringify(design);
+    writeFileSync(join(outDir, "design-tables.json"), d);
+    manifest.designSha256 = createHash("sha256").update(d).digest("hex");
   }
   writeFileSync(join(outDir, "manifest.json"), `${JSON.stringify(manifest, null, 2)}\n`);
   return manifest;
@@ -284,7 +306,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   try {
     const out = process.argv[2] ? resolve(process.argv[2]) : join(ROOT, "catalog");
     const contentDir = join(ROOT, "content");
-    const manifest = writeCatalog(buildCatalog({ pins, contentDir }), out, vehicleSources({ pins, contentDir }));
+    const manifest = writeCatalog(buildCatalog({ pins, contentDir }), out, vehicleSources({ pins, contentDir }), designTables({ pins, contentDir }));
     console.log(`catalog: ${manifest.entries} entries from ${manifest.pins.length} packages, ${manifest.books.length} books — sha256 ${manifest.sha256.slice(0, 16)}…`);
     for (const b of manifest.books) console.log(`  ${b.abbr.padEnd(12)} ${String(b.count).padStart(5)}  ${b.title}`);
   } catch (err) { console.error(err.message); process.exitCode = 1; }
