@@ -1,0 +1,27 @@
+Use your built-in image generation tool to create THREE different landscape images (1536x1024 each) and save them as
+landing-a.png, landing-b.png and landing-c.png in the current directory. Do not write any code or other files.
+
+Subject (an ORIGINAL scene; do not reproduce any existing book cover or artwork): a small team of shadowrunners in a
+rain-soaked street of a 2050s Seattle at night. The team mixes metahuman types: a huge troll with small horns and a
+heavy coat, a slim elf with pointed ears and a long duster, a stocky dwarf carrying a tool case, and a human street
+samurai with a chrome cyberarm. They walk TOWARD the viewer down the middle of a narrow street, mid-stride, seen from
+a low angle, wet pavement reflecting the lights; the figures fill roughly the lower-middle half of the frame, with a
+lot of dark, rainy street and tall buildings above them. No one poses or looks at the camera.
+
+Setting: towering older brick and concrete buildings retrofitted with cables, fire escapes, hanging signs and
+holographic advertising; a monorail track crossing high overhead; steam from street grates; puddles. Signs show only
+abstract shapes or unreadable glyphs: NO legible words, letters, logos or brand names anywhere.
+
+Light and colour: varied practical light, not a single hue. Warm sodium-orange streetlamps and amber shop windows
+against hot magenta and electric cyan neon signs, cool teal shadows, a single red warning light; deep near-black
+blue-grey sky with rain streaks. Avoid an all-purple image.
+
+Style: a hand-painted late-1980s / early-1990s science-fiction role-playing-game paperback cover illustration:
+visible brush work, rich gouache-and-oil look, dramatic rim lighting on the figures, painterly detail, not a photo,
+not 3D, not anime. Keep the LEFT third of the frame darker and calmer (rain, shadowed wall), because page text may
+sit near it on some screens.
+
+Variation: a = the team closer and larger; b = wider street view, the team smaller and further away; c = a slightly
+higher camera, the monorail and neon more prominent.
+
+No text, no watermark, no signature, no border, no frame.
