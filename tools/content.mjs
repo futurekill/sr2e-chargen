@@ -24,7 +24,7 @@ export const STOCK_PORTRAITS = /^assets\/pregen_portraits\/[a-z0-9-]{1,40}\.webp
  * The system code the app RUNS (docs/PLAN-M2.md §1): these entry modules and every module they import, nothing else.
  * Plus the English labels the tables name by key. Only the system (the repository with system.json) provides them.
  */
-export const RULES_ENTRIES = ["module/config.mjs", "module/rules/sr2e-rules.mjs", "module/rules/ware-rules.mjs", "module/rules/shapeshift-rules.mjs"];
+export const RULES_ENTRIES = ["module/config.mjs", "module/rules/sr2e-rules.mjs", "module/rules/ware-rules.mjs", "module/rules/shapeshift-rules.mjs", "module/rules/vehicle-mounts.mjs"];
 export const LABELS = "lang/en.json";
 /**
  * Constructs copied code may not use: it must stay plain, side-effect-free rules. Checked on the PARSED module
