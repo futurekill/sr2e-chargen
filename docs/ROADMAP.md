@@ -46,6 +46,11 @@ Each milestone gives something you can use. Each has a short plan, a Codex revie
 8. **Later:** Vehicle Workshop, more themes and sheet styles, NPC builder, social login. _Site themes done
    (2026-11-25: Terminal, Cyberpunk, Cybernoir, GeoCities retro; an account preference). Sheet styles Printout and
    Dossier done (2026-11-26, docs/PLAN-sheet-styles.md); Fohawk is the default style._
+   - **To do (user, 2026-11-26): a livelier landing / sign-in page**, designed with Codex. Inspiration: the mood of
+     Larry Elmore's SR2 core-book cover (a mixed-metatype runner team, neon, rain, 2050s Seattle street level) and
+     other cyberpunk art. Inspiration only: ORIGINAL art (docs/GRAPHICS.md's "one atmospheric landing plate"), never
+     a copy or close imitation of the cover. In the default Cyberpunk theme first; it must read in all four themes and
+     keep the sign-in form plain and accessible.
 
 ## What is kept from the work done so far
 - The app skeleton (M3a): accounts, library, revisions, Docker, CI on four databases. All of it applies.

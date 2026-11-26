@@ -3,7 +3,7 @@
 Every change people can see goes under **Unreleased** in the same commit. A release retitles that section and its
 notes come from it.
 
-## Unreleased
+## 0.1.0-beta.9 — 2026-11-26
 - Added: **two new sheet styles**, **Printout** (mono headings, dashed rules, light grey bands on every other row)
   and **Dossier** (serif headings, thin double rules), for the sheet and the table card. Both keep Classic's layout;
   the readable font still replaces their heading fonts.
