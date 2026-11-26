@@ -10,6 +10,7 @@
   const act = (fn) => async () => { try { await fn(); await load(); } catch (err) { error = err.message; } };
   const invite = act(async () => { fresh = { what: `Invite (${role})`, ...(await post("/api/admin/invites", { role })) }; });
   const revoke = (id) => act(async () => { await del(`/api/admin/invites/${id}`); });
+  const plural = (n = 0, word) => `${n} ${word}${n === 1 ? "" : "s"}`;
   const toggle = (u) => act(async () => { await post(`/api/admin/users/${encodeURIComponent(u.username)}/${u.disabled_at == null ? "disable" : "enable"}`); });
   const resetLink = (u) => act(async () => { fresh = { what: `Password reset for ${u.username}`, ...(await post(`/api/admin/users/${encodeURIComponent(u.username)}/reset-link`)) }; });
   // The GM's rules settings (RULINGS R6): how selling pays.
@@ -55,7 +56,7 @@
   {#each users as u (u.id)}
     <li>
       <span class="name">{u.username}</span>
-      <span class="meta">{u.role}{u.disabled_at != null ? " · disabled" : ""} · {u.doc_count} {u.doc_count === 1 ? "doc" : "docs"}</span>
+      <span class="meta">{u.role}{u.disabled_at != null ? " · disabled" : ""} · {plural(u.made?.character, "character")} · {plural(u.made?.vehicle, "vehicle")} · {plural(u.made?.draft, "draft")}{u.trashed ? ` · ${u.trashed} in the trash` : ""}</span>
       <button class="quiet" onclick={resetLink(u)}>Reset link</button>
       <button class={u.disabled_at == null ? "danger" : "quiet"} onclick={toggle(u)}>{u.disabled_at == null ? "Disable" : "Enable"}</button>
     </li>

@@ -224,3 +224,8 @@ an AK-97 on the fixed mount: the kit appears in the Design Point lines (+2) and 
 turret's picker greys out pistols ("no value"); the Ingram Valiant fits (1.5 of 2), then an AK-97 doesn't (2.5). Remove
 the fixed mount: refused; unmount the rifle: the kit goes too. Download it; Foundry's Workshop shows the same Design
 Points and no mount problem.
+
+## Admin page: what each user has made
+Automatic: `test/admin-counts.test.mjs` (every database). Manual: as an admin, open Admin → Users: each user shows
+characters, vehicles and drafts (archived ones included) and "N in the trash" when there are any; delete a draft as that
+user and reload: one draft fewer, one more in the trash.

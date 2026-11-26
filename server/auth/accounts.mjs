@@ -194,4 +194,20 @@ export async function setDisabled(ctx, username, disabled, { actor = null } = {}
     await audit(trx, ctx, disabled ? "user.disabled" : "user.enabled", { actor, target: user.id });
   });
 }
-export const listUsers = (ctx) => ctx.db.selectFrom("users").select(["id", "username", "role", "disabled_at", "created_at", "doc_count"]).orderBy("username_key").execute();
+/**
+ * Every user for the admin page, with what they have made: `made` = live documents by kind (characters, vehicles,
+ * drafts; archived ones count, they are still theirs) and `trashed` = documents in the trash. One grouped query.
+ */
+export async function listUsers(ctx) {
+  const users = await ctx.db.selectFrom("users").select(["id", "username", "role", "disabled_at", "created_at", "doc_count"]).orderBy("username_key").execute();
+  const rows = await ctx.db.selectFrom("documents").select(eb => ["owner_id", "kind", eb.fn.countAll().as("n"),
+    eb.fn.sum(eb.case().when("deleted_at", "is not", null).then(1).else(0).end()).as("trashed")]).groupBy(["owner_id", "kind"]).execute();
+  const by = new Map(users.map(u => [u.id, { made: { character: 0, vehicle: 0, draft: 0 }, trashed: 0 }]));
+  for (const r of rows) {
+    const u = by.get(r.owner_id); if (!u) continue;
+    const n = Number(r.n), t = Number(r.trashed ?? 0);   // counts arrive as strings on Postgres and MySQL
+    if (Object.hasOwn(u.made, r.kind)) u.made[r.kind] += n - t;
+    u.trashed += t;
+  }
+  return users.map(u => ({ ...u, ...by.get(u.id) }));
+}

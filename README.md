@@ -333,8 +333,9 @@ With no command it lists them all.
 
 Links are printed once and stored only as hashes. If one is lost, make another.
 
-The Admin page in the app does the everyday part too: invites (user or admin), the user list, disabling and
-re-enabling, and reset links.
+The Admin page in the app does the everyday part too: invites (user or admin), the user list (with how many
+characters, vehicles and drafts each user has made, and how many are in their trash), disabling and re-enabling, and
+reset links.
 
 ## Building a character
 

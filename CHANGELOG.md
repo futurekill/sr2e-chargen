@@ -3,6 +3,10 @@
 Every change people can see goes under **Unreleased** in the same commit. A release retitles that section and its
 notes come from it.
 
+## 0.1.0-beta.14 — 2026-11-26
+- Added: the Admin page's user list shows how many characters, vehicles and drafts each user has made, and how many
+  are in their trash (it showed one total).
+
 ## 0.1.0-beta.13 — 2026-11-26
 - Added: **weapons on a design's Rigger 2 mounts** (Vehicle Workshop part 3; R2 p.131–135). Each fixed mount, pintle,
   ring mount or turret on a design lists what it holds and takes a weapon by the book's rules: hardpoints and
