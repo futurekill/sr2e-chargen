@@ -470,7 +470,7 @@ character moves to **Deleted** in your Library, where **Restore** brings it back
 ### Print and share
 
 On the **Print** tab, choose the style, paper and font, then:
-- **Print sheet**: the full character sheet as a PDF, in the **Classic**, **Fohawk** or **Fohawk (ink saver)** style,
+- **Print sheet**: the full character sheet as a PDF, in the **Fohawk** (the default), **Fohawk (ink saver)** or **Classic** style,
   on US Letter or A4, in your account's font or the readable font.
 - **Print card**: the one-page table card (tick its rows on the same tab). The page says whether it fits on one page, and which rows run over.
 - **Stat block (Markdown)**: the character as text, for a forum post or your notes.

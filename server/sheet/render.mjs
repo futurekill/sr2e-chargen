@@ -48,7 +48,7 @@ const BOX = 20;                    // condition-monitor box ≥ 7 mm (19.8 pt)
 export const STYLES = ["classic", "fohawk", "fohawk-ink"];
 const INK = "#0e0e10", ACCENT = "#c8006a", MUTED = "#55555d";   // magenta also differs by weight: never colour alone
 
-export async function renderSheet(model, { paper = "letter", font = "standard", style = "classic" } = {}) {
+export async function renderSheet(model, { paper = "letter", font = "standard", style = "fohawk" } = {}) {
   if (!PAPER[paper]) throw new SheetError("Unknown paper size.");
   if (!FONT_SETS[font]) throw new SheetError("Unknown font set.");
   if (!STYLES.includes(style)) throw new SheetError("Unknown sheet style.");

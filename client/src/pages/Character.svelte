@@ -297,8 +297,8 @@
   // The printable sheet: paper and font remembered in this browser (a convenience; the server holds no preference yet).
   const pref = (k, d) => { try { return localStorage.getItem(k) ?? d; } catch { return d; } };
   // The font: "" = the account's preference (the server applies it); a choice here overrides it for this browser.
-  let sheetStyle = $state(pref("sheet.style", "classic")), paper = $state(pref("sheet.paper", "letter")), sheetFont = $state(pref("sheet.fontChoice", ""));   // a new key: the old one stored a default, not a choice (r2 #1)
-  $effect(() => { try { localStorage.setItem("sheet.paper", paper); localStorage.setItem("sheet.style", sheetStyle); localStorage.setItem("sheet.fontChoice", sheetFont); } catch { /* private mode */ } });
+  let sheetStyle = $state(pref("sheet.styleChoice", "fohawk")), paper = $state(pref("sheet.paper", "letter")), sheetFont = $state(pref("sheet.fontChoice", ""));   // new keys: the old ones stored a default, not a choice (r2 #1; Fohawk default 2026-11-26)
+  $effect(() => { try { localStorage.setItem("sheet.paper", paper); localStorage.setItem("sheet.styleChoice", sheetStyle); localStorage.setItem("sheet.fontChoice", sheetFont); } catch { /* private mode */ } });
   const sheetHref = $derived(`/api/documents/${server.document.id}/sheet.pdf?style=${sheetStyle}&paper=${paper}${sheetFont ? `&font=${sheetFont}` : ""}`);
   // The table card (docs/PLAN-sheet.md slice 4): the chosen rows, and the server's fit answer after each change.
   const CARD_SECTION = { attacks: "Attacks", skills: "Active skills", cyberware: "Cyberware", powers: "Adept powers", spells: "Spells" };
@@ -955,7 +955,7 @@
       {#if body.creation.finished?.imported && (sys.chargen?.vehicles ?? []).length}<p class="muted small">Its vehicles stayed in Foundry: they aren't part of this file.</p>{/if}
       <h3>Paper</h3>
       <div class="print-options row">
-        <label><span>Style</span><select bind:value={sheetStyle}><option value="classic">Classic</option><option value="fohawk">Fohawk</option><option value="fohawk-ink">Fohawk (ink-saver)</option></select></label>
+        <label><span>Style</span><select bind:value={sheetStyle}><option value="fohawk">Fohawk</option><option value="fohawk-ink">Fohawk (ink-saver)</option><option value="classic">Classic</option></select></label>
         <label><span>Paper</span><select bind:value={paper}><option value="letter">US Letter</option><option value="a4">A4</option></select></label>
         <label><span>Font</span><select bind:value={sheetFont}><option value="">My account's font</option><option value="standard">Standard</option><option value="readable">Readable</option></select></label>
       </div>

@@ -4,6 +4,9 @@ Every change people can see goes under **Unreleased** in the same commit. A rele
 notes come from it.
 
 ## Unreleased
+- Changed: **Fohawk is the default sheet style** (sheet, card and Print tab). The Print tab asks once more on each
+  device: its old saved style was written even when nobody chose it. A character too large for Fohawk still gets the
+  message to print it in Classic.
 - Added: **three new site themes**, Cyberpunk, Cybernoir and GeoCities retro (light), beside Terminal. Choose one under
   **Account → Look**; it follows you to other devices. Every theme passes the WCAG AA contrast checks.
 - Content: pinned to sr2e v0.164.3. The core weapons now match the book: the Ingram Smartgun costs 950¥ with

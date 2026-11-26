@@ -79,13 +79,13 @@ export default async function documentRoutes(app) {
     if (document.kind !== "character") return reply.code(409).send({ error: "Only a character has a sheet.", code: "wrong-kind" });
     const font = req.query.font ?? (req.session.user.prefs?.readableFont ? "readable" : "standard");   // the user's preference by default
     const portrait = await L.portraitOf(req.ctx, me(req), req.params.id, body);   // the body already fetched (r1 #4, r2 #4)
-    const pdf = await renderSheetPdf(body, { paper: req.query.paper ?? "letter", font, style: req.query.style ?? "classic", portrait });
+    const pdf = await renderSheetPdf(body, { paper: req.query.paper ?? "letter", font, style: req.query.style ?? "fohawk", portrait });
     reply.header("content-disposition", `inline; filename="sheet-${document.id}.pdf"`).header("cache-control", "no-store").type("application/pdf");
     return pdf;
   });
   // The one-page table card (docs/PLAN-sheet.md slice 4): the chosen rows; refused when they don't fit.
   const sheetQuery = { type: "object", additionalProperties: false, properties: { paper: { enum: ["letter", "a4"] }, font: { enum: ["standard", "readable"] }, style: { enum: ["classic", "fohawk", "fohawk-ink"] } } };
-  const cardOpts = (req, body, fitOnly) => ({ paper: req.query.paper ?? "letter", style: req.query.style ?? "classic", card: cardIds(body), fitOnly,
+  const cardOpts = (req, body, fitOnly) => ({ paper: req.query.paper ?? "letter", style: req.query.style ?? "fohawk", card: cardIds(body), fitOnly,
     font: req.query.font ?? (req.session.user.prefs?.readableFont ? "readable" : "standard") });
   const characterOf = async (req, reply) => {
     const { document, body } = await L.getDocument(req.ctx, me(req), req.params.id);
