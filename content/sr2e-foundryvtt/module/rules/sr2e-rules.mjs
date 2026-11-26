@@ -577,6 +577,21 @@ export function rangedEngagement({ record, key, targetUuid, mode, weaponUuid, sm
 }
 
 /**
+ * Why a weapon can't fire again this Combat Phase (SR2E p.92), or null: a single-shot weapon "cannot be fired again
+ * that Combat Phase"; semi-auto and burst fire are Simple Actions, so one weapon fires at most twice in those modes.
+ * Full auto (a Complex Action, split across targets as the system already models) and anything out of combat are
+ * not limited here. `record.fired` lists this phase's SS/SA/BF shots per weapon id.
+ */
+export function phaseFireBlock({ record, key, weaponId, mode, inCombat = true } = {}) {
+  if (!inCombat || !["ss", "sa", "bf"].includes(mode)) return null;
+  // `fired` is a list of [weaponId, count] (a list, so a flag update replaces it: no stale counts merge in).
+  const n = record && record.key === key ? nonNegInt((Array.isArray(record.fired) ? record.fired : []).find(([id]) => id === weaponId)?.[1]) : 0;
+  if (mode === "ss" && n >= 1) return "A single-shot weapon can't fire again this Combat Phase (SR2E p.92).";
+  if (n >= 2) return "That weapon has already fired twice this Combat Phase: two Simple Actions (SR2E p.92).";
+  return null;
+}
+
+/**
  * Recoil still in force: the stored counter belongs to the phase it was
  * committed under, and reads as 0 once the phase key has moved on (p.93: recoil
  * accumulates within a Combat Phase). Nothing zeroes it at a boundary.
@@ -961,6 +976,23 @@ export function rangeBracketFor(distance, r = {}) {
   if (distance <= r.extreme) return { range: "extreme", outOfRange: false };
   return { range: "extreme", outOfRange: true };
 }
+
+/**
+ * A throwing weapon's range brackets (SR2E p.88 Weapon Range Table, rendered 2026-11-25): Thrown Knife 0–Str / to Str×2 /
+ * to Str×3 / to Str×5; Shuriken 0–Str / to Str×2 / to Str×5 / to Str×7. Grenades use `thrownRange` (their own table).
+ * docs/archive/plans/PLAN-impact-projectiles.md.
+ */
+export function throwingWeaponRange(strength, { shuriken = false } = {}) {
+  const s = Math.max(0, Number(strength) || 0);
+  return shuriken ? { short: s, medium: s * 2, long: s * 5, extreme: s * 7 } : { short: s, medium: s * 2, long: s * 3, extreme: s * 5 };
+}
+/** The armor a ranged attack meets (ruling 2026-11-25): Impact against bows, crossbows and thrown weapons — "Impact
+ *  Projectile Weapons" (p.238) — Ballistic against firearms and heavy weapons. */
+export const rangedArmorType = (weaponType) => (weaponType === "projectile" || weaponType === "throwing") ? "impact" : "ballistic";
+/** Missile Parry's target number (Grimoire p.34): 10 − the attack's base range TN (4/5/6/9, p.88), at least 2. */
+export const missileParryTN = (rangeTN) => Math.max(2, 10 - (Number(rangeTN) || 4));
+/** The weapons Missile Parry can catch (a ruling): slow missiles — bows, crossbows, thrown weapons (not grenades). */
+export const isSlowMissile = (weaponType) => weaponType === "projectile" || weaponType === "throwing";
 
 export function thrownRange(strength, aerodynamic = false) {
   const m = aerodynamic ? THROWN_RANGE_MULT.aerodynamic : THROWN_RANGE_MULT.standard;
@@ -2078,7 +2110,7 @@ export const ADEPT_POWER_SOURCES = Object.freeze({
   [ADEPT("b03361c78fba6c27")]: "increased_reflexes", [ADEPT("30f5e3493545db6b")]: "killing_hands",
   [ADEPT("7480a901bc283d25")]: "killing_hands", [ADEPT("05d498aa7cbd198c")]: "killing_hands",
   [ADEPT("81347eccfc7bebee")]: "killing_hands", [ADEPT("003f74fef4a1756e")]: "pain_resistance",
-  // The Grimoire's (p.34) and the Corporate Security Handbook's (p.104), docs/PLAN-sourcebook-adept-powers.md.
+  // The Grimoire's (p.34) and the Corporate Security Handbook's (p.104), docs/archive/plans/PLAN-sourcebook-adept-powers.md.
   [GRIM_POWER("8910da4d6b4d8736")]: "attribute_boost", [GRIM_POWER("ba2ae6d7b6371ee8")]: "body_control",
   [GRIM_POWER("aa5b3ad241d4737b")]: "enhanced_centering", [GRIM_POWER("f7cddaf8ff7bc502")]: "missile_parry",
   [GRIM_POWER("52fa826e15730ecb")]: "mystic_armor", [GRIM_POWER("5d99b6e3588f2101")]: "suspended_state",

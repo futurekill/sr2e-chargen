@@ -1,6 +1,6 @@
 {
- "$comment": "Foundry PREPARED values for six characters with rule-bearing bioware (docs/PLAN-M5k.md, Proof), exported 2026-11-19 from the local test world on release/0.161.0 (pinned locally as v0.160.99). Sources BUILT by the app (ops), books ct+ssc+st. Item cost = the prepared row cost (before grade). (a) was prepared under vehicleRuleset rigger2 (Task Pool). Regenerate when the pin moves. Carried to v0.162.0 on 2026-11-25: the 0.161.0 to 0.162.0 system diff (synaptic accelerator beside wired/boosted reflexes; the Grimoire/CSH adept powers) reaches none of these actors, and Bio a and Tiger were re-prepared under the 0.162.0 code with the same values.",
- "version": "0.162.0",
+ "$comment": "Foundry PREPARED values for six characters with rule-bearing bioware (docs/PLAN-M5k.md, Proof), exported 2026-11-19 from the local test world on release/0.161.0 (pinned locally as v0.160.99). Sources BUILT by the app (ops), books ct+ssc+st. Item cost = the prepared row cost (before grade). (a) was prepared under vehicleRuleset rigger2 (Task Pool). Regenerate when the pin moves. Carried to v0.162.0 on 2026-11-25: the 0.161.0 to 0.162.0 system diff (synaptic accelerator beside wired/boosted reflexes; the Grimoire/CSH adept powers) reaches none of these actors, and Bio a and Tiger were re-prepared under the 0.162.0 code with the same values. Carried to v0.164.3 on 2026-11-25: the 0.162.0 to 0.164.3 system diff changes no data model (module/data: one comment) and no runner source; its actor.mjs changes are roll paths (centering, perception, melee defence), not prepared values.",
+ "version": "0.164.3",
  "actors": [
   {
    "ruleset": "rigger2",
