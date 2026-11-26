@@ -7,6 +7,7 @@
   import { untrack, onDestroy } from "svelte";
   import { get, mutate, upload } from "../lib/api.js";
   import { derive, injuryPenalty } from "../../../shared/derive.mjs";
+  import { SHEET_STYLES, SHEET_STYLE_KEYS } from "../../../shared/sheet-styles.mjs";
   import { applyOp, validate, karmaOptions, undoable, surgeryPreview, booksOf, priorityTable, freeContacts, withRacial, formMod, edgeMax, PLAY_GEAR, cardIds, cardEligible, CARD_TYPES, CATEGORIES, CATEGORY_NAMES, LETTERS, METATYPES, MAGIC_TYPES, MAGIC_NAMES, TRADITIONS, ATTRIBUTES, ATTR_NAMES, CUSTOM_SKILL_CATEGORIES, totemNames } from "../../../shared/creation.mjs";
   import { TABLES, racialProfile, metavariantNotes, metavariantFrom, ONI_SOURCE, qualityEffects, BP_NUYEN_TIERS } from "../../../shared/rules.mjs";
   import { BUYABLE, choiceSpec, defaultChoices, project, price, essenceOf, isCybereye, smallWeapon, limbTypeOf, pricedItems, bodyCostOf } from "../../../shared/purchase.mjs";
@@ -297,7 +298,7 @@
   // The printable sheet: paper and font remembered in this browser (a convenience; the server holds no preference yet).
   const pref = (k, d) => { try { return localStorage.getItem(k) ?? d; } catch { return d; } };
   // The font: "" = the account's preference (the server applies it); a choice here overrides it for this browser.
-  let sheetStyle = $state(pref("sheet.styleChoice", "fohawk")), paper = $state(pref("sheet.paper", "letter")), sheetFont = $state(pref("sheet.fontChoice", ""));   // new keys: the old ones stored a default, not a choice (r2 #1; Fohawk default 2026-11-26)
+  let sheetStyle = $state(SHEET_STYLE_KEYS.includes(pref("sheet.styleChoice", "")) ? pref("sheet.styleChoice", "") : SHEET_STYLE_KEYS[0]), paper = $state(pref("sheet.paper", "letter")), sheetFont = $state(pref("sheet.fontChoice", ""));   // new keys: the old ones stored a default, not a choice (r2 #1; Fohawk default 2026-11-26)
   $effect(() => { try { localStorage.setItem("sheet.paper", paper); localStorage.setItem("sheet.styleChoice", sheetStyle); localStorage.setItem("sheet.fontChoice", sheetFont); } catch { /* private mode */ } });
   const sheetHref = $derived(`/api/documents/${server.document.id}/sheet.pdf?style=${sheetStyle}&paper=${paper}${sheetFont ? `&font=${sheetFont}` : ""}`);
   // The table card (docs/PLAN-sheet.md slice 4): the chosen rows, and the server's fit answer after each change.
@@ -955,7 +956,7 @@
       {#if body.creation.finished?.imported && (sys.chargen?.vehicles ?? []).length}<p class="muted small">Its vehicles stayed in Foundry: they aren't part of this file.</p>{/if}
       <h3>Paper</h3>
       <div class="print-options row">
-        <label><span>Style</span><select bind:value={sheetStyle}><option value="fohawk">Fohawk</option><option value="fohawk-ink">Fohawk (ink-saver)</option><option value="classic">Classic</option></select></label>
+        <label><span>Style</span><select bind:value={sheetStyle}>{#each SHEET_STYLES as st (st.key)}<option value={st.key}>{st.name}</option>{/each}</select></label>
         <label><span>Paper</span><select bind:value={paper}><option value="letter">US Letter</option><option value="a4">A4</option></select></label>
         <label><span>Font</span><select bind:value={sheetFont}><option value="">My account's font</option><option value="standard">Standard</option><option value="readable">Readable</option></select></label>
       </div>

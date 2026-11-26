@@ -267,6 +267,11 @@ test("table card routes: fit answer, PDF when it fits, refusal when it doesn't",
   assert.deepEqual(fit.fits, true);
   const pdf = await razor.call("GET", `${D}/${id}/card.pdf?style=fohawk-ink&paper=a4`);
   assert.equal(pdf.statusCode, 200); assert.equal(pdf.rawPayload.subarray(0, 5).toString(), "%PDF-");
+  for (const style of ["printout", "dossier"]) for (const kind of ["card.pdf", "sheet.pdf"]) {
+    const r = await razor.call("GET", `${D}/${id}/${kind}?style=${style}`);
+    assert.equal(r.statusCode, 200, `${kind} ${style}`); assert.equal(r.rawPayload.subarray(0, 5).toString(), "%PDF-");
+  }
+  assert.equal((await razor.call("GET", `${D}/${id}/sheet.pdf?style=mauve`)).statusCode, 400, "an unknown style");
 });
 
 import sharp from "sharp";

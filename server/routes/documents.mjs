@@ -9,6 +9,7 @@ import { Refused } from "../auth/accounts.mjs";
 import { createHash } from "node:crypto";
 import { sheetModel } from "../sheet/model.mjs";
 import { statBlock } from "../sheet/markdown.mjs";
+import { SHEET_STYLE_KEYS } from "../../shared/sheet-styles.mjs";
 
 const UUID = "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$";
 const idParams = { type: "object", required: ["id"], properties: { id: { type: "string", pattern: UUID }, n: { type: "string", pattern: "^[1-9][0-9]{0,8}$" } } };   // no coercion anywhere: numbers in the URL are checked strings
@@ -73,19 +74,19 @@ export default async function documentRoutes(app) {
     (req) => L.restoreRevision(req.ctx, me(req), req.params.id, Number(req.params.n), req.body, key(req)));
   // The printable sheet (docs/PLAN-sheet.md): characters only; rate-limited per user, one render at a time server-wide.
   app.get("/:id/sheet.pdf", { config: { rateLimit: { max: 6, timeWindow: "1 minute", keyGenerator: (req) => `sheet:${me(req)}` } },
-    schema: { params: idParams, querystring: { type: "object", additionalProperties: false, properties: { paper: { enum: ["letter", "a4"] }, font: { enum: ["standard", "readable"] }, style: { enum: ["classic", "fohawk", "fohawk-ink"] } } } } },
+    schema: { params: idParams, querystring: { type: "object", additionalProperties: false, properties: { paper: { enum: ["letter", "a4"] }, font: { enum: ["standard", "readable"] }, style: { enum: [...SHEET_STYLE_KEYS] } } } } },
   async (req, reply) => {
     const { document, body } = await L.getDocument(req.ctx, me(req), req.params.id);
     if (document.kind !== "character") return reply.code(409).send({ error: "Only a character has a sheet.", code: "wrong-kind" });
     const font = req.query.font ?? (req.session.user.prefs?.readableFont ? "readable" : "standard");   // the user's preference by default
     const portrait = await L.portraitOf(req.ctx, me(req), req.params.id, body);   // the body already fetched (r1 #4, r2 #4)
-    const pdf = await renderSheetPdf(body, { paper: req.query.paper ?? "letter", font, style: req.query.style ?? "fohawk", portrait });
+    const pdf = await renderSheetPdf(body, { paper: req.query.paper ?? "letter", font, style: req.query.style ?? SHEET_STYLE_KEYS[0], portrait });
     reply.header("content-disposition", `inline; filename="sheet-${document.id}.pdf"`).header("cache-control", "no-store").type("application/pdf");
     return pdf;
   });
   // The one-page table card (docs/PLAN-sheet.md slice 4): the chosen rows; refused when they don't fit.
-  const sheetQuery = { type: "object", additionalProperties: false, properties: { paper: { enum: ["letter", "a4"] }, font: { enum: ["standard", "readable"] }, style: { enum: ["classic", "fohawk", "fohawk-ink"] } } };
-  const cardOpts = (req, body, fitOnly) => ({ paper: req.query.paper ?? "letter", style: req.query.style ?? "fohawk", card: cardIds(body), fitOnly,
+  const sheetQuery = { type: "object", additionalProperties: false, properties: { paper: { enum: ["letter", "a4"] }, font: { enum: ["standard", "readable"] }, style: { enum: [...SHEET_STYLE_KEYS] } } };
+  const cardOpts = (req, body, fitOnly) => ({ paper: req.query.paper ?? "letter", style: req.query.style ?? SHEET_STYLE_KEYS[0], card: cardIds(body), fitOnly,
     font: req.query.font ?? (req.session.user.prefs?.readableFont ? "readable" : "standard") });
   const characterOf = async (req, reply) => {
     const { document, body } = await L.getDocument(req.ctx, me(req), req.params.id);

@@ -9,6 +9,7 @@ import * as fontkit from "fontkit";
 import { existsSync, readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
+import { SHEET_STYLES, SHEET_STYLE_KEYS } from "../../shared/sheet-styles.mjs";
 
 export class SheetError extends Error {
   constructor(message, overflow = null) { super(message); this.overflow = overflow; }
@@ -22,12 +23,17 @@ export const FONT_SETS = {
   standard: ["@fontsource/source-sans-3", "@fontsource/noto-sans"],
   readable: ["@fontsource/atkinson-hyperlegible-next", "@fontsource/noto-sans"]
 };
+/** Heading faces a style may use (docs/PLAN-sheet-styles.md): NOT user choices; the readable set still wins (U22). */
+export const HEAD_FACES = {
+  mono: ["@fontsource/noto-sans-mono", "@fontsource/noto-sans"],
+  serif: ["@fontsource/noto-serif", "@fontsource/noto-sans"]
+};
 const faces = new Map();   // `${set}:${weight}` → [{ name, file, font }]
 function facesFor(set, weight) {
   const key = `${set}:${weight}`;
   if (faces.has(key)) return faces.get(key);
   const list = [];
-  for (const pkg of FONT_SETS[set]) {
+  for (const pkg of FONT_SETS[set] ?? HEAD_FACES[set]) {
     const fam = pkg.split("/")[1];
     for (const sub of SUBSETS) {
       const file = join(pkgDir(pkg), "files", `${fam}-${sub}-${weight}-normal.woff`);
@@ -44,15 +50,19 @@ const MARGIN = 36;                 // 0.5 in = 12.7 mm (PLAN.md: safe margins fo
 const BODY = 10, FLOOR = 8, LABEL = 7.5, LABEL_FLOOR = 6.5, LINE = 1.22;
 const BOX = 20;                    // condition-monitor box ≥ 7 mm (19.8 pt)
 
-/** Sheet styles (PLAN.md U16): Classic; Fohawk (black angled bars, magenta accents); Fohawk ink-saver (outlined bars). */
-export const STYLES = ["classic", "fohawk", "fohawk-ink"];
-const INK = "#0e0e10", ACCENT = "#c8006a", MUTED = "#55555d";   // magenta also differs by weight: never colour alone
+/** Sheet styles (PLAN.md U16; shared/sheet-styles.mjs): Fohawk (black angled bars, magenta accents) and its ink-saver
+ *  (outlined bars) on one layout; Classic, Printout (mono headings, dashed rules, grey bands) and Dossier (serif
+ *  headings, double brass rules) on the other. */
+export const STYLES = SHEET_STYLE_KEYS;
+const INK = "#0e0e10", ACCENT = "#c8006a", MUTED = "#55555d", BRASS = "#705024";   // magenta also differs by weight: never colour alone
 
 export async function renderSheet(model, { paper = "letter", font = "standard", style = "fohawk" } = {}) {
   if (!PAPER[paper]) throw new SheetError("Unknown paper size.");
   if (!FONT_SETS[font]) throw new SheetError("Unknown font set.");
   if (!STYLES.includes(style)) throw new SheetError("Unknown sheet style.");
-  const fohawk = style !== "classic", inkSaver = style === "fohawk-ink";
+  const look = SHEET_STYLES.find(s => s.key === style);
+  const fohawk = look.layout === "fohawk", inkSaver = look.ink;
+  const headSet = font === "readable" || !look.head ? font : look.head;   // the readable font wins (U22)
   const [W, H] = PAPER[paper];
   const doc = new PDFDocument({ size: [W, H], margin: 0, autoFirstPage: false, bufferPages: true, info: { Title: model.title, Producer: "sr2e-chargen" } });
   const chunks = [];
@@ -62,8 +72,8 @@ export async function renderSheet(model, { paper = "letter", font = "standard", 
   let page = 0;
 
   /** Split text into runs of one face each (per-glyph fallback); a character no face has is an error, never a box. */
-  const segments = (text, weight) => {
-    const list = facesFor(font, weight), out = [];
+  const segments = (text, weight, set = font) => {
+    const list = facesFor(set, weight), out = [];
     for (const ch of text) {
       const cp = ch.codePointAt(0);
       const f = /\s/.test(ch) ? (out.at(-1)?.face ?? list[0]) : list.find(x => x.font.hasGlyphForCodePoint(cp));
@@ -76,19 +86,19 @@ export async function renderSheet(model, { paper = "letter", font = "standard", 
     if (!reg.has(face.name)) { doc.registerFont(face.name, face.file); reg.add(face.name); }
     doc.font(face.name).fontSize(size);
   };
-  const width = (text, size, weight) => segments(text, weight).reduce((t, s) => { use(s.face, size); return t + doc.widthOfString(s.text); }, 0);
+  const width = (text, size, weight, set = font) => segments(text, weight, set).reduce((t, s) => { use(s.face, size); return t + doc.widthOfString(s.text); }, 0);
   /** Wrap to lines no wider than w (a word longer than the line is broken by characters). */
-  const wrap = (text, size, w, weight) => {
+  const wrap = (text, size, w, weight, set = font) => {
     const lines = [];
     for (const para of String(text).split("\n")) {
       let line = "";
       for (const word of para.split(" ")) {
         const tryLine = line ? `${line} ${word}` : word;
-        if (width(tryLine, size, weight) <= w) { line = tryLine; continue; }
+        if (width(tryLine, size, weight, set) <= w) { line = tryLine; continue; }
         if (line) lines.push(line);
         let piece = "";
         for (const ch of word) {
-          if (width(piece + ch, size, weight) > w && piece) { lines.push(piece); piece = ""; }
+          if (width(piece + ch, size, weight, set) > w && piece) { lines.push(piece); piece = ""; }
           piece += ch;
         }
         line = piece;
@@ -98,17 +108,18 @@ export async function renderSheet(model, { paper = "letter", font = "standard", 
     return lines;
   };
   const cellText = {};   // every table cell's full text by id, so the fit test checks split cells exactly
-  const draw = (text, x, y, size, weight, box, kind = "text", cell = null, color = "#000") => {
+  const draw = (text, x, y, size, weight, box, kind = "text", cell = null, color = "#000", set = font) => {
     let cx = x;
-    for (const s of segments(text, weight)) { use(s.face, size); doc.fillColor(color).text(s.text, cx, y, { lineBreak: false }); cx += doc.widthOfString(s.text); }
-    runs.push({ text, page, x, y, w: cx - x, h: size * LINE, size, box, kind, cell });
+    const used = [];   // the faces actually drawn (the font test checks them, not the set asked for)
+    for (const s of segments(text, weight, set)) { use(s.face, size); used.push(s.face.name); doc.fillColor(color).text(s.text, cx, y, { lineBreak: false }); cx += doc.widthOfString(s.text); }
+    runs.push({ text, page, x, y, w: cx - x, h: size * LINE, size, box, kind, cell, faces: used });
   };
   /** Text in a box: wrap; if it is a one-line field (maxLines), shrink toward the floor. Returns the height used. */
-  const block = (text, x, y, w, { size = BODY, floor = FLOOR, weight = 400, maxLines = Infinity, box, kind, cell, color } = {}) => {
+  const block = (text, x, y, w, { size = BODY, floor = FLOOR, weight = 400, maxLines = Infinity, box, kind, cell, color, set = font } = {}) => {
     if (!text) return 0;
-    let s = size, lines = wrap(text, s, w, weight);
-    while (lines.length > maxLines && s - 0.5 >= floor) { s -= 0.5; lines = wrap(text, s, w, weight); }
-    lines.forEach((ln, i) => draw(ln, x, y + i * s * LINE, s, weight, box ?? { x, y, w, h: lines.length * s * LINE }, kind, cell, color));
+    let s = size, lines = wrap(text, s, w, weight, set);
+    while (lines.length > maxLines && s - 0.5 >= floor) { s -= 0.5; lines = wrap(text, s, w, weight, set); }
+    lines.forEach((ln, i) => draw(ln, x, y + i * s * LINE, s, weight, box ?? { x, y, w, h: lines.length * s * LINE }, kind, cell, color, set));
     return lines.length * s * LINE;
   };
 
@@ -126,15 +137,29 @@ export async function renderSheet(model, { paper = "letter", font = "standard", 
     doc.image(model.portrait, x, y, { fit: [side, side], align: "center", valign: "center" });
     shapes.push({ kind: "image", page, x, y, w: side, h: side });
   };
+  /** A rule (a line ornament), recorded so the fit test can prove no text touches it. */
+  const rule = (x, y, w, h) => shapes.push({ kind: "rule", page, x, y: y - h / 2, w, h });
   const bar = (title, x, y, w) => {
     if (fohawk) {
       band(x, y, w, 16);
       block(title.toUpperCase(), x + 6, y + 2.5, w - 16, { size: 9, floor: LABEL_FLOOR, weight: 700, maxLines: 1, kind: "title", color: onBand });
       return 21;
     }
-    doc.save().lineWidth(1.2).moveTo(x, y + 14).lineTo(x + w, y + 14).stroke("#000").restore();
-    block(title.toUpperCase(), x, y + 1, w, { size: 9, floor: LABEL_FLOOR, weight: 700, maxLines: 1, kind: "title" });
-    return 18;
+    // The classic layout's bar, per style; it returns the height it drew (a title that wraps grows it, never overlaps).
+    const label = style === "printout" ? `> ${title.toUpperCase()}` : title.toUpperCase();
+    const h = block(label, x, y + 1, w, { size: 9, floor: LABEL_FLOOR, weight: 700, maxLines: 1, kind: "title", set: headSet });
+    const ry = y + Math.max(14, h + 2);
+    if (style === "printout") {
+      doc.save().lineWidth(0.8).dash(2, { space: 2 }).moveTo(x, ry).lineTo(x + w, ry).stroke("#000").undash().restore();
+      rule(x, ry, w, 0.8);
+    } else if (style === "dossier") {
+      doc.save().lineWidth(0.5).moveTo(x, ry - 1).lineTo(x + w, ry - 1).moveTo(x, ry + 1.5).lineTo(x + w, ry + 1.5).stroke(BRASS).restore();
+      rule(x, ry - 1, w, 0.5); rule(x, ry + 1.5, w, 0.5);
+    } else {
+      doc.save().lineWidth(1.2).moveTo(x, ry).lineTo(x + w, ry).stroke("#000").restore();
+      rule(x, ry, w, 1.2);
+    }
+    return Math.max(18, ry - y + 4);
   };
   /** A table section: rows of cells in columns (fractions of w); rows wrap; rows past maxY go to `rest`. */
   let cellSeq = 0;
@@ -163,6 +188,8 @@ export async function renderSheet(model, { paper = "letter", font = "standard", 
         }
         rest.push(...rows.slice(r)); break;
       }
+      // Printout: light grey bands behind every other row (the fanfold printout), under the row's text.
+      if (style === "printout" && placed % 2 === 1) { doc.save().rect(x, cy, w, h - 1).fill("#efefef").restore(); shapes.push({ kind: "fill", page, x, y: cy, w, h: h - 1 }); }
       let cx = x;
       cells.forEach((c, i) => {
         const hot = fohawk && accent.includes(i);
@@ -170,6 +197,7 @@ export async function renderSheet(model, { paper = "letter", font = "standard", 
         cx += w * cols[i];
       });
       doc.save().lineWidth(0.3).moveTo(x, cy + h - 1).lineTo(x + w, cy + h - 1).stroke("#888").restore();
+      rule(x, cy + h - 1, w, 0.3);
       cy += h;
       placed++;
     }
@@ -212,12 +240,13 @@ export async function renderSheet(model, { paper = "letter", font = "standard", 
   let y = MARGIN;
   let attacks, act;
   if (!fohawk) {
+  // ── The classic layout (Classic, Printout, Dossier): the same places; the style changes bars, bands and faces ──
   const PIC = model.portrait ? 72 : 0, HW = CW - (PIC ? PIC + 12 : 0);
   if (PIC) portrait(R - PIC, y, PIC);
   const y0 = y;
-  y += block(model.title, L, y, HW, { size: 18, floor: 11, weight: 700, maxLines: 2 }) + 2;
+  y += block(model.title, L, y, HW, { size: 18, floor: 11, weight: 700, maxLines: 2, kind: "head", set: headSet }) + 2;
   if (model.draft) y += block("DRAFT — character creation not finished", L, y, HW, { size: 9, weight: 700, maxLines: 1 });
-  y += block(model.header.map(([k, v]) => `${k}: ${v}`).join("   "), L, y, HW, { size: 9.5, floor: FLOOR }) + 8;
+  y += block(model.header.map(([k, v]) => `${k}: ${v}`).join("   "), L, y, HW, { size: 9.5, floor: FLOOR, kind: "head", set: headSet }) + 8;
   y = Math.max(y, y0 + PIC + 8);
   const top = y;
   // Left: attributes, pools, armor.
@@ -241,7 +270,7 @@ export async function renderSheet(model, { paper = "letter", font = "standard", 
     band(L, y, CW, Math.max(headH, 56), 14);
     if (PIC) portrait(L + 8, y + 8, PIC);
     let hy = y + 12;
-    hy += block(model.title, TX, hy, TW, { size: 22, floor: 13, weight: 700, maxLines: 2, color: onBand }) + 4;
+    hy += block(model.title, TX, hy, TW, { size: 22, floor: 13, weight: 700, maxLines: 2, color: onBand, kind: "head" }) + 4;
     hy += block(model.subtitle.toUpperCase(), TX, hy, TW, { size: 9.5, floor: FLOOR, weight: 700, color: inkSaver ? ACCENT : "#e8e8ee" });   // light on black (r1 #4)
     if (model.draft) hy += 2 + block("DRAFT — character creation not finished", TX, hy + 2, TW, { size: 8, floor: 6.5, weight: 700, maxLines: 1, color: onBand });
     if (extra) block(extra, TX, hy + 2, TW, { size: 8.5, floor: FLOOR, color: onBand });

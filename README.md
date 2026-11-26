@@ -470,7 +470,8 @@ character moves to **Deleted** in your Library, where **Restore** brings it back
 ### Print and share
 
 On the **Print** tab, choose the style, paper and font, then:
-- **Print sheet**: the full character sheet as a PDF, in the **Fohawk** (the default), **Fohawk (ink saver)** or **Classic** style,
+- **Print sheet**: the full character sheet as a PDF, in the **Fohawk** (the default), **Fohawk (ink saver)**, **Classic**, **Printout** (a computer printout: mono
+  headings, grey bands) or **Dossier** (a case file: serif headings, double rules) style,
   on US Letter or A4, in your account's font or the readable font.
 - **Print card**: the one-page table card (tick its rows on the same tab). The page says whether it fits on one page, and which rows run over.
 - **Stat block (Markdown)**: the character as text, for a forum post or your notes.
@@ -570,7 +571,7 @@ The approved order is in [docs/ROADMAP.md](docs/ROADMAP.md) (standalone first, r
 | 5 | Sourcebooks, alternate methods, Edges and Flaws | done (M5a–M5n) |
 | 6 | Release ([docs/PLAN-release.md](docs/PLAN-release.md)) | done: backups, image scan, SBOM, signed image; first beta v0.1.0-beta.1 |
 | 7 | Foundry connector (optional) ([docs/PLAN-M7.md](docs/PLAN-M7.md)) | simple form done: Foundry actor JSON both ways |
-| 8 | Later: themes and sheet styles, Vehicle Workshop, NPC builder, social login | site themes done (four); the rest not started |
+| 8 | Later: themes and sheet styles, Vehicle Workshop, NPC builder, social login | site themes (four) and sheet styles Printout and Dossier done; the rest not started |
 
 Each milestone goes plan → review → build → code review → release.
 

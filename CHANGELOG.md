@@ -4,6 +4,9 @@ Every change people can see goes under **Unreleased** in the same commit. A rele
 notes come from it.
 
 ## Unreleased
+- Added: **two new sheet styles**, **Printout** (mono headings, dashed rules, light grey bands on every other row)
+  and **Dossier** (serif headings, thin double rules), for the sheet and the table card. Both keep Classic's layout;
+  the readable font still replaces their heading fonts.
 - Changed: **Fohawk is the default sheet style** (sheet, card and Print tab). The Print tab asks once more on each
   device: its old saved style was written even when nobody chose it. A character too large for Fohawk still gets the
   message to print it in Classic.

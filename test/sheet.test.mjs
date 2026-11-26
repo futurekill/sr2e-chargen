@@ -5,7 +5,8 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync, readdirSync } from "node:fs";
 import { sheetModel, plain } from "../server/sheet/model.mjs";
-import { renderSheet, SheetError, PAPER, FONT_SETS, STYLES } from "../server/sheet/render.mjs";
+import { renderSheet, SheetError, PAPER, FONT_SETS, STYLES, HEAD_FACES } from "../server/sheet/render.mjs";
+import { SHEET_STYLES } from "../shared/sheet-styles.mjs";
 import { newCharacter } from "../shared/creation.mjs";
 import { getDocument } from "pdfjs-dist/legacy/build/pdf.mjs";
 
@@ -34,8 +35,9 @@ const FIXTURES = [["huge row", hugeRow()], ["new character", { ...newCharacter("
 const squash = (s) => String(s).replace(/\s+/g, "");
 /** Every string the model holds (what must appear on the sheet); the Fohawk style draws the attribute row, the stat
  * strip and the priorities instead of the Classic tables. */
+const layoutOf = (style) => SHEET_STYLES.find(s => s.key === style).layout;
 const strings = (m, style = "classic") => [m.title,
-  ...(style === "classic" ? [...m.header.flat(), ...m.attributes.flat(), ...m.pools.flat(), m.armor]
+  ...(layoutOf(style) === "classic" ? [...m.header.flat(), ...m.attributes.flat(), ...m.pools.flat(), m.armor]
     : [m.subtitle.toUpperCase(), ...m.header.filter(([k]) => !["Metatype", "Magic", "Priorities", "Karma Pool"].includes(k)).flat(),
       ...m.attrRow.flatMap(a => [a.abbr, a.value, a.natural]), ...m.stats.flatMap(([k, v]) => [k.toUpperCase(), v]), ...m.priorities.flat()]),
   ...m.attacks.flat(), ...m.skills.map(r => r.slice(0, 3)).flat(),
@@ -46,7 +48,7 @@ for (const [name, body] of FIXTURES) for (const style of STYLES) for (const pape
     const model = sheetModel(body);
     const { pdf, runs, shapes, cells, size: [W, H], margin } = await renderSheet(model, { paper, font, style });
     // 1. Every model string is placed (in order-insensitive, whitespace-free form: wrapping may split a string).
-    const placed = squash(runs.filter(r => r.kind === "text" && !r.cell).map(r => r.text).join(""));
+    const placed = squash(runs.filter(r => (r.kind === "text" || r.kind === "head") && !r.cell).map(r => r.text).join(""));
     // Table cells exactly: each cell's runs, joined, equal its full text (a split cell too).
     const byCell = new Map();
     for (const r of runs) if (r.cell) byCell.set(r.cell, (byCell.get(r.cell) ?? "") + r.text);
@@ -66,6 +68,12 @@ for (const [name, body] of FIXTURES) for (const style of STYLES) for (const pape
     for (let i = 0; i < boxes.length; i++) for (let j = i + 1; j < boxes.length; j++) {
       const a = boxes[i], b = boxes[j];
       assert.ok(!(a.page === b.page && a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h), `${name}: two monitor boxes overlap`);
+    }
+    // 2c. No text touches a rule (a bar's line ornament; docs/PLAN-sheet-styles.md).
+    for (const g of shapes.filter(b => b.kind === "rule")) for (const r of runs) {
+      if (r.page !== g.page) continue;
+      const glyphs = { y: r.y + r.size * 0.1, h: r.size * 1.05 };   // the ink box: the run's line minus its leading
+      assert.ok(!(r.x < g.x + g.w && g.x < r.x + r.w && glyphs.y < g.y + g.h && g.y < glyphs.y + glyphs.h), `${name}: "${r.text}" touches a rule`);
     }
     // 3. No two runs overlap on a page.
     const byPage = Map.groupBy(runs, r => r.page);
@@ -191,4 +199,78 @@ test("the table card: everything by default, a choice per item, one page or refu
 test("a header too long for page 1 is refused, never cut (card r1 #2)", async () => {
   const body = newCharacter("x"); body.name = body.actor.name = "Long ".repeat(800);
   for (const style of STYLES) await assert.rejects(renderSheet(cardModel(body, []), { style }), (e) => e instanceof SheetError);
+});
+
+// ── More sheet styles (docs/PLAN-sheet-styles.md) ───────────────────────────────────────────────────────────────
+const razorBody = () => asBody(structuredClone(pregens.find(p => /Razor/.test(p.name))), "Notes.");
+const pkgOf = (faceName) => faceName.replace(/-(latin|latin-ext|greek|greek-ext|cyrillic|cyrillic-ext|vietnamese)-\d+$/, "");
+const expectedSet = (style, font) => { const look = SHEET_STYLES.find(s => s.key === style); return font === "readable" || !look.head ? font : look.head; };
+const familiesOf = (set) => (FONT_SETS[set] ?? HEAD_FACES[set]).map(p => p.split("/")[1]);
+
+test("heading faces: each style's title and header runs exist and are drawn in the expected faces (sheet and card)", async () => {
+  const body = razorBody();
+  for (const style of STYLES) for (const font of Object.keys(FONT_SETS)) for (const card of [false, true]) {
+    const model = card ? cardModel(body, []) : sheetModel(body);
+    const { runs } = await renderSheet(model, { style, font });
+    const heads = runs.filter(r => r.kind === "head");
+    const at = `${style}/${font}/${card ? "card" : "sheet"}`;
+    assert.ok(heads.some(r => squash(model.title).startsWith(squash(r.text))), `${at}: the title is a head run`);
+    if (layoutOf(style) === "classic" && model.header.length) assert.ok(heads.some(r => r.text.includes(`${model.header[0][0]}:`)), `${at}: the header line is a head run`);
+    const [primary, ...fallback] = familiesOf(expectedSet(style, font));
+    const checked = [...heads, ...runs.filter(r => r.kind === "title")];
+    for (const r of checked) for (const f of r.faces) assert.ok([primary, ...fallback].includes(pkgOf(f)), `${style}/${font}: "${r.text}" drawn in ${f}`);
+    // The primary face carries every Latin title (the fallback is only for glyphs it lacks).
+    for (const r of checked.filter(r => /^[\x20-\x7e]+$/.test(r.text))) assert.ok(r.faces.every(f => pkgOf(f) === primary), `${style}/${font}: "${r.text}" fell back`);
+  }
+});
+
+test("motifs: Printout bands every other row, on the sheet and the card; the others none", async () => {
+  const body = razorBody();
+  for (const style of STYLES) for (const card of [false, true]) {
+    const { shapes } = await renderSheet(card ? cardModel(body, cardIds(body)) : sheetModel(body), { style });
+    const fills = shapes.filter(b => b.kind === "fill");
+    if (style !== "printout") { assert.equal(fills.length, 0, `${style}: no bands`); continue; }
+    assert.ok(fills.length >= 1, `printout ${card ? "card" : "sheet"}: bands`);
+    // Every other row: a band's row separator is followed by an unbanded row, so two bands in one column never touch.
+    const cols = Map.groupBy(fills, f => `${f.page}:${f.x}`);
+    for (const list of cols.values()) { list.sort((p, q) => p.y - q.y); for (let i = 1; i < list.length; i++) assert.ok(list[i].y >= list[i - 1].y + list[i - 1].h + 10, "two bands in a row"); }
+    // And the first row of each table is unbanded: a band starts one row below some table's first row.
+    assert.ok(fills.every(f => f.y > 40), "a band under a table's first row");
+  }
+});
+
+test("heading font files: 400 and 700 latin WOFFs and a licence for each heading face", () => {
+  for (const pkgs of Object.values(HEAD_FACES)) {
+    const pkg = pkgs[0], fam = pkg.split("/")[1], d = new URL(`../node_modules/${pkg}/`, import.meta.url);
+    for (const w of [400, 700]) assert.ok(readdirSync(new URL("files/", d)).includes(`${fam}-latin-${w}-normal.woff`), `${fam} ${w}`);
+    assert.ok(readdirSync(d).includes("LICENSE"), `${fam} licence`);
+  }
+});
+
+test("the card in every style × paper × font: one page, the pdf.js text, and both refusals", async () => {
+  const razor = razorBody(), ids = cardIds(razor);
+  assert.ok(ids.length > 0, "the card has selected rows");
+  const chosen = ids.map(id => razor.actor.items.find(i => i._id === id)?.name).filter(Boolean);
+  const crowd = structuredClone(razor);
+  for (let i = 0; i < 80; i++) crowd.actor.items.push({ _id: `cw${String(i).padStart(14, "0")}`, name: `Wired Thing ${i}`, type: "cyberware", system: { installed: true, essenceCost: 0, attributeMods: {} } });
+  const long = newCharacter("x"); long.name = long.actor.name = "Long ".repeat(800);
+  for (const style of STYLES) for (const paper of Object.keys(PAPER)) for (const font of Object.keys(FONT_SETS)) {
+    const at = `${style}/${paper}/${font}`;
+    const { pdf, pages, runs } = await renderSheet(cardModel(razor, ids), { style, paper, font });
+    assert.equal(pages, 1, `${at}: one page`);
+    const doc = await getDocument({ data: new Uint8Array(pdf), useSystemFonts: false, isEvalSupported: false }).promise;
+    const text = (await (await doc.getPage(1)).getTextContent()).items.map(i => i.str).join("");
+    assert.equal(squash(text), squash(runs.map(r => r.text).join("")), `${at}: the PDF's text is what was placed`);
+    for (const n of chosen) assert.ok(squash(text).includes(squash(n)), `${at}: the selected "${n}" is on the card`);
+    await assert.rejects(renderSheet(cardModel(crowd, cardIds(crowd)), { style, paper, font }), (e) => e instanceof SheetError && /Untick/.test(e.message), `${at}: overflow refused`);
+    await assert.rejects(renderSheet(cardModel(long, []), { style, paper, font }), (e) => e instanceof SheetError, `${at}: header refused`);
+  }
+});
+
+test("every consumer takes its styles from shared/sheet-styles.mjs, never its own list", () => {
+  for (const f of ["server/routes/documents.mjs", "server/sheet/render.mjs", "client/src/pages/Character.svelte"]) {
+    const src = readFileSync(new URL(`../${f}`, import.meta.url), "utf8");
+    assert.match(src, /shared\/sheet-styles\.mjs/, `${f} imports the shared list`);
+    assert.ok(!/"fohawk-ink"|value="classic"|enum: \["classic"/.test(src), `${f} names styles itself`);
+  }
 });

@@ -44,7 +44,8 @@ Each milestone gives something you can use. Each has a short plan, a Codex revie
 7. **Foundry connector (optional).** _Done._ Export a character from the app and import it into Foundry as a new actor.
    Export a settled character from Foundry to the app. No in-play state.
 8. **Later:** Vehicle Workshop, more themes and sheet styles, NPC builder, social login. _Site themes done
-   (2026-11-25: Terminal, Cyberpunk, Cybernoir, GeoCities retro; an account preference)._
+   (2026-11-25: Terminal, Cyberpunk, Cybernoir, GeoCities retro; an account preference). Sheet styles Printout and
+   Dossier done (2026-11-26, docs/PLAN-sheet-styles.md); Fohawk is the default style._
 
 ## What is kept from the work done so far
 - The app skeleton (M3a): accounts, library, revisions, Docker, CI on four databases. All of it applies.
