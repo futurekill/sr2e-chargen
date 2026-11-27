@@ -228,13 +228,13 @@ export function applyNpcOp(body, op, lookup = () => null) {
 /** p.187's experience, applied ONCE to the stored values (R22: nearest, halves up; a modifier stays as it is). */
 export function experiencePreview(body, { years, attributes, skills, resources }) {
   const pct = npcExperiencePct(years), sys = filled(body.actor.system), out = [];
-  if (attributes) for (const a of NPC_ATTRS) out.push({ what: a, from: sys[a].base, to: npcExperienced(sys[a].base, pct), max: MAX_ATTR, set: (s) => { s[a].base = npcExperienced(sys[a].base, pct); } });
+  if (attributes) for (const a of NPC_ATTRS) out.push({ what: a[0].toUpperCase() + a.slice(1), from: sys[a].base, to: npcExperienced(sys[a].base, pct), max: MAX_ATTR, set: (s) => { s[a].base = npcExperienced(sys[a].base, pct); } });
   if (skills) for (const i of body.actor.items.filter(x => x.type === "skill")) for (const k of ["rating", "concentration", "specialization"]) {
     const from = k === "rating" ? i.system.rating : i.system[k]?.rating;
     if (!(from > 0) || (k !== "rating" && !i.system[k]?.name)) continue;
     out.push({ what: k === "rating" ? i.name : `${i.name} (${i.system[k].name})`, from, to: npcExperienced(from, pct), max: MAX_SKILL, itemId: i._id, field: k });
   }
-  if (resources) out.push({ what: "nuyen", from: sys.nuyen, to: npcExperienced(sys.nuyen, pct), max: MAX_NUYEN, set: (s) => { s.nuyen = npcExperienced(sys.nuyen, pct); } });
+  if (resources) out.push({ what: "Nuyen", money: true, from: sys.nuyen, to: npcExperienced(sys.nuyen, pct), max: MAX_NUYEN, set: (s) => { s.nuyen = npcExperienced(sys.nuyen, pct); } });
   return { pct, changes: out.filter(c => c.to !== c.from) };
 }
 function applyExperience(b, op) {

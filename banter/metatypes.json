@@ -1,43 +1,83 @@
 {
  "schema": "sr2e-banter",
- "version": 1,
+ "version": 2,
  "set": "original",
  "source": "original",
  "entries": {
   "metatype:human": [
-   {
-    "handle": "Tick-Tock",
-    "text": "Human. Nothing special — which is exactly why nobody remembers your face. Use that.",
-    "stamp": "14:20:31/03-12-57"
-   }
+   [
+    {
+     "handle": "Tick-Tock",
+     "text": "Human. Nothing special — which is exactly why nobody remembers your face. Use that.",
+     "stamp": "14:20:31/03-12-57"
+    },
+    {
+     "handle": "Velvet Nine",
+     "text": "Average is camouflage. Use it.",
+     "stamp": "01:39:21/03-12-57"
+    }
+   ]
   ],
   "metatype:elf": [
-   {
-    "handle": "Lady Ghoul",
-    "text": "Pointy ears open doors uptown and close them in the Barrens. Know which street you're on.",
-    "stamp": "14:22:09/03-12-57"
-   }
+   [
+    {
+     "handle": "Lady Ghoul",
+     "text": "Pointy ears open doors uptown and close them in the Barrens. Know which street you're on.",
+     "stamp": "14:22:09/03-12-57"
+    },
+    {
+     "handle": "Saltlick",
+     "text": "Downtown they'll ask about your skincare. In the Barrens they'll ask what you're worth.",
+     "stamp": "01:45:29/03-12-57"
+    }
+   ]
   ],
   "metatype:dwarf": [
-   {
-    "handle": "Two-Ton Mule",
-    "text": "Dwarves see in the dark and shrug off what kills the rest of us. Short jokes are fatal. Mostly for the joker.",
-    "stamp": "14:25:44/03-12-57"
-   }
+   [
+    {
+     "handle": "Two-Ton Mule",
+     "text": "Dwarves see in the dark and shrug off what kills the rest of us. Short jokes are fatal. Mostly for the joker.",
+     "stamp": "14:25:44/03-12-57"
+    },
+    {
+     "handle": "Kipper",
+     "text": "And they'll still make you sit in the back seat. Bring a cushion.",
+     "stamp": "00:19:22/03-12-57"
+    }
+   ]
   ],
   "metatype:ork": [
-   {
-    "handle": "Saltlick",
-    "text": "Tusks and a short fuse are what they expect. Give 'em a long memory instead.",
-    "stamp": "14:29:02/03-12-57"
-   }
+   [
+    {
+     "handle": "Saltlick",
+     "text": "Tusks and a short fuse are what they expect. Give 'em a long memory instead.",
+     "stamp": "14:29:02/03-12-57"
+    },
+    {
+     "handle": "Two-Ton Mule",
+     "text": "Then surprise them on payday too. Read the contract.",
+     "stamp": "20:38:45/03-12-57"
+    }
+   ]
   ],
   "metatype:troll": [
-   {
-    "handle": "Two-Ton Mule",
-    "text": "Doorframes are your natural enemy. Everything else is just scared of you.",
-    "stamp": "14:31:57/03-12-57"
-   }
+   [
+    {
+     "handle": "Two-Ton Mule",
+     "text": "Doorframes are your natural enemy. Everything else is just scared of you.",
+     "stamp": "14:31:57/03-12-57"
+    },
+    {
+     "handle": "Tick-Tock",
+     "text": "Ceiling fans. Don't forget ceiling fans.",
+     "stamp": "15:43:10/03-12-57"
+    },
+    {
+     "handle": "Two-Ton Mule",
+     "text": "I have not forgotten. I will never forget.",
+     "stamp": "15:45:03/03-12-57"
+    }
+   ]
   ]
  }
 }

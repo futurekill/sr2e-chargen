@@ -67,6 +67,7 @@
 </script>
 
 <h1>{body.name}</h1>
+<p class="howto"><a href={designed ? "/help/workshop" : "/help/garage"}>How this works</a></p>
 <p class="muted">{designed ? "Designed vehicle" : "Garage vehicle"} · revision {server.document.revision}{#if server.usedBy?.length} · used by {server.usedBy.map(u => u.bought ? `${u.name} (bought at revision ${u.bought})` : u.name).join(", ")}{/if}</p>
 {#if error}<p class="notice bad" role="alert" id="doc-error">{error}</p>{/if}
 <p class="sr-only" role="status">{status}</p>

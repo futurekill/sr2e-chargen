@@ -1,43 +1,88 @@
 {
  "schema": "sr2e-banter",
- "version": 1,
+ "version": 2,
  "set": "original",
  "source": "original",
  "entries": {
   "choice:priority.magic.A": [
-   {
-    "handle": "Spoonbender",
-    "text": "Full magician. Remember: the astral sees you too.",
-    "stamp": "23:52:40/03-09-57"
-   }
+   [
+    {
+     "handle": "Spoonbender",
+     "text": "Full magician. Remember: the astral sees you too.",
+     "stamp": "23:52:40/03-09-57"
+    },
+    {
+     "handle": "Lady Ghoul",
+     "text": "And the astral remembers. Keep your aura clean and your mouth shut.",
+     "stamp": "01:23:37/03-09-57"
+    }
+   ]
   ],
   "choice:priority.resources.A": [
-   {
-    "handle": "Velvet Nine",
-    "text": "A million nuyen and a head full of chrome. Try not to rust before your first run.",
-    "stamp": "23:55:18/03-09-57"
-   }
+   [
+    {
+     "handle": "Velvet Nine",
+     "text": "A million nuyen and a head full of chrome. Try not to rust before your first run.",
+     "stamp": "23:55:18/03-09-57"
+    },
+    {
+     "handle": "Kipper",
+     "text": "Spend it all before the first run. Nuyen in your pocket is nuyen somebody else is planning to take.",
+     "stamp": "16:20:30/03-09-57"
+    }
+   ]
   ],
   "choice:priority.resources.E": [
-   {
-    "handle": "Kipper",
-    "text": "Five thousand nuyen. That's a pistol and a prayer, chummer.",
-    "stamp": "23:57:03/03-09-57"
-   }
+   [
+    {
+     "handle": "Kipper",
+     "text": "Five thousand nuyen. That's a pistol and a prayer, chummer.",
+     "stamp": "23:57:03/03-09-57"
+    },
+    {
+     "handle": "Velvet Nine",
+     "text": "A pistol, a prayer and a cousin with a couch. I've started with less.",
+     "stamp": "20:24:01/03-09-57"
+    },
+    {
+     "handle": "Rustbucket",
+     "text": "You started with a stolen bicycle, Nine.",
+     "stamp": "20:26:33/03-09-57"
+    }
+   ]
   ],
   "choice:essence.low": [
-   {
-    "handle": "Lady Ghoul",
-    "text": "Under two Essence. The street docs call that 'held together by warranty'.",
-    "stamp": "02:40:15/03-15-57"
-   }
+   [
+    {
+     "handle": "Lady Ghoul",
+     "text": "Under two Essence. The street docs call that 'held together by warranty'.",
+     "stamp": "02:40:15/03-15-57"
+    },
+    {
+     "handle": "Spoonbender",
+     "text": "And every tenth of a point you trade is a tenth the healers can't reach.",
+     "stamp": "12:06:41/03-15-57"
+    },
+    {
+     "handle": "Two-Ton Mule",
+     "text": "Held together by warranty and spite. Classic.",
+     "stamp": "12:10:34/03-15-57"
+    }
+   ]
   ],
   "choice:magic.with.cyberware": [
-   {
-    "handle": "Spoonbender",
-    "text": "Every piece of chrome you put in costs the mana you had. Ask the shamans who traded theirs for a smartlink.",
-    "stamp": "02:44:51/03-15-57"
-   }
+   [
+    {
+     "handle": "Spoonbender",
+     "text": "Every piece of chrome you put in costs the mana you had. Ask the shamans who traded theirs for a smartlink.",
+     "stamp": "02:44:51/03-15-57"
+    },
+    {
+     "handle": "Tick-Tock",
+     "text": "Saw a mage buy a smartlink once. Hit everything he aimed at. Never cast again.",
+     "stamp": "20:39:08/03-15-57"
+    }
+   ]
   ]
  }
 }

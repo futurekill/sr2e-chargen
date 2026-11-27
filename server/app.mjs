@@ -13,6 +13,7 @@ import { fileURLToPath } from "node:url";
 import { findSession, csrfOk, ABSOLUTE_MS } from "./auth/sessions.mjs";
 import { dummyHash } from "./auth/passwords.mjs";
 import authRoutes from "./routes/auth.mjs";
+import aboutRoutes from "./routes/about.mjs";
 import adminRoutes from "./routes/admin.mjs";
 import documentRoutes from "./routes/documents.mjs";
 import catalogRoutes from "./routes/catalog.mjs";
@@ -99,6 +100,7 @@ export async function buildApp({ ctx, config, logger, catalog = null }) {
 
   app.get("/healthz", async () => ({ ok: true }));
   await app.register(authRoutes, { prefix: "/api" });
+  await app.register(aboutRoutes, { prefix: "/api" });
   await app.register(adminRoutes, { prefix: "/api/admin" });
   await app.register(documentRoutes, { prefix: "/api/documents" });
   await app.register(catalogRoutes, { prefix: "/api/catalog" });

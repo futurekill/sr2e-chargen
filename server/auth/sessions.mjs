@@ -21,11 +21,12 @@ export async function createSession(trx, ctx, userId) {
 
 /** A user's preferences, with defaults; anything unknown or damaged in the column reads as the default. */
 export const THEMES = THEME_KEYS;
-export const PREF_DEFAULTS = Object.freeze({ readableFont: false, theme: THEMES[0] });
+export const PREF_DEFAULTS = Object.freeze({ readableFont: false, theme: THEMES[0], banter: true });
 export function readPrefs(raw) {
   let p;
   try { p = typeof raw === "string" ? JSON.parse(raw) : raw; } catch { p = null; }
-  return { readableFont: p?.readableFont === true, theme: THEMES.includes(p?.theme) ? p.theme : THEMES[0] };
+  // banter: the footer's Shadowland board (docs/PLAN-help-footer.md 3); on unless turned off.
+  return { readableFont: p?.readableFont === true, theme: THEMES.includes(p?.theme) ? p.theme : THEMES[0], banter: p?.banter !== false };
 }
 
 /** The live session for a cookie secret: `{ session, user, csrf }`, or null (unknown, expired, idle, disabled). */

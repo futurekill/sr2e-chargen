@@ -28,6 +28,7 @@
 </script>
 
 <h1>Admin</h1>
+<p class="howto"><a href={"/help/admin"}>How this works</a></p>
 {#if error}<p class="notice bad" role="alert">{error}</p>{/if}
 {#if fresh}
   <div class="notice" role="status">

@@ -27,13 +27,17 @@
     catalog = out;
   })().catch(err => { catalogError = err.message; });
 
-  // The working design: the saved one until edited here.
-  let work = $state($state.snapshot(body.design.choices)), savedJson = $state(JSON.stringify(body.design.choices));
+  // The working design: the saved one until edited here. Compared in a canonical form (keys sorted, empty values
+  // dropped): a select bound to a field the saved design lacks (Tires: "") fills it in on first render, which is not
+  // an edit (it showed "unsaved changes" on a design just opened).
+  const canon = (v) => JSON.stringify(v, (_, x) => (x && typeof x === "object" && !Array.isArray(x)
+    ? Object.fromEntries(Object.keys(x).sort().filter(k => x[k] !== "" && x[k] !== undefined).map(k => [k, x[k]])) : x));
+  let work = $state($state.snapshot(body.design.choices)), savedJson = $state(canon(body.design.choices));
   $effect(() => {   // a save (or a change elsewhere) arrives: take it unless there are unsaved edits
-    const now = JSON.stringify(body.design.choices);
-    if (now !== savedJson) { if (JSON.stringify(work) === savedJson) work = $state.snapshot(body.design.choices); savedJson = now; }
+    const now = canon(body.design.choices);
+    if (now !== savedJson) { if (canon(work) === savedJson) work = $state.snapshot(body.design.choices); savedJson = now; }
   });
-  const dirty = $derived(JSON.stringify(work) !== savedJson);
+  const dirty = $derived(canon(work) !== savedJson);
   const installed = $derived(body.actor.items.filter(i => i.flags?.sr2e?.designMod && !i.flags?.sr2e?.kitFor));
   // Weapon mounts (R2 p.131–135; docs/PLAN-workshop-mounts.md): each mount, what it holds, and what may go on it.
   const mounts = $derived(installed.filter(i => mountOf(i)).map(m => ({ item: m, spec: mountOf(m),

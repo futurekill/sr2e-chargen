@@ -230,6 +230,16 @@ Automatic: `test/admin-counts.test.mjs` (every database). Manual: as an admin, o
 characters, vehicles and drafts (archived ones included) and "N in the trash" when there are any; delete a draft as that
 user and reload: one draft fewer, one more in the trash.
 
+## Help, footer and the Shadowland board (docs/PLAN-help-footer.md)
+Automatic: `test/help.test.mjs` (safe markup, every page's help link lands, shots exist with alt text),
+`test/banter.test.mjs` (data, picking, the v1 lines kept, no banter in any sheet or export), `test/about.test.mjs`,
+the prefs test, and the accessibility scan (help pages, the footer on every page, the board in motion: Pause, Hide).
+Manual: open the Library, watch a thread appear line by line; reload: a different one; open a character step: the
+thread fits it; Pause; Hide banter, then Show; Account → Banter off and on. Open Help from the header and from "How
+this works" on a character's Nuyen step (lands on After creation → Nuyen).
+**Screenshots:** a release that changes a page with a help picture re-runs `npm run build && npm run help:shots` and
+the maintainer LOOKS at the new pictures (existence is all a test can check).
+
 ## NPC builder (docs/PLAN-npc-builder.md)
 Automatic: `test/npc.test.mjs` (every database): npcs.json, contacts as printed, archetype parity with the runners
 fixture, experience (p.187's 25 years, R22), every op's bounds, the routes, the export, admin counts. In Foundry: Quench

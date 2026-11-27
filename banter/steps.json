@@ -1,115 +1,297 @@
 {
  "schema": "sr2e-banter",
- "version": 1,
+ "version": 2,
  "set": "original",
  "source": "original",
  "entries": {
   "step:start": [
-   {
-    "handle": "GridMother",
-    "text": "New face on the board. Pick a handle you can live with, chummer. Your government name? Keep it in a lead box.",
-    "stamp": "02:14:07/03-11-57"
-   },
-   {
-    "handle": "Whisperjack",
-    "text": "Second the lead box. I've seen SINs sold for less than a soykaf.",
-    "stamp": "02:16:51/03-11-57"
-   }
+   [
+    {
+     "handle": "GridMother",
+     "text": "New face on the board. Pick a handle you can live with, chummer. Your government name? Keep it in a lead box.",
+     "stamp": "02:14:07/03-11-57"
+    },
+    {
+     "handle": "Whisperjack",
+     "text": "Second the lead box. I've seen SINs sold for less than a soykaf.",
+     "stamp": "02:16:51/03-11-57"
+    }
+   ]
   ],
   "step:priorities": [
-   {
-    "handle": "Rustbucket",
-    "text": "Five letters, A through E, and every one of 'em costs you something. Welcome to the shadows.",
-    "stamp": "23:40:12/03-09-57"
-   },
-   {
-    "handle": "Velvet Nine",
-    "text": "Put Resources on E and you'll be eating Nutrisoy out of a dumpster behind the Stuffer Shack. Ask me how I know.",
-    "stamp": "23:44:30/03-09-57"
-   },
-   {
-    "handle": "Tick-Tock",
-    "text": "Put Magic on A and the street will smell it on you before you open your mouth. Worth it.",
-    "stamp": "23:47:02/03-09-57"
-   }
+   [
+    {
+     "handle": "Rustbucket",
+     "text": "Five letters, A through E, and every one of 'em costs you something. Welcome to the shadows.",
+     "stamp": "23:40:12/03-09-57"
+    },
+    {
+     "handle": "Velvet Nine",
+     "text": "Put Resources on E and you'll be eating Nutrisoy out of a dumpster behind the Stuffer Shack. Ask me how I know.",
+     "stamp": "23:44:30/03-09-57"
+    },
+    {
+     "handle": "Tick-Tock",
+     "text": "Put Magic on A and the street will smell it on you before you open your mouth. Worth it.",
+     "stamp": "23:47:02/03-09-57"
+    }
+   ]
   ],
   "step:metatype": [
-   {
-    "handle": "Two-Ton Mule",
-    "text": "Pick your meat. You'll be stuck in it a while.",
-    "stamp": "04:02:45/03-12-57"
-   }
+   [
+    {
+     "handle": "Two-Ton Mule",
+     "text": "Pick your meat. You'll be stuck in it a while.",
+     "stamp": "04:02:45/03-12-57"
+    },
+    {
+     "handle": "Whisperjack",
+     "text": "And every bouncer from here to Tacoma will treat you like it.",
+     "stamp": "22:10:00/03-12-57"
+    }
+   ]
   ],
   "step:magic": [
-   {
-    "handle": "Spoonbender",
-    "text": "Awakened? Then hear this: the drain doesn't care how pretty your spell looks.",
-    "stamp": "19:21:09/03-10-57"
-   },
-   {
-    "handle": "Lady Ghoul",
-    "text": "Totem or tradition, choose like your life depends on it. It will.",
-    "stamp": "19:25:33/03-10-57"
-   }
+   [
+    {
+     "handle": "Spoonbender",
+     "text": "Awakened? Then hear this: the drain doesn't care how pretty your spell looks.",
+     "stamp": "19:21:09/03-10-57"
+    },
+    {
+     "handle": "Lady Ghoul",
+     "text": "Totem or tradition, choose like your life depends on it. It will.",
+     "stamp": "19:25:33/03-10-57"
+    }
+   ]
   ],
   "step:attributes": [
-   {
-    "handle": "Rustbucket",
-    "text": "Body keeps you breathing. Quickness keeps you out of the way. Nobody ever died of too much Willpower.",
-    "stamp": "01:08:19/03-13-57"
-   }
+   [
+    {
+     "handle": "Rustbucket",
+     "text": "Body keeps you breathing. Quickness keeps you out of the way. Nobody ever died of too much Willpower.",
+     "stamp": "01:08:19/03-13-57"
+    },
+    {
+     "handle": "Two-Ton Mule",
+     "text": "And Willpower keeps you from doing something stupid. Mostly.",
+     "stamp": "13:15:09/03-13-57"
+    }
+   ]
   ],
   "step:skills": [
-   {
-    "handle": "GridMother",
-    "text": "Can't shoot, can't talk, can't drive? Then you'd better be able to run. Fast.",
-    "stamp": "03:33:41/03-13-57"
-   },
-   {
-    "handle": "Kipper",
-    "text": "Etiquette is the cheapest armor in the Sprawl. Nobody buys it.",
-    "stamp": "03:35:20/03-13-57"
-   }
+   [
+    {
+     "handle": "GridMother",
+     "text": "Can't shoot, can't talk, can't drive? Then you'd better be able to run. Fast.",
+     "stamp": "03:33:41/03-13-57"
+    },
+    {
+     "handle": "Kipper",
+     "text": "Etiquette is the cheapest armor in the Sprawl. Nobody buys it.",
+     "stamp": "03:35:20/03-13-57"
+    }
+   ]
   ],
   "step:edges": [
-   {
-    "handle": "Whisperjack",
-    "text": "Everybody's got a flaw. The smart ones know which one will get 'em killed.",
-    "stamp": "22:12:58/03-14-57"
-   }
+   [
+    {
+     "handle": "Whisperjack",
+     "text": "Everybody's got a flaw. The smart ones know which one will get 'em killed.",
+     "stamp": "22:12:58/03-14-57"
+    },
+    {
+     "handle": "Lady Ghoul",
+     "text": "And the dumb ones put it on a T-shirt.",
+     "stamp": "03:48:02/03-14-57"
+    }
+   ]
   ],
   "step:resources": [
-   {
-    "handle": "Velvet Nine",
-    "text": "Nuyen in your pocket at the start is the most nuyen you'll ever have. Spend it like it's your last.",
-    "stamp": "00:51:07/03-15-57"
-   }
+   [
+    {
+     "handle": "Velvet Nine",
+     "text": "Nuyen in your pocket at the start is the most nuyen you'll ever have. Spend it like it's your last.",
+     "stamp": "00:51:07/03-15-57"
+    },
+    {
+     "handle": "Kipper",
+     "text": "So spend it like you'll never see that much again. You probably won't.",
+     "stamp": "06:43:09/03-15-57"
+    }
+   ]
   ],
   "step:contacts": [
-   {
-    "handle": "Saltlick",
-    "text": "Your fixer is not your friend. Your fixer is your fixer. Learn the difference before you learn it the hard way.",
-    "stamp": "16:44:10/03-15-57"
-   }
+   [
+    {
+     "handle": "Saltlick",
+     "text": "Your fixer is not your friend. Your fixer is your fixer. Learn the difference before you learn it the hard way.",
+     "stamp": "16:44:10/03-15-57"
+    },
+    {
+     "handle": "Velvet Nine",
+     "text": "Your bartender, though. Tip your bartender.",
+     "stamp": "01:36:35/03-15-57"
+    }
+   ]
   ],
   "step:lifestyle": [
-   {
-    "handle": "Kipper",
-    "text": "Low lifestyle: you'll learn which neighbours to trust. Squatter: you'll learn which ones to run from.",
-    "stamp": "05:19:33/03-16-57"
-   }
+   [
+    {
+     "handle": "Kipper",
+     "text": "Low lifestyle: you'll learn which neighbours to trust. Squatter: you'll learn which ones to run from.",
+     "stamp": "05:19:33/03-16-57"
+    },
+    {
+     "handle": "Rustbucket",
+     "text": "High lifestyle: you'll learn which neighbours call security on you.",
+     "stamp": "03:10:48/03-16-57"
+    }
+   ]
   ],
   "step:finish": [
-   {
-    "handle": "GridMother",
-    "text": "Board's open. Don't make me write your obituary on it.",
-    "stamp": "06:00:00/03-16-57"
-   },
-   {
-    "handle": "Rustbucket",
-    "text": "Frag it, I'll write it. I've got a template.",
-    "stamp": "06:02:14/03-16-57"
-   }
+   [
+    {
+     "handle": "GridMother",
+     "text": "Board's open. Don't make me write your obituary on it.",
+     "stamp": "06:00:00/03-16-57"
+    },
+    {
+     "handle": "Rustbucket",
+     "text": "Frag it, I'll write it. I've got a template.",
+     "stamp": "06:02:14/03-16-57"
+    }
+   ]
+  ],
+  "step:concept": [
+   [
+    {
+     "handle": "GridMother",
+     "text": "Who are you when the lights go out? Write it down before someone else writes it for you.",
+     "stamp": "05:05:28/03-20-57"
+    },
+    {
+     "handle": "Whisperjack",
+     "text": "Concept first, chrome later. Every good runner I knew had a reason.",
+     "stamp": "05:07:34/03-20-57"
+    }
+   ],
+   [
+    {
+     "handle": "Velvet Nine",
+     "text": "A face for a portrait, a name for the street. Make them both forgettable or both unforgettable.",
+     "stamp": "05:38:26/03-20-57"
+    },
+    {
+     "handle": "Saltlick",
+     "text": "No middle ground. The middle ground gets you remembered by the wrong people.",
+     "stamp": "05:42:15/03-20-57"
+    }
+   ]
+  ],
+  "step:card": [
+   [
+    {
+     "handle": "Kipper",
+     "text": "Print the card. Datapads die. Paper only dies if you set it on fire.",
+     "stamp": "22:06:51/03-20-57"
+    },
+    {
+     "handle": "Rustbucket",
+     "text": "Which I have done. On purpose. Long story.",
+     "stamp": "22:07:14/03-20-57"
+    }
+   ],
+   [
+    {
+     "handle": "GridMother",
+     "text": "One page, everything you need at the table. Anything else is homework.",
+     "stamp": "00:48:53/03-20-57"
+    },
+    {
+     "handle": "Tick-Tock",
+     "text": "Laminate it. Soykaf rings are not a dice modifier.",
+     "stamp": "00:52:55/03-20-57"
+    }
+   ]
+  ],
+  "step:karma": [
+   [
+    {
+     "handle": "Spoonbender",
+     "text": "Good Karma, chummer. Spend it on what kept you alive, not on what looks good.",
+     "stamp": "18:41:47/03-20-57"
+    },
+    {
+     "handle": "Tick-Tock",
+     "text": "I spent mine on Etiquette. Still alive. Coincidence? Probably not.",
+     "stamp": "18:44:40/03-20-57"
+    }
+   ],
+   [
+    {
+     "handle": "Lady Ghoul",
+     "text": "Karma Pool's the closest thing to luck we've got. Don't waste it on rolling for a parking space.",
+     "stamp": "22:20:30/03-20-57"
+    },
+    {
+     "handle": "Kipper",
+     "text": "In this city? Parking is a combat encounter.",
+     "stamp": "22:24:24/03-20-57"
+    }
+   ]
+  ],
+  "step:nuyen": [
+   [
+    {
+     "handle": "Velvet Nine",
+     "text": "Every purchase is a ledger line. Every ledger line is evidence. Pay cash.",
+     "stamp": "12:47:21/03-20-57"
+    },
+    {
+     "handle": "Kipper",
+     "text": "Pay cash, keep receipts. Contradiction? Welcome to the shadows.",
+     "stamp": "12:50:47/03-20-57"
+    }
+   ],
+   [
+    {
+     "handle": "Rustbucket",
+     "text": "Sold it to a fence? You got a third of what it's worth and a story. Keep the story.",
+     "stamp": "13:43:36/03-20-57"
+    },
+    {
+     "handle": "Saltlick",
+     "text": "The fence gets the rest. And your face.",
+     "stamp": "13:44:44/03-20-57"
+    }
+   ]
+  ],
+  "step:condition": [
+   [
+    {
+     "handle": "Lady Ghoul",
+     "text": "Mark the boxes honestly. The street doc will count them anyway.",
+     "stamp": "13:07:27/03-20-57"
+    },
+    {
+     "handle": "Two-Ton Mule",
+     "text": "Ten boxes. I've filled eleven. Don't ask.",
+     "stamp": "13:08:42/03-20-57"
+    }
+   ],
+   [
+    {
+     "handle": "Spoonbender",
+     "text": "Stun heals by morning. Physical heals by paying someone. Plan accordingly.",
+     "stamp": "02:17:45/03-20-57"
+    },
+    {
+     "handle": "Lady Ghoul",
+     "text": "Or by knowing a shaman who owes you. Cheaper, worse bedside manner.",
+     "stamp": "02:18:00/03-20-57"
+    }
+   ]
   ]
  }
 }

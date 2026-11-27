@@ -1,7 +1,11 @@
 {
   "name": "sr2e-chargen",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/futurekill/sr2e-chargen"
+  },
   "description": "Hoi, chummer! A Shadowrun 2nd Edition character generator and manager.",
   "type": "module",
   "engines": {
@@ -22,7 +26,8 @@
     "test:mysql": "TEST_DATABASE_URL=mysql://root:test@127.0.0.1:53306/mysql node --test --test-timeout=300000 --test-force-exit --test-concurrency=1 test/",
     "test:mariadb": "TEST_DATABASE_URL=mysql://root:test@127.0.0.1:53307/mysql node --test --test-timeout=300000 --test-force-exit --test-concurrency=1 test/",
     "lint": "eslint server shared test tools",
-    "a11y": "node tools/a11y-scan.mjs"
+    "a11y": "node tools/a11y-scan.mjs",
+    "help:shots": "node tools/help-shots.mjs"
   },
   "license": "UNLICENSED",
   "dependencies": {

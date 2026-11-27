@@ -1,0 +1,501 @@
+{
+ "schema": "sr2e-banter",
+ "version": 2,
+ "set": "original",
+ "source": "original",
+ "entries": {
+  "page:library": [
+   [
+    {
+     "handle": "GridMother",
+     "text": "Your library, your secrets. Archive what you don't need. Delete what could hang you.",
+     "stamp": "01:44:11/03-20-57"
+    },
+    {
+     "handle": "Whisperjack",
+     "text": "And keep the drafts. Every good plan starts as a bad note.",
+     "stamp": "01:48:40/03-20-57"
+    }
+   ],
+   [
+    {
+     "handle": "Velvet Nine",
+     "text": "Characters, rides, contacts, notes. A whole life in one list. Mine's shorter.",
+     "stamp": "05:02:48/03-20-57"
+    },
+    {
+     "handle": "Kipper",
+     "text": "Yours is shorter because you keep deleting the evidence, Nine.",
+     "stamp": "05:05:48/03-20-57"
+    },
+    {
+     "handle": "Velvet Nine",
+     "text": "Housekeeping, darling.",
+     "stamp": "05:07:46/03-20-57"
+    }
+   ],
+   [
+    {
+     "handle": "Rustbucket",
+     "text": "Start a new one. Fresh face, fresh SIN, fresh mistakes.",
+     "stamp": "00:01:35/03-20-57"
+    },
+    {
+     "handle": "Tick-Tock",
+     "text": "Same old mistakes, actually. Faster this time.",
+     "stamp": "00:02:25/03-20-57"
+    }
+   ]
+  ],
+  "page:catalog": [
+   [
+    {
+     "handle": "Kipper",
+     "text": "Window shopping. The only shopping that doesn't leave a paper trail.",
+     "stamp": "09:44:37/03-20-57"
+    },
+    {
+     "handle": "Saltlick",
+     "text": "Pretty sure the catalog's watching you back.",
+     "stamp": "09:48:53/03-20-57"
+    }
+   ],
+   [
+    {
+     "handle": "Two-Ton Mule",
+     "text": "Every gun in the book and not one in my size.",
+     "stamp": "01:30:13/03-20-57"
+    },
+    {
+     "handle": "Rustbucket",
+     "text": "They make 'em in your size, Mule. They're called vehicle mounts.",
+     "stamp": "01:32:40/03-20-57"
+    }
+   ],
+   [
+    {
+     "handle": "Whisperjack",
+     "text": "Check the page number before you argue with your GM. Saves a fist-fight.",
+     "stamp": "14:39:11/03-20-57"
+    },
+    {
+     "handle": "GridMother",
+     "text": "Saves two. I've seen both.",
+     "stamp": "14:40:58/03-20-57"
+    }
+   ]
+  ],
+  "page:account": [
+   [
+    {
+     "handle": "GridMother",
+     "text": "Change your password like you change your safehouse: before you need to.",
+     "stamp": "22:34:43/03-20-57"
+    },
+    {
+     "handle": "Whisperjack",
+     "text": "And log out everywhere when the van starts smelling funny.",
+     "stamp": "22:38:17/03-20-57"
+    }
+   ],
+   [
+    {
+     "handle": "Lady Ghoul",
+     "text": "Easier font on? Smart. Reading the fine print kept me alive twice.",
+     "stamp": "05:07:22/03-20-57"
+    },
+    {
+     "handle": "GridMother",
+     "text": "The fine print is where the corps hide the knives.",
+     "stamp": "05:09:14/03-20-57"
+    }
+   ],
+   [
+    {
+     "handle": "Tick-Tock",
+     "text": "New theme. Same shadows. Feels better though.",
+     "stamp": "20:08:03/03-20-57"
+    },
+    {
+     "handle": "Velvet Nine",
+     "text": "Green on black for nostalgia. Pink on black for style.",
+     "stamp": "20:10:23/03-20-57"
+    }
+   ]
+  ],
+  "page:admin": [
+   [
+    {
+     "handle": "GridMother",
+     "text": "Sysop's console. Every invite is a door. Count your doors.",
+     "stamp": "07:22:22/03-20-57"
+    },
+    {
+     "handle": "Whisperjack",
+     "text": "And close the ones nobody walks through.",
+     "stamp": "07:25:14/03-20-57"
+    }
+   ],
+   [
+    {
+     "handle": "Saltlick",
+     "text": "Make a second admin before you need one. Ask me how I learned.",
+     "stamp": "10:30:56/03-20-57"
+    },
+    {
+     "handle": "Kipper",
+     "text": "How did you learn?",
+     "stamp": "10:32:47/03-20-57"
+    },
+    {
+     "handle": "Saltlick",
+     "text": "Locked myself out for a week. Ate a lot of soy.",
+     "stamp": "10:34:14/03-20-57"
+    }
+   ],
+   [
+    {
+     "handle": "Rustbucket",
+     "text": "Fence or refund, the sysop decides. The runners complain either way.",
+     "stamp": "21:18:44/03-20-57"
+    },
+    {
+     "handle": "Velvet Nine",
+     "text": "Complaining is free. Selling isn't.",
+     "stamp": "21:20:36/03-20-57"
+    }
+   ]
+  ],
+  "page:help": [
+   [
+    {
+     "handle": "GridMother",
+     "text": "Reading the manual. Respect. Most runners learn by bleeding.",
+     "stamp": "20:24:26/03-20-57"
+    },
+    {
+     "handle": "Kipper",
+     "text": "Reading's cheaper. Fewer stitches.",
+     "stamp": "20:27:22/03-20-57"
+    }
+   ],
+   [
+    {
+     "handle": "Whisperjack",
+     "text": "If the help doesn't help, file an issue. Politely. Sysops remember tone.",
+     "stamp": "12:24:16/03-20-57"
+    },
+    {
+     "handle": "Saltlick",
+     "text": "And say which page broke. 'It's broken' is a riddle, not a report.",
+     "stamp": "12:25:17/03-20-57"
+    }
+   ],
+   [
+    {
+     "handle": "Tick-Tock",
+     "text": "Page numbers in every answer. Take them to your GM like a lawyer.",
+     "stamp": "12:44:16/03-20-57"
+    },
+    {
+     "handle": "Two-Ton Mule",
+     "text": "My GM eats lawyers.",
+     "stamp": "12:46:45/03-20-57"
+    }
+   ]
+  ],
+  "page:sign-in": [
+   [
+    {
+     "handle": "GridMother",
+     "text": "Invite only. If you're reading this, somebody vouched for you. Don't make them regret it.",
+     "stamp": "03:21:09/03-20-57"
+    },
+    {
+     "handle": "Whisperjack",
+     "text": "Handle and password. Nothing else. No names, no faces.",
+     "stamp": "03:24:21/03-20-57"
+    }
+   ],
+   [
+    {
+     "handle": "Saltlick",
+     "text": "Forgot your password? Ask your sysop for a reset. Don't ask me, I don't even know mine.",
+     "stamp": "23:47:04/03-20-57"
+    },
+    {
+     "handle": "GridMother",
+     "text": "Reset links work once. Like most good ideas.",
+     "stamp": "23:50:21/03-20-57"
+    }
+   ],
+   [
+    {
+     "handle": "Tick-Tock",
+     "text": "Jack in, chummer. The board's been quiet.",
+     "stamp": "02:35:07/03-20-57"
+    },
+    {
+     "handle": "Velvet Nine",
+     "text": "Too quiet. Somebody bring snacks.",
+     "stamp": "02:39:34/03-20-57"
+    }
+   ]
+  ],
+  "page:character": [
+   [
+    {
+     "handle": "Rustbucket",
+     "text": "Every number on that sheet is a decision somebody's going to test with a gun.",
+     "stamp": "04:45:14/03-20-57"
+    },
+    {
+     "handle": "Lady Ghoul",
+     "text": "Or a spell. Don't forget the spells.",
+     "stamp": "04:47:40/03-20-57"
+    }
+   ],
+   [
+    {
+     "handle": "Kipper",
+     "text": "Check the Rules box before you finish. The book doesn't forgive and neither does your GM.",
+     "stamp": "23:35:26/03-20-57"
+    },
+    {
+     "handle": "Rustbucket",
+     "text": "My GM forgives. Then she remembers. Then she sends a dragon.",
+     "stamp": "23:36:06/03-20-57"
+    }
+   ],
+   [
+    {
+     "handle": "Velvet Nine",
+     "text": "A runner's history is a list of debts. Read yours before you sell anything.",
+     "stamp": "16:50:59/03-20-57"
+    },
+    {
+     "handle": "Saltlick",
+     "text": "And undo is not a lifestyle.",
+     "stamp": "16:53:38/03-20-57"
+    }
+   ]
+  ],
+  "page:vehicle": [
+   [
+    {
+     "handle": "Tick-Tock",
+     "text": "Hardpoints for the big guns, firmpoints for the polite ones.",
+     "stamp": "01:36:35/03-20-57"
+    },
+    {
+     "handle": "Two-Ton Mule",
+     "text": "There are no polite guns.",
+     "stamp": "01:39:34/03-20-57"
+    }
+   ],
+   [
+    {
+     "handle": "Rustbucket",
+     "text": "Cargo space is where good plans go to rust. Pack light.",
+     "stamp": "11:06:14/03-20-57"
+    },
+    {
+     "handle": "Kipper",
+     "text": "Pack light, carry missiles. Balance.",
+     "stamp": "11:08:44/03-20-57"
+    }
+   ],
+   [
+    {
+     "handle": "Whisperjack",
+     "text": "Link it, don't buy it, until you know you'll keep it.",
+     "stamp": "15:24:32/03-20-57"
+    },
+    {
+     "handle": "GridMother",
+     "text": "Same rule for friends.",
+     "stamp": "15:25:46/03-20-57"
+    }
+   ]
+  ],
+  "page:workshop": [
+   [
+    {
+     "handle": "Rustbucket",
+     "text": "Design Points don't lie. The salesman does.",
+     "stamp": "05:14:24/03-20-57"
+    },
+    {
+     "handle": "Tick-Tock",
+     "text": "Mark-Up is where the salesman lives.",
+     "stamp": "05:17:57/03-20-57"
+    }
+   ],
+   [
+    {
+     "handle": "Saltlick",
+     "text": "Built a hovercraft once. It handled like a shopping cart full of grenades.",
+     "stamp": "15:14:32/03-20-57"
+    },
+    {
+     "handle": "Rustbucket",
+     "text": "That was the point, as I recall.",
+     "stamp": "15:17:09/03-20-57"
+    },
+    {
+     "handle": "Saltlick",
+     "text": "That was the point.",
+     "stamp": "15:21:12/03-20-57"
+    }
+   ],
+   [
+    {
+     "handle": "Kipper",
+     "text": "Drive-by-wire: when your car trusts your brain more than you do.",
+     "stamp": "11:35:59/03-20-57"
+    },
+    {
+     "handle": "Spoonbender",
+     "text": "Mine never trusted my brain. Smart car.",
+     "stamp": "11:39:47/03-20-57"
+    }
+   ]
+  ],
+  "page:npc": [
+   [
+    {
+     "handle": "GridMother",
+     "text": "Every contact has a price and a breaking point. Write down both.",
+     "stamp": "09:43:24/03-20-57"
+    },
+    {
+     "handle": "Lady Ghoul",
+     "text": "Professional ones don't break. They just invoice you.",
+     "stamp": "09:46:40/03-20-57"
+    }
+   ],
+   [
+    {
+     "handle": "Two-Ton Mule",
+     "text": "Twenty-five years in the business and still bouncing. That's experience.",
+     "stamp": "12:27:25/03-20-57"
+    },
+    {
+     "handle": "Kipper",
+     "text": "That's a career plan, Mule.",
+     "stamp": "12:30:56/03-20-57"
+    }
+   ],
+   [
+    {
+     "handle": "Whisperjack",
+     "text": "A Threat Rating is the GM's way of saying 'this one's read the manual too'.",
+     "stamp": "02:36:08/03-20-57"
+    },
+    {
+     "handle": "Two-Ton Mule",
+     "text": "My Threat Rating is 'large'. Works on most people.",
+     "stamp": "02:40:00/03-20-57"
+    }
+   ]
+  ],
+  "page:draft": [
+   [
+    {
+     "handle": "Velvet Nine",
+     "text": "Notes. The only thing more dangerous than a plan is a plan written down.",
+     "stamp": "17:20:11/03-20-57"
+    },
+    {
+     "handle": "GridMother",
+     "text": "So write it here, not on a napkin in a bar.",
+     "stamp": "17:23:20/03-20-57"
+    }
+   ],
+   [
+    {
+     "handle": "Tick-Tock",
+     "text": "Revision history. Even your mistakes get a timestamp.",
+     "stamp": "23:06:26/03-20-57"
+    },
+    {
+     "handle": "Whisperjack",
+     "text": "Especially your mistakes.",
+     "stamp": "23:07:46/03-20-57"
+    }
+   ]
+  ],
+  "page:any": [
+   [
+    {
+     "handle": "GridMother",
+     "text": "Board's live. Mind your OPSEC.",
+     "stamp": "00:42:34/03-20-57"
+    },
+    {
+     "handle": "Kipper",
+     "text": "Mind your manners too. Sysop's watching.",
+     "stamp": "00:43:32/03-20-57"
+    }
+   ],
+   [
+    {
+     "handle": "Rustbucket",
+     "text": "Rain again. Of course it's raining.",
+     "stamp": "04:28:56/03-20-57"
+    },
+    {
+     "handle": "Velvet Nine",
+     "text": "It's Seattle, Rusty. It's always raining.",
+     "stamp": "04:30:55/03-20-57"
+    },
+    {
+     "handle": "Tick-Tock",
+     "text": "Puddles reflect neon. Free light show.",
+     "stamp": "04:32:11/03-20-57"
+    }
+   ],
+   [
+    {
+     "handle": "Saltlick",
+     "text": "Anybody got work? Asking for a friend. The friend is me.",
+     "stamp": "04:23:43/03-20-57"
+    },
+    {
+     "handle": "Kipper",
+     "text": "Fixer on 3rd is hiring. Bring your own body bag.",
+     "stamp": "04:25:10/03-20-57"
+    }
+   ],
+   [
+    {
+     "handle": "Lady Ghoul",
+     "text": "Heard the Stuffer Shack on 5th has real coffee now.",
+     "stamp": "12:06:33/03-20-57"
+    },
+    {
+     "handle": "Two-Ton Mule",
+     "text": "Heard wrong. It's soykaf with brown dye.",
+     "stamp": "12:09:39/03-20-57"
+    },
+    {
+     "handle": "Lady Ghoul",
+     "text": "Still better than yours.",
+     "stamp": "12:12:09/03-20-57"
+    }
+   ],
+   [
+    {
+     "handle": "Whisperjack",
+     "text": "Reminder: the board never sleeps, but you should.",
+     "stamp": "02:47:35/03-20-57"
+    },
+    {
+     "handle": "Spoonbender",
+     "text": "Sleep is for people without drain headaches.",
+     "stamp": "02:50:25/03-20-57"
+    }
+   ]
+  ]
+ }
+}

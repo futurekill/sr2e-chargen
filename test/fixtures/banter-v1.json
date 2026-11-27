@@ -1,0 +1,165 @@
+{
+ "$comment": "The 32 lines of banter version 1 (git HEAD before docs/PLAN-help-footer.md): the v2 conversion must keep every one under its key.",
+ "lines": [
+  {
+   "key": "choice:priority.magic.A",
+   "handle": "Spoonbender",
+   "text": "Full magician. Remember: the astral sees you too."
+  },
+  {
+   "key": "choice:priority.resources.A",
+   "handle": "Velvet Nine",
+   "text": "A million nuyen and a head full of chrome. Try not to rust before your first run."
+  },
+  {
+   "key": "choice:priority.resources.E",
+   "handle": "Kipper",
+   "text": "Five thousand nuyen. That's a pistol and a prayer, chummer."
+  },
+  {
+   "key": "choice:essence.low",
+   "handle": "Lady Ghoul",
+   "text": "Under two Essence. The street docs call that 'held together by warranty'."
+  },
+  {
+   "key": "choice:magic.with.cyberware",
+   "handle": "Spoonbender",
+   "text": "Every piece of chrome you put in costs the mana you had. Ask the shamans who traded theirs for a smartlink."
+  },
+  {
+   "key": "itemtype:cyberware",
+   "handle": "Whisperjack",
+   "text": "Chrome's forever. The warranty isn't."
+  },
+  {
+   "key": "itemtype:weapon",
+   "handle": "Rustbucket",
+   "text": "Buy the gun you can afford to throw in the river."
+  },
+  {
+   "key": "itemtype:armor",
+   "handle": "Two-Ton Mule",
+   "text": "Armor jacket. Boring. Alive. Pick one."
+  },
+  {
+   "key": "itemtype:vehicle",
+   "handle": "Tick-Tock",
+   "text": "Your ride is your getaway, your office and occasionally your coffin. Spend accordingly."
+  },
+  {
+   "key": "itemtype:program",
+   "handle": "GridMother",
+   "text": "A deck's only as good as the code on it. And the decker's only as good as their nerve."
+  },
+  {
+   "key": "metatype:human",
+   "handle": "Tick-Tock",
+   "text": "Human. Nothing special — which is exactly why nobody remembers your face. Use that."
+  },
+  {
+   "key": "metatype:elf",
+   "handle": "Lady Ghoul",
+   "text": "Pointy ears open doors uptown and close them in the Barrens. Know which street you're on."
+  },
+  {
+   "key": "metatype:dwarf",
+   "handle": "Two-Ton Mule",
+   "text": "Dwarves see in the dark and shrug off what kills the rest of us. Short jokes are fatal. Mostly for the joker."
+  },
+  {
+   "key": "metatype:ork",
+   "handle": "Saltlick",
+   "text": "Tusks and a short fuse are what they expect. Give 'em a long memory instead."
+  },
+  {
+   "key": "metatype:troll",
+   "handle": "Two-Ton Mule",
+   "text": "Doorframes are your natural enemy. Everything else is just scared of you."
+  },
+  {
+   "key": "step:start",
+   "handle": "GridMother",
+   "text": "New face on the board. Pick a handle you can live with, chummer. Your government name? Keep it in a lead box."
+  },
+  {
+   "key": "step:start",
+   "handle": "Whisperjack",
+   "text": "Second the lead box. I've seen SINs sold for less than a soykaf."
+  },
+  {
+   "key": "step:priorities",
+   "handle": "Rustbucket",
+   "text": "Five letters, A through E, and every one of 'em costs you something. Welcome to the shadows."
+  },
+  {
+   "key": "step:priorities",
+   "handle": "Velvet Nine",
+   "text": "Put Resources on E and you'll be eating Nutrisoy out of a dumpster behind the Stuffer Shack. Ask me how I know."
+  },
+  {
+   "key": "step:priorities",
+   "handle": "Tick-Tock",
+   "text": "Put Magic on A and the street will smell it on you before you open your mouth. Worth it."
+  },
+  {
+   "key": "step:metatype",
+   "handle": "Two-Ton Mule",
+   "text": "Pick your meat. You'll be stuck in it a while."
+  },
+  {
+   "key": "step:magic",
+   "handle": "Spoonbender",
+   "text": "Awakened? Then hear this: the drain doesn't care how pretty your spell looks."
+  },
+  {
+   "key": "step:magic",
+   "handle": "Lady Ghoul",
+   "text": "Totem or tradition, choose like your life depends on it. It will."
+  },
+  {
+   "key": "step:attributes",
+   "handle": "Rustbucket",
+   "text": "Body keeps you breathing. Quickness keeps you out of the way. Nobody ever died of too much Willpower."
+  },
+  {
+   "key": "step:skills",
+   "handle": "GridMother",
+   "text": "Can't shoot, can't talk, can't drive? Then you'd better be able to run. Fast."
+  },
+  {
+   "key": "step:skills",
+   "handle": "Kipper",
+   "text": "Etiquette is the cheapest armor in the Sprawl. Nobody buys it."
+  },
+  {
+   "key": "step:edges",
+   "handle": "Whisperjack",
+   "text": "Everybody's got a flaw. The smart ones know which one will get 'em killed."
+  },
+  {
+   "key": "step:resources",
+   "handle": "Velvet Nine",
+   "text": "Nuyen in your pocket at the start is the most nuyen you'll ever have. Spend it like it's your last."
+  },
+  {
+   "key": "step:contacts",
+   "handle": "Saltlick",
+   "text": "Your fixer is not your friend. Your fixer is your fixer. Learn the difference before you learn it the hard way."
+  },
+  {
+   "key": "step:lifestyle",
+   "handle": "Kipper",
+   "text": "Low lifestyle: you'll learn which neighbours to trust. Squatter: you'll learn which ones to run from."
+  },
+  {
+   "key": "step:finish",
+   "handle": "GridMother",
+   "text": "Board's open. Don't make me write your obituary on it."
+  },
+  {
+   "key": "step:finish",
+   "handle": "Rustbucket",
+   "text": "Frag it, I'll write it. I've got a template."
+  }
+ ]
+}

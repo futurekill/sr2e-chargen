@@ -28,6 +28,11 @@ Character step is opened in each theme, with its disclosures opened, a purchase 
 colours as the visible rows), and the purchase table's "×" remove buttons (one glyph axe can't measure; its accessible
 name "Remove <item>" starts with the visible text, as 2.5.3 allows).
 
+## The Shadowland board
+The footer's banter is decoration: screen readers get the whole thread as a list (not a live region, never
+interrupting); the line-by-line reveal is hidden from them, has a Pause (it lasts longer than 5 seconds, 2.2.2), never
+runs with "reduce motion", and can be hidden (footer or Account). The scan checks all of it.
+
 ## Known limits
 - The PDFs are tagged but **not certified PDF/UA**: pdfkit can't produce every PDF/UA requirement.
 - The landing picture is decorative (no information) and is hidden from screen readers.
@@ -36,5 +41,5 @@ name "Remove <item>" starts with the visible text, as 2.5.3 allows).
   only when its results are recorded and fixed.
 
 ## Reporting a problem
-Open an issue on the project's GitHub page and say which page, which browser and assistive technology, and what
-happened.
+Tell the admin of the node you use (the repository is private), and say which page, which browser and assistive
+technology, and what happened. The maintainer takes it from there.

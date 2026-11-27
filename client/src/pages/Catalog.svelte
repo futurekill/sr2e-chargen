@@ -53,6 +53,7 @@
 </script>
 
 <h1>The catalog</h1>
+<p class="howto"><a href={"/help/catalog"}>How this works</a></p>
 <p class="muted">Everything a runner can buy, learn or be. Each entry says where it comes from.</p>
 {#if error}<p class="notice bad" role="alert">{error}</p>{/if}
 

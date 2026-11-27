@@ -338,6 +338,11 @@ The Admin page in the app does the everyday part too: invites (user or admin), t
 characters, vehicles and drafts each user has made, and how many are in their trash), disabling and re-enabling, and
 reset links.
 
+## Using the app
+
+The full guide is **in the app**: **Help** in the header (or **How this works** on any page) covers every feature with
+pictures. The sections below are a summary for people reading the repository.
+
 ## Building a character
 
 **Hoi, chummer!** builds a Shadowrun, Second Edition character the way the core book does it, one step at a time.

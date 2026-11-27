@@ -2,6 +2,7 @@
   import { get, mutate } from "../lib/api.js";
   import { go } from "../lib/router.svelte.js";
   import { page } from "../lib/page.svelte.js";
+  import { setBoard } from "../lib/context.svelte.js";
   import Character from "./Character.svelte";
   import Vehicle from "./Vehicle.svelte";
   import Npc from "./Npc.svelte";
@@ -16,6 +17,9 @@
     try {
       doc = await get(`/api/documents/${id}`);
       page.title = doc.document.name;
+      // The board's place by kind; a character page refines it with its step and choices.
+      const k = doc.document.kind;
+      setBoard({ page: k === "vehicle" ? (doc.body.design ? "workshop" : "vehicle") : k === "npc" ? "npc" : k === "draft" ? "draft" : "character" });
       name = doc.body.name; notes = doc.body.notes;
       revisions = (await get(`/api/documents/${id}/revisions`)).revisions;
       error = "";
@@ -66,6 +70,7 @@
   <Npc {doc} />
 {:else}
   <h1>{doc.document.name}</h1>
+  <p class="howto"><a href={"/help/drafts"}>How this works</a></p>
   <p class="muted">{doc.document.kind} · revision {doc.document.revision} · saved {when(doc.document.updatedAt)}</p>
   <form class="stack wide" onsubmit={save}>
     <!-- Locked while a save is in flight: what comes back replaces the boxes, so nothing typed meanwhile can be lost. -->

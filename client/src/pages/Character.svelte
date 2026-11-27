@@ -1,6 +1,9 @@
 <script>
+  import { helpFor } from "../help/sections.js";
   import { flagFocused, clearFlags } from "../lib/focus.js";
   import { page } from "../lib/page.svelte.js";
+  import { setBoard } from "../lib/context.svelte.js";
+  import { characterChoices } from "../../../shared/banter.mjs";
   /**
    * Character creation (docs/PLAN-M2.md §6). Every change is ONE operation: applied here at once with the shared
    * reducer (a fast screen), then sent to the server, whose answer replaces the local copy. Changes go out one at a
@@ -244,6 +247,8 @@
    */
   let epoch = 0, recovering = $state(false), gone = false, savedNote = $state("");
   $effect(() => { page.title = body.name; });   // the tab title follows a rename (code review r1 #3)
+  // The board fits the open step, the metatype and the choices made (docs/PLAN-help-footer.md 3).
+  $effect(() => { setBoard({ page: "character", step: tab, race: sys.race ?? "", choices: characterChoices(body, derived.essence) }); });
   onDestroy(() => { gone = true; });
   function change(op) {
     if (recovering) return;   // nothing new on top of a copy that's about to be replaced (review r2)
@@ -400,6 +405,7 @@
   <div class="steps">
     <header>
       <h1>{body.name}</h1>
+      <p class="howto"><a href={helpFor({ kind: "character", tab })}>How this works</a></p>
       <p class="muted">character · revision {server.document.revision} · {sending ? "saving…" : "saved"}{finished ? " · finished" : ""}</p>
       <div class="tabs" role="tablist" aria-label="Character steps" tabindex="-1" onkeydown={tabKey}>
         {#each tabs as [id, title] (id)}

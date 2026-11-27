@@ -59,6 +59,7 @@
 </script>
 
 <h1>{body.name}</h1>
+<p class="howto"><a href={"/help/npcs"}>How this works</a></p>
 <p class="muted">NPC{#if body.source} · from the book's {body.source.kind}{/if} · revision {server.document.revision}</p>
 {#if error}<p class="notice bad" role="alert" id="doc-error">{error}</p>{/if}
 <p class="sr-only" role="status">{status}</p>
@@ -139,7 +140,7 @@
   {#if preview.changes.length}
     <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
 <div class="scroll-x" role="region" aria-label="Experience preview" tabindex="0"><table><caption>What +{preview.pct}% changes</caption><thead><tr><th scope="col">Value</th><th scope="col">Now</th><th scope="col">After</th></tr></thead>
-      <tbody>{#each preview.changes as c (c.what + (c.itemId ?? ""))}<tr><th scope="row">{c.what}</th><td>{c.what === "nuyen" ? nuyen(c.from) : c.from}</td><td>{c.what === "nuyen" ? nuyen(c.to) : c.to}</td></tr>{/each}</tbody></table></div>
+      <tbody>{#each preview.changes as c (c.what + (c.itemId ?? ""))}<tr><th scope="row">{c.what}</th><td>{c.money ? nuyen(c.from) : c.from}</td><td>{c.money ? nuyen(c.to) : c.to}</td></tr>{/each}</tbody></table></div>
     <button disabled={busy || (!xpAttrs && !xpSkills && !xpRes)} onclick={() => send([{ op: "applyExperience", years: int(years), attributes: xpAttrs, skills: xpSkills, resources: xpRes }]).then(() => { years = ""; })}>Apply</button>
   {/if}
 {/if}

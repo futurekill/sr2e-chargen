@@ -3,6 +3,23 @@
 Every change people can see goes under **Unreleased** in the same commit. A release retitles that section and its
 notes come from it.
 
+## 1.1.0 — 2026-11-27
+- Added: **Help** in the app (docs/PLAN-help-footer.md): how to use every feature, with pictures — getting started,
+  building a character, play, printing, Foundry, the garage, the Workshop, NPCs, drafts, the catalog, your account,
+  accessibility and the admin's tasks. Every page has a **How this works** link to its own topic; Help works signed out
+  too.
+- Added: **a footer** on every page: the app's version (and, signed in, the rules content this node runs), links to
+  Help, Accessibility, **What's new** (a page of the latest releases, from this changelog) and **Report a problem**
+  (tell your node's admin), and an unofficial-fan-project notice.
+- Added: **the Shadowland board** (PLAN.md U11, now in the footer): a short thread of in-character banter that fits
+  where you are (the page, the character's step, metatype and choices), new on every page, revealed line by line like a
+  live board. Pause shows the whole thread; Hide banter (or Account → Banter) turns it off; it never animates with
+  "reduce motion", and screen readers get the whole thread at once, never interrupted. 156 original lines. Never on
+  a sheet or an export.
+- Fixed: a Rigger 2 design showed "unsaved changes" as soon as it opened (a menu filled in an empty field).
+- Fixed: the NPC experience preview names attributes properly ("Body", not "body").
+- Changed: an address with an ordinary `#anchor` keeps it (only one-time link secrets are wiped).
+
 ## 1.0.0 — 2026-11-27
 The first release without the beta tag.
 - Added: **accessibility** to WCAG 2.2 AA (docs/ACCESSIBILITY.md, docs/PLAN-a11y.md). A skip link; each page has its

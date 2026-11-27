@@ -43,7 +43,7 @@ export default async function authRoutes(app) {
   // A partial update: each field given replaces that field; the rest are re-read in the same transaction, so a font save
   // and a theme save from two devices don't undo each other.
   app.put("/account/prefs", { onRequest: app.needSession, schema: { body: { type: "object", additionalProperties: false, minProperties: 1,
-    properties: { readableFont: { type: "boolean" }, theme: { type: "string", enum: [...THEMES] } } } } },
+    properties: { readableFont: { type: "boolean" }, theme: { type: "string", enum: [...THEMES] }, banter: { type: "boolean" } } } } },
     async (req) => writeTx(req.ctx, async trx => {
       const row = await updateLock(req.ctx, trx.selectFrom("users").select("prefs").where("id", "=", req.session.user.id)).executeTakeFirst();
       const prefs = { ...readPrefs(row?.prefs), ...req.body };

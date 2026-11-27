@@ -1,43 +1,83 @@
 {
  "schema": "sr2e-banter",
- "version": 1,
+ "version": 2,
  "set": "original",
  "source": "original",
  "entries": {
   "itemtype:cyberware": [
-   {
-    "handle": "Whisperjack",
-    "text": "Chrome's forever. The warranty isn't.",
-    "stamp": "03:10:22/03-15-57"
-   }
+   [
+    {
+     "handle": "Whisperjack",
+     "text": "Chrome's forever. The warranty isn't.",
+     "stamp": "03:10:22/03-15-57"
+    },
+    {
+     "handle": "Lady Ghoul",
+     "text": "Read the Essence cost twice. The doc only reads it once.",
+     "stamp": "12:35:09/03-15-57"
+    }
+   ]
   ],
   "itemtype:weapon": [
-   {
-    "handle": "Rustbucket",
-    "text": "Buy the gun you can afford to throw in the river.",
-    "stamp": "03:12:48/03-15-57"
-   }
+   [
+    {
+     "handle": "Rustbucket",
+     "text": "Buy the gun you can afford to throw in the river.",
+     "stamp": "03:12:48/03-15-57"
+    },
+    {
+     "handle": "Two-Ton Mule",
+     "text": "And buy two. The river's hungry.",
+     "stamp": "05:37:27/03-15-57"
+    }
+   ]
   ],
   "itemtype:armor": [
-   {
-    "handle": "Two-Ton Mule",
-    "text": "Armor jacket. Boring. Alive. Pick one.",
-    "stamp": "03:14:05/03-15-57"
-   }
+   [
+    {
+     "handle": "Two-Ton Mule",
+     "text": "Armor jacket. Boring. Alive. Pick one.",
+     "stamp": "03:14:05/03-15-57"
+    },
+    {
+     "handle": "Kipper",
+     "text": "Pick alive. Boring gets you to the next run.",
+     "stamp": "16:32:14/03-15-57"
+    },
+    {
+     "handle": "Velvet Nine",
+     "text": "Boring with a lining. I know a tailor.",
+     "stamp": "16:34:57/03-15-57"
+    }
+   ]
   ],
   "itemtype:vehicle": [
-   {
-    "handle": "Tick-Tock",
-    "text": "Your ride is your getaway, your office and occasionally your coffin. Spend accordingly.",
-    "stamp": "03:16:39/03-15-57"
-   }
+   [
+    {
+     "handle": "Tick-Tock",
+     "text": "Your ride is your getaway, your office and occasionally your coffin. Spend accordingly.",
+     "stamp": "03:16:39/03-15-57"
+    },
+    {
+     "handle": "Rustbucket",
+     "text": "...and occasionally your coffin. Buy the one with the armour.",
+     "stamp": "21:13:26/03-15-57"
+    }
+   ]
   ],
   "itemtype:program": [
-   {
-    "handle": "GridMother",
-    "text": "A deck's only as good as the code on it. And the decker's only as good as their nerve.",
-    "stamp": "03:18:11/03-15-57"
-   }
+   [
+    {
+     "handle": "GridMother",
+     "text": "A deck's only as good as the code on it. And the decker's only as good as their nerve.",
+     "stamp": "03:18:11/03-15-57"
+    },
+    {
+     "handle": "Whisperjack",
+     "text": "And the decker's only as good as their exit plan.",
+     "stamp": "20:29:28/03-15-57"
+    }
+   ]
   ]
  }
 }

@@ -26,7 +26,9 @@ loss in either direction**.
   copied in beyond what the compendia hold.
 - U10. Later, not v1: social login (Google etc.), personal library with public copies, campaigns/GM layer.
 - U11. **Shadowland banter** in the builder (2026-11-12, a must): in-character BBS-style commentary on choices
-  (`>>>>>[ … ]<<<<< —Handle`), shown in the builder only, never printed on sheets or exports. Banter is data
+  (`>>>>>[ … ]<<<<< —Handle`), shown in the builder only, never printed on sheets or exports. _Amended 2026-11-27 (user):
+  shown in the site footer's board on every page, context-aware, still never on sheets or exports
+  (docs/PLAN-help-footer.md)._ Banter is data
   (`banter/*.json`, keyed to steps, items, metatypes, choices), so it can be toggled and swapped. Default set is
   ORIGINAL writing in the style with our own handles; quotes from the books only in the full-content mode (U12).
 - U12. **Copyright-friendly mode** (later, to think through): a run mode with reduced content exposure. Design

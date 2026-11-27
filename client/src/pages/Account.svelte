@@ -2,6 +2,7 @@
   import { tick } from "svelte";
   import { get, post, put, applyFont, applyTheme } from "../lib/api.js";
   import { keepFocus } from "../lib/focus.js";
+  import { prefs, setBanter } from "../lib/prefs.svelte.js";
   import { THEMES } from "../../../shared/themes.mjs";
   let { user, onSignedOut } = $props();
   let current = $state(""), next = $state(""), again = $state(""), error = $state(""), busy = $state(false);
@@ -12,6 +13,13 @@
   /** Saved on the server (every device, and the sheet's default font), then applied; one save at a time (r1 #4 #5). */
   let saving = $state(false), status = $state("");
   const setFont = () => keepFocus(saveFont), setTheme = () => keepFocus(saveTheme);   // the control keeps focus (r1 #1)
+  /** The Shadowland board on or off: the SAME shared state the footer's Hide uses (docs/PLAN-help-footer.md 3). */
+  const setBoardPref = (ev) => keepFocus(async () => {
+    const on = ev.currentTarget.checked;
+    saving = true; error = "";
+    try { status = (await setBanter(on)) ? "Shadowland board on." : "Shadowland board off."; } catch (err) { error = err.message; }
+    saving = false;
+  });
   async function saveFont() {
     saving = true; error = "";
     try { const p = await put("/api/account/prefs", { readableFont: readable }); readable = p.readableFont; applyFont(readable); status = readable ? "Easy-to-read font on." : "Easy-to-read font off."; }
@@ -51,6 +59,7 @@
 </script>
 
 <h1>{user.username}</h1>
+<p class="howto"><a href={"/help/account"}>How this works</a></p>
 <p class="muted">{user.role === "admin" ? "Admin of this node." : "Runner."}</p>
 {#if error}<p class="notice bad" role="alert" id="account-error">{error}</p>{/if}
 <p class="sr-only" role="status">{status}</p>
@@ -62,6 +71,9 @@
 
 <h2>Reading</h2>
 <label class="row"><input class="check" type="checkbox" bind:checked={readable} onchange={setFont} disabled={saving}><span>Use an easy-to-read font (Atkinson Hyperlegible) on the site and on printed sheets</span></label>
+
+<h2>Banter</h2>
+<label class="row"><input class="check" type="checkbox" checked={prefs.banter} onchange={setBoardPref} disabled={saving}><span>Show the Shadowland board (in-character banter at the foot of each page)</span></label>
 
 <h2>Change password</h2>
 <p class="muted">Changing it signs you out on every device.</p>

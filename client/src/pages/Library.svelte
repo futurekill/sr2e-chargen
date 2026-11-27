@@ -70,6 +70,7 @@
 </script>
 
 <h1>Your library</h1>
+<p class="howto"><a href={"/help/getting-started#library"}>How this works</a></p>
 <p class="muted">Characters are built step by step: the core book's Priority system, or, with the Companion, sum-to-10 or Building Points. Vehicles live in your garage: weapons on their mounts, cargo, then bought or linked by your characters. NPCs are the gamemaster's: start from a book contact or archetype, or blank, and tailor them (core p.187). Drafts are free-text notes.</p>
 {#if error}<p class="notice bad" role="alert">{error}</p>{/if}
 

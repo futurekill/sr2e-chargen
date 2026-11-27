@@ -9,18 +9,9 @@
  *   A11Y_ONLY     a regular expression: scan only the pages whose key matches (debugging)
  */
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
-import { randomUUID, randomBytes } from "node:crypto";
-import { createServer } from "node:net";
 import { join } from "node:path";
 import puppeteer from "puppeteer-core";
-import { createContext } from "../server/db/index.mjs";
-import { buildApp } from "../server/app.mjs";
-import { loadConfig } from "../server/config.mjs";
-import { loadCatalog, entryOf } from "../server/catalog.mjs";
-import * as A from "../server/auth/accounts.mjs";
-import * as L from "../server/library.mjs";
-import { active } from "../server/auth/passwords.mjs";
-import { blankDesign } from "../shared/rules.mjs";
+import { startApp } from "./app-fixture.mjs";
 import { THEME_KEYS } from "../shared/themes.mjs";
 
 const ROOT = new URL("../", import.meta.url).pathname;
@@ -31,51 +22,6 @@ const REDUCED = { name: "prefers-reduced-motion", value: "reduce" };   // kept i
 const TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22a", "wcag22aa"];
 const problems = [], incomplete = [], seenControls = new Set(), log = (...a) => console.log(...a);
 const fail = (page, check, detail) => { problems.push({ page, check, detail }); console.log(`  ✗ ${page} · ${check}: ${detail}`); };
-
-const freePort = () => new Promise((res) => { const s = createServer(); s.listen(0, "127.0.0.1", () => { const { port } = s.address(); s.close(() => res(port)); }); });
-
-/* ── The app and its data ─────────────────────────────────────────────────────────────────────────────────────── */
-async function startApp() {
-  active.memory = 8192; active.passes = 1;   // quick hashing: these credentials live only for this run
-  const port = await freePort(), origin = `http://127.0.0.1:${port}`;
-  const ctx = await createContext("sqlite://:memory:", { now: () => Date.now() });
-  const catalog = loadCatalog(join(ROOT, "catalog"));
-  const app = await buildApp({ ctx, config: loadConfig({ NODE_ENV: "production", BASE_URL: origin }), logger: false, catalog });
-  await app.listen({ port, host: "127.0.0.1" });
-  const password = randomBytes(18).toString("base64url");
-  const admin = await A.redeem(ctx, { secret: (await A.bootstrap(ctx)).secret, username: "Scanner", password });
-  const uid = admin.user.id, key = () => randomUUID(), lookup = (id) => entryOf(catalog, id);
-  const docs = {};
-  docs.draft = (await L.createDraft(ctx, uid, { name: "Run notes", notes: "Meet at the Ork Underground." }, key())).document.id;
-  // A character in creation, a shaman (the totem select shows).
-  let c = await L.createCharacter(ctx, uid, { name: "Whisper Two" }, key());
-  c = await L.applyOps(ctx, uid, c.document.id, { revision: c.document.revision, ops: [{ op: "setPriority", category: "magic", letter: "A" }, { op: "setMagic", type: "full_magician" }, { op: "setTradition", tradition: "shamanic" }] }, key(), lookup);
-  docs.creating = c.document.id;
-  // A finished character (an archetype imported from Foundry).
-  const razor = [...catalog.npcs.values()].find(r => r.source.type === "character" && /Razor/.test(r.source.name)).source;
-  docs.finished = (await L.importCharacter(ctx, uid, structuredClone(razor), key(), catalog.manifest.pins.find(p => p.id === "sr2e")?.version)).document.id;
-  // Vehicles: a catalog one, and designs that bring up every conditional Workshop control (r2 #1, r3 #1, r4).
-  const americar = catalog.index.find(({ e }) => e.type === "vehicle" && e.book === "sr2" && e.name === "Ford Americar").e.id;
-  docs.vehicle = (await L.createVehicle(ctx, uid, { catalogId: americar, name: "Getaway" }, key(), lookup, catalog.design)).document.id;
-  const design = async (name, d, ops = []) => {
-    const v = await L.createVehicle(ctx, uid, { design: true, name }, key(), lookup, catalog.design);
-    const r = await L.applyOps(ctx, uid, v.document.id, { revision: v.document.revision, ops: [{ op: "setDesign", design: { ...blankDesign(), ...d } }, ...ops] }, key(), lookup, "", [], catalog.design);
-    return r.document.id;
-  };
-  docs.sedan = await design("Sedan", { chassisKey: "sedan", powerPlantKey: "gasoline-cars-sedan", amenities: { level: "basic", occupants: 2 } },
-    [{ op: "addDesignMod", catalogId: "sr2e-rigger-2.r2-vehicle-mods.1536f4089f7e6eac", rating: 1 }]);   // drive-by-wire: its split shows
-  docs.boat = await design("Water Scooter", { chassisKey: "waterScooter", powerPlantKey: "gasoline-motorboats-skiff-and-water-scooter" });
-  docs.plane = await design("Ultralight", { chassisKey: "ultralight", powerPlantKey: "electric-fixed-wing-ultralight" });
-  docs.blankDesign = (await L.createVehicle(ctx, uid, { design: true, name: "Blank design" }, key(), lookup, catalog.design)).document.id;
-  // NPCs: a contact with a printed range, and a shaman archetype.
-  const npcId = (name) => [...catalog.npcs].find(([, r]) => r.source.name.startsWith(name))[0];
-  docs.npc = (await L.createNpc(ctx, uid, { catalogId: npcId("Bounty Hunter"), name: "Bounty Hunter" }, key(), (id) => catalog.npcs.get(id))).document.id;
-  docs.shamanNpc = (await L.createNpc(ctx, uid, { catalogId: npcId("Whisper"), name: "Whisper NPC" }, key(), (id) => catalog.npcs.get(id))).document.id;
-  // Something in the trash.
-  const gone = await L.createDraft(ctx, uid, { name: "Old notes" }, key());
-  await L.deleteDocument(ctx, uid, gone.document.id, { revision: 1 }, key());
-  return { app, ctx, origin, cookie: { name: "sid", value: admin.sessionSecret }, docs, login: { username: "Scanner", password } };
-}
 
 /* ── In-page checks (run inside the browser) ──────────────────────────────────────────────────────────────────── */
 const IN_PAGE = String.raw`
@@ -157,6 +103,12 @@ function pages(docs, login) {
     { key: "design blank", url: doc(docs.blankDesign), title: /^Blank design · / },
     { key: "npc", url: doc(docs.npc), title: /^Bounty Hunter · /, open: true, act: npcPreview, expect: ["Years of experience"], saveFocus: [["Professional Rating", "ArrowDown"]] },
     { key: "npc shaman", url: doc(docs.shamanNpc), title: /^Whisper NPC · /, expect: ["Totem"] },
+    // Help (docs/PLAN-help-footer.md 1): the index, a section, a section reached at an anchor, and signed out.
+    { key: "help", url: "/help", title: /^Help · / },
+    { key: "whats new", url: "/whats-new", title: /^What's new · / },
+    { key: "help section", url: "/help/npcs", title: /^NPCs · Help · / },
+    { key: "help anchor", url: "/help/garage#mounts", title: /^The garage \(vehicles\) · Help · / },
+    { key: "help signed out", url: "/help/getting-started", signedOut: true, title: /^Getting started · Help · / },
     { key: "sign in", url: "/", signedOut: true, title: /Hoi, chummer!/, act: refusedSignIn },
     { key: "redeem", url: "/redeem#k=not-a-real-secret", signedOut: true, title: /^Redeem/ },
     { key: "reset", url: "/reset#k=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", signedOut: true, title: /^Reset your password/, expect: ["Password again"] },
@@ -334,6 +286,7 @@ async function main() {
         const title = await p.title();
         if (pg.title && !pg.title.test(title)) fail(where, "title", `"${title}"`);
         await axe(p, where);
+        await footer(p, where);
         if (pg.expect) { pg.expect.forEach(e => expectAll.add(e)); await coverage(p, pg.expect); }
         if (theme === THEME_KEYS[0]) {   // the theme-independent checks once; focus contrast in every theme below
           await keyboard(p, where);
@@ -350,6 +303,7 @@ async function main() {
       }
     }
     for (const e of expectAll) if (!seenControls.has(e)) fail("coverage", "control never rendered", e);
+    await boardInMotion(browser, origin, cookie);
   } finally {
     await browser.close();
     await app.close();
@@ -358,6 +312,53 @@ async function main() {
   writeFileSync(process.env.A11Y_REPORT || "a11y-report.json", `${JSON.stringify(report, null, 2)}\n`);
   log(problems.length ? `\n${problems.length} accessibility problem(s)` : "\nno accessibility problems");
   process.exitCode = problems.length ? 1 : 0;
+}
+/**
+ * The footer on every page (docs/PLAN-help-footer.md 2–3): a contentinfo landmark with its links; the board, when
+ * on, is never a live region, its static copy holds the WHOLE thread, and (reduce motion) every line shows at once.
+ */
+async function footer(p, where) {
+  const r = await p.evaluate(() => {
+    const f = document.querySelector("footer.site");
+    const board = f?.querySelector(".board");
+    return { footer: !!f, links: [...(f?.querySelectorAll("nav a") ?? [])].map(a => a.textContent.trim()),
+      live: !!f?.querySelector("[aria-live], [role=log], [role=status]:not(:empty)") && !!board?.closest("[aria-live]"),
+      board: !!board, all: board?.querySelectorAll("ol.sr-only li").length ?? 0, shown: board?.querySelectorAll("ol.screen li:not(.typing)").length ?? 0,
+      screenHidden: board ? board.querySelector("ol.screen")?.getAttribute("aria-hidden") === "true" : true };
+  });
+  if (!r.footer) return fail(where, "footer", "no footer");
+  for (const l of ["Help", "Accessibility"]) if (!r.links.includes(l)) fail(where, "footer", `no ${l} link`);
+  if (r.live) fail(where, "footer", "the board is inside a live region");
+  if (r.board && (r.all < 2 || r.shown !== r.all)) fail(where, "board", `reduced motion: ${r.shown} of ${r.all} lines shown`);
+  if (!r.screenHidden) fail(where, "board", "the animated copy is not aria-hidden");
+}
+/** Under NORMAL motion (r1 #9): lines come over time; Pause shows the whole thread and keeps focus; Hide removes it. */
+async function boardInMotion(browser, origin, cookie) {
+  const where = "board in motion";
+  const ctxB = await browser.createBrowserContext();
+  const p = await ctxB.newPage();
+  await p.setViewport({ width: 1280, height: 900 });
+  await ctxB.setCookie({ ...cookie, domain: "127.0.0.1", path: "/", httpOnly: true, sameSite: "Lax" });
+  await p.goto(`${origin}/catalog`, { waitUntil: "networkidle0" });
+  const early = await p.evaluate(() => ({ all: document.querySelectorAll(".board ol.sr-only li").length, shown: document.querySelectorAll(".board ol.screen li:not(.typing)").length }));
+  if (!(early.all >= 2 && early.shown < early.all)) fail(where, "reveal", `at load ${early.shown} of ${early.all} lines shown (expected fewer)`);
+  const btn = await p.evaluateHandle(() => [...document.querySelectorAll(".board button")].find(b => b.textContent.trim() === "Pause"));
+  if (!btn.asElement()) { fail(where, "pause", "no Pause button while revealing"); return ctxB.close(); }
+  await btn.asElement().focus();
+  await p.keyboard.press("Enter");
+  await new Promise(r => setTimeout(r, 200));
+  const paused = await p.evaluate(() => ({ all: document.querySelectorAll(".board ol.sr-only li").length, shown: document.querySelectorAll(".board ol.screen li:not(.typing)").length, focus: document.activeElement?.closest(".board") !== null }));
+  if (paused.shown !== paused.all) fail(where, "pause", `after Pause ${paused.shown} of ${paused.all} lines shown`);
+  if (!paused.focus) fail(where, "pause", "focus left the board's button");
+  await p.evaluate(() => [...document.querySelectorAll(".board button")].find(b => b.textContent.trim() === "Hide banter")?.click());
+  await p.waitForNetworkIdle({ idleTime: 200, timeout: 5000 }).catch(() => {});
+  const hidden = await p.evaluate(() => ({ board: !!document.querySelector(".board"), focus: document.activeElement?.textContent.trim() }));
+  if (hidden.board) fail(where, "hide", "the board is still there after Hide");
+  if (hidden.focus !== "Show the Shadowland board") fail(where, "hide", `focus went to "${hidden.focus}"`);
+  await p.keyboard.press("Enter");   // bring it back for the rest of the run
+  await p.waitForNetworkIdle({ idleTime: 200, timeout: 5000 }).catch(() => {});
+  if (!(await p.$(".board"))) fail(where, "show", "Show the Shadowland board didn't bring it back");
+  await ctxB.close();
 }
 /** Focus indicators in this theme and width, without the full traversal (contrast differs by theme). */
 async function keyboardFocusOnly(p, where) {
