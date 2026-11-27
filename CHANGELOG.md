@@ -3,6 +3,15 @@
 Every change people can see goes under **Unreleased** in the same commit. A release retitles that section and its
 notes come from it.
 
+## 1.3.1 — 2026-11-27
+
+### Fixed
+- NPC page: the "Use" buttons beside the Threat Rating helpers (and every other button in a row of labelled fields)
+  line up with the fields, not the labels; "Keep" for a book's Professional Rating range is no longer wedged inside
+  the sentence.
+- Tests: each test file drops the test databases of earlier runs that nobody is connected to, so a long-lived local
+  Postgres/MySQL container no longer fills up (Postgres ran out of shared memory, error 53100).
+
 ## 1.3.0 — 2026-11-27
 
 ### Changed — NPC Threat dice roll in Foundry (system 0.172.0, core p.187)

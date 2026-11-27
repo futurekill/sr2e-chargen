@@ -113,9 +113,9 @@
     {#each [1, 2, 3, 4] as r (r)}<option value={r}>{r} · {PR_NAME[r]}</option>{/each}</select></label>
   <label><span>Threat Rating</span><input type="number" min="0" max="20" value={sys.threatRating} disabled={busy} onchange={(ev) => send([{ op: "setThreatRating", rating: num(ev) }])}></label>
 </div>
-<p class="muted">{#if view.prRange}The book prints {view.prRange[0]}–{view.prRange[1]} for this NPC: pick one. Until then, the low end:
-  <button type="button" class="quiet" disabled={busy} onclick={() => send([{ op: "setProfessionalRating", rating: sys.professionalRating }])}>Keep {sys.professionalRating}</button>{/if}
-  {#if view.professional}{PR_NAME[sys.professionalRating]}: {view.professional.withdraw ? WITHDRAW[view.professional.withdraw] : "fights to the end"}{#if view.professional.withdraw}; the gamemaster may call a Willpower (4) Test to stay{/if}.{/if}</p>
+{#if view.prRange}<div class="row"><p class="muted">The book prints {view.prRange[0]}–{view.prRange[1]} for this NPC: pick one. Until then, the low end.</p>
+  <button type="button" class="quiet" disabled={busy} onclick={() => send([{ op: "setProfessionalRating", rating: sys.professionalRating }])}>Keep {sys.professionalRating}</button></div>{/if}
+<p class="muted">{#if view.professional}{PR_NAME[sys.professionalRating]}: {view.professional.withdraw ? WITHDRAW[view.professional.withdraw] : "fights to the end"}{#if view.professional.withdraw}; the gamemaster may call a Willpower (4) Test to stay{/if}.{/if}</p>
 {#if sys.threatRating > 0}<p class="notice" role="status">Threat Rating {sys.threatRating}: these dice don't refresh and can be used for several tests in a Combat Phase; p.187 says this NPC then uses no Dice Pools. The export turns on "Roll Threat dice", so Foundry rolls them on every test and uses no Dice Pools for this NPC.</p>{/if}
 <div class="row wrap">
   <label><span>From a difficulty (p.68)</span><select bind:value={difficulty} onchange={() => { tnChoice = ""; }}>
@@ -201,3 +201,9 @@
   <p class="muted">It goes to the trash (restorable for 30 days).</p>
   <button class="danger" disabled={busy} onclick={remove}>Delete</button>
 </details>
+
+<style>
+  /* Fields sit under their labels: a button in the same row lines up with the fields, not the labels. */
+  .row.wrap { align-items: end; }
+  .row > p { margin: 0; }
+</style>
