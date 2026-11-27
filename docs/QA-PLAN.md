@@ -276,7 +276,9 @@ Run it once with **VoiceOver + Safari** (macOS) and once with **NVDA + Firefox**
    marked"; no page numbers in the reading.
 8. Windows **High Contrast** (Settings → Accessibility → Contrast themes): every control has a border and a visible
    focus.
-Results: _not yet run._
+Results: _not yet run._ The maintainer has no Windows machine (2026-11-27): NVDA stays an open item, possibly never
+run. Substitute on Linux: **Orca + Firefox** (same steps; Orca's own keys) — not NVDA, but it finds the same kind of
+problems. VoiceOver + Safari on a Mac remains the main pass.
 
 Automatic: `test/accounts.test.mjs` and `test/admin-counts.test.mjs` (every database). Manual: as an admin, set a
 runner's role menu to admin: the runner's next page load shows Admin. With only one admin, set your own menu to runner:
