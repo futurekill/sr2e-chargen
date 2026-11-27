@@ -30,4 +30,4 @@ export const label = (key) => (typeof key === "string" && LABELS[key]) || key;
 export { designVehicle, applyModEffects, vehicleCapacity } from "../content/sr2e-foundryvtt/module/rules/vehicle-design.mjs";
 export { blankDesign, chassisArt, workshopUpdate, engineMods, choiceFor, modBuildContext, designModProblems, checkChoices, vehicleEffective } from "../content/sr2e-foundryvtt/module/rules/vehicle-workshop-rules.mjs";
 export { R2_MOUNTS, CONVERSION_KITS, mountProblems, mountedWeaponLoad, removalProblem, mountOf, weaponClassOf, fitProblem, kitFor, sourceKey } from "../content/sr2e-foundryvtt/module/rules/vehicle-mounts-r2.mjs";
-export { NPC_ATTRS, npcExperiencePct, npcExperienced, SKILL_SUCCESS_TABLE, threatFromDifficulty, threatFromTeamKarma, PROFESSIONAL_RATINGS, npcWithEffects, npcDerived } from "../content/sr2e-foundryvtt/module/rules/npc-rules.mjs";
+export { NPC_ATTRS, npcExperiencePct, npcExperienced, SKILL_SUCCESS_TABLE, threatFromDifficulty, threatFromTeamKarma, PROFESSIONAL_RATINGS, npcWithEffects, npcDerived, npcThreat } from "../content/sr2e-foundryvtt/module/rules/npc-rules.mjs";

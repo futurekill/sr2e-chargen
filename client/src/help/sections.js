@@ -156,7 +156,7 @@ export const SECTIONS = [
         "The preview lists every value that changes; **Apply** once. Values round to the nearest (house ruling R22)." ] },
       { id: "ratings", title: "Threat and Professional Ratings", steps: [
         "**Professional Rating** 1–4 shows when the NPC withdraws from a fight. Where the book prints a range, pick one.",
-        "**Threat Rating**: type it, or take it from a Skill Success Table difficulty (SR2 p.68) or the team's Karma (1 per 100). Foundry doesn't roll Threat dice for people: roll them by hand." ] }
+        "**Threat Rating**: type it, or take it from a Skill Success Table difficulty (SR2 p.68) or the team's Karma (1 per 100). An NPC with a Threat Rating exports with Roll Threat dice on: Foundry adds the Threat dice to every test and uses no Dice Pools for it (SR2 p.187)." ] }
     ]
   },
   {

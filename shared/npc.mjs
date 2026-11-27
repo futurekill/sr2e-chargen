@@ -8,7 +8,7 @@
  */
 import { Refusal } from "./creation.mjs";
 import { derive } from "./derive.mjs";
-import { NPC_ATTRS, npcExperiencePct, npcExperienced, npcWithEffects, npcDerived, PROFESSIONAL_RATINGS, wornArmorTotals, TABLES, RACE_KEYS } from "./rules.mjs";
+import { NPC_ATTRS, npcExperiencePct, npcExperienced, npcWithEffects, npcDerived, npcThreat, PROFESSIONAL_RATINGS, wornArmorTotals, TABLES, RACE_KEYS } from "./rules.mjs";
 
 export const NPC_SCHEMA = "sr2e-chargen-npc", NPC_SCHEMA_VERSION = 1;
 export const MAX_NPC_ITEMS = 200;
@@ -62,6 +62,8 @@ function filled(sys = {}) {
   s.magic = { value: 0, max: 0, type: "none", tradition: "none", totem: "", ...(s.magic ?? {}) };
   s.race ??= "human"; s.professionalRating ??= 1; s.combatPoolBonus ??= 0; s.nuyen ??= 0; s.biography ??= "";
   s.threatRating ??= 0;   // the contacts print none; Foundry's default would be 1 (r2 #2)
+  // A builder NPC with a Threat Rating rolls Threat dice in Foundry (system 0.172.0, core p.187): one rule, derived here.
+  s.threatDice = s.threatRating > 0;
   return s;
 }
 const blankBody = (name) => ({ schema: NPC_SCHEMA, schemaVersion: NPC_SCHEMA_VERSION, name, notes: "", source: null, nextItem: 1, experience: [],
@@ -255,7 +257,7 @@ export function npcView(body) {
   const sys = filled(body.actor.system), items = body.actor.items ?? [];
   const { system, unsupported } = npcWithEffects(sys, items);
   const awakened = sys.magic.type !== "none" || (sys.magic.value ?? 0) > 0 || items.some(i => i.type === "spell");
-  const d = npcDerived(system, { awakened, armorItems: items });
+  const d = npcDerived(system, { awakened, armorItems: items, threat: npcThreat("npc", system) });
   const pr = PROFESSIONAL_RATINGS[sys.professionalRating] ?? null;
   return { ...d, awakened, unsupported, professional: pr, prRange: body.source?.prPicked ? null : body.source?.prRange ?? null, threat: sys.threatRating,
     monitors: { physical: 10, stun: 10 } };
@@ -270,14 +272,13 @@ export function npcBooks(body) {
 }
 
 const escapeHtml = (s) => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
-/** The Foundry NPC actor this document describes: its name, its notes and the Threat note added to the biography. */
+/** The Foundry NPC actor this document describes: its name and its notes added to the biography. */
 export function npcActor(body) {
   const a = structuredClone(body.actor);
   a.name = body.name;
   a.system = filled(a.system);
   if (a.prototypeToken) a.prototypeToken = { ...a.prototypeToken, name: body.name };
   const paras = String(body.notes ?? "").split(/\n{2,}/).map(p => p.trim()).filter(Boolean);
-  if (a.system.threatRating > 0) paras.push(`Threat Rating ${a.system.threatRating}: roll these dice by hand; core p.187 says this NPC uses no Dice Pools.`);
   const extra = paras.map(p => `<p>${escapeHtml(p).replace(/\n/g, "<br>")}</p>`).join("");
   if (extra) a.system.biography = `${a.system.biography ?? ""}${extra}`;
   return a;

@@ -1,8 +1,8 @@
 {
   "dir": "sr2e-foundryvtt",
   "repo": "futurekill/sr2e-foundryvtt",
-  "tag": "v0.171.0",
-  "commit": "fdda9de5bd90eb85ae90696471ee1226916e1be3",
+  "tag": "v0.172.0",
+  "commit": "514a94cbc397c64cdf5f8bd94a438988c0d49624",
   "files": {
     "assets/pregen_portraits/glitch.webp": "d755a662065cf7ef209e114aab076e44ab813440",
     "assets/pregen_portraits/hexen.webp": "8bb0b8aad3f732fe85a2f700fe9b77c914e6475d",
@@ -11,16 +11,16 @@
     "assets/pregen_portraits/silk.webp": "9f83b6be644b75579b509122dd994c0322f93ea8",
     "assets/pregen_portraits/tiger.webp": "10891674af5a2c72cc7e4494ee3b391d9c887498",
     "assets/pregen_portraits/whisper.webp": "6b1b231d3e24c6ba89ebd261440b86bde2db4838",
-    "lang/en.json": "df6214a5acb48f7a7778d616d284279b1dd1330d",
+    "lang/en.json": "ee2d5b09a25894ef46d753dd666226e4e459ade1",
     "module/config.mjs": "17ff520e54dd45f85c18319d16172dd5ca7a5ed7",
     "module/rules/books.mjs": "a2f41e8dcf70828dbf9532c649a5fea933609f34",
     "module/rules/claim-rules.mjs": "e7086a18d86d4a651073a8576a03e2083a8d6203",
     "module/rules/limb-rules.mjs": "c51d44177c33c407314f42fc2041fe5c9bb4c890",
     "module/rules/limb-stats.mjs": "8287f3a0e187e1fd8f3f0e86a9b01106468cae2b",
-    "module/rules/npc-rules.mjs": "a81942e5433a05e4798453ab5c6d458a4e4d7178",
+    "module/rules/npc-rules.mjs": "eaab387557c587aad5c25e51a6ef7eb5150c2737",
     "module/rules/quality-rules.mjs": "12d33f6965373d7ac05aa79da549d59bfd904824",
     "module/rules/shapeshift-rules.mjs": "1ceafa60b2b8a62508b2604c71f0d795ca7145b2",
-    "module/rules/sr2e-rules.mjs": "fc73481cf12599a230f2d390737297844a8cae73",
+    "module/rules/sr2e-rules.mjs": "70f39f6d93aafbaf7be30c7da2506f4af4b580f2",
     "module/rules/vehicle-design.mjs": "4f846a7df72e6925dbb4195214731e3007881c33",
     "module/rules/vehicle-mounts-r2.mjs": "9d249aa73f6573cbaf041a23fb8f7d246a43ff9c",
     "module/rules/vehicle-mounts.mjs": "88fa26bcdbf12b9aa3688c080f11694f24fe1592",
@@ -714,6 +714,6 @@
     "packs-src/weapons/_subfolder_sniper_rifle_6d8b9811f947bd91.json": "f856b44d9d800069ef4e688d0b01889ef7e1033f",
     "packs-src/weapons/_subfolder_sport_rifle_c07931b8ddd4ff16.json": "4440a910975a6325eba9bc702e1015ed8d1e7e4e",
     "packs-src/weapons/_subfolder_taser_a6839df7cd4a9019.json": "0e5430599874bf68eeef7dbf2cbfeab2dc5fa420",
-    "system.json": "af8f6e33135ade468579e1bd0cbab038374fffcf"
+    "system.json": "39ad3e133ebced2e0ba5b23ce5e30371136e1b45"
   }
 }

@@ -55,7 +55,7 @@ test("a contact as printed: Threat 0, its items with fresh ids, the printed rang
 });
 
 test("archetypes become NPCs with Foundry's prepared numbers baked in (the runners parity fixture)", () => {
-  const fixture = JSON.parse(readFileSync(new URL("fixtures/parity/runners-v0.171.0.json", import.meta.url), "utf8"));
+  const fixture = JSON.parse(readFileSync(new URL("fixtures/parity/runners-v0.172.0.json", import.meta.url), "utf8"));
   for (const want of fixture.actors) {
     const id = Object.keys(npcs).find(k => k.endsWith(`.${want.id}`));
     const b = newNpc(npcs[id], null, id), v = npcView(b), at = (k) => `${want.name}: ${k}`;
@@ -128,8 +128,15 @@ test("ops: bounds, items, custom skills, totem, Body Index fractions, equip, Thr
   refused(() => op(b, { op: "setRace", race: "dragon" }));
   refused(() => op(b, { op: "nope" }));
   const a = npcActor(b);
-  assert.match(a.system.biography, /Threat Rating 3: roll these dice by hand/);
+  assert.equal(a.system.threatRating, 3);
+  assert.equal(a.system.threatDice, true, "exported with Roll Threat dice on (system 0.172.0, p.187)");
+  assert.doesNotMatch(a.system.biography ?? "", /by hand/);
   assert.equal(a.type, "npc");
+  const tv = npcView(b);
+  assert.deepEqual([tv.threat, tv.combatPool, tv.astralPool, tv.magicPool], [3, 0, 0, 0], "no Dice Pools in threat mode");
+  const off = npcActor(op(b, { op: "setThreatRating", rating: 0 }));
+  assert.equal(off.system.threatDice, false);
+  assert.ok(npcView(op(b, { op: "setThreatRating", rating: 0 })).combatPool > 0, "pools back with no Threat Rating");
 });
 
 test("HTTP: create from a book NPC, run NPC ops on their own route, export; the character route refuses them; admin counts", async () => {

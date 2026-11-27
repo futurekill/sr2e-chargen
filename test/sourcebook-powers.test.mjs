@@ -49,7 +49,7 @@ test("M5n: Enhanced Perception's tier items are priced together; Attribute Boost
 });
 
 test("M5n parity: an app-built adept with Mystic Armor, Enhanced Perception and Body Control derives as Foundry 0.166.0", () => {
-  const fx = JSON.parse(readFileSync(new URL("fixtures/parity/powers-v0.171.0.json", import.meta.url), "utf8"));
+  const fx = JSON.parse(readFileSync(new URL("fixtures/parity/powers-v0.172.0.json", import.meta.url), "utf8"));
   const system = JSON.parse(readFileSync(new URL("../content/sr2e-foundryvtt/system.json", import.meta.url), "utf8"));
   assert.equal(fx.version, system.version, "regenerate the fixture when the pin moves");
   for (const want of fx.actors) {

@@ -74,8 +74,8 @@
 <dl>
   <div><dt>Reaction</dt><dd>{view.reaction}</dd></div>
   <div><dt>Initiative</dt><dd>{view.reaction} + {view.initiativeDice}D6</dd></div>
-  <div><dt>Combat Pool</dt><dd>{view.combatPool}</dd></div>
-  {#if view.awakened}<div><dt>Astral Combat Pool</dt><dd>{view.astralPool}</dd></div>{/if}
+  <div><dt>Combat Pool</dt><dd>{view.threat ? `not used (Threat Rating ${view.threat})` : view.combatPool}</dd></div>
+  {#if view.awakened}<div><dt>Astral Combat Pool</dt><dd>{view.threat ? "not used" : view.astralPool}</dd></div>{/if}
   <div><dt>Armor</dt><dd>{view.armor.ballistic} / {view.armor.impact}</dd></div>
   <div><dt>Movement</dt><dd>{view.walk} / {view.run}</dd></div>
 </dl>
@@ -116,7 +116,7 @@
 <p class="muted">{#if view.prRange}The book prints {view.prRange[0]}–{view.prRange[1]} for this NPC: pick one. Until then, the low end:
   <button type="button" class="quiet" disabled={busy} onclick={() => send([{ op: "setProfessionalRating", rating: sys.professionalRating }])}>Keep {sys.professionalRating}</button>{/if}
   {#if view.professional}{PR_NAME[sys.professionalRating]}: {view.professional.withdraw ? WITHDRAW[view.professional.withdraw] : "fights to the end"}{#if view.professional.withdraw}; the gamemaster may call a Willpower (4) Test to stay{/if}.{/if}</p>
-{#if sys.threatRating > 0}<p class="notice" role="status">Threat Rating {sys.threatRating}: these dice don't refresh and can be used for several tests in a Combat Phase; p.187 says this NPC then uses no Dice Pools. Foundry doesn't roll them for people: roll them by hand (the export says so too).</p>{/if}
+{#if sys.threatRating > 0}<p class="notice" role="status">Threat Rating {sys.threatRating}: these dice don't refresh and can be used for several tests in a Combat Phase; p.187 says this NPC then uses no Dice Pools. The export turns on "Roll Threat dice", so Foundry rolls them on every test and uses no Dice Pools for this NPC.</p>{/if}
 <div class="row wrap">
   <label><span>From a difficulty (p.68)</span><select bind:value={difficulty} onchange={() => { tnChoice = ""; }}>
     {#each SKILL_SUCCESS_TABLE as r (r.key)}<option value={r.key}>{DIFFICULTY[r.key]} ({r.tn.join("–")}{r.open ? "+" : ""})</option>{/each}</select></label>

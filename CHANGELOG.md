@@ -3,6 +3,15 @@
 Every change people can see goes under **Unreleased** in the same commit. A release retitles that section and its
 notes come from it.
 
+## 1.3.0 — 2026-11-27
+
+### Changed — NPC Threat dice roll in Foundry (system 0.172.0, core p.187)
+- The content pin moves to sr2e-foundryvtt v0.172.0, which rolls an NPC's Threat dice.
+- An NPC with a Threat Rating above 0 exports with **Roll Threat dice** on: Foundry adds its Threat dice to every
+  test and gives it no Dice Pools. The export no longer adds a "roll these dice by hand" line to the biography.
+- The NPC page shows the Combat and Astral Combat Pools as "not used" when the NPC has a Threat Rating, and its note
+  and Help say Foundry now rolls the dice.
+
 ## 1.2.0 — 2026-11-27
 - Added: **background textures** (docs/PLAN-textures.md). Each theme gets a quiet texture behind the page — Cyberpunk:
   rain on the glass, a neon wash or a Matrix grid; Terminal: scanlines, a phosphor glow or a dot matrix; Cybernoir:

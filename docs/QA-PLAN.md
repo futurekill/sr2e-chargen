@@ -162,7 +162,7 @@ bonding (p.46, p.137), refusals.
 - Bone lacing with an Unarmed Strike: the sheet's attack shows (Str+N).
 - A VCR with move-by-wire or muscle replacement: the sheet shows "Control Pool X (Rigger 2 rules: Y)".
 - Invoked Memory Stimulator and Automatic-Medication are refused ("comes with a cybermantic operation").
-- `test/fixtures/parity/ware-v0.170.0.json` is Foundry's prepared values; regenerate it when the pin moves.
+- `test/fixtures/parity/ware-v0.172.0.json` is Foundry's prepared values; regenerate it when the pin moves.
 
 ## Cyberlimbs (M5j)
 - With Cybertechnology on, buy two Cyberarms: each asks for its side (an error until chosen). Buy a Strength
@@ -170,14 +170,14 @@ bonding (p.46, p.137), refusals.
 - Add a Body Enhancement to the same arm: its price shows the 10 % surcharge (a second enhancement type on one limb).
 - A Cyber Forearm on the same side as a Cyberarm: an overlap error. Remove the arm: the option's "its limb is gone".
 - A troll with a core Cyberarm (Full) and Increased Strength 2: Essence 0.8 for the option (p.51).
-- `test/fixtures/parity/limbs-v0.170.0.json` is Foundry's prepared values; regenerate it when the pin moves.
+- `test/fixtures/parity/limbs-v0.172.0.json` is Foundry's prepared values; regenerate it when the pin moves.
 
 ## Bioware with its own rules (M5k)
 - With Shadowtech on, buy a Synaptic Accelerator 2: Initiative +2D6. Add Wired Reflexes: an error (Shadowtech p.28).
 - Synaptic Accelerator 1 with Move-by-Wire 1: priced ×3; Level 2 with move-by-wire: an error (Cybertechnology p.57).
 - Muscle Augmentation beside two full cyberarms: Body Cost and price × .6.
 - Orthoskin 2 with an Armor Vest: armor adds. Enhanced Articulation beside three cyber limb positions: no Reaction bonus.
-- `test/fixtures/parity/bioware-v0.170.0.json` is Foundry's prepared values; regenerate it when the pin moves.
+- `test/fixtures/parity/bioware-v0.172.0.json` is Foundry's prepared values; regenerate it when the pin moves.
 
 ## Implant weapons (M5l)
 - With Cybertechnology on, buy an Oral Gun: its weapon appears beside it (no remove button) and the sheet lists its
@@ -203,7 +203,7 @@ bonding (p.46, p.137), refusals.
   Foundry: Impact 2, Magic 6 (not 0), no power-point problem.
 - Enhanced Perception (Tier 1) level 3 + (Tier 2) level 3: 2.25 power points (human). Two Attribute Boosts on Body: an
   error; change one to Strength: it clears. Enhanced Centering: refused (an initiate's power).
-- `test/fixtures/parity/powers-v0.170.0.json` is Foundry's prepared values; regenerate it when the pin moves.
+- `test/fixtures/parity/powers-v0.172.0.json` is Foundry's prepared values; regenerate it when the pin moves.
 
 ## The Workshop (docs/PLAN-workshop.md)
 Automatic: `test/workshop.test.mjs` (designs through the reducer and the server, the trust boundary, mods, books, price,
@@ -254,7 +254,7 @@ fixture, experience (p.187's 25 years, R22), every op's bounds, the routes, the 
 Initiative dice, Combat and Astral pools and armor with the page — all equal. Manual: Library → Kind NPC → Start from
 "Fixer"; set Threat from "Difficult" with 7; apply 4 years to Attributes (the preview lists each change); add
 "Rumormill" (Special, Intelligence, 4); add an Armor Vest and tick Worn (Armor goes up); Download for Foundry and import
-it into an NPC actor: the numbers match the page and the biography says to roll Threat dice by hand.
+it into an NPC actor: the numbers match the page and "Roll Threat dice" is ticked (1.3.0, system 0.172.0) and the sheet's Combat Pool reads "not used — Threat Rating N"; a roll shows the Threat dice.
 
 ## Accessibility (docs/PLAN-a11y.md, docs/ACCESSIBILITY.md)
 Automatic: CI job "Accessibility" (`npm run a11y`; build the client and the catalog first) and `test/pdf-tags.test.mjs`.
