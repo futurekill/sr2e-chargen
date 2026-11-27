@@ -3,7 +3,13 @@
 Every change people can see goes under **Unreleased** in the same commit. A release retitles that section and its
 notes come from it.
 
-## 1.1.0 — 2026-11-27
+## 1.1.1 — 2026-11-27
+- Fixed: the Docker image didn't build: its build stage lacked the banter files and the changelog the client now
+  bundles, so the 1.1.0 build failed.
+
+The 1.1.0 build did not publish; this release carries all of 1.1.0 below.
+
+## 1.1.0 — 2026-11-27 (not published)
 - Added: **Help** in the app (docs/PLAN-help-footer.md): how to use every feature, with pictures — getting started,
   building a character, play, printing, Foundry, the garage, the Workshop, NPCs, drafts, the catalog, your account,
   accessibility and the admin's tasks. Every page has a **How this works** link to its own topic; Help works signed out

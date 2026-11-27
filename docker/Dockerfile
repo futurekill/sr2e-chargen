@@ -14,6 +14,9 @@ COPY content ./content
 COPY shared ./shared
 COPY vite.config.mjs ./
 COPY client ./client
+# The client bundles the Shadowland board's banter and What's new (docs/PLAN-help-footer.md).
+COPY banter ./banter
+COPY CHANGELOG.md ./
 RUN npm run build
 # The catalog (docs/PLAN-catalog.md, Amendment A4): built HERE from the project's own copy of the content (content/),
 # which the build checks against its record and the pins; then checked again. A build without valid content fails.

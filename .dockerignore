@@ -8,9 +8,10 @@ data
 .impeccable
 docs
 test
-banter
 *.md
 !content/**
+# The client bundles these (docs/PLAN-help-footer.md): the banter threads and What's new from the changelog.
+!CHANGELOG.md
 *.db*
 .env
 content.staging
