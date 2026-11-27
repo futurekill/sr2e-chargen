@@ -181,10 +181,11 @@ export const SECTIONS = [
   {
     id: "account", title: "Your account",
     intro: "Your look, your reading font, the banter, your password and your sessions.",
-    shots: [{ file: "account.webp", alt: "The Account page: the theme menu, the easy-to-read font option, the banter option and the password form.", part: "look" }],
+    shots: [{ file: "account.webp", alt: "The Account page over the Cyberpunk rain texture: the Theme and Background menus, the easy-to-read font and banter options, and the password form.", part: "look" }],
     parts: [
       { id: "look", title: "Look and reading", steps: [
         "**Theme**: Cyberpunk (the default), Terminal, Cybernoir or GeoCities retro. It follows you to other devices.",
+        "**Background**: a quiet texture behind the page, three to choose from for each theme (or **None**). Each theme keeps its own choice.",
         "**Easy-to-read font** (Atkinson Hyperlegible) on the site and on printed sheets." ] },
       { id: "banter", title: "The Shadowland board", steps: [
         "At the foot of each page, regulars of a shadowrunner board talk about what you're doing. It's flavour, never on a sheet or an export.",

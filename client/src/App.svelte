@@ -5,7 +5,7 @@
   import { loadPrefs } from "./lib/prefs.svelte.js";
   import { setBoard } from "./lib/context.svelte.js";
   import Footer from "./lib/Footer.svelte";
-  import { session, post, forgetSession, applyFont, applyTheme } from "./lib/api.js";
+  import { session, post, forgetSession, applyFont, applyTheme, resetLook, onLostSession } from "./lib/api.js";
   import SignIn from "./pages/SignIn.svelte";
   import Redeem from "./pages/Redeem.svelte";
   import Library from "./pages/Library.svelte";
@@ -52,12 +52,14 @@
   });
 
   async function refresh() {
-    try { user = await session(); down = ""; loadPrefs(user); if (user?.prefs) { applyFont(user.prefs.readableFont); applyTheme(user.prefs.theme); } } catch (err) { down = err.message; }
+    try { user = await session(); down = ""; loadPrefs(user); if (user?.prefs) { applyFont(user.prefs.readableFont); applyTheme(user.prefs.theme, user.prefs.textures); } else if (!user) resetLook(); } catch (err) { down = err.message; }
     ready = true;
   }
+  // The session ended somewhere else (it expired, or "Jack out everywhere"): signed out here too, the default look.
+  onLostSession(() => { if (!user) return; forgetSession(); user = null; loadPrefs(null); resetLook(); });
   async function signOut() {
     try { await post("/api/logout"); } catch { /* already gone */ }
-    forgetSession(); user = null; loadPrefs(null); go("/");
+    forgetSession(); user = null; loadPrefs(null); resetLook(); go("/");
   }
   refresh();
 </script>
@@ -98,7 +100,7 @@
     {:else if route.path === "/catalog"}
       <Catalog />
     {:else if route.path === "/account"}
-      <Account {user} onSignedOut={() => { forgetSession(); user = null; loadPrefs(null); go("/"); }} />
+      <Account {user} onSignedOut={() => { forgetSession(); user = null; loadPrefs(null); resetLook(); go("/"); }} />
     {:else if route.path === "/admin" && user.role === "admin"}
       <Admin me={user.id} onSelfDemoted={async () => { await refresh(); go("/", { replace: true }); }} />
     {:else if route.path === "/"}

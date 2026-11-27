@@ -4,10 +4,11 @@
  * Signed out there is no account: the board's on/off is this device's choice only.
  */
 import { put } from "./api.js";
-export const prefs = $state({ signedIn: false, banter: true });
+export const prefs = $state({ signedIn: false, banter: true, textures: {} });
 const LOCAL = "banter";
 export function loadPrefs(user) {
   prefs.signedIn = !!user;
+  prefs.textures = user?.prefs?.textures ?? {};
   if (user?.prefs) prefs.banter = user.prefs.banter !== false;
   else { try { prefs.banter = localStorage.getItem(LOCAL) !== "off"; } catch { prefs.banter = true; } }
 }

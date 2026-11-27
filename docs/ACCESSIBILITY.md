@@ -28,6 +28,13 @@ Character step is opened in each theme, with its disclosures opened, a purchase 
 colours as the visible rows), and the purchase table's "×" remove buttons (one glyph axe can't measure; its accessible
 name "Remove <item>" starts with the visible text, as 2.5.3 allows).
 
+## Background textures
+Each theme's textures sit behind the page only (cards and fields stay plain), never move, and are turned off by
+forced colours (Windows High Contrast). The scan renders every one with the real Content-Security-Policy and measures
+its darkest and lightest pixels against every colour drawn on the page background: text ≥ 4.5:1, borders ≥ 3:1. axe
+can't judge text over a background image (or very short text while one is on), so it marks those as "needs review";
+while a texture is on, the scan's own pixel measurement answers them instead (docs/PLAN-textures.md).
+
 ## The Shadowland board
 The footer's banter is decoration: screen readers get the whole thread as a list (not a live region, never
 interrupting); the line-by-line reveal is hidden from them, has a Pause (it lasts longer than 5 seconds, 2.2.2), never

@@ -216,20 +216,27 @@ test("preferences: the readable font is stored per user, comes with the session,
   const res = await app.inject({ method: "POST", url: "/api/redeem", headers: { origin: ORIGIN }, payload: { secret, username: "Boss", password: PW } });
   const cookie = res.headers["set-cookie"].split(";")[0];
   const s = (await app.inject({ url: "/api/session", headers: { cookie } })).json();
-  assert.deepEqual(s.user.prefs, { readableFont: false, theme: "cyberpunk", banter: true });
+  assert.deepEqual(s.user.prefs, { readableFont: false, theme: "cyberpunk", banter: true, textures: {} });
   const put = (body) => app.inject({ method: "PUT", url: "/api/account/prefs", headers: { origin: ORIGIN, cookie, "x-csrf-token": s.csrf }, payload: body });
   assert.equal((await put({ readableFont: true })).statusCode, 200);
   assert.equal((await put({ readableFont: "yes" })).statusCode, 400);
   assert.equal((await put({ readableFont: true, theme: "x" })).statusCode, 400, "an unknown theme");
   assert.equal((await put({})).statusCode, 400, "nothing to change");
   assert.equal((await put({ theme: "cybernoir" })).statusCode, 200);
-  assert.deepEqual((await put({ readableFont: true })).json(), { readableFont: true, theme: "cybernoir", banter: true }, "a font save keeps the theme");
-  assert.deepEqual((await app.inject({ url: "/api/session", headers: { cookie } })).json().user.prefs, { readableFont: true, theme: "cybernoir", banter: true });
-  assert.deepEqual((await app.inject({ url: "/api/account/prefs", headers: { cookie } })).json(), { readableFont: true, theme: "cybernoir", banter: true });
+  assert.deepEqual((await put({ readableFont: true })).json(), { readableFont: true, theme: "cybernoir", banter: true, textures: {} }, "a font save keeps the theme");
+  assert.deepEqual((await app.inject({ url: "/api/session", headers: { cookie } })).json().user.prefs, { readableFont: true, theme: "cybernoir", banter: true, textures: {} });
+  assert.deepEqual((await app.inject({ url: "/api/account/prefs", headers: { cookie } })).json(), { readableFont: true, theme: "cybernoir", banter: true, textures: {} });
   // The Shadowland board (docs/PLAN-help-footer.md 3): on by default, turned off and kept with the other choices.
   assert.equal((await put({ banter: "no" })).statusCode, 400);
-  assert.deepEqual((await put({ banter: false })).json(), { readableFont: true, theme: "cybernoir", banter: false });
-  assert.deepEqual((await put({ theme: "terminal" })).json(), { readableFont: true, theme: "terminal", banter: false }, "a theme save keeps banter off");
+  assert.deepEqual((await put({ banter: false })).json(), { readableFont: true, theme: "cybernoir", banter: false, textures: {} });
+  assert.deepEqual((await put({ theme: "terminal" })).json(), { readableFont: true, theme: "terminal", banter: false, textures: {} }, "a theme save keeps banter off");
+  // Textures (docs/PLAN-textures.md 3): per theme, merged, only that theme's keys.
+  assert.equal((await put({ textures: { terminal: "rain" } })).statusCode, 400, "another theme's key");
+  assert.equal((await put({ textures: { nope: "rain" } })).statusCode, 400, "an unknown theme");
+  assert.equal((await put({ textures: {} })).statusCode, 400, "nothing to change");
+  assert.deepEqual((await put({ textures: { terminal: "dots" } })).json().textures, { terminal: "dots" });
+  assert.deepEqual((await put({ textures: { cyberpunk: "none" } })).json().textures, { terminal: "dots", cyberpunk: "none" }, "merged per theme");
+  assert.deepEqual((await app.inject({ url: "/api/session", headers: { cookie } })).json().user.prefs.textures, { terminal: "dots", cyberpunk: "none" });
   assert.equal((await app.inject({ method: "PUT", url: "/api/account/prefs", headers: { origin: ORIGIN, cookie }, payload: { readableFont: false } })).statusCode, 403, "CSRF");
 });
 

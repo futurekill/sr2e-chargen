@@ -3,6 +3,16 @@
 Every change people can see goes under **Unreleased** in the same commit. A release retitles that section and its
 notes come from it.
 
+## 1.2.0 — 2026-11-27
+- Added: **background textures** (docs/PLAN-textures.md). Each theme gets a quiet texture behind the page — Cyberpunk:
+  rain on the glass, a neon wash or a Matrix grid; Terminal: scanlines, a phosphor glow or a dot matrix; Cybernoir:
+  film grain, venetian blinds or rain-dark glass; GeoCities: a starfield tile, graph paper or paper fibre. Choose it
+  on **Account → Background** (or None); each theme keeps its own choice. On by default (rain, scanlines, blinds,
+  starfield). Cards and fields stay plain; nothing moves; Windows High Contrast shows no texture; every texture keeps
+  text and borders at WCAG AA at its darkest and lightest spot.
+- Changed: the page opens in your theme and texture at once (a small start-up script), and signing out returns the
+  device to the default look.
+
 ## 1.1.1 — 2026-11-27
 - Fixed: the Docker image didn't build: its build stage lacked the banter files and the changelog the client now
   bundles, so the 1.1.0 build failed.

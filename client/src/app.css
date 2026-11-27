@@ -92,3 +92,4 @@ th[scope="row"] { font-weight: 400; }
 fieldset { min-inline-size: 0; }   /* a fieldset is min-content wide by default: let it wrap at 320px */
 ul.list .meta { overflow-wrap: anywhere; min-width: 0; }
 .howto { margin: -.2rem 0 .9rem; font-size: .9rem; }
+.small { font-size: .9rem; }

@@ -6,7 +6,7 @@
 import { randomUUID } from "node:crypto";
 import { newSecret, sha256, sameHash } from "./tokens.mjs";
 import { writeTx, Maintenance } from "../db/fence.mjs";
-import { THEME_KEYS } from "../../shared/themes.mjs";
+import { THEME_KEYS, TEXTURES } from "../../shared/themes.mjs";
 
 export const IDLE_MS = 7 * 86400e3, ABSOLUTE_MS = 30 * 86400e3, TOUCH_MS = 60e3;
 export const csrfFor = (secret) => sha256(`csrf:${secret}`);
@@ -21,12 +21,16 @@ export async function createSession(trx, ctx, userId) {
 
 /** A user's preferences, with defaults; anything unknown or damaged in the column reads as the default. */
 export const THEMES = THEME_KEYS;
-export const PREF_DEFAULTS = Object.freeze({ readableFont: false, theme: THEMES[0], banter: true });
+export const PREF_DEFAULTS = Object.freeze({ readableFont: false, theme: THEMES[0], banter: true, textures: {} });
 export function readPrefs(raw) {
   let p;
   try { p = typeof raw === "string" ? JSON.parse(raw) : raw; } catch { p = null; }
   // banter: the footer's Shadowland board (docs/PLAN-help-footer.md 3); on unless turned off.
-  return { readableFont: p?.readableFont === true, theme: THEMES.includes(p?.theme) ? p.theme : THEMES[0], banter: p?.banter !== false };
+  // textures (docs/PLAN-textures.md 3): per theme, only that theme's own keys or "none"; anything else is dropped (the
+  // theme's default then applies).
+  const textures = {};
+  for (const t of THEMES) { const k = p?.textures?.[t]; if (k === "none" || TEXTURES[t].some(x => x.key === k)) textures[t] = k; }
+  return { readableFont: p?.readableFont === true, theme: THEMES.includes(p?.theme) ? p.theme : THEMES[0], banter: p?.banter !== false, textures };
 }
 
 /** The live session for a cookie secret: `{ session, user, csrf }`, or null (unknown, expired, idle, disabled). */

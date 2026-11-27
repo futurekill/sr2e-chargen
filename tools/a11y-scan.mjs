@@ -12,7 +12,8 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 import puppeteer from "puppeteer-core";
 import { startApp } from "./app-fixture.mjs";
-import { THEME_KEYS } from "../shared/themes.mjs";
+import { THEME_KEYS, TEXTURES } from "../shared/themes.mjs";
+import sharp from "sharp";
 
 const ROOT = new URL("../", import.meta.url).pathname;
 const AXE = readFileSync(join(ROOT, "node_modules/axe-core/axe.min.js"), "utf8");
@@ -20,6 +21,7 @@ const REVIEWED = JSON.parse(readFileSync(join(ROOT, "tools/a11y-reviewed.json"),
 const CHROME = process.env.CHROME_PATH || (process.platform === "darwin" ? "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" : "/usr/bin/google-chrome");
 const REDUCED = { name: "prefers-reduced-motion", value: "reduce" };   // kept in EVERY emulateMediaFeatures call (it replaces the set)
 const TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22a", "wcag22aa"];
+const textures = [];   // the measured worst-pixel contrast per texture, for the report
 const problems = [], incomplete = [], seenControls = new Set(), log = (...a) => console.log(...a);
 const fail = (page, check, detail) => { problems.push({ page, check, detail }); console.log(`  ✗ ${page} · ${check}: ${detail}`); };
 
@@ -172,14 +174,20 @@ async function axe(p, where) {
   const r = await p.evaluate(async (tags) => {
     const res = await window.axe.run(document, { runOnly: { type: "tag", values: tags }, rules: { "target-size": { enabled: true } }, resultTypes: ["violations", "incomplete"] });
     const ran = [...res.violations, ...res.passes ?? [], ...res.incomplete, ...res.inapplicable ?? []].some(x => x.id === "target-size");
-    const pick = (list) => list.map(v => ({ id: v.id, impact: v.impact, nodes: v.nodes.map(n => ({ target: n.target.join(" "), why: (n.failureSummary || "").split("\n").slice(0, 3).join(" ") })) }));
+    // A node axe can't judge because the page has a background TEXTURE (messageKey "bgImage", "bgGradient" or, for short text,
+    // "shortTextContent") is measured by the scan's
+    // own pixel check instead (textureChecks, docs/PLAN-textures.md 6): marked, not raised.
+    // With a texture on, axe also gives up on very short text ("shortTextContent"); it is the same colour tokens, which
+    // the pixel check (on the page background) and test/theme-contrast.test.mjs (on panels) cover.
+    const bgImage = (n) => [...(n.any ?? []), ...(n.all ?? []), ...(n.none ?? [])].some(c => ["bgImage", "bgGradient", "shortTextContent"].includes(c.data?.messageKey));
+    const pick = (list) => list.map(v => ({ id: v.id, impact: v.impact, nodes: v.nodes.map(n => ({ target: n.target.join(" "), key: [...(n.any ?? []), ...(n.all ?? []), ...(n.none ?? [])].map(c => c.data?.messageKey).filter(Boolean).join(","), texture: v.id === "color-contrast" && bgImage(n) && document.documentElement.dataset.texture !== "none", why: (n.failureSummary || "").split("\n").slice(0, 3).join(" ") })) }));
     return { violations: pick(res.violations), incomplete: pick(res.incomplete), ran };
   }, TAGS);
   if (!r.ran) fail(where, "axe", "target-size did not run");
   for (const v of r.violations) for (const n of v.nodes) fail(where, `axe ${v.id}`, `${n.target} — ${n.why}`);
   for (const v of r.incomplete) for (const n of v.nodes) {
-    const ok = REVIEWED.find(x => x.rule === v.id && new RegExp(x.target).test(n.target));
-    incomplete.push({ page: where, rule: v.id, target: n.target, reviewed: ok?.verdict ?? null });
+    const ok = n.texture ? { verdict: "texture: measured by the scan's pixel check" } : REVIEWED.find(x => x.rule === v.id && new RegExp(x.target).test(n.target));
+    incomplete.push({ page: where, rule: v.id, target: n.target, key: n.key, reviewed: ok?.verdict ?? null });
     if (!ok) fail(where, `axe needs review: ${v.id}`, `${n.target} — review it and record the verdict in tools/a11y-reviewed.json`);
   }
 }
@@ -288,6 +296,7 @@ async function main() {
         await axe(p, where);
         await footer(p, where);
         if (pg.expect) { pg.expect.forEach(e => expectAll.add(e)); await coverage(p, pg.expect); }
+        if (theme !== THEME_KEYS[0] && pg.key === "account") await reflow(p, where);   // its Background note differs by theme (r1 #7)
         if (theme === THEME_KEYS[0]) {   // the theme-independent checks once; focus contrast in every theme below
           await keyboard(p, where);
           if (pg.tab === "concept" || pg.tab === "karma") await tablist(p, where);
@@ -304,14 +313,62 @@ async function main() {
     }
     for (const e of expectAll) if (!seenControls.has(e)) fail("coverage", "control never rendered", e);
     await boardInMotion(browser, origin, cookie);
+    await textureChecks(browser, origin);
   } finally {
     await browser.close();
     await app.close();
   }
-  const report = { at: new Date().toISOString(), problems, incomplete: incomplete.filter(i => !i.reviewed) };
+  const report = { at: new Date().toISOString(), problems, incomplete: incomplete.filter(i => !i.reviewed), textures };
   writeFileSync(process.env.A11Y_REPORT || "a11y-report.json", `${JSON.stringify(report, null, 2)}\n`);
   log(problems.length ? `\n${problems.length} accessibility problem(s)` : "\nno accessibility problems");
   process.exitCode = problems.length ? 1 : 0;
+}
+/**
+ * Background textures (docs/PLAN-textures.md 6), with the CSP ENFORCED (r1 #5): for every theme × texture, the page's
+ * content hidden, the TRUE darkest and lightest pixels (only the scrollbar strip left out) against every token drawn
+ * on the page background — text 4.5:1, --line 3:1 (r1 #6); a texture that didn't render (flat, or a CSP violation)
+ * fails; with forced colours the root has no background image (r1 #7).
+ */
+async function textureChecks(browser, origin) {
+  const lum = (r, g, b) => { const f = (v) => { v /= 255; return v <= .03928 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4; }; return .2126 * f(r) + .7152 * f(g) + .0722 * f(b); };
+  const ratio = (a, b) => (Math.max(a, b) + .05) / (Math.min(a, b) + .05);
+  const ctxB = await browser.createBrowserContext();
+  const p = await ctxB.newPage();   // NO setBypassCSP here
+  await p.evaluateOnNewDocument(() => { window.__csp = []; addEventListener("securitypolicyviolation", (e) => window.__csp.push(`${e.violatedDirective} ${e.blockedURI}`.slice(0, 120))); });
+  await p.setViewport({ width: 1280, height: 860 });
+  await p.goto(`${origin}/help`, { waitUntil: "networkidle0" });
+  textures.length = 0;
+  for (const theme of THEME_KEYS) for (const { key } of TEXTURES[theme]) {
+    const where = `texture ${theme}/${key}`;
+    await p.emulateMediaFeatures([REDUCED]);
+    const tokens = await p.evaluate(async (t, k) => {
+      const r = document.documentElement; r.dataset.theme = t; r.dataset.texture = k; document.body.style.visibility = "hidden";
+      const urls = [...getComputedStyle(r).backgroundImage.matchAll(/url\("(.*?)"\)/g)].map(m => m[1]);
+      // Every URL layer must load (a broken grain could hide behind a gradient that still varies; code review r1 #4).
+      const loaded = await Promise.all(urls.map(u => new Promise(res => { const i = new Image(); i.onload = () => res(i.naturalWidth > 0); i.onerror = () => res(false); i.src = u; })));
+      await new Promise(res => setTimeout(res, 400));
+      const cs = getComputedStyle(r), v = (n) => cs.getPropertyValue(n).trim();
+      return { ink: v("--ink"), muted: v("--muted"), accent: v("--accent"), danger: v("--danger"), ok: v("--ok"), line: v("--line"), image: cs.backgroundImage !== "none", broken: loaded.filter(x => !x).length };
+    }, theme, key);
+    const { data, info } = await sharp(await p.screenshot({ clip: { x: 0, y: 0, width: 1240, height: 860 } })).raw().toBuffer({ resolveWithObject: true });
+    let lo = 1, hi = 0;
+    for (let i = 0; i < data.length; i += info.channels) { const l = lum(data[i], data[i + 1], data[i + 2]); if (l < lo) lo = l; if (l > hi) hi = l; }
+    const hex = (h) => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+    const worst = {};
+    for (const [tok, need] of [["ink", 4.5], ["muted", 4.5], ["accent", 4.5], ["danger", 4.5], ["ok", 4.5], ["line", 3]]) {
+      const c = lum(...hex(tokens[tok])), w = Math.min(ratio(c, lo), ratio(c, hi));
+      worst[tok] = +w.toFixed(2);
+      if (w < need) fail(where, "texture contrast", `--${tok} ${w.toFixed(2)}:1 at the worst pixel (needs ${need})`);
+    }
+    if (!tokens.image || hi - lo < 1e-4) fail(where, "texture", "nothing rendered (no image, or a flat page)");
+    if (tokens.broken) fail(where, "texture", `${tokens.broken} image layer(s) failed to load`);
+    textures.push({ theme, key, worst });
+    await p.emulateMediaFeatures([REDUCED, { name: "forced-colors", value: "active" }]);
+    if (await p.evaluate(() => getComputedStyle(document.documentElement).backgroundImage) !== "none") fail(where, "forced colors", "the texture still shows in forced colours");
+  }
+  const csp = await p.evaluate(() => window.__csp);
+  for (const v of csp) fail("textures", "CSP", v);
+  await ctxB.close();
 }
 /**
  * The footer on every page (docs/PLAN-help-footer.md 2–3): a contentinfo landmark with its links; the board, when

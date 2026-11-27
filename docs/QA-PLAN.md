@@ -230,6 +230,12 @@ Automatic: `test/admin-counts.test.mjs` (every database). Manual: as an admin, o
 characters, vehicles and drafts (archived ones included) and "N in the trash" when there are any; delete a draft as that
 user and reload: one draft fewer, one more in the trash.
 
+## Background textures (docs/PLAN-textures.md)
+Automatic: `test/textures.test.mjs` (generated files in step, keys per theme, boot.js fallbacks), the prefs test, and
+the scan's texture checks (CSP enforced; worst-pixel contrast for every token; forced colours). Manual: Account →
+Background, pick each of the current theme's three and None; switch theme and back (each keeps its own); reload (no
+flash of the untextured page); sign out (the default look). On a phone, scroll a long page once: no stutter.
+
 ## Help, footer and the Shadowland board (docs/PLAN-help-footer.md)
 Automatic: `test/help.test.mjs` (safe markup, every page's help link lands, shots exist with alt text),
 `test/banter.test.mjs` (data, picking, the v1 lines kept, no banter in any sheet or export), `test/about.test.mjs`,

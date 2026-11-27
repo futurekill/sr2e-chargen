@@ -1,6 +1,6 @@
 {
   "name": "sr2e-chargen",
-  "version": "1.1.1",
+  "version": "1.2.0",
   "private": true,
   "repository": {
     "type": "git",
@@ -27,7 +27,8 @@
     "test:mariadb": "TEST_DATABASE_URL=mysql://root:test@127.0.0.1:53307/mysql node --test --test-timeout=300000 --test-force-exit --test-concurrency=1 test/",
     "lint": "eslint server shared test tools",
     "a11y": "node tools/a11y-scan.mjs",
-    "help:shots": "node tools/help-shots.mjs"
+    "help:shots": "node tools/help-shots.mjs",
+    "gen:textures": "node tools/gen-textures.mjs"
   },
   "license": "UNLICENSED",
   "dependencies": {

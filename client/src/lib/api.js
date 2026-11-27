@@ -1,4 +1,4 @@
-import { THEME_KEYS } from "../../../shared/themes.mjs";
+import { THEME_KEYS, textureFor } from "../../../shared/themes.mjs";
 /** The API client: same-origin JSON, the session's CSRF token on every change, a fresh Idempotency-Key per action. */
 let csrf = null;
 
@@ -14,9 +14,13 @@ async function request(method, url, body, { key } = {}) {
   try { res = await fetch(url, { method, headers, credentials: "same-origin", body: body === undefined ? undefined : JSON.stringify(body) }); }
   catch { throw new ApiError(0, null); }
   const data = await res.json().catch(() => null);
+  if (res.status === 401 && data?.code === "no-session" && url !== "/api/session") lostSession?.();   // code review r1 #1
   if (!res.ok) throw new ApiError(res.status, data);
   return data;
 }
+/** Called when any request finds the session gone (expired, signed out elsewhere): App resets to signed out. */
+let lostSession = null;
+export const onLostSession = (fn) => { lostSession = fn; };
 /** Who's signed in (and the CSRF token for this session), or null. */
 export async function session() {
   try { const s = await request("GET", "/api/session"); csrf = s.csrf; return s.user; }
@@ -26,13 +30,24 @@ export const get = (url) => request("GET", url);
 export const post = (url, body = {}) => request("POST", url, body);
 export const del = (url) => request("DELETE", url);
 export const put = (url, body = {}) => request("PUT", url, body);
-/** Apply a theme (shared/themes.mjs) to the page, and remember it for the next visit's first paint. */
-export function applyTheme(theme) {
-  const t = THEME_KEYS.includes(theme) ? theme : THEME_KEYS[0];
+/**
+ * Apply a theme (shared/themes.mjs) and that theme's background texture (`textures`: the per-theme choices; missing =
+ * the theme's default; docs/PLAN-textures.md), and remember both for the next visit's first paint (public/boot.js).
+ */
+export function applyTheme(theme, textures = {}) {
+  const t = THEME_KEYS.includes(theme) ? theme : THEME_KEYS[0], tex = textureFor(t, textures);
   document.documentElement.dataset.theme = t;
+  document.documentElement.dataset.texture = tex;
+  try { localStorage.setItem("texture", tex); } catch { /* not remembered in private mode */ }
   // The browser's own toolbar colour follows the theme's background (code review r1 #3).
   document.querySelector('meta[name="theme-color"]')?.setAttribute("content", getComputedStyle(document.documentElement).getPropertyValue("--bg").trim());
   try { localStorage.setItem("theme", t); } catch { /* not remembered in private mode */ }
+}
+/** Signed out (or the session is gone): the default look, and nothing of the last person's remembered (r1 #4). */
+export function resetLook() {
+  applyTheme(THEME_KEYS[0]);
+  applyFont(false);
+  try { localStorage.removeItem("theme"); localStorage.removeItem("texture"); localStorage.removeItem("font"); } catch { /* fine */ }
 }
 /** Apply the readable-font preference to the page, and remember it for the next visit's sign-in page. */
 export function applyFont(readable) {
@@ -59,6 +74,7 @@ export async function upload(url, file) {
   try { res = await fetch(url, { method: "PUT", credentials: "same-origin", headers: { "content-type": file.type, "x-csrf-token": csrf ?? "", "idempotency-key": crypto.randomUUID() }, body: file }); }
   catch { throw new ApiError(0, null); }
   const data = await res.json().catch(() => null);
+  if (res.status === 401 && data?.code === "no-session" && url !== "/api/session") lostSession?.();   // code review r1 #1
   if (!res.ok) throw new ApiError(res.status, data);
   return data;
 }

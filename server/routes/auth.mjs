@@ -3,6 +3,11 @@ import { getSaleMode } from "../rules-settings.mjs";
 import * as A from "../auth/accounts.mjs";
 import { writeTx, updateLock } from "../db/fence.mjs";
 import { deleteSession, deleteUserSessions, readPrefs, THEMES } from "../auth/sessions.mjs";
+import { TEXTURES } from "../../shared/themes.mjs";
+
+/** The textures a PUT may set: per theme, that theme's own keys or "none" (docs/PLAN-textures.md 3, r1 #2). */
+const TEXTURES_SCHEMA = { type: "object", additionalProperties: false, minProperties: 1,
+  properties: Object.fromEntries(THEMES.map(t => [t, { enum: [...TEXTURES[t].map(x => x.key), "none"] }])) };
 
 const str = (max, min = 1) => ({ type: "string", minLength: min, maxLength: max });
 const body = (properties) => ({ type: "object", additionalProperties: false, required: Object.keys(properties), properties });
@@ -43,10 +48,12 @@ export default async function authRoutes(app) {
   // A partial update: each field given replaces that field; the rest are re-read in the same transaction, so a font save
   // and a theme save from two devices don't undo each other.
   app.put("/account/prefs", { onRequest: app.needSession, schema: { body: { type: "object", additionalProperties: false, minProperties: 1,
-    properties: { readableFont: { type: "boolean" }, theme: { type: "string", enum: [...THEMES] }, banter: { type: "boolean" } } } } },
+    properties: { readableFont: { type: "boolean" }, theme: { type: "string", enum: [...THEMES] }, banter: { type: "boolean" }, textures: TEXTURES_SCHEMA } } } },
     async (req) => writeTx(req.ctx, async trx => {
       const row = await updateLock(req.ctx, trx.selectFrom("users").select("prefs").where("id", "=", req.session.user.id)).executeTakeFirst();
-      const prefs = { ...readPrefs(row?.prefs), ...req.body };
+      const stored = readPrefs(row?.prefs);
+      // Textures merge PER THEME: a choice for one theme never drops the others' (r1 #2).
+      const prefs = { ...stored, ...req.body, ...(req.body.textures ? { textures: { ...stored.textures, ...req.body.textures } } : {}) };
       await trx.updateTable("users").set({ prefs: JSON.stringify(prefs) }).where("id", "=", req.session.user.id).execute();
       return prefs;
     }));
