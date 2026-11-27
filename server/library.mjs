@@ -2,9 +2,9 @@
  * The library (docs/PLAN-M3.md §5): documents with revisions. Authorization lives in ONE place (`ownedDocument`);
  * every mutation is idempotent (a key + a fingerprint of the request) and conditional on the revision the client read;
  * quotas are counters changed in the mutation's own transaction.
- * Three kinds: a DRAFT (free text, edited whole), a CHARACTER (docs/PLAN-M2.md) and a VEHICLE (the Garage,
- * docs/PLAN-garage.md); characters and vehicles change only by operations through their shared reducers, so the
- * server stays the authority on what they hold.
+ * Four kinds: a DRAFT (free text, edited whole), a CHARACTER (docs/PLAN-M2.md), a VEHICLE (the Garage,
+ * docs/PLAN-garage.md) and an NPC (docs/PLAN-npc-builder.md); all but drafts change only by operations through their
+ * shared reducers, so the server stays the authority on what they hold.
  */
 import { randomUUID, randomInt } from "node:crypto";
 import { writeTx, changed } from "./db/fence.mjs";
@@ -14,6 +14,7 @@ import { newCharacter, applyOp, Refusal, diceFor, validate, garagePurchases } fr
 import { fromFoundryActor } from "../shared/foundry.mjs";
 import { newVehicle, newDesignedVehicle, applyVehicleOp, vehicleActor, vehiclePrice, vehicleBooks } from "../shared/vehicle.mjs";
 import { derive } from "../shared/derive.mjs";
+import { newNpc, applyNpcOp } from "../shared/npc.mjs";
 import { sheetModel } from "./sheet/model.mjs";
 import { getSaleMode } from "./rules-settings.mjs";
 import { isStock, stockPortrait } from "./portrait/stock.mjs";
@@ -120,7 +121,7 @@ async function current(trx, userId, id, revision, kind) {
   if (!doc) throw GONE();
   if (doc.revision !== revision || doc.deleted_at != null) throw STALE();   // a deleted document isn't editable
   const kinds = Array.isArray(kind) ? kind : [kind];
-  if (!kinds.includes(doc.kind)) throw new Refused(kind === "draft" ? "A character or vehicle changes only step by step." : "That isn't a character.", 409, "wrong-kind");
+  if (!kinds.includes(doc.kind)) throw new Refused(kind === "draft" ? "A character, vehicle or NPC changes only step by step." : kind === "npc" ? "That isn't an NPC." : "That isn't a character.", 409, "wrong-kind");
   return doc;
 }
 
@@ -157,6 +158,38 @@ export function createVehicle(ctx, userId, { catalogId, name, design }, key, loo
     const doc = { id, owner_id: userId, kind: "vehicle", name: body.name, revision: 1, body: text, bytes: Buffer.byteLength(text), created_at: now, updated_at: now, deleted_at: null };
     await trx.insertInto("documents").values(doc).execute();
     await appendRevision(trx, ctx, doc, 1, body, "created");
+    return { ...(await answer(trx, userId, id)), body };
+  });
+}
+
+/** A new NPC (docs/PLAN-npc-builder.md 2): blank, or from a book NPC's complete source (`npcRecord(catalogId)`). */
+export function createNpc(ctx, userId, { catalogId = null, name }, key, npcRecord = () => null) {
+  return idempotent(ctx, userId, key, fingerprint("POST", "/documents/npcs", { catalogId, name }), async trx => {
+    let body;
+    try {
+      const rec = catalogId ? npcRecord(catalogId) : null;
+      if (catalogId && !rec) throw new Refusal("That book NPC isn't available on this server.");
+      body = newNpc(rec, name, catalogId);
+    } catch (e) { throw refusal(e); }
+    const id = randomUUID(), now = ctx.now(), text = encode(body);
+    if (Buffer.byteLength(text) > MAX_BODY_BYTES) throw new Refused("That NPC is too big to store.", 413, "too-big");
+    await charge(trx, userId, { docs: 1 });
+    const doc = { id, owner_id: userId, kind: "npc", name: body.name, revision: 1, body: text, bytes: Buffer.byteLength(text), created_at: now, updated_at: now, deleted_at: null };
+    await trx.insertInto("documents").values(doc).execute();
+    await appendRevision(trx, ctx, doc, 1, body, "created");
+    return { ...(await answer(trx, userId, id)), body };
+  });
+}
+/** Apply NPC operations, in order, as ONE new revision; any refusal refuses them all (their own route and schema). */
+export function applyNpcOps(ctx, userId, id, { revision, ops }, key, lookup = () => null) {
+  return idempotent(ctx, userId, key, fingerprint("POST", `/documents/${id}/npc-ops`, { revision, ops }), async trx => {
+    const doc = await current(trx, userId, id, revision, "npc");
+    let body = decodeBody(doc.body);
+    try { for (const op of ops) body = applyNpcOp(body, op, lookup); } catch (e) { throw refusal(e); }
+    const text = encode(body);
+    if (Buffer.byteLength(text) > MAX_BODY_BYTES) throw new Refused("That NPC is too big to store.", 413, "too-big");
+    await bump(trx, ctx, userId, id, revision, { name: body.name, body: text, bytes: Buffer.byteLength(text) });
+    await appendRevision(trx, ctx, { id, owner_id: userId }, revision + 1, body, ops.map(o => o.op).join(", ").slice(0, 200));
     return { ...(await answer(trx, userId, id)), body };
   });
 }

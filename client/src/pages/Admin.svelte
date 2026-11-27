@@ -63,7 +63,7 @@
   {#each users as u (u.id)}
     <li>
       <span class="name">{u.username}</span>
-      <span class="meta">{u.role}{u.disabled_at != null ? " · disabled" : ""} · {plural(u.made?.character, "character")} · {plural(u.made?.vehicle, "vehicle")} · {plural(u.made?.draft, "draft")}{u.trashed ? ` · ${u.trashed} in the trash` : ""}</span>
+      <span class="meta">{u.role}{u.disabled_at != null ? " · disabled" : ""} · {plural(u.made?.character, "character")} · {plural(u.made?.vehicle, "vehicle")} · {plural(u.made?.npc, "NPC")} · {plural(u.made?.draft, "draft")}{u.trashed ? ` · ${u.trashed} in the trash` : ""}</span>
       <label class="row"><span class="sr-only">Role of {u.username}</span><select value={u.role} onchange={(e) => { const r = e.currentTarget.value; e.currentTarget.value = u.role; setRole(u, r); }}><option value="user">runner</option><option value="admin">admin</option></select></label>
       <button class="quiet" onclick={resetLink(u)}>Reset link</button>
       <button class={u.disabled_at == null ? "danger" : "quiet"} onclick={toggle(u)}>{u.disabled_at == null ? "Disable" : "Enable"}</button>

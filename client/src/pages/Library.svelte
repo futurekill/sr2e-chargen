@@ -9,6 +9,9 @@
   const DESIGN = "design";
   let canDesign = $state(false);
   get("/api/catalog/design-tables").then(() => { canDesign = true; }).catch(() => { /* no tables: no designing */ });
+  // The NPC builder (docs/PLAN-npc-builder.md): blank, or from a book contact or archetype.
+  let bookNpcs = $state([]), npcFrom = $state("");
+  get("/api/catalog/npcs").then(r => { bookNpcs = r.npcs; }).catch(() => { /* only blank NPCs */ });
   const when = (ms) => new Date(ms).toLocaleString();
 
   /** Every page of a listing (a library holds up to 200; the API hands out 100 at a time). */
@@ -31,6 +34,7 @@
     busy = true;
     try {
       const { document } = kind === "vehicle" ? await mutate("POST", "/api/documents/vehicles", vehicleId === DESIGN ? { design: true, name: name.trim() } : { catalogId: vehicleId, name: name.trim() })
+        : kind === "npc" ? await mutate("POST", "/api/documents/npcs", npcFrom ? { catalogId: npcFrom, name: name.trim() } : { name: name.trim() })
         : await mutate("POST", kind === "character" ? "/api/documents/characters" : "/api/documents", { name: name.trim() });
       go(`/doc/${document.id}`);
     }
@@ -66,12 +70,19 @@
 </script>
 
 <h1>Your library</h1>
-<p class="muted">Characters are built step by step: the core book's Priority system, or, with the Companion, sum-to-10 or Building Points. Vehicles live in your garage: weapons on their mounts, cargo, then bought or linked by your characters. Drafts are free-text notes.</p>
+<p class="muted">Characters are built step by step: the core book's Priority system, or, with the Companion, sum-to-10 or Building Points. Vehicles live in your garage: weapons on their mounts, cargo, then bought or linked by your characters. NPCs are the gamemaster's: start from a book contact or archetype, or blank, and tailor them (core p.187). Drafts are free-text notes.</p>
 {#if error}<p class="notice bad" role="alert">{error}</p>{/if}
 
 <form class="row" onsubmit={create}>
   <label class="grow"><span>Name</span><input bind:value={name} maxlength={kind === "character" ? 120 : 200} placeholder="Street name" required></label>
-  <label><span>Kind</span><select bind:value={kind}><option value="character">Character</option><option value="vehicle">Vehicle</option><option value="draft">Draft</option></select></label>
+  <label><span>Kind</span><select bind:value={kind}><option value="character">Character</option><option value="vehicle">Vehicle</option><option value="npc">NPC</option><option value="draft">Draft</option></select></label>
+  {#if kind === "npc"}
+    <label><span>Start from</span><select bind:value={npcFrom}>
+      <option value="">Blank</option>
+      <optgroup label="Contacts (core p.203–213)">{#each bookNpcs.filter(n => n.kind === "contact") as n (n.id)}<option value={n.id}>{n.name}</option>{/each}</optgroup>
+      <optgroup label="Archetypes">{#each bookNpcs.filter(n => n.kind === "archetype") as n (n.id)}<option value={n.id}>{n.name}</option>{/each}</optgroup>
+    </select></label>
+  {/if}
   {#if kind === "vehicle"}
     <label><span>Model</span><select bind:value={vehicleId} required>
       <option value="" disabled>Choose…</option>

@@ -499,6 +499,20 @@ On a character's **Resources** step, **From your garage** lets you **buy** a veh
 price; the character keeps a copy of it as it was) or **link** one (free, any time; the sheet shows it as it stands in
 your garage). A deleted or archived vehicle shows as "unavailable" on the characters that link it.
 
+### NPCs (the gamemaster's)
+
+Start an NPC from the Library (**Kind: NPC**): blank, or from one of the core book's 22 contacts (p.203–213) or 7
+archetypes. An archetype keeps its numbers (its cyberware and powers are baked into the stat block, as Foundry's NPC
+sheet has no ware rules). Edit anything — attributes, Reaction modifier, Initiative dice, armor, Essence, Magic and
+totem, Body Index, skills (catalog or your own, e.g. Rumormill), any catalog item from any book. The core p.187 tools:
+- **Experience**: years of experience raise Attributes, Skills or nuyen (+10% per two years up to 10, then per four
+  years); a preview shows every value that changes before you apply it.
+- **Threat Rating**: from a Skill Success Table difficulty (p.68) or 1 per 100 of the team's Team Karma. Foundry doesn't
+  roll Threat dice for people: the export's biography says to roll them by hand.
+- **Professional Rating** 1–4 with its withdrawal point. Where the book prints a range ("3–4") the page says so.
+
+Download it **for Foundry** and import it into an NPC actor: Foundry prepares it to the numbers the page shows.
+
 After creation, the **Nuyen** step buys vehicles too: a core vehicle or a finished one from your garage, at the price
 you agreed (the street price is shown: list × .75 under 10,000¥, × 1 up to 50,000¥, × 2 above, core p.264). Vehicles
 bought this way sell back (a refund, or a fence's percentage of their list value) and download for Foundry one by one.
@@ -545,6 +559,8 @@ sourcebook modules at the releases in `content-pins.json`). A daily workflow pro
   it comes from (`SSC p.59`, `R2 p.14`).
 - **Manage it in play**: Karma and advancement, nuyen, purchases, damage, ammo, with history and undo.
 - **Rigger 2 vehicle design**: design a vehicle from scratch by the Rigger 2 rules, or start from a core vehicle (the Garage).
+- **NPCs** for the gamemaster: from a book contact or archetype, or blank, with p.187's experience, Threat and
+  Professional Ratings, exported as Foundry NPCs.
 - **Export**: Foundry JSON (characters with their vehicles, spirits and images), printable PDF sheets in several
   styles (Classic and Fohawk, with an ink-saver option), a Markdown stat block and a one-page table card.
 - **Shadowland banter** while you build: in-character commentary from street handles, never printed on sheets.
@@ -598,7 +614,7 @@ The approved order is in [docs/ROADMAP.md](docs/ROADMAP.md) (standalone first, r
 | 5 | Sourcebooks, alternate methods, Edges and Flaws | done (M5a–M5n) |
 | 6 | Release ([docs/PLAN-release.md](docs/PLAN-release.md)) | done: backups, image scan, SBOM, signed image; first beta v0.1.0-beta.1 |
 | 7 | Foundry connector (optional) ([docs/PLAN-M7.md](docs/PLAN-M7.md)) | simple form done: Foundry actor JSON both ways |
-| 8 | Later: themes and sheet styles, Vehicle Workshop, NPC builder, social login | site themes, sheet styles Printout and Dossier, the Garage and Rigger 2 design (Vehicle Workshop parts 1–2) done; NPC builder and social login not started |
+| 8 | Later: themes and sheet styles, Vehicle Workshop, NPC builder, social login | site themes, sheet styles Printout and Dossier, the Garage and Rigger 2 design (Vehicle Workshop parts 1–3, vehicles in play) and the NPC builder done; social login not started |
 
 Each milestone goes plan → review → build → code review → release.
 

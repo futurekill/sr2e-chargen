@@ -3,6 +3,7 @@
   import { go } from "../lib/router.svelte.js";
   import Character from "./Character.svelte";
   import Vehicle from "./Vehicle.svelte";
+  import Npc from "./Npc.svelte";
   let { id } = $props();
   let doc = $state(null), name = $state(""), notes = $state(""), revisions = $state([]), error = $state(""), saved = $state(""), busy = $state(false);
   let lost = null;   // the save that got no answer (it may or may not have landed)
@@ -58,6 +59,8 @@
   <Character {doc} onDeleted={remove} />
 {:else if doc.document.kind === "vehicle"}
   <Vehicle {doc} />
+{:else if doc.document.kind === "npc"}
+  <Npc {doc} />
 {:else}
   <h1>{doc.document.name}</h1>
   <p class="muted">{doc.document.kind} · revision {doc.document.revision} · saved {when(doc.document.updatedAt)}</p>

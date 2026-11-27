@@ -27,6 +27,12 @@ export default async function catalogRoutes(app) {
     if (req.headers["if-none-match"] === d.etag) return reply.code(304).send();
     return { pin: d.pin, chassis: d.chassis, powerPlants: d.powerPlants, fuel: d.fuel, markUp: d.markUp };
   });
+  // The book NPCs the NPC builder starts from (docs/PLAN-npc-builder.md 4): contacts (p.203–213) and archetypes.
+  app.get("/npcs", async (_req, reply) => {
+    if (!app.catalog) return none(reply);
+    return { npcs: [...(app.catalog.npcs ?? new Map())].map(([id, r]) => ({ id, name: r.source.name, kind: r.source.type === "npc" ? "contact" : "archetype" }))
+      .sort((a, b) => a.kind.localeCompare(b.kind) || a.name.localeCompare(b.name, "en")) };
+  });
   app.get("/", async (_req, reply) => (app.catalog ? { ...app.catalog.manifest, offers: app.catalog.offers ?? {} } : none(reply)));
   app.get("/entries", { schema: { querystring: { type: "object", additionalProperties: false, properties: {
     book: list, type: list, q: { type: "string", maxLength: 64 }, offerable: { enum: ["creation", "play"] },

@@ -27,8 +27,8 @@ test("admin: each user's characters, vehicles and drafts, and their trash; not f
   await razor("DELETE", `${D}/${d1.id}`, { revision: 1 });
   const users = (await boss("GET", "/api/admin/users")).json().users;
   const r = users.find(u => u.username === "Razor"), b = users.find(u => u.username === "Boss");
-  assert.deepEqual([r.made, r.trashed], [{ character: 1, vehicle: 0, draft: 1 }, 1]);
-  assert.deepEqual([b.made, b.trashed], [{ character: 0, vehicle: 0, draft: 0 }, 0]);
+  assert.deepEqual([r.made, r.trashed], [{ character: 1, vehicle: 0, npc: 0, draft: 1 }, 1]);
+  assert.deepEqual([b.made, b.trashed], [{ character: 0, vehicle: 0, npc: 0, draft: 0 }, 0]);
   assert.equal((await razor("GET", "/api/admin/users")).statusCode, 403, "admins only");
   // Roles change after creation (admins only; the last admin keeps theirs; a new admin's page opens at once).
   assert.equal((await razor("PUT", "/api/admin/users/Razor/role", { role: "admin" })).statusCode, 403);

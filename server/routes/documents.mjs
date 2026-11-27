@@ -2,6 +2,7 @@
 import * as L from "../library.mjs";
 import { OPS, cardIds } from "../../shared/creation.mjs";
 import { VEHICLE_OPS, vehicleActor } from "../../shared/vehicle.mjs";
+import { NPC_OPS, NPC_OPTIONAL, npcActor } from "../../shared/npc.mjs";
 import { entryOf } from "../catalog.mjs";
 import { toFoundryActor, vehicleToFoundry } from "../../shared/foundry.mjs";
 import { renderSheetPdf, processPortraitJob } from "../sheet/index.mjs";
@@ -70,6 +71,25 @@ const opSchema = { oneOf: Object.entries({ ...VEHICLE_OPS, ...OPS }).map(([op, f
   properties: { op: { const: op }, ...Object.fromEntries(Object.entries(fields).map(([k, t]) => [k, BOUNDS[op]?.[k] ?? FIELD[t]])) } })) };
 const opsBody = { type: "object", additionalProperties: false, required: ["revision", "ops"],
   properties: { revision: { type: "integer", minimum: 1 }, ops: { type: "array", minItems: 1, maxItems: 50, items: opSchema } } };
+// The NPC builder's operations (docs/PLAN-npc-builder.md 2): their OWN schema and route, never mixed with the
+// character's (r1 #1). Field types first, then each op's tighter bounds; the reducer checks the values again.
+const NPC_FIELD = { string: { type: "string", maxLength: 20000 }, boolean: { type: "boolean" }, integer: { type: "integer", minimum: -1000, maximum: 1000000000 }, number: { type: "number", minimum: 0, maximum: 99 } };
+const npcItemId = { type: "string", pattern: "^[A-Za-z0-9]{16}$" }, npcShort = { type: "string", maxLength: 120 };
+const NPC_BOUNDS = { setRace: { race: { type: "string", maxLength: 20 } }, setAttribute: { attr: { type: "string", maxLength: 20 }, base: { type: "integer", minimum: 1, maximum: 99 } },
+  setMagic: { value: { type: "integer", minimum: 0, maximum: 99 }, type: { type: "string", maxLength: 30 }, tradition: { type: "string", maxLength: 30 }, totem: { type: "string", maxLength: 30 } },
+  setArmor: { ballistic: { type: "integer", minimum: 0, maximum: 99 }, impact: { type: "integer", minimum: 0, maximum: 99 } },
+  setReactionMod: { mod: { type: "integer", minimum: -20, maximum: 20 } }, setCombatPoolBonus: { bonus: { type: "integer", minimum: 0, maximum: 20 } },
+  setInitiativeDice: { dice: { type: "integer", minimum: 1, maximum: 5 } }, setNuyen: { nuyen: { type: "integer", minimum: 0, maximum: 1000000000 } },
+  setProfessionalRating: { rating: { type: "integer", minimum: 1, maximum: 4 } }, setThreatRating: { rating: { type: "integer", minimum: 0, maximum: 20 } },
+  addItem: { catalogId: { type: "string", maxLength: 200 }, rating: { type: "integer", minimum: 0, maximum: 99 } },
+  addCustomSkill: { name: npcShort, category: { type: "string", maxLength: 20 }, attribute: { type: "string", maxLength: 20 }, rating: { type: "integer", minimum: 0, maximum: 99 } },
+  setItemRating: { itemId: npcItemId, rating: { type: "integer", minimum: 0, maximum: 99 } }, setEquipped: { itemId: npcItemId }, removeItem: { itemId: npcItemId },
+  applyExperience: { years: { type: "integer", minimum: 1, maximum: 60 } }, setName: { name: npcShort } };
+const npcOpSchema = { oneOf: Object.entries(NPC_OPS).map(([op, fields]) => ({ type: "object", additionalProperties: false, required: ["op", ...Object.keys(fields).filter(k => !NPC_OPTIONAL[op]?.includes(k))],
+  properties: { op: { const: op }, ...Object.fromEntries(Object.entries(fields).map(([k, t]) => [k, NPC_BOUNDS[op]?.[k] ?? NPC_FIELD[t]])) } })) };
+const npcOpsBody = { type: "object", additionalProperties: false, required: ["revision", "ops"],
+  properties: { revision: { type: "integer", minimum: 1 }, ops: { type: "array", minItems: 1, maxItems: 50, items: npcOpSchema } } };
+const npcBody = { type: "object", additionalProperties: false, required: ["name"], properties: { catalogId: { type: "string", maxLength: 200 }, name: { type: "string", minLength: 1, maxLength: 200 } } };
 
 export default async function documentRoutes(app) {
   app.addHook("onRequest", app.needSession);   // before validation: an anonymous caller learns nothing from a 400
@@ -84,6 +104,8 @@ export default async function documentRoutes(app) {
     (req) => L.importCharacter(req.ctx, me(req), req.body, key(req), pinned()));
   app.post("/characters", { schema: { headers: keyHeader, querystring: noQuery, body: characterBody } }, (req) => L.createCharacter(req.ctx, me(req), req.body, key(req)));
   app.post("/vehicles", { schema: { headers: keyHeader, querystring: noQuery, body: vehicleBody } }, (req) => L.createVehicle(req.ctx, me(req), req.body, key(req), (cid) => entryOf(app.catalog, cid), app.catalog?.design ?? null));
+  app.post("/npcs", { schema: { headers: keyHeader, querystring: noQuery, body: npcBody } }, (req) => L.createNpc(req.ctx, me(req), req.body, key(req), (cid) => app.catalog?.npcs?.get(cid) ?? null));
+  app.post("/:id/npc-ops", { schema: { params: idParams, headers: keyHeader, querystring: noQuery, body: npcOpsBody } }, (req) => L.applyNpcOps(req.ctx, me(req), req.params.id, req.body, key(req), (cid) => entryOf(app.catalog, cid)));
   app.post("/:id/ops", { schema: { params: idParams, headers: keyHeader, querystring: noQuery, body: opsBody } }, (req) => L.applyOps(req.ctx, me(req), req.params.id, req.body, key(req), (cid) => entryOf(app.catalog, cid), req.session.user.username, (app.catalog?.manifest?.books ?? []).map(x => x.key), app.catalog?.design ?? null));
   app.get("/:id", { schema: { params: idParams } }, (req) => L.getDocument(req.ctx, me(req), req.params.id));
   app.put("/:id", { ...BIG, schema: { params: idParams, headers: keyHeader, querystring: noQuery, body: updateBody } }, (req) => L.updateDraft(req.ctx, me(req), req.params.id, req.body, key(req)));
@@ -184,9 +206,10 @@ export default async function documentRoutes(app) {
   const fileName = (n) => String(n).replace(/[^A-Za-z0-9 _-]+/g, "").trim().replace(/\s+/g, "-").slice(0, 60) || "character";
   app.get("/:id/foundry", { schema: { params: idParams } }, async (req, reply) => {
     const { document, body } = await L.getDocument(req.ctx, me(req), req.params.id);
-    reply.header("content-disposition", `attachment; filename="fvtt-Actor-${fileName(body.name)}.json"`).type("application/json");
+    reply.header("content-disposition", `attachment; filename="fvtt-Actor-${fileName(body.name)}${document.kind === "npc" ? `-${document.id}` : ""}.json"`).type("application/json");
     if (document.kind === "vehicle") return vehicleToFoundry(vehicleActor(body), pinned());   // the Garage (PLAN-garage 8)
-    if (document.kind !== "character") return reply.code(404).send({ error: "Only a character or a vehicle exports to Foundry.", code: "not-found" });
+    if (document.kind === "npc") return vehicleToFoundry(npcActor(body), pinned());   // the same actor-file shape (PLAN-npc-builder 3)
+    if (document.kind !== "character") return reply.code(404).send({ error: "Only a character, a vehicle or an NPC exports to Foundry.", code: "not-found" });
     return toFoundryActor(body, pinned());
   });
   app.get("/:id/foundry/vehicles/:key", { schema: { params: { type: "object", required: ["id", "key"], properties: { id: idParams.properties.id, key: { type: "string", pattern: "^[vw][0-9a-z]{5}$" } } } } }, async (req, reply) => {

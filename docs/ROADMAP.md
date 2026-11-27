@@ -43,7 +43,8 @@ Each milestone gives something you can use. Each has a short plan, a Codex revie
    the `assets` table (portraits): restore tests compare each asset's bytes and `sha256` (docs/PLAN-portrait.md).
 7. **Foundry connector (optional).** _Done._ Export a character from the app and import it into Foundry as a new actor.
    Export a settled character from Foundry to the app. No in-play state.
-8. **Later:** Vehicle Workshop, more themes and sheet styles, NPC builder, social login. _Vehicle Workshop part 1, the
+8. **Later:** Vehicle Workshop, more themes and sheet styles, NPC builder, social login. _NPC builder done 2026-11-27
+   (docs/PLAN-npc-builder.md; core p.187). Vehicle Workshop part 1, the
    Garage, done 2026-11-26 (docs/PLAN-garage.md); part 2, Rigger 2 design from scratch, done 2026-11-26
    (docs/PLAN-workshop.md); part 3, weapons on a design's Rigger 2 mounts, done 2026-11-26
    (docs/PLAN-workshop-mounts.md); buying and selling vehicles in play, done 2026-11-26 (docs/PLAN-play-vehicles.md).

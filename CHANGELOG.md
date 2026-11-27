@@ -3,6 +3,15 @@
 Every change people can see goes under **Unreleased** in the same commit. A release retitles that section and its
 notes come from it.
 
+## 0.1.0-beta.18 — 2026-11-27
+- Added: **the NPC builder** (docs/PLAN-npc-builder.md, core p.187, RULINGS R22). A new kind of document, the NPC:
+  start blank or from one of the core book's 22 contacts or 7 archetypes, edit any value, add skills (from the catalog
+  or your own) and any catalog item from any book. Apply p.187's **experience** formula with a preview, set a **Threat
+  Rating** from a Skill Success Table difficulty or the team's Karma, and a **Professional Rating** with its withdrawal
+  point. Download it for Foundry as an NPC actor; Foundry prepares it to the same numbers the page shows (one shared
+  engine, the system's npc-rules.mjs). The Admin page counts each user's NPCs.
+- Changed: pins the Foundry system v0.171.0.
+
 ## 0.1.0-beta.17 — 2026-11-27
 - Added: **admins can change a user's role** after the account is made — on the Admin page (a role menu on each user)
   or with `chargen admin role <user> user|admin`. It applies at once, is written to the audit log, and the last admin

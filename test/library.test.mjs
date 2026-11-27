@@ -114,7 +114,7 @@ test("someone else's document is a 404 on EVERY document route (admins included)
   for (const r of routes) {
     const url = r.url.replace(":id", doc.id).replace(":n", "1").replace(":key", "v00001") + (r.url.endsWith("/portrait") ? "?revision=1" : "");
     const body = r.method === "GET" ? undefined : r.method === "PUT" ? { name: "Mine now", revision: 1 }
-      : r.url.endsWith("/ops") ? { revision: 1, ops: [{ op: "setName", name: "Mine now" }] }
+      : r.url.endsWith("/ops") || r.url.endsWith("/npc-ops") ? { revision: 1, ops: [{ op: "setName", name: "Mine now" }] }
       : r.url.endsWith("/portrait/stock") ? { revision: 1, stock: "tiger" }
       : r.url.endsWith("/archive") ? { archived: true } : { revision: 1 };
     const res = await boss.call(r.method, url, body);

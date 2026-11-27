@@ -1,5 +1,5 @@
 # Plan: the NPC builder (roadmap item 8)
-_Round 1 — revised after Codex r1 (docs/PLAN-npc-builder-REVIEW-LOG.md), 2026-11-27._ User decisions (2026-11-27): every user builds NPCs in their own
+_Built as 0.1.0-beta.18 (2026-11-27), with sr2e 0.171.0. Round 5 — revised after Codex r1–r5 (docs/PLAN-npc-builder-REVIEW-LOG.md), 2026-11-27._ User decisions (2026-11-27): every user builds NPCs in their own
 library (no GM role); the first release has all four core p.187 tools — start from a book NPC, the experience formula,
 the Threat Rating helper, the Professional Rating. Rules: core p.187 (rendered 2026-11-27), p.68 Skill Success Table
 (rendered), p.190 Team Karma; p.203–213 contact stat blocks (the system's `contact-npcs` pack).
@@ -17,7 +17,9 @@ to the same numbers the app shows.
   + 30% (next 15 years, "not quite 16 … so not 40") = +80%. So `pct(years) = 10·min(⌊y/2⌋, 5) + 10·⌊max(0, y−10)/4⌋`.
   The GM chooses which values grow (Attributes, Skills, Resources = nuyen); the book gives no rounding — ruling
   **R22**: each value × (1 + pct/100), rounded to the nearest whole number, halves up (p.68 "Taking the Time" rounds
-  fractions to the nearest whole unit — the only rounding rule near it). The formula is applied ONCE as an operation
+  fractions to the nearest whole unit — the only rounding rule near it). Experience scales the STORED values — an
+  attribute's `base` (the person's own; a cyberware or effect modifier stays as it is: the Bounty Hunter's Strength 5
+  with +1 becomes 9 +1 at 80%, never 11), a skill's rating, nuyen (r5 #3; part of R22, with a test). The formula is applied ONCE as an operation
   (a preview first); after that the values are plain values the user can edit.
 - **Threat Rating**: dice that "do not refresh", "available for multiple tests within a Combat Phase"; not added to
   Initiative; treated as Combat Pool dice for a clean miss; "if using Threat Ratings, do not use standard Dice Pools for
@@ -31,7 +33,10 @@ to the same numbers the app shows.
   Rating N: roll these dice by hand; p.187 says this NPC uses no Dice Pools"). Play support is a system follow-up.
 - **Professional Rating** 1–4 (Average, Semi-Trained, Trained, Professional) with its withdrawal point shown: Light,
   Moderate, Serious wound, never (the GM "may" call a Willpower (4) Test at 1–3). Foundry's schema allows 0–6; the
-  builder offers the book's 1–4 and keeps a book NPC's printed value as it is.
+  builder offers the book's 1–4 and keeps a book NPC's printed value as it is. Some contacts print a RANGE ("3–4") and
+  Foundry stores its low end (r5 #2): the catalog build reads the range from the source's biography line ("Professional Rating: 3-4 (the sheet stores
+  3 …)": 15 of the 22 contacts) into the npcs.json record as `prRange`, and such an NPC shows "printed 3–4" beside the field until the user picks one, and the
+  withdrawal point shown is the one for the picked rating (the low end until then, labelled so).
 
 ## Approach
 
@@ -47,6 +52,8 @@ to the same numbers the app shows.
    items, p.242), monitors. `NPCData` calls the same function for those numbers (spent pools, projection and
    substances stay in NPCData, around it), so Foundry and the app share ONE engine. Existing NPC Quench + vitests stay
    green; a Quench test compares `npcDerived` with the prepared actor for every contact NPC and converted archetype.
+   A new NPC field `combatPoolBonus` (integer, initial 0; r2 #1) adds to the Combat Pool, for a baked bonus such as an
+   adept's Combat Sense (Tiger) — no migration (the default changes nothing).
 3. The Professional Rating's names and withdrawal wound on the Foundry NPC sheet (localized) — a read-only line.
    Nothing else changes in Foundry play (Threat dice for people stay manual, as today: see Risks).
 The app adds `module/rules/npc-rules.mjs` to `tools/content.mjs` RULES_ENTRIES (r1 #2), pins this release, syncs it
@@ -64,22 +71,27 @@ A fourth kind, **"npc"** (`server/library.mjs`; quotas, revisions, idempotency, 
 every kind). Body `{ schema: "sr2e-chargen-npc", schemaVersion: 1, name, notes, source: { catalogId | null },
 nextItem, actor, experience: [] }` where `actor` is the Foundry NPC actor source — the ONE authority, as the Garage.
 `shared/npc.mjs`: `newNpc(entry | null, name)`, `applyNpcOp`, `npcActor(body)`, `npcBooks(body)`.
-- **From a contact NPC**: its actor source as printed.
+- **From a contact NPC**: its actor source as printed; a missing Threat Rating is set to 0 (r2 #2: the contacts print
+  none, and Foundry's default is 1). Every new NPC (book, archetype, blank) starts at Threat 0.
 - **From an archetype** (a `character` actor, from `npcs.json`): converted ONCE by `archetypeToNpc`, which BAKES the
   prepared numbers (r1 #4: NPC preparation applies no cyberware/bioware/adept item modifiers): each attribute's NPC
   `base` = the archetype's prepared value from the app's derive (parity-tested with Foundry's character preparation),
   less any transfer-effect `mod` that the NPC will get again from the same item (none in today's packs: 0 transfer
   effects in `runners` and `contact-npcs`; a test pins that); `reaction.mod` = prepared Reaction − ⌊(Q+I)/2⌋;
-  `initiative.dice` = prepared dice; armor base 0 with the worn armor items kept `equipped`; Essence (value and max),
+  `initiative.dice` = prepared dice; `combatPoolBonus` = prepared Combat Pool − ⌊(Q+I+W)/2⌋; armor base 0 with the worn armor items kept `equipped`; Essence (value and max),
   Magic, race, nuyen, biography as prepared/printed; every item copied (fresh `gn…` ids). The Quench test compares the
   imported NPC's prepared attributes, Reaction, Initiative, Combat Pool and armor with the archetype character's.
-- **Blank**: Foundry's NPC defaults (human, every attribute 3, PR 1, Threat 0).
+- **Blank**: Foundry's NPC defaults (human, every attribute 3, PR 1), Threat 0.
 - **Ops** — their OWN map `NPC_OPS` and route `POST /api/documents/:id/npc-ops` (r1 #1: `setMagic`/`addItem` exist in
   the character's OPS; the two schemas never mix), field types as `VEHICLE_OPS`: `setName`, `setNotes`, `setRace` (the system's race
-  keys), `setAttribute {attr, base}` (1–99), `setEssence`, `setMagic {value, tradition, type}`, `setArmor {ballistic,
-  impact}`, `setInitiativeDice` (1–5), `setNuyen` (0–1e9), `setProfessionalRating` (1–4), `setThreatRating` (0–20),
+  keys), `setAttribute {attr, base}` (1–99), `setEssence`, `setMagic {value, tradition, type, totem}` (the totem from the system's totem list; r3 #2), `setBodyIndex`
+  (a finite number 0–99 — bioware costs fractions such as 0.25, kept exactly (r5 #1); an input bound only: above natural Body is biosystem overstress, Shadowtech p.6 — Foundry reads the stored
+  value; r3 #3, r4), `setArmor {ballistic,
+  impact}`, `setReactionMod` (−20…20; r2 #3: four contacts print one), `setCombatPoolBonus` (0–20), `setInitiativeDice` (1–5), `setNuyen` (0–1e9), `setProfessionalRating` (1–4), `setThreatRating` (0–20),
   `addItem {catalogId, rating?}` (any catalog item type an NPC can hold in Foundry, every book — the GM's NPC needs no
-  book toggle; the items keep their citation), `setItemRating {itemId, rating}` (skills, rated gear), `setEquipped {itemId, equipped}` (armor and weapons — the
+  book toggle; the items keep their citation), `addCustomSkill {name, category, attribute, rating}` (a skill the catalog lacks, e.g. the
+  Bartender's Rumormill; category/attribute from the system's skill schema choices; name 1–80 characters; r3 #1),
+  `setItemRating {itemId, rating}` (skills, rated gear), `setEquipped {itemId, equipped}` (armor and weapons — the
   only item states NPC preparation reads; r1 #6), `removeItem`,
   `applyExperience {years, attributes: bool, skills: bool, resources: bool}` (1–60 years; at least one target; records
   `{years, pct, targets, at}` in `experience`). Item ids `gn…` from `nextItem`, as `gv…`. Caps: 200 items.

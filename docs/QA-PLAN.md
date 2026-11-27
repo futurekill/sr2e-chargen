@@ -230,6 +230,16 @@ Automatic: `test/admin-counts.test.mjs` (every database). Manual: as an admin, o
 characters, vehicles and drafts (archived ones included) and "N in the trash" when there are any; delete a draft as that
 user and reload: one draft fewer, one more in the trash.
 
+## NPC builder (docs/PLAN-npc-builder.md)
+Automatic: `test/npc.test.mjs` (every database): npcs.json, contacts as printed, archetype parity with the runners
+fixture, experience (p.187's 25 years, R22), every op's bounds, the routes, the export, admin counts. In Foundry: Quench
+`sr2e.npc-derived` (the system's shared engine against every contact NPC). Release check (done for beta.18): export all
+29 book NPCs (Bounty Hunter with 25 years of experience), import each into Foundry, compare attributes, Reaction,
+Initiative dice, Combat and Astral pools and armor with the page — all equal. Manual: Library → Kind NPC → Start from
+"Fixer"; set Threat from "Difficult" with 7; apply 4 years to Attributes (the preview lists each change); add
+"Rumormill" (Special, Intelligence, 4); add an Armor Vest and tick Worn (Armor goes up); Download for Foundry and import
+it into an NPC actor: the numbers match the page and the biography says to roll Threat dice by hand.
+
 ## Changing a user's role
 Automatic: `test/accounts.test.mjs` and `test/admin-counts.test.mjs` (every database). Manual: as an admin, set a
 runner's role menu to admin: the runner's next page load shows Admin. With only one admin, set your own menu to runner:

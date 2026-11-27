@@ -23,8 +23,11 @@ export const TABLES = {
   racialAbilities: SR2E.racialAbilities,  // core p.45
   totems: SR2E.totems                     // core p.119–121
 };
+/** The races the system knows (core p.43–45 and shapeshifters), for pickers; the tables themselves stay behind racialProfile. */
+export const RACE_KEYS = Object.freeze(Object.keys(SR2E.racialModifiers));
 /** A label the system names by key ("SR2E.Totems.Bear" → "Bear"); the key itself when unknown. */
 export const label = (key) => (typeof key === "string" && LABELS[key]) || key;
 export { designVehicle, applyModEffects, vehicleCapacity } from "../content/sr2e-foundryvtt/module/rules/vehicle-design.mjs";
 export { blankDesign, chassisArt, workshopUpdate, engineMods, choiceFor, modBuildContext, designModProblems, checkChoices, vehicleEffective } from "../content/sr2e-foundryvtt/module/rules/vehicle-workshop-rules.mjs";
 export { R2_MOUNTS, CONVERSION_KITS, mountProblems, mountedWeaponLoad, removalProblem, mountOf, weaponClassOf, fitProblem, kitFor, sourceKey } from "../content/sr2e-foundryvtt/module/rules/vehicle-mounts-r2.mjs";
+export { NPC_ATTRS, npcExperiencePct, npcExperienced, SKILL_SUCCESS_TABLE, threatFromDifficulty, threatFromTeamKarma, PROFESSIONAL_RATINGS, npcWithEffects, npcDerived } from "../content/sr2e-foundryvtt/module/rules/npc-rules.mjs";

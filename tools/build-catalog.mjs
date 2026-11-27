@@ -107,7 +107,7 @@ const kindOf = (doc) => /^!(\w+)!/.exec(String(doc._key ?? ""))?.[1] ?? null;
 export function selected(doc, pack) {
   const kind = kindOf(doc);
   if (kind === "items") return "item";
-  if (kind === "actors" && (doc.type === "vehicle" || (doc.type === "character" && pack === "runners"))) return "actor";
+  if (kind === "actors" && (doc.type === "vehicle" || (doc.type === "character" && pack === "runners") || (doc.type === "npc" && pack === "contact-npcs"))) return "actor";
   return null;
 }
 
@@ -259,6 +259,25 @@ export function vehicleSources({ pins, contentDir }) {
 }
 
 /**
+ * Book NPCs' COMPLETE actor sources by catalog id (docs/PLAN-npc-builder.md 1): the 22 contacts (core p.203–213) and the
+ * 7 archetypes, for the NPC builder. `prRange` = a Professional Rating RANGE the book prints ("3-4") where the source
+ * stores only its low end (r5 #2), read from the source's biography line; null otherwise.
+ */
+export function npcSources({ pins, contentDir }) {
+  const out = {};
+  const range = (doc) => {
+    const m = /Professional Rating:(?:<\/strong>|\*\*)?\s*(\d)\s*[-–]\s*(\d)/.exec(String(doc.system?.biography ?? ""));
+    return m ? [Number(m[1]), Number(m[2])] : null;
+  };
+  for (const pin of pins) {
+    const repo = shapeRepo(pin, readVendored(contentDir, pin));
+    for (const { pack, doc } of repo.docs) if (selected(doc, pack) === "actor" && (doc.type === "npc" || doc.type === "character"))
+      out[`${repo.id}.${pack}.${doc._id}`] = { source: doc, prRange: doc.type === "npc" ? range(doc) : null };
+  }
+  return Object.fromEntries(Object.entries(out).sort(([a], [b]) => (a < b ? -1 : 1)));   // byte-stable
+}
+
+/**
  * Rigger 2's vehicle-design tables (docs/PLAN-workshop.md 1.2), keyed as the system's registerVehicleDesignTables keys
  * them, from the one pin that has them; null when none does. `pin` records where they came from.
  */
@@ -280,9 +299,9 @@ export function manifestOf(catalog) {
   return { ...rest, entries: entries.length };
 }
 
-/** Write {catalog.json, manifest.json} (and vehicles.json, design-tables.json when given) into `outDir`; the manifest
- *  carries each file's SHA-256. */
-export function writeCatalog(catalog, outDir, vehicles = null, design = null) {
+/** Write {catalog.json, manifest.json} (and vehicles.json, design-tables.json, npcs.json when given) into `outDir`; the
+ *  manifest carries each file's SHA-256. */
+export function writeCatalog(catalog, outDir, vehicles = null, design = null, npcs = null) {
   mkdirSync(outDir, { recursive: true });
   const body = JSON.stringify(catalog);
   writeFileSync(join(outDir, "catalog.json"), body);
@@ -297,6 +316,11 @@ export function writeCatalog(catalog, outDir, vehicles = null, design = null) {
     writeFileSync(join(outDir, "design-tables.json"), d);
     manifest.designSha256 = createHash("sha256").update(d).digest("hex");
   }
+  if (npcs) {
+    const n = JSON.stringify(npcs);
+    writeFileSync(join(outDir, "npcs.json"), n);
+    manifest.npcsSha256 = createHash("sha256").update(n).digest("hex");
+  }
   writeFileSync(join(outDir, "manifest.json"), `${JSON.stringify(manifest, null, 2)}\n`);
   return manifest;
 }
@@ -306,7 +330,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   try {
     const out = process.argv[2] ? resolve(process.argv[2]) : join(ROOT, "catalog");
     const contentDir = join(ROOT, "content");
-    const manifest = writeCatalog(buildCatalog({ pins, contentDir }), out, vehicleSources({ pins, contentDir }), designTables({ pins, contentDir }));
+    const manifest = writeCatalog(buildCatalog({ pins, contentDir }), out, vehicleSources({ pins, contentDir }), designTables({ pins, contentDir }), npcSources({ pins, contentDir }));
     console.log(`catalog: ${manifest.entries} entries from ${manifest.pins.length} packages, ${manifest.books.length} books — sha256 ${manifest.sha256.slice(0, 16)}…`);
     for (const b of manifest.books) console.log(`  ${b.abbr.padEnd(12)} ${String(b.count).padStart(5)}  ${b.title}`);
   } catch (err) { console.error(err.message); process.exitCode = 1; }

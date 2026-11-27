@@ -5,7 +5,7 @@ import { readFileSync } from "node:fs";
 import { derive } from "../shared/derive.mjs";
 import { bodyCostOf } from "../shared/purchase.mjs";
 
-const fixture = JSON.parse(readFileSync(new URL("fixtures/parity/bioware-v0.170.0.json", import.meta.url), "utf8"));
+const fixture = JSON.parse(readFileSync(new URL("fixtures/parity/bioware-v0.171.0.json", import.meta.url), "utf8"));
 
 for (const want of fixture.actors) {
   test(`bioware parity: ${want.name} (${want.ruleset})`, () => {
