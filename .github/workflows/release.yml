@@ -15,6 +15,7 @@ jobs:
   on-main:
     name: The tag is on main
     runs-on: ubuntu-24.04
+    timeout-minutes: 30   # a stuck step fails the job, never runs for hours
     permissions: { contents: read }
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -32,6 +33,7 @@ jobs:
     name: Build, scan, push (private), sign, release
     needs: ci
     runs-on: ubuntu-24.04
+    timeout-minutes: 30   # a stuck step fails the job, never runs for hours
     permissions:
       contents: write        # the GitHub release and its SBOM asset
       packages: write        # the private GHCR package
