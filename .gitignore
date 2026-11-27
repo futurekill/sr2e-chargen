@@ -12,3 +12,4 @@ dist/
 content.staging/
 content.old/
 sync-report.json
+a11y-report.json

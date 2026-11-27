@@ -3,6 +3,21 @@
 Every change people can see goes under **Unreleased** in the same commit. A release retitles that section and its
 notes come from it.
 
+## 1.0.0 — 2026-11-27
+The first release without the beta tag.
+- Added: **accessibility** to WCAG 2.2 AA (docs/ACCESSIBILITY.md, docs/PLAN-a11y.md). A skip link; each page has its
+  own title, and moving to a page puts focus on its heading and announces it; form errors are tied to their fields
+  and focused; a control that saves keeps keyboard focus; tables have headers and captions; nothing scrolls sideways
+  at 320 px or clips at 200% text; Windows High Contrast keeps borders and focus; no motion with "reduce motion".
+- Added: **tagged PDFs**: the printed sheets and the table card read in order with a screen reader — headings,
+  tables with headers (a small header row now names each table's columns), the condition monitors as "N of M boxes
+  marked", page numbers skipped.
+- Added: an automated accessibility check in CI (every page, every theme; axe-core and keyboard/focus/reflow/motion
+  checks). The manual screen-reader pass is still to do (docs/QA-PLAN.md).
+- Fixed: the NPC page crashed in the browser (beta.18). A character imported from Foundry crashed on its Karma step.
+- Fixed: the Library's Start button (and every form row) lines up with its fields.
+- Changed: the daily content sync closes its own pull request when main already has that content or newer.
+
 ## 0.1.0-beta.18 — 2026-11-27
 - Added: **the NPC builder** (docs/PLAN-npc-builder.md, core p.187, RULINGS R22). A new kind of document, the NPC:
   start blank or from one of the core book's 22 contacts or 7 archetypes, edit any value, add skills (from the catalog

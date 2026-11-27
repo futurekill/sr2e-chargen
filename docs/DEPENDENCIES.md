@@ -16,6 +16,8 @@ the test runner (`node:test`), UUIDs and random tokens (`node:crypto`), `fetch`.
 | eslint, @eslint/js (dev) | see package.json | 2026-11-16 | Lint (`no-undef` above all) |
 | pdfkit, fontkit | 0.20.2, 2.0.4 | 2026-11-18 | The printable sheet: pure-JavaScript PDF with embedded fonts, measured with the same metrics it draws (no native binary in the distroless image) |
 | @fontsource/source-sans-3, @fontsource/atkinson-hyperlegible-next, @fontsource/noto-sans | 5.3.1, 5.3.0, 5.3.0 | 2026-11-18 | Sheet fonts (SIL OFL 1.1, licence file in each package): standard, readable, and the per-glyph fallback |
+| axe-core (dev) | 4.14.0 | 2026-11-27 | The accessibility scan's rule engine (WCAG 2.2 A/AA), injected into each page by `tools/a11y-scan.mjs`. Dev only |
+| puppeteer-core (dev) | 25.17.0 | 2026-11-27 | Drives the system Chrome for the accessibility scan; `-core` downloads no browser (CI uses the runner's Chrome). Dev only |
 | pdfjs-dist (dev) | 6.5.438 | 2026-11-18 | The fit test reads each produced PDF's text back |
 | acorn (dev) | 8.19.0 | 2026-11-18 | The content sync PARSES the system modules it copies (import closure, forbidden constructs); already in the tree via eslint and svelte. Tools only, not in the image |
 

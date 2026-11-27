@@ -6,6 +6,8 @@
  *   - The branch is replaced only when its head is the sync's own last commit — proved by the commit status that only
  *     this workflow's token can write (`content-sync / catalog`, created by github-actions[bot]) — and has exactly
  *     one commit beyond main. The push is leased against the head that was checked, so a push in between is kept.
+ *   - Main already holds the newest content (the maintainer moved the pins, or merged): an open sync pull request is
+ *     stale, so it is CLOSED and its branch deleted — only when the branch head is the sync's own commit (as above).
  *   - Every body row and status is computed here; upstream strings never pass through a shell; the body is a file.
  *   - The token reaches git through the environment, never the command line, and every error is redacted.
  * Inputs (environment): GH_TOKEN, GITHUB_REPOSITORY, GITHUB_SERVER_URL, GITHUB_RUN_ID, OUTCOMES = JSON
@@ -38,6 +40,12 @@ export function prBody({ pins, report, outcomes, runUrl }) {
   ].join("\n");
 }
 
+/**
+ * What to do with an open sync pull request when main needs nothing (pure: tests call it): close it only when its
+ * branch is the sync's own work — one commit beyond main, carrying this workflow's status. Anything else is left alone.
+ */
+export const staleAction = ({ pr, remoteHead, beyond, ours }) => (!pr || !remoteHead ? "none" : beyond === "1" && ours ? "close" : "leave");
+
 /** Remove the token and anything derived from it from text that may be printed. */
 export const redact = (text, token) => (token ? String(text).split(token).join("***").split(Buffer.from(`x-access-token:${token}`).toString("base64")).join("***") : String(text));
 
@@ -69,7 +77,31 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     }
     const pins = JSON.parse(readFileSync("content-pins.json", "utf8")).content;
     const report = JSON.parse(readFileSync("sync-report.json", "utf8"));
-    if (!run("git", ["status", "--porcelain", "--", "content", "content-pins.json"])) { console.log("content/ and the pins match main: nothing to publish."); process.exit(0); }
+    if (!run("git", ["status", "--porcelain", "--", "content", "content-pins.json"])) {
+      // Nothing new for main. A sync pull request still open is stale (main moved past it): close it (user, 2026-11-27).
+      const pr = openPr();
+      let beyond = "", ours = false, head = "";
+      if (pr && remoteHead) {
+        // Check the head we FETCHED, and only it: its commit count and its status together (code review r2 #2).
+        run("git", ["fetch", "-q", "origin", `+refs/heads/${BRANCH}:refs/remotes/origin/${BRANCH}`]);
+        head = run("git", ["rev-parse", `refs/remotes/origin/${BRANCH}`]);
+        beyond = run("git", ["rev-list", "--count", `origin/main..${head}`]);
+        ours = JSON.parse(api([`repos/${repo}/commits/${head}/statuses`, "--paginate"]) || "[]").some(s => s.context === STATUS && s.creator?.login === BOT);
+      }
+      const action = staleAction({ pr, remoteHead: head, beyond, ours });
+      if (action === "close") {
+        // Say why, then delete the branch only if it is STILL that head (a leased push): GitHub closes a pull request
+        // whose branch is deleted; the explicit close below covers the rest and may find it closed already.
+        run("gh", ["pr", "comment", pr, "--repo", repo, "--body", `Main already has this content or newer, so this pull request is out of date. Closed by the daily sync: ${runUrl}`]);
+        run("git", ["push", "-q", `--force-with-lease=refs/heads/${BRANCH}:${head}`, "origin", `:refs/heads/${BRANCH}`]);
+        // Already closed by the branch deletion is fine; any other failure is reported (r3 #3).
+        try { run("gh", ["pr", "close", pr, "--repo", repo]); }
+        catch (err) { if (run("gh", ["pr", "view", pr, "--repo", repo, "--json", "state", "--jq", ".state"]) !== "CLOSED") throw err; }
+        console.log(`content/ and the pins match main: closed the stale pull request #${pr}.`);
+      } else if (action === "leave") console.log(`content/ and the pins match main; pull request #${pr} has work the sync didn't make, so it was left open.`);
+      else console.log("content/ and the pins match main: nothing to publish.");
+      process.exit(0);
+    }
     // Only the sync's OWN last commit may be replaced: one commit beyond main, carrying the status this token wrote.
     if (remoteHead) {
       run("git", ["fetch", "-q", "origin", `+refs/heads/${BRANCH}:refs/remotes/origin/${BRANCH}`]);

@@ -35,6 +35,28 @@ jobs:
       - name: Audit (production dependencies must be clean)
         run: npm audit --omit=dev --audit-level=low
 
+  a11y:
+    # docs/PLAN-a11y.md 1: the real app on 127.0.0.1 with its own temporary data, scanned in the runner's Google Chrome
+    # (axe-core, WCAG 2.2 A/AA + target size, and the keyboard, focus, reflow, motion and forced-colour checks).
+    name: Accessibility
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { persist-credentials: false }
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with: { node-version: "26.13.1", cache: npm }
+      - run: npm ci
+      - run: npm run build
+      - run: npm run build:catalog
+      - name: Scan every page in every theme
+        run: npm run a11y
+        env: { CHROME_PATH: /usr/bin/google-chrome, A11Y_REPORT: a11y-report.json }
+      - name: Keep the report (also when the scan fails)
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with: { name: a11y-report, path: a11y-report.json, if-no-files-found: error, retention-days: 14 }
+
   databases:
     name: Test (${{ matrix.name }})
     runs-on: ubuntu-24.04

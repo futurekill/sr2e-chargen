@@ -156,3 +156,12 @@ test("the project's real copy builds and matches content-pins.json", { skip: !ex
   assert.ok(catalog.entries.length > 1000);
   assert.deepEqual(catalog.pins.map(p => [p.dir, p.tag, p.commit]), pins.map(p => [p.dir, p.tag, p.commit]));
 });
+
+test("the daily sync closes its own stale pull request, and only its own (user, 2026-11-27)", async () => {
+  const { staleAction } = await import("../tools/content-pr.mjs");
+  assert.equal(staleAction({ pr: "1", remoteHead: "abc", beyond: "1", ours: true }), "close", "the sync's own single commit: closed");
+  assert.equal(staleAction({ pr: "1", remoteHead: "abc", beyond: "2", ours: true }), "leave", "someone added a commit: left open");
+  assert.equal(staleAction({ pr: "1", remoteHead: "abc", beyond: "1", ours: false }), "leave", "a head the sync didn't make: left open");
+  assert.equal(staleAction({ pr: "", remoteHead: "abc", beyond: "1", ours: true }), "none");
+  assert.equal(staleAction({ pr: "1", remoteHead: "", beyond: "", ours: false }), "none");
+});

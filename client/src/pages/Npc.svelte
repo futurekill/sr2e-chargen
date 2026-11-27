@@ -2,11 +2,15 @@
   /** An NPC (docs/PLAN-npc-builder.md): a stat block tailored to the story (core p.187), exported as a Foundry NPC. */
   import { get, mutate } from "../lib/api.js";
   import { go } from "../lib/router.svelte.js";
+  import { keepFocus, flagFocused, clearFlags } from "../lib/focus.js";
+  import { page } from "../lib/page.svelte.js";
   import { npcView, experiencePreview } from "../../../shared/npc.mjs";
   import { NPC_ATTRS, SKILL_SUCCESS_TABLE, threatFromDifficulty, threatFromTeamKarma, TABLES, RACE_KEYS, label } from "../../../shared/rules.mjs";
   let { doc } = $props();
+  let status = $state("");
   let server = $state(doc), error = $state(""), busy = $state(false), notes = $state(doc.body.notes), name = $state(doc.body.name);
-  const body = $derived(server.body), sys = $derived(server.body.actor.system), view = $derived(npcView(server.body));
+  // Plain copies for the shared helpers (they structuredClone, which a Svelte state proxy refuses).
+  const body = $derived($state.snapshot(server.body)), sys = $derived(body.actor.system), view = $derived(npcView(body));
   const items = $derived(body.actor.items), skills = $derived(items.filter(i => i.type === "skill")), gear = $derived(items.filter(i => i.type !== "skill"));
   const TITLE = { body: "Body", quickness: "Quickness", strength: "Strength", charisma: "Charisma", intelligence: "Intelligence", willpower: "Willpower" };
   const PR_NAME = { 1: "Average", 2: "Semi-Trained", 3: "Trained", 4: "Professional" };
@@ -14,15 +18,17 @@
   const DIFFICULTY = { simple: "Simple", routine: "Routine", average: "Average", challenging: "Challenging", difficult: "Difficult", strenuous: "Strenuous", extreme: "Extreme", nearlyImpossible: "Nearly Impossible" };
   const nuyen = (n) => `${Number(n || 0).toLocaleString("en-US")}¥`;
 
-  async function send(ops) {
-    busy = true; error = "";
-    try { server = await mutate("POST", `/api/documents/${server.document.id}/npc-ops`, { revision: server.document.revision, ops }); name = server.body.name; notes = server.body.notes; }
+  const send = (ops) => keepFocus(async () => {
+    const from = document.activeElement;   // the control that made this change, before busy disables it (r2 #1)
+    busy = true; error = ""; status = "";
+    try { server = await mutate("POST", `/api/documents/${server.document.id}/npc-ops`, { revision: server.document.revision, ops }); name = server.body.name; notes = server.body.notes; clearFlags(); status = "Saved."; page.title = server.body.name; }
     catch (err) {
+      flagFocused("doc-error", from);
       error = err.code === "stale" ? "This NPC changed somewhere else. It now shows the saved version." : err.message;
       try { server = await get(`/api/documents/${server.document.id}`); } catch { /* keep the last answer */ }
     }
     busy = false;
-  }
+  });
   const int = (v) => Number.parseInt(v, 10);
   const num = (ev) => Number(ev.currentTarget.value);
 
@@ -54,7 +60,8 @@
 
 <h1>{body.name}</h1>
 <p class="muted">NPC{#if body.source} · from the book's {body.source.kind}{/if} · revision {server.document.revision}</p>
-{#if error}<p class="notice bad" role="alert">{error}</p>{/if}
+{#if error}<p class="notice bad" role="alert" id="doc-error">{error}</p>{/if}
+<p class="sr-only" role="status">{status}</p>
 
 <h2>Attributes</h2>
 <div class="row wrap">
@@ -130,8 +137,9 @@
 {#if preview}
   <p>+{preview.pct}%{#if !preview.changes.length}: nothing changes.{/if}</p>
   {#if preview.changes.length}
-    <table><thead><tr><th scope="col">Value</th><th scope="col">Now</th><th scope="col">After</th></tr></thead>
-      <tbody>{#each preview.changes as c (c.what + (c.itemId ?? ""))}<tr><td>{c.what}</td><td>{c.what === "nuyen" ? nuyen(c.from) : c.from}</td><td>{c.what === "nuyen" ? nuyen(c.to) : c.to}</td></tr>{/each}</tbody></table>
+    <!-- svelte-ignore a11y_no_noninteractive_tabindex -->
+<div class="scroll-x" role="region" aria-label="Experience preview" tabindex="0"><table><caption>What +{preview.pct}% changes</caption><thead><tr><th scope="col">Value</th><th scope="col">Now</th><th scope="col">After</th></tr></thead>
+      <tbody>{#each preview.changes as c (c.what + (c.itemId ?? ""))}<tr><th scope="row">{c.what}</th><td>{c.what === "nuyen" ? nuyen(c.from) : c.from}</td><td>{c.what === "nuyen" ? nuyen(c.to) : c.to}</td></tr>{/each}</tbody></table></div>
     <button disabled={busy || (!xpAttrs && !xpSkills && !xpRes)} onclick={() => send([{ op: "applyExperience", years: int(years), attributes: xpAttrs, skills: xpSkills, resources: xpRes }]).then(() => { years = ""; })}>Apply</button>
   {/if}
 {/if}

@@ -100,9 +100,11 @@
       <p class="small">Handling {fmtH(s.handling)} · Speed {s.stallSpeed != null ? `${s.stallSpeed}/` : ""}{cell(s.speed)} · Accel {cell(s.acceleration)} · Body {cell(s.body)} · Armor {cell(s.armor)} · Sig {cell(s.signature)} · Autonav {cell(s.autonav)} · Pilot {cell(s.pilot)} · Sensor {cell(s.sensor)}</p>
       {#if r.budgets}<p class="small">Cargo {r.budgets.cfUsed} of {r.budgets.cargo} CF used · Load {r.budgets.loadUsed} of {r.budgets.load} kg used</p>{/if}
     {/if}
-    {#if r?.dpLines?.length}<details><summary>Design Points, line by line</summary><table class="dp"><tbody>
-      {#each r.dpLines as l, i (i)}<tr><td>{l.label}</td><td class="n">{l.dp}</td><td class="muted">{l.page ?? ""}</td></tr>{/each}
-    </tbody></table></details>{/if}
+    {#if r?.dpLines?.length}<details><summary>Design Points, line by line</summary><!-- svelte-ignore a11y_no_noninteractive_tabindex -->
+<div class="scroll-x" role="region" aria-label="Design Points, line by line" tabindex="0"><table class="dp"><caption class="sr-only">Design Points, line by line</caption>
+      <thead><tr><th scope="col">Item</th><th scope="col">Design Points</th><th scope="col">Page</th></tr></thead><tbody>
+      {#each r.dpLines as l, i (i)}<tr><th scope="row">{l.label}</th><td class="n">{l.dp}</td><td class="muted">{l.page ?? ""}</td></tr>{/each}
+    </tbody></table></div></details>{/if}
     <p>Design Points <strong>{r?.dp ?? 0}</strong> · Mark-Up ×{r?.markUp?.total ?? "–"} · Price <strong>{r?.valid ? nuyen(r.price) : "unfinished"}</strong>{#if dirty} · <em>unsaved changes</em>{/if}</p>
     {#if r?.problems?.length}<ul class="problems" aria-label="Why this design isn't finished">{#each r.problems as p, i (i)}<li>{p.msg} <span class="muted">({p.page})</span></li>{/each}</ul>{/if}
     <div class="row"><button type="button" disabled={busy || !dirty} onclick={save}>Save design</button>
@@ -232,7 +234,7 @@
   .summary { border: 1px solid var(--line); background: var(--surface); padding: .7rem .85rem; margin: 0 0 1rem; }
   .summary p { margin: .2rem 0; }
   .problems { color: var(--danger); margin: .3rem 0; padding-left: 1.2rem; }
-  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); gap: .6rem 1rem; margin-bottom: 1rem; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(16rem, 100%), 1fr)); gap: .6rem 1rem; margin-bottom: 1rem; }
   .grid label, .row label { display: flex; flex-direction: column; gap: .2rem; }
   .grid label.check { flex-direction: row; align-items: center; }
   .inline input { width: 4.5rem; }

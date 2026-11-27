@@ -559,6 +559,8 @@ sourcebook modules at the releases in `content-pins.json`). A daily workflow pro
   it comes from (`SSC p.59`, `R2 p.14`).
 - **Manage it in play**: Karma and advancement, nuyen, purchases, damage, ammo, with history and undo.
 - **Rigger 2 vehicle design**: design a vehicle from scratch by the Rigger 2 rules, or start from a core vehicle (the Garage).
+- **Accessible**: WCAG 2.2 AA in every theme (keyboard, screen readers, zoom, high contrast, reduced motion), checked in
+  CI; the PDF sheets are tagged for screen readers (docs/ACCESSIBILITY.md).
 - **NPCs** for the gamemaster: from a book contact or archetype, or blank, with p.187's experience, Threat and
   Professional Ratings, exported as Foundry NPCs.
 - **Export**: Foundry JSON (characters with their vehicles, spirits and images), printable PDF sheets in several

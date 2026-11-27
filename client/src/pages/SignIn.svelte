@@ -1,13 +1,14 @@
 <script>
   import { post } from "../lib/api.js";
   let { onDone } = $props();
-  let username = $state(""), password = $state(""), error = $state(""), busy = $state(false);
+  import { tick } from "svelte";
+  let username = $state(""), password = $state(""), error = $state(""), busy = $state(false), userEl = $state();
 
   async function submit(ev) {
     ev.preventDefault();
     busy = true; error = "";
     try { await post("/api/login", { username, password }); await onDone(); }
-    catch (err) { error = err.message; password = ""; }
+    catch (err) { error = err.message; password = ""; await tick(); userEl?.focus(); }
     busy = false;
   }
 </script>
@@ -22,10 +23,11 @@
   <section class="gate" aria-labelledby="jack-in">
     <h1 id="jack-in">Jack in</h1>
     <p class="muted">Invite only. No invite? Ask whoever runs this node.</p>
-    {#if error}<p class="notice bad" role="alert">{error}</p>{/if}
+    {#if error}<p class="notice bad" role="alert" id="signin-error">{error}</p>{/if}
     <form class="stack" onsubmit={submit}>
-      <label><span>Handle</span><input bind:value={username} name="username" autocomplete="username" autocapitalize="none" spellcheck="false" required></label>
-      <label><span>Password</span><input bind:value={password} name="password" type="password" autocomplete="current-password" required></label>
+      <!-- A refused sign-in marks both fields: the server never says which one was wrong (3.3.1). -->
+      <label><span>Handle</span><input bind:this={userEl} aria-invalid={error ? "true" : undefined} aria-describedby={error ? "signin-error" : undefined} bind:value={username} name="username" autocomplete="username" autocapitalize="none" spellcheck="false" required></label>
+      <label><span>Password</span><input aria-invalid={error ? "true" : undefined} aria-describedby={error ? "signin-error" : undefined} bind:value={password} name="password" type="password" autocomplete="current-password" required></label>
       <div class="row"><button disabled={busy}>{busy ? "Checking…" : "Jack in"}</button></div>
     </form>
   </section>

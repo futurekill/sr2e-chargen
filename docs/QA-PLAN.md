@@ -240,7 +240,28 @@ Initiative dice, Combat and Astral pools and armor with the page — all equal. 
 "Rumormill" (Special, Intelligence, 4); add an Armor Vest and tick Worn (Armor goes up); Download for Foundry and import
 it into an NPC actor: the numbers match the page and the biography says to roll Threat dice by hand.
 
-## Changing a user's role
+## Accessibility (docs/PLAN-a11y.md, docs/ACCESSIBILITY.md)
+Automatic: CI job "Accessibility" (`npm run a11y`; build the client and the catalog first) and `test/pdf-tags.test.mjs`.
+Locally: `CHROME_PATH=… A11Y_SHOTS=/tmp/shots npm run a11y` also saves a screenshot of each page.
+
+**Manual screen-reader pass** (the maintainer; record the date, browser, reader and findings below, then fix them).
+Run it once with **VoiceOver + Safari** (macOS) and once with **NVDA + Firefox** (Windows), keyboard only:
+1. Sign in with a wrong password: the error is announced and focus is on Handle. Sign in.
+2. The skip link is first; it jumps to the content. Each page change announces the page title.
+3. Library: create a character. Walk every step with the tab keys (←/→/Home/End); add a skill, buy an item with a
+   choice, finish. Every field has a name; a refused change is announced.
+4. In play: buy and sell gear and a vehicle; mark damage on the Condition step.
+5. Garage: design a vehicle (chassis, power plant, a modification, a weapon on a mount); the Design Points table is
+   read with its headers.
+6. NPC: start from a contact; apply experience (the preview table is read with its headers); set the Professional and
+   Threat Ratings; add an item.
+7. Print a sheet and the table card; open each PDF in Acrobat Reader (Windows) / Preview (macOS) with the reader: the
+   name first, then the sections in order; tables read with their headers; the condition monitors read as "… boxes
+   marked"; no page numbers in the reading.
+8. Windows **High Contrast** (Settings → Accessibility → Contrast themes): every control has a border and a visible
+   focus.
+Results: _not yet run._
+
 Automatic: `test/accounts.test.mjs` and `test/admin-counts.test.mjs` (every database). Manual: as an admin, set a
 runner's role menu to admin: the runner's next page load shows Admin. With only one admin, set your own menu to runner:
 "That's the last admin" and the menu stays admin. With two admins, demote yourself: the app goes to the Library and the

@@ -57,7 +57,8 @@ Each milestone gives something you can use. Each has a short plan, a Codex revie
      a copy or close imitation of the cover. In the default Cyberpunk theme first; it must read in all four themes and
      keep the sign-in form plain and accessible.
 
-9. **Accessibility pass (user, 2026-11-26: after the main features).** A full audit and fixes, the maintainer's call
+9. **Accessibility pass (user, 2026-11-26: after the main features).** _Automated part done 2026-11-27 (1.0.0;
+   docs/PLAN-a11y.md, docs/ACCESSIBILITY.md); the manual VoiceOver/NVDA pass (docs/QA-PLAN.md) is pending._ A full audit and fixes, the maintainer's call
    on the means: keyboard-only use of every page, screen-reader names and live announcements (NVDA/VoiceOver), visible
    focus, zoom to 200% and 400% reflow, contrast in every theme, reduced motion, forced-colors (Windows high contrast),
    touch target sizes, form errors tied to their fields, and the PDF sheets (tagged PDF, reading order, real text).

@@ -1,10 +1,12 @@
 <script>
   import { get, mutate } from "../lib/api.js";
   import { go } from "../lib/router.svelte.js";
+  import { page } from "../lib/page.svelte.js";
   import Character from "./Character.svelte";
   import Vehicle from "./Vehicle.svelte";
   import Npc from "./Npc.svelte";
   let { id } = $props();
+  page.title = "";   // the previous document's title must not stand while this one loads (r1 #2)
   let doc = $state(null), name = $state(""), notes = $state(""), revisions = $state([]), error = $state(""), saved = $state(""), busy = $state(false);
   let lost = null;   // the save that got no answer (it may or may not have landed)
   const when = (ms) => new Date(ms).toLocaleString();
@@ -13,6 +15,7 @@
   async function load() {
     try {
       doc = await get(`/api/documents/${id}`);
+      page.title = doc.document.name;
       name = doc.body.name; notes = doc.body.notes;
       revisions = (await get(`/api/documents/${id}/revisions`)).revisions;
       error = "";

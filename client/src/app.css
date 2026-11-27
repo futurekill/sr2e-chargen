@@ -15,16 +15,19 @@ a[aria-current="page"] { color: var(--ink); text-decoration-thickness: 2px; }
 :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 form.stack { display: grid; gap: 1rem; max-width: 26rem; }
-label { display: grid; gap: .3rem; }
+label { display: grid; grid-template-columns: minmax(0, 1fr); gap: .3rem; }
 label > span { color: var(--muted); font-size: .9rem; }
 input, textarea, select { font: inherit; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: .55rem .65rem; width: 100%; }
 textarea { min-height: 9rem; resize: vertical; }
 input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 0; }
-button, .button { font: inherit; font-weight: 700; cursor: pointer; border: 1px solid var(--accent); border-radius: var(--radius); background: var(--accent); color: var(--on-accent); padding: .5rem .95rem; text-decoration: none; display: inline-block; }
+button, .button { font: inherit; font-weight: 700; cursor: pointer; border: 1px solid var(--accent); border-radius: var(--radius); background: var(--accent); color: var(--on-accent); padding: .5rem .95rem; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; }
 button.quiet, .button.quiet { background: transparent; color: var(--accent); }
 button.danger { background: transparent; border-color: var(--danger); color: var(--danger); }
 button:disabled { opacity: .55; cursor: not-allowed; }
 .row { display: flex; flex-wrap: wrap; gap: .6rem; align-items: center; }
+/* A form row's fields carry their label above them: line the controls up by their bottom edge, all one height. */
+form.row { align-items: end; }
+input:not([type="checkbox"]):not([type="radio"]):not([type="file"]), select, button:not(.plain), .button { min-height: 2.75rem; }
 
 .notice { border: 1px solid var(--line); background: var(--surface); padding: .7rem .85rem; margin: 0 0 1.25rem; max-width: 68ch; }
 .notice.bad { border-color: var(--danger); color: var(--danger); }
@@ -44,7 +47,8 @@ pre.json { background: var(--surface); border: 1px solid var(--line); padding: .
 form.stack.wide { max-width: none; }
 .grow { flex: 1 1 14rem; }
 input.check { width: 1.15rem; height: 1.15rem; accent-color: var(--accent); }
-select { width: auto; }
+select { width: auto; max-width: 100%; text-overflow: ellipsis; }
+label, .row > * { min-width: 0; max-width: 100%; }   /* a long option name never widens the page (1.4.10) */
 details { margin: 1.5rem 0 0; }
 summary { cursor: pointer; color: var(--accent); width: fit-content; }
 details[open] > summary { margin-bottom: .6rem; }
@@ -62,6 +66,28 @@ dt { color: var(--muted); }
 dd { margin: 0; text-align: right; overflow-wrap: anywhere; }
 .shell:has(.sheet), .shell:has(.landing) { max-width: 72rem; }
 
+/* Skip link: first on the page, visible only when focused (2.4.1). */
+.skip { position: absolute; left: .5rem; top: -4rem; z-index: 10; background: var(--accent); color: var(--on-accent); padding: .6rem .9rem; font-weight: 700; }
+.skip:focus { top: .5rem; }
+main:focus { outline: none; }
+h1[tabindex="-1"]:focus { outline: none; }
 /* Visually hidden, still read and focusable (file inputs inside a styled label). */
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 label.button:has(.sr-only:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
+label.check { display: flex; align-items: center; gap: .45rem; }
+label.check > input { width: 1.15rem; height: 1.15rem; min-height: 0; accent-color: var(--accent); }
+.scroll-x { overflow-x: auto; max-width: 100%; }
+table { border-collapse: collapse; }
+caption { text-align: left; color: var(--muted); font-size: .9rem; padding-bottom: .3rem; }
+th, td { text-align: left; padding: .2rem .6rem .2rem 0; }
+th[scope="row"] { font-weight: 400; }
+/* Windows High Contrast / forced colours: system colours, every control keeps its border, focus in Highlight. */
+@media (forced-colors: active) {
+  button, .button, input, select, textarea { border: 1px solid ButtonText; }
+  button:disabled { color: GrayText; border-color: GrayText; }
+  :focus-visible, label.button:has(.sr-only:focus-visible) { outline: 2px solid Highlight; }
+  .notice, .cite, .count, li.entry .detail { border: 1px solid CanvasText; }
+  .skip:focus { border: 2px solid Highlight; }
+}
+fieldset { min-inline-size: 0; }   /* a fieldset is min-content wide by default: let it wrap at 320px */
+ul.list .meta { overflow-wrap: anywhere; min-width: 0; }

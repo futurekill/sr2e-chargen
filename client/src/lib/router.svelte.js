@@ -10,6 +10,7 @@ addEventListener("popstate", () => { route.path = location.pathname; });
 addEventListener("click", (ev) => {
   const a = ev.target.closest?.("a[href]");
   if (!a || ev.defaultPrevented || ev.button !== 0 || ev.metaKey || ev.ctrlKey || ev.shiftKey || a.target || a.hasAttribute("download")) return;
+  if (a.getAttribute("href").startsWith("#")) return;   // an in-page link (the skip link): the browser's own job
   const url = new URL(a.href);
   if (url.origin !== location.origin || url.pathname.startsWith("/api/")) return;
   ev.preventDefault();

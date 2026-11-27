@@ -2,10 +2,13 @@
   /** A garage vehicle (docs/PLAN-garage.md): its stats, weapons on its mounts (core p.251–253), cargo, notes, price. */
   import { get, mutate } from "../lib/api.js";
   import { go } from "../lib/router.svelte.js";
+  import { keepFocus, flagFocused, clearFlags } from "../lib/focus.js";
+  import { page } from "../lib/page.svelte.js";
   import { mountsOf, vehiclePrice, docIdOf } from "../../../shared/vehicle.mjs";
   import { mountKindFor, mountedWeaponCost, LAUNCHER_MUNITIONS, vehicleEffective } from "../../../shared/rules.mjs";
   import VehicleDesign from "./VehicleDesign.svelte";
   let { doc } = $props();
+  let status = $state("");
   let server = $state(doc), error = $state(""), busy = $state(false), notes = $state(doc.body.notes), name = $state(doc.body.name);
   const body = $derived(server.body), sys = $derived(server.body.actor.system ?? {});
   // A designed vehicle (docs/PLAN-workshop.md): the Rigger 2 tables price it and drive its Design section.
@@ -36,15 +39,17 @@
     cargoable = [...g.filter(priced), ...w.filter(e => priced(e) && e.id.startsWith("sr2e.") && Object.hasOwn(LAUNCHER_MUNITIONS, docIdOf(e.id)))];
   }).catch(err => { error = err.message; });
 
-  async function send(ops) {
-    busy = true; error = "";
-    try { server = await mutate("POST", `/api/documents/${server.document.id}/ops`, { revision: server.document.revision, ops }); name = server.body.name; notes = server.body.notes; }
+  const send = (ops) => keepFocus(async () => {
+    const from = document.activeElement;   // the control that made this change, before busy disables it (r2 #1)
+    busy = true; error = ""; status = "";
+    try { server = await mutate("POST", `/api/documents/${server.document.id}/ops`, { revision: server.document.revision, ops }); name = server.body.name; notes = server.body.notes; clearFlags(); status = "Saved."; page.title = server.body.name; }
     catch (err) {
+      flagFocused("doc-error", from);
       error = err.code === "stale" ? "This vehicle changed somewhere else. It now shows the saved version." : err.message;
       try { server = await get(`/api/documents/${server.document.id}`); } catch { /* keep the last answer */ }
     }
     busy = false;
-  }
+  });
   function mount(ev) {
     ev.preventDefault();
     const kind = mountable.hardpoint.some(e => e.id === pickWeapon) ? "hardpoint" : "firmpoint";
@@ -63,7 +68,8 @@
 
 <h1>{body.name}</h1>
 <p class="muted">{designed ? "Designed vehicle" : "Garage vehicle"} · revision {server.document.revision}{#if server.usedBy?.length} · used by {server.usedBy.map(u => u.bought ? `${u.name} (bought at revision ${u.bought})` : u.name).join(", ")}{/if}</p>
-{#if error}<p class="notice bad" role="alert">{error}</p>{/if}
+{#if error}<p class="notice bad" role="alert" id="doc-error">{error}</p>{/if}
+<p class="sr-only" role="status">{status}</p>
 
 <dl>
   <div><dt>Handling</dt><dd>{shown.handling ?? "–"}</dd></div>

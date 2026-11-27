@@ -1,0 +1,17 @@
+[
+  {
+    "rule": "color-contrast",
+    "target": "^li:nth-child\\(\\d+\\) > (\\.name|\\.small\\.muted|\\.quiet\\[type=\"button\"\\])$",
+    "verdict": "Reviewed 2026-11-27: rows of the Character shop list (ul.shop) scrolled out of its 18rem box; axe can't see behind the scroll. They use the same tokens as the visible rows, which pass (test/theme-contrast.test.mjs)."
+  },
+  {
+    "rule": "label-content-name-mismatch",
+    "target": "\\[aria-label=\"Remove [^\"]+\"\\]",
+    "verdict": "Reviewed 2026-11-27: the visible text is \"Remove\" and the accessible name \"Remove <item>\" starts with it, which 2.5.3 Label in Name allows; axe can't tell because the button sits in a table cell."
+  },
+  {
+    "rule": "color-contrast",
+    "target": "\\.quiet\\[aria-label=\"Remove [^\"]+\"\\]|button\\[aria-label=\"Remove [^\"]+\"\\]",
+    "verdict": "Reviewed 2026-11-27 (screenshot, every theme): the purchase table's remove button shows one symbol (\u00d7) in the accent colour on the page background, the same token pair as every quiet button, which passes; axe can't measure a one-glyph label."
+  }
+]

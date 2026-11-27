@@ -1,4 +1,6 @@
 <script>
+  import { flagFocused, clearFlags } from "../lib/focus.js";
+  import { page } from "../lib/page.svelte.js";
   /**
    * Character creation (docs/PLAN-M2.md §6). Every change is ONE operation: applied here at once with the shared
    * reducer (a fast screen), then sent to the server, whose answer replaces the local copy. Changes go out one at a
@@ -232,7 +234,7 @@
     catch (err) { if (!gone) error = err.message; return; }
     if (!gone) change({ op: "addSkill", catalogId: id });   // not after the page closed (review M2b #5)
   }
-  const nuyen = (n) => `${n.toLocaleString("en-US")}¥`;
+  const nuyen = (n) => `${Number(n ?? 0).toLocaleString("en-US")}¥`;
   const sign = (n) => (n > 0 ? `+${n}` : n < 0 ? `−${-n}` : "");
 
   /**
@@ -240,12 +242,13 @@
    * the changes still waiting are DROPPED (code review M2a #5): each was made on top of the failed one, so sending it
    * against what the server really holds could save something the player never saw.
    */
-  let epoch = 0, recovering = $state(false), gone = false;
+  let epoch = 0, recovering = $state(false), gone = false, savedNote = $state("");
+  $effect(() => { page.title = body.name; });   // the tab title follows a rename (code review r1 #3)
   onDestroy(() => { gone = true; });
   function change(op) {
     if (recovering) return;   // nothing new on top of a copy that's about to be replaced (review r2)
-    try { body = applyOp(body, op, lookup, { saleMode, catalogBooks }); } catch (err) { error = err.message; return; }
-    error = ""; sending++;
+    try { body = applyOp(body, op, lookup, { saleMode, catalogBooks }); } catch (err) { error = err.message; flagFocused("doc-error"); return; }
+    error = ""; clearFlags(); savedNote = ""; sending++;
     const mine = epoch;
     queue = queue.then(async () => {
       if (mine === epoch) {
@@ -259,7 +262,7 @@
           body = server.body; recovering = false;
         }
       }
-      if (--sending === 0) body = server.body;   // the server's copy wins once nothing else is on its way
+      if (--sending === 0) { body = server.body; if (!error) savedNote = "Saved."; }   // the server's copy wins once nothing else is on its way
     });
   }
   /** An op only the server can apply (it rolls dice: a gang's members, the finish): no local copy first. */
@@ -405,10 +408,11 @@
         {/each}
       </div>
     </header>
-    {#if error}<p class="notice bad" role="alert">{error}</p>{/if}
+    {#if error}<p class="notice bad" role="alert" id="doc-error">{error}</p>{/if}
+    <p class="sr-only" role="status">{savedNote}</p>
 
     {#if finished}
-      <section id="step-karma" role="tabpanel" aria-labelledby="tab-karma" hidden={tab !== "karma"}>
+      <div id="step-karma" role="tabpanel" aria-labelledby="tab-karma" hidden={tab !== "karma"}>
         <h2>Karma</h2>
         <p class="muted">Good Karma {sys.karma?.current ?? 0} · Total {sys.karma?.total ?? 0} · Karma Pool {derived.karmaPool}. An award adds to Total; one-tenth of Total (rounded up) is the Karma Pool, the rest Good Karma to spend. <span class="cite">SR2 p.190–191</span></p>
         <form class="row adders" onsubmit={(ev) => { ev.preventDefault(); if (Number.isInteger(awardAmount) && awardAmount >= 1 && awardAmount <= 200) { change({ op: "awardKarma", amount: awardAmount, note: awardNote }); awardNote = ""; } }}>
@@ -449,11 +453,11 @@
         {:else}
           <p class="muted">No Karma yet.</p>
         {/if}
-      </section>
+      </div>
     {/if}
 
     {#if finished}
-      <section id="step-nuyen" role="tabpanel" aria-labelledby="tab-nuyen" hidden={tab !== "nuyen"}>
+      <div id="step-nuyen" role="tabpanel" aria-labelledby="tab-nuyen" hidden={tab !== "nuyen"}>
         <h2>Nuyen</h2>
         <p class="muted">{nuyen(sys.nuyen ?? 0)} to spend. Buying: the street price is shown (list × Street Index); enter the price you agreed. Selling: {saleMode === "fence" ? "through a fence — 30% of the list value, 5% more or less per extra Negotiation success, 10–50%" : "what was paid comes back"}. <span class="cite">SR2 p.184, p.188</span></p>
         <form class="row adders" onsubmit={(ev) => { ev.preventDefault(); const n = Number(cashAmount); if (Number.isInteger(n) && n > 0) { change({ op: "nuyen", amount: cashDir === "in" ? n : -n, note: cashNote }); cashNote = ""; cashAmount = 0; } }}>
@@ -521,9 +525,9 @@
           </ul>
         {/if}
         <p class="muted small">The history (with Undo) is in the Karma step. Installed cyberware isn't sold: it comes out by surgery.</p>
-      </section>
+      </div>
 
-      <section id="step-condition" role="tabpanel" aria-labelledby="tab-condition" hidden={tab !== "condition"}>
+      <div id="step-condition" role="tabpanel" aria-labelledby="tab-condition" hidden={tab !== "condition"}>
         <h2>Condition</h2>
         <p class="muted">Record the wounds the character carries after a run; the dice stay at the table. <span class="cite">SR2 p.111</span></p>
         <div class="monitors">
@@ -581,7 +585,7 @@
           </ul>
         {:else}<p class="muted">No spare cyberware. Cyberware bought on the Nuyen step arrives as a spare.</p>{/if}
         <p class="muted small">A surgery is in the history (Karma step) and can be undone while the implant and the wounds are as it left them.</p>
-      </section>
+      </div>
     {/if}
 
     {#snippet choiceControls(x)}
@@ -620,7 +624,7 @@
                       {/each}
     {/snippet}
 
-    <section id="step-concept" role="tabpanel" aria-labelledby="tab-concept" hidden={tab !== "concept"}>
+    <div id="step-concept" role="tabpanel" aria-labelledby="tab-concept" hidden={tab !== "concept"}>
       <h2>Concept</h2>
       <div class="row portrait">
         {#if hasPortrait}<img src={`/api/documents/${server.document.id}/portrait?revision=${server.document.revision}`} alt={`Portrait of ${body.name}`} width="120" height="120">{:else}<div class="nopic muted">No portrait</div>{/if}
@@ -706,9 +710,9 @@
           </div>
         {/if}
       </div>
-    </section>
+    </div>
 
-    <section id="step-priorities" role="tabpanel" aria-labelledby="tab-priorities" hidden={tab !== "priorities"}>
+    <div id="step-priorities" role="tabpanel" aria-labelledby="tab-priorities" hidden={tab !== "priorities"}>
       <h2>Priorities</h2>
       {#if booksOf(body).includes("sc")}
         <div class="row" role="radiogroup" aria-label="Priority method">
@@ -769,9 +773,9 @@
         {/each}
       </dl>
       {/if}
-    </section>
+    </div>
 
-    <section id="step-metatype" role="tabpanel" aria-labelledby="tab-metatype" hidden={tab !== "metatype"}>
+    <div id="step-metatype" role="tabpanel" aria-labelledby="tab-metatype" hidden={tab !== "metatype"}>
       <h2>Metatype</h2>
       <div class="row" role="radiogroup" aria-label="Metatype">
         {#each METATYPES as m}
@@ -819,9 +823,9 @@
           {#if !finished && Object.values(allergy).some(Boolean)}<button type="button" class="quiet" onclick={() => change({ op: "setAllergy", substance: "", rarity: "", severity: "", rarityBonus: "", severityBonus: "" })}>No allergy</button>{/if}
         </fieldset>
       {/if}
-    </section>
+    </div>
 
-    <section id="step-magic" role="tabpanel" aria-labelledby="tab-magic" hidden={tab !== "magic"}>
+    <div id="step-magic" role="tabpanel" aria-labelledby="tab-magic" hidden={tab !== "magic"}>
       <h2>Magic</h2>
       <div class="row">
         <label><span>Magic</span>
@@ -843,9 +847,9 @@
           {/if}
         {/if}
       </div>
-    </section>
+    </div>
 
-    <section id="step-attributes" role="tabpanel" aria-labelledby="tab-attributes" hidden={tab !== "attributes"}>
+    <div id="step-attributes" role="tabpanel" aria-labelledby="tab-attributes" hidden={tab !== "attributes"}>
       <h2>Attributes</h2>
       <p class="muted">Buy each attribute from 1; racial modifiers apply after. <span class="cite">SR2 p.45</span></p>
       <div class="scroll"><table class="grid attrs">
@@ -871,10 +875,10 @@
           {/each}
         </tbody>
       </table></div>
-    </section>
+    </div>
 
 
-    <section id="step-skills" role="tabpanel" aria-labelledby="tab-skills" hidden={tab !== "skills"}>
+    <div id="step-skills" role="tabpanel" aria-labelledby="tab-skills" hidden={tab !== "skills"}>
       <h2>Skills</h2>
       <p class="muted">Put Skill Points into each skill; no skill rating may start above 6. A concentration takes 1 from the skill and gives +1 in the narrow field; a specialization takes 2 and gives +2 (Firearms 5 → Firearms 3, Pistols 5, Ares Predator 7), and only those may start above 6. Your native language is free at Intelligence + 2. <span class="cite">SR2 p.45, p.70, p.74</span></p>
       {#if !finished}
@@ -929,9 +933,9 @@
       {:else}
         <p class="muted">No skills yet.</p>
       {/if}
-    </section>
+    </div>
 
-    <section id="step-resources" role="tabpanel" aria-labelledby="tab-resources" hidden={tab !== "resources"}>
+    <div id="step-resources" role="tabpanel" aria-labelledby="tab-resources" hidden={tab !== "resources"}>
       <h2>Resources</h2>
       <p class="muted">Spend your nuyen on gear at list price; magicians (adepts too) spend Force Points on bonding foci, and full magicians on spells (Force up to 6); a physical adept uses only a weapon focus, and buys its powers here with power points (its Magic Rating). No starting gear above Rating 6. Cybereyes take up to .5 Essence of accessories for free. <span class="cite">SR2 p.46, p.124–126, p.137, p.247</span></p>
       {#if !finished}
@@ -1005,9 +1009,9 @@
           <button type="button" class="quiet" disabled={!extraName.trim()} onclick={() => { change({ op: "addExtra", kind: "follower", name: extraName }); extraName = ""; }}>Add followers</button>
         </form>
       {/if}
-    </section>
+    </div>
 
-    <section id="step-finish" role="tabpanel" aria-labelledby="tab-finish" hidden={tab !== "finish"}>
+    <div id="step-finish" role="tabpanel" aria-labelledby="tab-finish" hidden={tab !== "finish"}>
       <h2>Finish</h2>
       {#if finished && body.creation.finished.imported}
         <p>Imported from Foundry (system {body.creation.finished.imported.systemVersion}): {nuyen(sys.nuyen ?? 0)}, Good Karma {sys.karma?.current ?? 0}, Total Karma {sys.karma?.total ?? 0}. Its items are kept as Foundry had them; Karma, nuyen and condition work here. <span class="cite">SR2 p.47</span></p>
@@ -1022,9 +1026,9 @@
         <p role="alert">Finish now? Nothing about creation can change afterwards.</p>
         <div class="row"><button type="button" onclick={() => { confirmFinish = false; send({ op: "finish" }); }}>Yes, finish and roll</button><button type="button" class="quiet" onclick={() => { confirmFinish = false; }}>Not yet</button></div>
       {/if}
-    </section>
+    </div>
 
-    <section id="step-card" role="tabpanel" aria-labelledby="tab-card" hidden={tab !== "card"}>
+    <div id="step-card" role="tabpanel" aria-labelledby="tab-card" hidden={tab !== "card"}>
       <h2>Print and share</h2>
       <h3>Foundry</h3>
       <p class="muted small">To bring this character into Foundry: create an Actor of type Character, right-click it in the Actors directory, choose <strong>Import Data</strong> and pick the file. Set the portrait yourself. Vehicles bought here are their own actors: import each the same way.</p>
@@ -1061,7 +1065,7 @@
         {:else}<span class="bad">{fit.message || "It doesn't fit."}</span>{/if}
         <a class="button quiet" class:disabled={!cardReady} aria-disabled={!cardReady} href={cardReady ? `/api/documents/${server.document.id}/card.pdf?${cardQuery}` : undefined} target="_blank" rel="noopener">Print card</a>
       </p>
-    </section>
+    </div>
 
   </div>
 
@@ -1090,7 +1094,9 @@
       <div><dt>Essence</dt><dd class:bad={check.essence < 0}>{check.essence}</dd></div>
       {#if sys.magic.type !== "none"}<div><dt>Magic</dt><dd class:bad={check.magic < 1}>{check.magic}</dd></div>{/if}
     </dl>
-    {#if finished}
+    {#if finished && body.creation.finished.imported}
+      <p class="good">Imported from Foundry, finished there.</p>
+    {:else if finished}
       <p class="good">Finished: {nuyen(body.creation.finished.nuyen)} to start with. <span class="cite">SR2 p.47</span></p>
     {:else if check.problems.length === 0}
       <p class="good">No problems: ready to finish (the Finish step).</p>
@@ -1107,8 +1113,8 @@
 <style>
   .sheet { display: grid; gap: 1.5rem; grid-template-columns: minmax(0, 1fr); }
   @media (min-width: 60rem) { .sheet { grid-template-columns: minmax(0, 1fr) 19rem; align-items: start; } .panel { position: sticky; top: 1rem; } }
-  section { scroll-margin-top: 1rem; }
-  section[hidden] { display: none; }
+  [role="tabpanel"] { scroll-margin-top: 1rem; }
+  [role="tabpanel"][hidden] { display: none; }
   /* The step tabs: they wrap onto a second row rather than hide (every step stays in sight); on a phone, one row that
      scrolls sideways. The open tab is the one with the accent frame. */
   .tabs { display: flex; flex-wrap: wrap; gap: .4rem; margin: 1rem 0 0; padding-bottom: .9rem; border-bottom: 1px solid var(--line); }

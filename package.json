@@ -1,6 +1,6 @@
 {
   "name": "sr2e-chargen",
-  "version": "0.1.0-beta.18",
+  "version": "1.0.0",
   "private": true,
   "description": "Hoi, chummer! A Shadowrun 2nd Edition character generator and manager.",
   "type": "module",
@@ -21,7 +21,8 @@
     "test:postgres": "TEST_DATABASE_URL=postgres://postgres:test@127.0.0.1:55432/postgres node --test --test-timeout=300000 --test-force-exit --test-concurrency=1 test/",
     "test:mysql": "TEST_DATABASE_URL=mysql://root:test@127.0.0.1:53306/mysql node --test --test-timeout=300000 --test-force-exit --test-concurrency=1 test/",
     "test:mariadb": "TEST_DATABASE_URL=mysql://root:test@127.0.0.1:53307/mysql node --test --test-timeout=300000 --test-force-exit --test-concurrency=1 test/",
-    "lint": "eslint server shared test tools"
+    "lint": "eslint server shared test tools",
+    "a11y": "node tools/a11y-scan.mjs"
   },
   "license": "UNLICENSED",
   "dependencies": {
@@ -46,8 +47,10 @@
     "@eslint/js": "10.0.1",
     "@sveltejs/vite-plugin-svelte": "7.3.1",
     "acorn": "8.19.0",
+    "axe-core": "4.14.0",
     "eslint": "10.15.0",
     "pdfjs-dist": "6.5.438",
+    "puppeteer-core": "25.17.0",
     "svelte": "5.57.3",
     "vite": "8.3.8"
   }

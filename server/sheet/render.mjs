@@ -54,6 +54,8 @@ const BOX = 20;                    // condition-monitor box ≥ 7 mm (19.8 pt)
  *  (outlined bars) on one layout; Classic, Printout (mono headings, dashed rules, grey bands) and Dossier (serif
  *  headings, double brass rules) on the other. */
 export const STYLES = SHEET_STYLE_KEYS;
+/** Column names for the tables whose columns carry meaning (docs/PLAN-a11y.md 3, r1 #9): shown and tagged TH Column. */
+const HEADS = { attacks: ["Weapon", "Damage", "Skill"], skills: ["Skill", "Rating", "Concentration · Specialization"] };
 const INK = "#0e0e10", ACCENT = "#c8006a", MUTED = "#55555d", BRASS = "#705024";   // magenta also differs by weight: never colour alone
 
 export async function renderSheet(model, { paper = "letter", font = "standard", style = "fohawk" } = {}) {
@@ -64,7 +66,18 @@ export async function renderSheet(model, { paper = "letter", font = "standard", 
   const fohawk = look.layout === "fohawk", inkSaver = look.ink;
   const headSet = font === "readable" || !look.head ? font : look.head;   // the readable font wins (U22)
   const [W, H] = PAPER[paper];
-  const doc = new PDFDocument({ size: [W, H], margin: 0, autoFirstPage: false, bufferPages: true, info: { Title: model.title, Producer: "sr2e-chargen" } });
+  // A TAGGED PDF (docs/PLAN-a11y.md 3): structure in reading order, decoration and page numbers as artifacts.
+  const doc = new PDFDocument({ size: [W, H], margin: 0, autoFirstPage: false, bufferPages: true, tagged: true, lang: "en-US", displayTitle: true,
+    pdfVersion: "1.7", info: { Title: model.title, Producer: "sr2e-chargen" } });
+  const root = doc.struct("Document");
+  doc.addStructure(root);
+  const stack = [root], top = () => stack.at(-1);
+  /** A structure element holding the content `fn` draws now (pdfkit runs the closure at once, inside its marking). */
+  const leaf = (type, opts, fn) => { const el = doc.struct(type, opts); top().add(el); el.add(fn); el.end(); };
+  /** A structure element whose children `fn` adds (a section, a table, a row). */
+  const group = (type, opts, fn) => { const el = doc.struct(type, opts); top().add(el); stack.push(el); try { return fn(); } finally { stack.pop(); el.end(); } };
+  /** Drawing that carries no information (rules, bands, frames, page numbers): skipped by screen readers. */
+  const art = (fn, type = "Layout") => { doc.markContent("Artifact", { type }); fn(); doc.endMarkedContent(); };
   const chunks = [];
   doc.on("data", (c) => chunks.push(c));
   const done = new Promise((res, rej) => { doc.on("end", res); doc.on("error", rej); });
@@ -127,14 +140,16 @@ export async function renderSheet(model, { paper = "letter", font = "standard", 
   /** A black band with a clipped right corner (Fohawk), outlined in ink-saver. */
   const band = (x, y, w, h, cut = 7) => {
     shapes.push({ kind: "band", page, x, y, w, h });
-    doc.save().moveTo(x, y).lineTo(x + w - cut, y).lineTo(x + w, y + cut).lineTo(x + w, y + h).lineTo(x, y + h).closePath();
-    if (inkSaver) doc.lineWidth(1.2).stroke(INK); else doc.fill(INK);
-    doc.restore();
+    art(() => {
+      doc.save().moveTo(x, y).lineTo(x + w - cut, y).lineTo(x + w, y + cut).lineTo(x + w, y + h).lineTo(x, y + h).closePath();
+      if (inkSaver) doc.lineWidth(1.2).stroke(INK); else doc.fill(INK);
+      doc.restore();
+    });
   };
   const onBand = inkSaver ? INK : "#fff";
   /** The portrait (a JPEG made from the stored WebP), fitted into a square; recorded as a shape for the fit test. */
   const portrait = (x, y, side) => {
-    doc.image(model.portrait, x, y, { fit: [side, side], align: "center", valign: "center" });
+    leaf("Figure", { alt: `Portrait of ${model.title}` }, () => doc.image(model.portrait, x, y, { fit: [side, side], align: "center", valign: "center" }));
     shapes.push({ kind: "image", page, x, y, w: side, h: side });
   };
   /** A rule (a line ornament), recorded so the fit test can prove no text touches it. */
@@ -142,34 +157,54 @@ export async function renderSheet(model, { paper = "letter", font = "standard", 
   const bar = (title, x, y, w) => {
     if (fohawk) {
       band(x, y, w, 16);
-      block(title.toUpperCase(), x + 6, y + 2.5, w - 16, { size: 9, floor: LABEL_FLOOR, weight: 700, maxLines: 1, kind: "title", color: onBand });
+      leaf("H2", {}, () => block(title.toUpperCase(), x + 6, y + 2.5, w - 16, { size: 9, floor: LABEL_FLOOR, weight: 700, maxLines: 1, kind: "title", color: onBand }));
       return 21;
     }
     // The classic layout's bar, per style; it returns the height it drew (a title that wraps grows it, never overlaps).
     const label = style === "printout" ? `> ${title.toUpperCase()}` : title.toUpperCase();
-    const h = block(label, x, y + 1, w, { size: 9, floor: LABEL_FLOOR, weight: 700, maxLines: 1, kind: "title", set: headSet });
+    let h = 0;
+    leaf("H2", {}, () => { h = block(label, x, y + 1, w, { size: 9, floor: LABEL_FLOOR, weight: 700, maxLines: 1, kind: "title", set: headSet }); });
     const ry = y + Math.max(14, h + 2);
-    if (style === "printout") {
-      doc.save().lineWidth(0.8).dash(2, { space: 2 }).moveTo(x, ry).lineTo(x + w, ry).stroke("#000").undash().restore();
-      rule(x, ry, w, 0.8);
-    } else if (style === "dossier") {
-      doc.save().lineWidth(0.5).moveTo(x, ry - 1).lineTo(x + w, ry - 1).moveTo(x, ry + 1.5).lineTo(x + w, ry + 1.5).stroke(BRASS).restore();
-      rule(x, ry - 1, w, 0.5); rule(x, ry + 1.5, w, 0.5);
-    } else {
-      doc.save().lineWidth(1.2).moveTo(x, ry).lineTo(x + w, ry).stroke("#000").restore();
-      rule(x, ry, w, 1.2);
-    }
+    art(() => {
+      if (style === "printout") {
+        doc.save().lineWidth(0.8).dash(2, { space: 2 }).moveTo(x, ry).lineTo(x + w, ry).stroke("#000").undash().restore();
+        rule(x, ry, w, 0.8);
+      } else if (style === "dossier") {
+        doc.save().lineWidth(0.5).moveTo(x, ry - 1).lineTo(x + w, ry - 1).moveTo(x, ry + 1.5).lineTo(x + w, ry + 1.5).stroke(BRASS).restore();
+        rule(x, ry - 1, w, 0.5); rule(x, ry + 1.5, w, 0.5);
+      } else {
+        doc.save().lineWidth(1.2).moveTo(x, ry).lineTo(x + w, ry).stroke("#000").restore();
+        rule(x, ry, w, 1.2);
+      }
+    });
     return Math.max(18, ry - y + 4);
   };
   /** A table section: rows of cells in columns (fractions of w); rows wrap; rows past maxY go to `rest`. */
   let cellSeq = 0;
   /** Rows of cells as { t, id } (a cell keeps its id when it is split). */
   const cellsOf = (rows) => rows.map(r => r.map(c => { if (c && typeof c === "object" && "id" in c) return c; const id = `c${cellSeq++}`; const t = String(c ?? ""); cellText[id] = t; return { t, id }; }));
-  const table = (title, rowsIn, cols, x, y, w, maxY, { accent = [] } = {}) => {
+  /** `heads`: the column names (a visible header row, tagged TH Column); without them the first cell heads its row. */
+  const table = (title, rowsIn, cols, x, y, w, maxY, { accent = [], heads = null } = {}) => group("Sect", {}, () => {
     let rows = cellsOf(rowsIn);
     let cy = y + bar(title, x, y, w);
     const rest = [];
     let placed = 0;
+    const tableEl = doc.struct("Table");
+    top().add(tableEl);
+    stack.push(tableEl);
+    try {
+    if (heads && rows.length && cy + 2 * BODY * LINE <= maxY) {
+      // As tall as its tallest label (a narrow column wraps its name), so no label meets the rule below.
+      const lines = heads.map((t, i) => wrap(t, LABEL, w * cols[i] - 4, 700).length);
+      const hh = Math.max(...lines) * LABEL * LINE + 3;
+      group("TR", {}, () => {
+        let hx = x;
+        heads.forEach((t, i) => { leaf("TH", { scope: "Column" }, () => block(t, hx, cy, w * cols[i] - 4, { size: LABEL, floor: LABEL, weight: 700, color: MUTED, kind: "colhead", box: { x: hx, y: cy, w: w * cols[i] - 4, h: hh } })); hx += w * cols[i]; });
+      });
+      art(() => doc.save().lineWidth(0.3).moveTo(x, cy + hh - 1).lineTo(x + w, cy + hh - 1).stroke("#888").restore());
+      rule(x, cy + hh - 1, w, 0.3);
+      cy += hh;
+    }
     for (let r = 0; r < rows.length; r++) {
       const cells = rows[r];
       const sz = (i) => (i === 0 || (fohawk && accent.includes(i)) ? BODY : 9), wt = (i) => (fohawk && accent.includes(i) ? 700 : 400);
@@ -189,20 +224,22 @@ export async function renderSheet(model, { paper = "letter", font = "standard", 
         rest.push(...rows.slice(r)); break;
       }
       // Printout: light grey bands behind every other row (the fanfold printout), under the row's text.
-      if (style === "printout" && placed % 2 === 1) { doc.save().rect(x, cy, w, h - 1).fill("#efefef").restore(); shapes.push({ kind: "fill", page, x, y: cy, w, h: h - 1 }); }
+      if (style === "printout" && placed % 2 === 1) { art(() => doc.save().rect(x, cy, w, h - 1).fill("#efefef").restore()); shapes.push({ kind: "fill", page, x, y: cy, w, h: h - 1 }); }
       let cx = x;
-      cells.forEach((c, i) => {
+      group("TR", {}, () => cells.forEach((c, i) => {
         const hot = fohawk && accent.includes(i);
-        block(c.t, cx, cy, w * cols[i] - 4, { size: i === 0 ? BODY : hot ? BODY : 9, floor: FLOOR, cell: c.id, weight: hot ? 700 : 400, color: hot ? ACCENT : "#000", box: { x: cx, y: cy, w: w * cols[i] - 4, h } });
+        // The first cell names the row (a skill, a weapon, an attribute): a row header.
+        leaf(i === 0 ? "TH" : "TD", i === 0 ? { scope: "Row" } : {}, () => block(c.t, cx, cy, w * cols[i] - 4, { size: i === 0 ? BODY : hot ? BODY : 9, floor: FLOOR, cell: c.id, weight: hot ? 700 : 400, color: hot ? ACCENT : "#000", box: { x: cx, y: cy, w: w * cols[i] - 4, h } }));
         cx += w * cols[i];
-      });
-      doc.save().lineWidth(0.3).moveTo(x, cy + h - 1).lineTo(x + w, cy + h - 1).stroke("#888").restore();
+      }));
+      art(() => doc.save().lineWidth(0.3).moveTo(x, cy + h - 1).lineTo(x + w, cy + h - 1).stroke("#888").restore());
       rule(x, cy + h - 1, w, 0.3);
       cy += h;
       placed++;
     }
+    } finally { stack.pop(); tableEl.end(); }
     return { y: cy + 8, rest, placed };
-  };
+  });
 
   // ── Page 1: the at-the-table sections, in fixed places ──────────────────────────────────────────────────────
   newPage();
@@ -213,7 +250,11 @@ export async function renderSheet(model, { paper = "letter", font = "standard", 
   const monitors = (x, y0, w) => {
     let yy = y0;
     for (const [name, n, hurt] of [["Physical", model.monitors.physical, model.monitors.filled.physical], ["Stun", model.monitors.stun, model.monitors.filled.stun]]) {
-      block(fohawk ? name.toUpperCase() : name, x, yy, w, { size: fohawk ? 8 : 9, weight: 700, maxLines: 1, color: fohawk ? MUTED : "#000" });
+      const label = fohawk ? name.toUpperCase() : name, ly = yy;
+      // The boxes carry information (wounds marked): a Figure whose alt text says it; the name is its caption.
+      const fig = doc.struct("Figure", { alt: `${name} condition monitor: ${hurt} of ${n} boxes marked.` });
+      top().add(fig);
+      fig.add(() => block(label, x, ly, w, { size: fohawk ? 8 : 9, weight: 700, maxLines: 1, color: fohawk ? MUTED : "#000" }));
       yy += 12;
       // As many boxes per row as fit with a 2 pt gap at least; more wrap to a next row (never overlap, r1 #5).
       const per = Math.max(1, Math.min(n, Math.floor((w + 2) / (BOX + 2))));
@@ -222,14 +263,19 @@ export async function renderSheet(model, { paper = "letter", font = "standard", 
       for (let i = 0; i < n; i++) {
         const lvl = fohawk ? { 0: "L", 2: "M", 5: "S", 9: "D" }[i] : null;
         const bx = x + (i % per) * (BOX + gap), by = yy + Math.floor(i / per) * rowH;
-        doc.save().lineWidth(lvl ? 1.6 : 0.8).rect(bx, by, BOX, BOX).stroke(fohawk && !lvl ? "#888" : "#000").restore();
         shapes.push({ kind: "box", page, x: bx, y: by, w: BOX, h: BOX });
-        if (i < hurt) doc.save().lineWidth(1.2).moveTo(bx + 2, by + 2).lineTo(bx + BOX - 2, by + BOX - 2).moveTo(bx + BOX - 2, by + 2).lineTo(bx + 2, by + BOX - 2).stroke("#000").restore();   // a wound carried
-        if (lvl) block(lvl, bx + BOX / 2 - 3, by + BOX + 1, 10, { size: 6.5, floor: 6.5, weight: 700, maxLines: 1, color: MUTED });
+        fig.add(() => {
+          doc.save().lineWidth(lvl ? 1.6 : 0.8).rect(bx, by, BOX, BOX).stroke(fohawk && !lvl ? "#888" : "#000").restore();
+          if (i < hurt) doc.save().lineWidth(1.2).moveTo(bx + 2, by + 2).lineTo(bx + BOX - 2, by + BOX - 2).moveTo(bx + BOX - 2, by + 2).lineTo(bx + 2, by + BOX - 2).stroke("#000").restore();   // a wound carried
+          if (lvl) block(lvl, bx + BOX / 2 - 3, by + BOX + 1, 10, { size: 6.5, floor: 6.5, weight: 700, maxLines: 1, color: MUTED });
+        });
       }
+      fig.end();
       yy += Math.ceil(n / per) * rowH;
     }
-    return yy + block(overflowText(), x, yy, w, { size: 8.5, floor: FLOOR }) + 8;
+    let oh = 0;
+    leaf("P", {}, () => { oh = block(overflowText(), x, yy, w, { size: 8.5, floor: FLOOR }); });
+    return yy + oh + 8;
   };
   /** The monitors' height in a column of width w, computed exactly as monitors() lays them out. */
   const monitorsHeight = (w) => {
@@ -242,11 +288,12 @@ export async function renderSheet(model, { paper = "letter", font = "standard", 
   if (!fohawk) {
   // ── The classic layout (Classic, Printout, Dossier): the same places; the style changes bars, bands and faces ──
   const PIC = model.portrait ? 72 : 0, HW = CW - (PIC ? PIC + 12 : 0);
-  if (PIC) portrait(R - PIC, y, PIC);
   const y0 = y;
-  y += block(model.title, L, y, HW, { size: 18, floor: 11, weight: 700, maxLines: 2, kind: "head", set: headSet }) + 2;
-  if (model.draft) y += block("DRAFT — character creation not finished", L, y, HW, { size: 9, weight: 700, maxLines: 1 });
-  y += block(model.header.map(([k, v]) => `${k}: ${v}`).join("   "), L, y, HW, { size: 9.5, floor: FLOOR, kind: "head", set: headSet }) + 8;
+  const tagged = (type, fn) => { let h = 0; leaf(type, {}, () => { h = fn(); }); return h; };
+  y += tagged("H1", () => block(model.title, L, y, HW, { size: 18, floor: 11, weight: 700, maxLines: 2, kind: "head", set: headSet })) + 2;
+  if (PIC) portrait(R - PIC, y0, PIC);
+  if (model.draft) y += tagged("P", () => block("DRAFT — character creation not finished", L, y, HW, { size: 9, weight: 700, maxLines: 1 }));
+  y += tagged("P", () => block(model.header.map(([k, v]) => `${k}: ${v}`).join("   "), L, y, HW, { size: 9.5, floor: FLOOR, kind: "head", set: headSet })) + 8;
   y = Math.max(y, y0 + PIC + 8);
   const top = y;
   // Left: attributes, pools, armor.
@@ -254,10 +301,10 @@ export async function renderSheet(model, { paper = "letter", font = "standard", 
   ly = table("Dice pools", model.pools, [0.6, 0.4], L, ly, colW, BOTTOM).y;
   ly = table("Armor (Ballistic / Impact)", [["Worn", model.armor]], [0.6, 0.4], L, ly, colW, BOTTOM).y;
   // Right: condition monitors (pencil boxes), then attacks.
-  let ry = monitors(X2, top + bar("Condition monitors", X2, top, colW), colW);
-  attacks = table("Attacks", model.attacks, [0.55, 0.2, 0.25], X2, ry, colW, BOTTOM);
+  let ry = group("Sect", {}, () => monitors(X2, top + bar("Condition monitors", X2, top, colW), colW));
+  attacks = table("Attacks", model.attacks, [0.55, 0.2, 0.25], X2, ry, colW, BOTTOM, { heads: HEADS.attacks });
   ry = attacks.y;
-  act = table("Active skills", active, [0.4, 0.1, 0.5], L, Math.max(ly, ry), CW, BOTTOM);
+  act = table("Active skills", active, [0.4, 0.1, 0.5], L, Math.max(ly, ry), CW, BOTTOM, { heads: HEADS.skills });
   } else {
     // ── Fohawk: header band, big attribute row, stat strip, then skills | monitors + attacks ───────────────────
     const PIC = model.portrait ? 84 : 0, TX = L + 14 + (PIC ? PIC + 12 : 0);
@@ -268,66 +315,77 @@ export async function renderSheet(model, { paper = "letter", font = "standard", 
     const extraH = extra ? wrap(extra, 8.5, TW, 400).length * 8.5 * LINE + 2 : 0;
     const headH = Math.max(12 + titleH + 4 + subH + (model.draft ? 13 : 0) + extraH + 12, PIC ? PIC + 16 : 0);
     band(L, y, CW, Math.max(headH, 56), 14);
-    if (PIC) portrait(L + 8, y + 8, PIC);
     let hy = y + 12;
-    hy += block(model.title, TX, hy, TW, { size: 22, floor: 13, weight: 700, maxLines: 2, color: onBand, kind: "head" }) + 4;
-    hy += block(model.subtitle.toUpperCase(), TX, hy, TW, { size: 9.5, floor: FLOOR, weight: 700, color: inkSaver ? ACCENT : "#e8e8ee" });   // light on black (r1 #4)
-    if (model.draft) hy += 2 + block("DRAFT — character creation not finished", TX, hy + 2, TW, { size: 8, floor: 6.5, weight: 700, maxLines: 1, color: onBand });
-    if (extra) block(extra, TX, hy + 2, TW, { size: 8.5, floor: FLOOR, color: onBand });
-    model.priorities.forEach(([k, v], i) => {
-      const px = R - 14 - PRW + i * 34;
-      block(k, px, y + 12, 32, { size: 6.5, floor: 6.5, weight: 700, maxLines: 1, color: inkSaver ? MUTED : "#b5b5bd" });
-      block(v, px, y + 22, 32, { size: 16, floor: 12, weight: 700, maxLines: 1, color: i === 0 ? ACCENT : onBand });
+    const tagged = (type, fn) => { let h = 0; leaf(type, {}, () => { h = fn(); }); return h; };
+    hy += tagged("H1", () => block(model.title, TX, hy, TW, { size: 22, floor: 13, weight: 700, maxLines: 2, color: onBand, kind: "head" })) + 4;
+    if (PIC) portrait(L + 8, y + 8, PIC);
+    hy += tagged("P", () => block(model.subtitle.toUpperCase(), TX, hy, TW, { size: 9.5, floor: FLOOR, weight: 700, color: inkSaver ? ACCENT : "#e8e8ee" }));   // light on black (r1 #4)
+    if (model.draft) hy += 2 + tagged("P", () => block("DRAFT — character creation not finished", TX, hy + 2, TW, { size: 8, floor: 6.5, weight: 700, maxLines: 1, color: onBand }));
+    if (extra) tagged("P", () => block(extra, TX, hy + 2, TW, { size: 8.5, floor: FLOOR, color: onBand }));
+    // Priorities: a one-row table, each letter headed by its category.
+    if (model.priorities.length) group("Table", {}, () => {
+      group("TR", {}, () => model.priorities.forEach(([k], i) => leaf("TH", { scope: "Column" }, () => block(k, R - 14 - PRW + i * 34, y + 12, 32, { size: 6.5, floor: 6.5, weight: 700, maxLines: 1, color: inkSaver ? MUTED : "#b5b5bd" }))));
+      group("TR", {}, () => model.priorities.forEach(([, v], i) => leaf("TD", {}, () => block(v, R - 14 - PRW + i * 34, y + 22, 32, { size: 16, floor: 12, weight: 700, maxLines: 1, color: i === 0 ? ACCENT : onBand }))));
     });
     y += Math.max(headH, 56) + 10;
     // Attributes: big values, accent when augmented, "nat X" under them.
+    // The attribute row and the stat strip: tables whose column heads are the abbreviations above each value.
+    group("Sect", {}, () => {
     y += bar("Attributes", L, y, CW);
     const aw = CW / model.attrRow.length;
     let rowH = 0;
-    model.attrRow.forEach((a, i) => {
-      const ax = L + i * aw;
-      let h = block(a.abbr, ax + 4, y, aw - 8, { size: 7.5, floor: 6.5, weight: 700, maxLines: 1, color: MUTED });
-      h += block(a.value, ax + 4, y + h, aw - 8, { size: 20, floor: 12, weight: 700, maxLines: 1, color: a.natural ? ACCENT : "#000" });
-      if (a.natural) h += block(`nat ${a.natural}`, ax + 4, y + h, aw - 8, { size: 7.5, floor: 6.5, maxLines: 1, color: MUTED });
-      rowH = Math.max(rowH, h);   // measured: a long value pushes the row down, never into the next (r1 #2)
+    const hs = [];   // each label's drawn height (the TH row draws first), so the value sits exactly where it did
+    group("Table", {}, () => {
+      group("TR", {}, () => model.attrRow.forEach((a, i) => leaf("TH", { scope: "Column" }, () => { hs[i] = block(a.abbr, L + i * aw + 4, y, aw - 8, { size: 7.5, floor: 6.5, weight: 700, maxLines: 1, color: MUTED }); })));
+      group("TR", {}, () => model.attrRow.forEach((a, i) => leaf("TD", {}, () => {
+        const ax = L + i * aw;
+        let h = hs[i];
+        h += block(a.value, ax + 4, y + h, aw - 8, { size: 20, floor: 12, weight: 700, maxLines: 1, color: a.natural ? ACCENT : "#000" });
+        if (a.natural) h += block(`nat ${a.natural}`, ax + 4, y + h, aw - 8, { size: 7.5, floor: 6.5, maxLines: 1, color: MUTED });
+        rowH = Math.max(rowH, h);   // measured: a long value pushes the row down, never into the next (r1 #2)
+      })));
     });
     y += Math.max(rowH, 46) + 4;
-    doc.save().lineWidth(0.5).moveTo(L, y).lineTo(R, y).stroke("#999").restore();
+    art(() => doc.save().lineWidth(0.5).moveTo(L, y).lineTo(R, y).stroke("#999").restore());
     y += 4;
     const perRow = Math.min(model.stats.length, 6), sw = CW / perRow;
+    group("Table", {}, () => {
     for (let r = 0; r * perRow < model.stats.length; r++) {
       let rowH2 = 0;
-      model.stats.slice(r * perRow, r * perRow + perRow).forEach(([k, v], i) => {
-        let h = block(k.toUpperCase(), L + i * sw + 4, y, sw - 8, { size: 6.5, floor: 6.5, weight: 700, maxLines: 2, color: MUTED });
-        h = Math.max(h, 16);
-        h += block(v, L + i * sw + 4, y + h, sw - 8, { size: 13, floor: 9, weight: 700, maxLines: 1 });
+      const part = model.stats.slice(r * perRow, r * perRow + perRow);
+      const kh = [];
+      group("TR", {}, () => part.forEach(([k], i) => leaf("TH", { scope: "Column" }, () => { kh[i] = Math.max(block(k.toUpperCase(), L + i * sw + 4, y, sw - 8, { size: 6.5, floor: 6.5, weight: 700, maxLines: 2, color: MUTED }), 16); })));
+      group("TR", {}, () => part.forEach(([, v], i) => leaf("TD", {}, () => {
+        const h = kh[i] + block(v, L + i * sw + 4, y + kh[i], sw - 8, { size: 13, floor: 9, weight: 700, maxLines: 1 });
         rowH2 = Math.max(rowH2, h);
-      });
+      })));
       y += rowH2 + 6;   // measured per row (r1 #3)
     }
+    });
+    });
     y += 4;
     // The fixed part must fit: the condition monitor (bar + boxes) and the Attacks bar with one row below it (r1 #1, r2 #1).
     if (y + 21 + monitorsHeight(colW) + 21 + BODY * LINE + 2 > BOTTOM) throw new SheetError("This character's header is too long for the Fohawk style: print it in the Classic style.");
-    act = table("Skills", active, [0.62, 0.12, 0.26], L, y, colW, BOTTOM, { accent: [1] });
-    let ry = monitors(X2, y + bar("Condition monitor", X2, y, colW), colW);
-    attacks = table("Attacks", model.attacks, [0.5, 0.25, 0.25], X2, ry, colW, BOTTOM, { accent: [1] });
+    act = table("Skills", active, [0.62, 0.12, 0.26], L, y, colW, BOTTOM, { accent: [1], heads: HEADS.skills });
+    let ry = group("Sect", {}, () => monitors(X2, y + bar("Condition monitor", X2, y, colW), colW));
+    attacks = table("Attacks", model.attacks, [0.5, 0.25, 0.25], X2, ry, colW, BOTTOM, { accent: [1], heads: HEADS.attacks });
     act = { ...act, y: Math.max(act.y, attacks.y) };
   }
 
   // ── Continuation pages: everything else, flowing ───────────────────────────────────────────────────────────
   const flow = [
-    ["Attacks (continued)", attacks.rest, [0.55, 0.2, 0.25]],
-    ["Active skills (continued)", act.rest, [0.4, 0.1, 0.5]],
-    ["Knowledge, language and other skills", model.skills.filter(s => s[3] !== "active").map(([n, r, sub]) => [n, r, sub]), [0.4, 0.1, 0.5]],
-    ["Cyberware", model.cyberware, [0.55, 0.1, 0.15, 0.2]],
-    ["Bioware", model.bioware ?? [], [0.45, 0.1, 0.25, 0.2]],
-    ["Adept powers", model.powers, [0.35, 0.1, 0.4, 0.15]],
-    ["Spells", model.spells, [0.4, 0.1, 0.3, 0.2]],
-    ["Foci", model.foci, [0.4, 0.1, 0.3, 0.2]],
-    ["Edges and Flaws", model.qualities ?? [], [0.4, 0.1, 0.3, 0.2]],
-    ["Gear", model.gear, [0.55, 0.12, 0.13, 0.2]],
-    ["Vehicles", model.vehicles ?? [], [0.3, 0.25, 0.3, 0.15]],
-    ["History", model.history ?? [], [0.14, 0.56, 0.2, 0.1]]
+    ["Attacks (continued)", attacks.rest, [0.55, 0.2, 0.25], HEADS.attacks],
+    ["Active skills (continued)", act.rest, [0.4, 0.1, 0.5], HEADS.skills],
+    ["Knowledge, language and other skills", model.skills.filter(s => s[3] !== "active").map(([n, r, sub]) => [n, r, sub]), [0.4, 0.1, 0.5], HEADS.skills],
+    ["Cyberware", model.cyberware, [0.55, 0.1, 0.15, 0.2], ["Cyberware", "Rating", "Essence", "Source"]],
+    ["Bioware", model.bioware ?? [], [0.45, 0.1, 0.25, 0.2], ["Bioware", "Rating", "Grade · Body Cost", "Source"]],
+    ["Adept powers", model.powers, [0.35, 0.1, 0.4, 0.15], ["Power", "Level", "Choice", "Source"]],
+    ["Spells", model.spells, [0.4, 0.1, 0.3, 0.2], ["Spell", "Force", "Category · Drain", "Source"]],
+    ["Foci", model.foci, [0.4, 0.1, 0.3, 0.2], ["Focus", "Force", "Bound spell", "Source"]],
+    ["Edges and Flaws", model.qualities ?? [], [0.4, 0.1, 0.3, 0.2], ["Edge or Flaw", "Value", "Detail", "Source"]],
+    ["Gear", model.gear, [0.55, 0.12, 0.13, 0.2], ["Item", "Qty / Rating", "Armor", "Source"]],
+    ["Vehicles", model.vehicles ?? [], [0.3, 0.25, 0.3, 0.15], ["Vehicle", "Handling · Speed", "Body · Armor · Sig · Pilot", "Source"]],
+    ["History", model.history ?? [], [0.14, 0.56, 0.2, 0.1], ["Date", "What", "By · Note", "Undone"]]
   ].filter(([, rows]) => rows.length);
   // Page 1's fixed part must lie inside the page (an absurd imported name, say): refuse, never cut (card r1 #2).
   if (runs.some(r => r.page === 1 && r.y + r.h > BOTTOM + 0.5) || shapes.some(b => b.page === 1 && b.y + b.h > BOTTOM + 0.5))
@@ -337,21 +395,21 @@ export async function renderSheet(model, { paper = "letter", font = "standard", 
     // The table card is ONE page: what doesn't fit is reported by section, never moved to a new page or cut.
     const overflow = [];
     const sectionOf = (t) => t.replace(/ \(continued\)$/, "");
-    for (const [title, rows, cols] of flow) {
+    for (const [title, rows, cols, heads] of flow) {
       if (!rows.length) continue;
       if (fy + 40 > BOTTOM) { overflow.push({ section: sectionOf(title), rows: rows.length }); continue; }
-      const out = table(title, rows, cols, L, fy, CW, BOTTOM);
+      const out = table(title, rows, cols, L, fy, CW, BOTTOM, { heads });
       fy = out.y;
       if (out.rest.length) overflow.push({ section: sectionOf(title), rows: out.rest.length });
     }
     if (overflow.length) throw new SheetError(`The card is too full: ${overflow.map(o => `${o.rows} ${o.section.toLowerCase()}`).join(", ")} don't fit. Untick something.`, overflow);
     flow.length = 0;
   }
-  for (let [title, rows, cols] of flow) {
+  for (let [title, rows, cols, heads] of flow) {
     while (rows.length) {
       if (fy == null || fy + 60 > BOTTOM) { newPage(); fy = MARGIN; }
-      const out = table(title, rows, cols, L, fy, CW, BOTTOM);
-      if (!out.placed) { newPage(); fy = MARGIN; const again = table(title, rows, cols, L, fy, CW, BOTTOM); if (!again.placed) throw new SheetError(`${title}: a row is taller than a page.`); rows = again.rest; fy = again.y; }
+      const out = table(title, rows, cols, L, fy, CW, BOTTOM, { heads });
+      if (!out.placed) { newPage(); fy = MARGIN; const again = table(title, rows, cols, L, fy, CW, BOTTOM, { heads }); if (!again.placed) throw new SheetError(`${title}: a row is taller than a page.`); rows = again.rest; fy = again.y; }
       else { rows = out.rest; fy = out.y; }
       title = title.endsWith("(continued)") ? title : `${title} (continued)`;
     }
@@ -361,9 +419,12 @@ export async function renderSheet(model, { paper = "letter", font = "standard", 
     let first = true;
     while (lines.length) {
       if (fy == null || fy + 60 > BOTTOM) { newPage(); fy = MARGIN; }
-      fy += bar(first ? "Notes" : "Notes (continued)", L, fy, CW);
+      group("Sect", {}, () => {
+        fy += bar(first ? "Notes" : "Notes (continued)", L, fy, CW);
+        const fit0 = Math.max(1, Math.floor((BOTTOM - fy) / (BODY * LINE)));
+        leaf("P", {}, () => lines.slice(0, fit0).forEach((ln, i) => draw(ln, L, fy + i * BODY * LINE, BODY, 400, { x: L, y: fy, w: CW, h: fit0 * BODY * LINE })));
+      });
       const fit = Math.max(1, Math.floor((BOTTOM - fy) / (BODY * LINE)));
-      lines.slice(0, fit).forEach((ln, i) => draw(ln, L, fy + i * BODY * LINE, BODY, 400, { x: L, y: fy, w: CW, h: fit * BODY * LINE }));
       fy += Math.min(fit, lines.length) * BODY * LINE + 8;
       lines = lines.slice(fit);
       first = false;
@@ -375,8 +436,9 @@ export async function renderSheet(model, { paper = "letter", font = "standard", 
   for (let p = 1; p <= pages; p++) {
     doc.switchToPage(p - 1);
     page = p;
-    draw(`Page ${p} of ${pages}`, L, H - MARGIN - 9, LABEL, 400, { x: L, y: H - MARGIN - 9, w: CW, h: 12 }, "footer");   // the title is in the header, in full
+    art(() => draw(`Page ${p} of ${pages}`, L, H - MARGIN - 9, LABEL, 400, { x: L, y: H - MARGIN - 9, w: CW, h: 12 }, "footer"), "Pagination");   // the title is in the header, in full
   }
+  root.end();
   doc.end();
   await done;
   return { pdf: Buffer.concat(chunks), runs, shapes, cells: cellText, pages, size: [W, H], margin: MARGIN };
