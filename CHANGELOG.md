@@ -3,7 +3,13 @@
 Every change people can see goes under **Unreleased** in the same commit. A release retitles that section and its
 notes come from it.
 
-## 0.1.0-beta.15 — 2026-11-26
+## 0.1.0-beta.16 — 2026-11-26
+- Fixed: a vehicle sale now looks up the vehicle by the character's own key, not the key in the request (the
+  security scan flagged the old form), so the beta.15 build failed its checks.
+
+The 0.1.0-beta.15 build did not publish (its CodeQL check failed); this release carries all of beta.15 below.
+
+## 0.1.0-beta.15 — 2026-11-26 (not published)
 - Added: **buying and selling vehicles in play.** A finished character's Nuyen step buys a core vehicle or a finished
   vehicle from the garage at the price agreed, with the street price shown (the vehicles' Street Index, core p.264),
   and sells vehicles bought in play (refund, or a fence's percentage of the whole list value). Each is a history entry

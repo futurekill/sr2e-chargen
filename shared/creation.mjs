@@ -720,7 +720,7 @@ function vehicleMoneyOp(b, op, lookup, now, saleMode, garage) {
     return b;
   }
   // sellVehicle (p.188, R6/R21): a play vehicle; refund = what was paid, fence = the percentage of its whole list value.
-  const key = op.vehicleKey, v = typeof key === "string" && Object.hasOwn(b.vehicles, key) ? b.vehicles[key] : null;
+  const key = Object.keys(b.vehicles).find(k => k === op.vehicleKey), v = key ? b.vehicles[key] : null;   // the store's own key, not the request's (CodeQL)
   if (!v) throw new Refusal("No such vehicle bought in play (a vehicle bought at creation is part of the character as built).");
   if (op.shownMode !== saleMode) throw new Refusal("The GM changed how selling works: look at the price again.");
   if (saleMode === "fence" && op.pct == null) throw new Refusal("A fence sale needs the agreed percentage.", 188);
