@@ -32,6 +32,11 @@ export default async function adminRoutes(app) {
       return { ok: true };
     });
   }
+  app.put("/users/:username/role", { schema: { params: params("username"),
+    body: { type: "object", additionalProperties: false, required: ["role"], properties: { role: { enum: ["user", "admin"] } } } } }, async (req) => {
+    await A.setRole(req.ctx, req.params.username, req.body.role, { actor: req.session.user.id });
+    return { ok: true };
+  });
   app.post("/users/:username/reset-link", { schema: { params: params("username") } }, async (req) => {
     const t = await A.resetLink(req.ctx, req.params.username, { actor: req.session.user.id });
     return { expiresAt: t.expiresAt, link: `${config.baseUrl}/reset#k=${t.secret}` };

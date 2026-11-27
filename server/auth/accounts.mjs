@@ -194,6 +194,21 @@ export async function setDisabled(ctx, username, disabled, { actor = null } = {}
     await audit(trx, ctx, disabled ? "user.disabled" : "user.enabled", { actor, target: user.id });
   });
 }
+/** Change an account's role ("user" or "admin"). The LAST enabled admin can't lose it; the admin set is locked first.
+ * Sessions read the role from the users table on every request, so the change applies at once. */
+export async function setRole(ctx, username, role, { actor = null } = {}) {
+  if (!["user", "admin"].includes(role)) throw new Refused("No such role.");
+  return writeTx(ctx, async trx => {
+    await lockAdmins(trx, ctx);
+    const user = await findUser(trx, username);
+    if (!user) throw new Refused("No such user.", 404);
+    if (user.role === role) return;
+    if (user.role === "admin" && user.disabled_at == null && (await enabledAdmins(trx)) <= 1)
+      throw new Refused("That's the last admin. Make another one first.", 409, "last-admin");
+    await trx.updateTable("users").set({ role }).where("id", "=", user.id).execute();
+    await audit(trx, ctx, `user.role.${role}`, { actor, target: user.id });
+  });
+}
 /**
  * Every user for the admin page, with what they have made: `made` = live documents by kind (characters, vehicles,
  * drafts; archived ones count, they are still theirs) and `trashed` = documents in the trash. One grouped query.

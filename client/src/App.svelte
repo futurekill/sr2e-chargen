@@ -55,7 +55,7 @@
     {:else if route.path === "/account"}
       <Account {user} onSignedOut={() => { forgetSession(); user = null; go("/"); }} />
     {:else if route.path === "/admin" && user.role === "admin"}
-      <Admin />
+      <Admin me={user.id} onSelfDemoted={async () => { await refresh(); go("/", { replace: true }); }} />
     {:else if route.path === "/"}
       <Library />
     {:else}

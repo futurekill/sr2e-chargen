@@ -228,3 +228,19 @@ test("preferences: the readable font is stored per user, comes with the session,
   assert.deepEqual((await app.inject({ url: "/api/account/prefs", headers: { cookie } })).json(), { readableFont: true, theme: "cybernoir" });
   assert.equal((await app.inject({ method: "PUT", url: "/api/account/prefs", headers: { origin: ORIGIN, cookie }, payload: { readableFont: false } })).statusCode, 403, "CSRF");
 });
+
+test("roles change after creation: at once, audited, never the last admin's", async () => {
+  const { ctx, admin } = await withAdmin();
+  const inv = await A.createInvite(ctx);
+  const runner = await A.redeem(ctx, { secret: inv.secret, username: "Runner", password: PW });
+  await assert.rejects(A.setRole(ctx, "Boss", "user"), refused("last-admin"));
+  await assert.rejects(A.setRole(ctx, "Runner", "gm"), refused());
+  await assert.rejects(A.setRole(ctx, "Nobody", "admin"), refused());
+  await A.setRole(ctx, "runner", "admin");
+  assert.equal((await findSession(ctx, runner.sessionSecret)).user.role, "admin");   // the live session sees it
+  await A.setRole(ctx, "Boss", "user");
+  assert.equal((await findSession(ctx, admin.sessionSecret)).user.role, "user");
+  await assert.rejects(A.setRole(ctx, "Runner", "user"), refused("last-admin"));
+  const actions = (await ctx.db.selectFrom("audit").select("action").execute()).map(r => r.action);
+  assert.ok(actions.includes("user.role.admin") && actions.includes("user.role.user"));
+});

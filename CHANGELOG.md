@@ -3,6 +3,11 @@
 Every change people can see goes under **Unreleased** in the same commit. A release retitles that section and its
 notes come from it.
 
+## 0.1.0-beta.17 — 2026-11-27
+- Added: **admins can change a user's role** after the account is made — on the Admin page (a role menu on each user)
+  or with `chargen admin role <user> user|admin`. It applies at once, is written to the audit log, and the last admin
+  can't lose the role. An admin who demotes themself leaves the Admin page.
+
 ## 0.1.0-beta.16 — 2026-11-26
 - Fixed: a vehicle sale now looks up the vehicle by the character's own key, not the key in the request (the
   security scan flagged the old form), so the beta.15 build failed its checks.

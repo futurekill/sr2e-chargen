@@ -230,6 +230,12 @@ Automatic: `test/admin-counts.test.mjs` (every database). Manual: as an admin, o
 characters, vehicles and drafts (archived ones included) and "N in the trash" when there are any; delete a draft as that
 user and reload: one draft fewer, one more in the trash.
 
+## Changing a user's role
+Automatic: `test/accounts.test.mjs` and `test/admin-counts.test.mjs` (every database). Manual: as an admin, set a
+runner's role menu to admin: the runner's next page load shows Admin. With only one admin, set your own menu to runner:
+"That's the last admin" and the menu stays admin. With two admins, demote yourself: the app goes to the Library and the
+Admin link is gone. `chargen admin role <user> admin` does the same from the CLI.
+
 ## Vehicles in play (docs/PLAN-play-vehicles.md)
 Automatic: `test/play-vehicles.test.mjs` (every database). Manual: on a finished character with 50,000¥, Nuyen →
 Vehicles: pick Ford Americar (street 20,000¥), agree 18,000¥, Buy: 32,000¥ left, one history entry; Undo it in the Karma

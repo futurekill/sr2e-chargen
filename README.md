@@ -322,6 +322,7 @@ With no command it lists them all.
 | `admin invites` / `admin revoke-invite <id>` | The open invites / cancel one. |
 | `admin users` | Everyone, with role and state. |
 | `admin disable <user>` / `admin enable <user>` | Disabling signs that user out everywhere. The last admin can't be disabled. |
+| `admin role <user> user\|admin` | Changes a role (also on the Admin page). It applies at once; the last admin can't lose theirs. |
 | (Admin page) Rules | How selling pays: refund what was paid, or a fence (p.188) — every character on the server |
 | `admin reset-link <user>` | A one-time password reset link, valid 24 hours. There is no email: hand it over yourself. |
 | `db status` / `db migrate` | Migration state / run pending migrations (the server also migrates at start). |

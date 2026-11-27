@@ -14,6 +14,7 @@ chargen admin invites                   open invites
 chargen admin revoke-invite <id>
 chargen admin users
 chargen admin disable|enable <user>
+chargen admin role <user> user|admin    change a role (the last admin keeps theirs)
 chargen admin reset-link <user>         a one-time password reset link
 chargen db migrate | status
 chargen maintenance on|off|status
@@ -47,6 +48,7 @@ export async function run(argv, { env = process.env, out = console.log } = {}) {
       case "revoke-invite": await A.revokeInvite(ctx, rest[0]); return void out("revoked");
       case "users": for (const u of await A.listUsers(ctx)) out(`${u.username}  ${u.role}${u.disabled_at != null ? "  DISABLED" : ""}`); return;
       case "disable": case "enable": await A.setDisabled(ctx, rest[0], cmd === "disable"); return void out(`${cmd}d ${rest[0]}`);
+      case "role": await A.setRole(ctx, rest[0], rest[1]); return void out(`${rest[0]} is now ${rest[1]}`);
       case "reset-link": { const t = await A.resetLink(ctx, rest[0]); return void out(`Reset link for ${rest[0]} (works once, until ${when(t.expiresAt)}):\n${config.baseUrl}/reset#k=${t.secret}`); }
       default: throw new A.Refused(USAGE);
     }

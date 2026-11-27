@@ -30,5 +30,13 @@ test("admin: each user's characters, vehicles and drafts, and their trash; not f
   assert.deepEqual([r.made, r.trashed], [{ character: 1, vehicle: 0, draft: 1 }, 1]);
   assert.deepEqual([b.made, b.trashed], [{ character: 0, vehicle: 0, draft: 0 }, 0]);
   assert.equal((await razor("GET", "/api/admin/users")).statusCode, 403, "admins only");
+  // Roles change after creation (admins only; the last admin keeps theirs; a new admin's page opens at once).
+  assert.equal((await razor("PUT", "/api/admin/users/Razor/role", { role: "admin" })).statusCode, 403);
+  assert.equal((await boss("PUT", "/api/admin/users/Boss/role", { role: "user" })).json().code, "last-admin");
+  assert.equal((await boss("PUT", "/api/admin/users/Razor/role", { role: "gm" })).statusCode, 400);
+  assert.equal((await boss("PUT", "/api/admin/users/Razor/role", { role: "admin" })).statusCode, 200);
+  assert.equal((await razor("GET", "/api/admin/users")).statusCode, 200);
+  assert.equal((await razor("PUT", "/api/admin/users/Boss/role", { role: "user" })).statusCode, 200);
+  assert.equal((await boss("GET", "/api/admin/users")).statusCode, 403, "demoted at once");
   await app.close();
 });

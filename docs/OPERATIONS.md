@@ -34,6 +34,7 @@ The operator's reference. The step-by-step guide is in the README: [Running the 
 | `admin invites` / `admin revoke-invite <id>` | Open invites / kill one |
 | `admin users` | Everyone, with role and state |
 | `admin disable <user>` / `admin enable <user>` | Disabling ends that user's sessions; the last admin can't be disabled |
+| `admin role <user> user\|admin` | Change a role (also on the Admin page); applies at once; the last admin can't lose it |
 | `admin reset-link <user>` | A one-time password reset link (24 hours). There is no email: hand it over yourself |
 | `db status` / `db migrate` | Migration state / run pending migrations (the server also migrates at start) |
 | `maintenance on` / `off` / `status` | Stop every write (reads go on) / resume |
