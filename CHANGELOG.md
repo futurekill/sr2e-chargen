@@ -3,6 +3,12 @@
 Every change people can see goes under **Unreleased** in the same commit. A release retitles that section and its
 notes come from it.
 
+## 1.3.2 — 2026-11-27
+
+### Changed
+- Content pin: sr2e-foundryvtt v0.173.1 — the Medkit is 200¥ (the Street Gear price, p.263; it was 300¥), a new
+  Medkit Supplies item (50¥), and the Trauma Patch's availability and Street Index from the same list.
+
 ## 1.3.1 — 2026-11-27
 
 ### Fixed

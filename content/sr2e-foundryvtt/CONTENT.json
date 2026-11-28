@@ -1,8 +1,8 @@
 {
   "dir": "sr2e-foundryvtt",
   "repo": "futurekill/sr2e-foundryvtt",
-  "tag": "v0.172.0",
-  "commit": "514a94cbc397c64cdf5f8bd94a438988c0d49624",
+  "tag": "v0.173.1",
+  "commit": "2cc07f2b65d3223765af4022aef93e0532a00fea",
   "files": {
     "assets/pregen_portraits/glitch.webp": "d755a662065cf7ef209e114aab076e44ab813440",
     "assets/pregen_portraits/hexen.webp": "8bb0b8aad3f732fe85a2f700fe9b77c914e6475d",
@@ -14,7 +14,7 @@
     "lang/en.json": "ee2d5b09a25894ef46d753dd666226e4e459ade1",
     "module/config.mjs": "17ff520e54dd45f85c18319d16172dd5ca7a5ed7",
     "module/rules/books.mjs": "a2f41e8dcf70828dbf9532c649a5fea933609f34",
-    "module/rules/claim-rules.mjs": "e7086a18d86d4a651073a8576a03e2083a8d6203",
+    "module/rules/claim-rules.mjs": "55176cd26ea0e279ae1fb996c15eb31a954b2e25",
     "module/rules/limb-rules.mjs": "c51d44177c33c407314f42fc2041fe5c9bb4c890",
     "module/rules/limb-stats.mjs": "8287f3a0e187e1fd8f3f0e86a9b01106468cae2b",
     "module/rules/npc-rules.mjs": "eaab387557c587aad5c25e51a6ef7eb5150c2737",
@@ -306,7 +306,8 @@
     "packs-src/gear/LinguaSoft_cf7d271f2c766e37.json": "b3bde8eedf92beeae4bd12cd2b37772c1cd942c5",
     "packs-src/gear/Maglock_Passkey_d94e559998982924.json": "72274f419a81cb374ca472deee6c2bd0bd797a5e",
     "packs-src/gear/Maglock_d50d65c50750b7b5.json": "5c3efd935b1dd3f60e5fea1cc116583a1261bc9e",
-    "packs-src/gear/Medkit_a7f6e11f694c0f68.json": "8318709bd0480bf381bb8deddceeba4f60a9b9f5",
+    "packs-src/gear/Medkit_Supplies_5fe766e5c6e4df29.json": "49209ba96ed057cb745b17cc0fb9ac55e9de6260",
+    "packs-src/gear/Medkit_a7f6e11f694c0f68.json": "cc24ac6f86dbc9fb9cc49314852e249a2ea915f5",
     "packs-src/gear/Micro-Camcorder_73b1b160934c1943.json": "68ca0a7ea7bf4cc0e2c5835c7b6ece80e46029ad",
     "packs-src/gear/Micro-Recorder_d9ee8496d82d2fb7.json": "75bcddce2d7cff8faabd8e07e6fbb0d2ee63f4b7",
     "packs-src/gear/Micro_Transceiver_efc77e6b7f2799e7.json": "9811cb458b8de017b8a2d1e0ffa754eecc10dd7b",
@@ -352,7 +353,7 @@
     "packs-src/gear/Thumbprint_Scanner_b51c134614fcdfa3.json": "f00a58c05117dd5ddb5f6cf83435d9261c1c5af2",
     "packs-src/gear/Tracking_Signal_d27e55aa3a081409.json": "2041e84acf2e4788a6eb90e4ad43396aa7d0c1c3",
     "packs-src/gear/Transmission_Unit_a947a99ea3c003cc.json": "c1d650523c655f18d08278283207682d98f3039f",
-    "packs-src/gear/Trauma_Patch_b3f51b664d45508d.json": "0931abcff74ac74610928dd9b17f836adfba1afb",
+    "packs-src/gear/Trauma_Patch_b3f51b664d45508d.json": "47c8acd9615394df31309b30c047b6e9bb4ad9a6",
     "packs-src/gear/Tripod_a4e5f6379e80a1b3.json": "df170e4803463a17f02189f09698e5e77bcffb1e",
     "packs-src/gear/Video_Disk_Chip_55a4aab53d92cb5e.json": "c0f5201420083a5a347093c9b8b8782f74caec68",
     "packs-src/gear/Voice_Identifier_1abbb221d550040b.json": "0d1ebab0fa8205017cc838d2bc67cca63ff0f5d0",
@@ -372,7 +373,7 @@
     "packs-src/gear/_folder_working_1fe8a980b3c4ad75.json": "9b579d6e7d17986a3836a021c48f97a6d2154092",
     "packs-src/guides/Character_Creation_Quickstart_a1b2c3d4e5f60718.json": "01cd8e931f37870eadbaa160c2f99843b1a67862",
     "packs-src/guides/GM_Tools_b7c1d2e3f4a5b607.json": "29436525487952142b3b2a8aa7f16ecdef9f92aa",
-    "packs-src/guides/How_To_Guides_sr2eHowToGuides1.json": "e7606ea0989c8a93218c8dc47662e8bbd360b612",
+    "packs-src/guides/How_To_Guides_sr2eHowToGuides1.json": "771e2968674662a1541b21c7237d158308ac9c4e",
     "packs-src/guides/Quick_Reference_Damage_Healing_c72f8a3e15d049b6.json": "d5aceaf61cabe8d23b4714ce5354237e8ffcfd1e",
     "packs-src/guides/Quick_Reference_First_Aid_e63bd2170a9c4f18.json": "59306ee5ef8c27e0cdc9643b3ad6556d1b8d50d1",
     "packs-src/guides/Quick_Reference_Movement_a48d61b7e2c93f05.json": "2358e568553a09e7fb18a1ef824d21bd226d734f",
@@ -714,6 +715,6 @@
     "packs-src/weapons/_subfolder_sniper_rifle_6d8b9811f947bd91.json": "f856b44d9d800069ef4e688d0b01889ef7e1033f",
     "packs-src/weapons/_subfolder_sport_rifle_c07931b8ddd4ff16.json": "4440a910975a6325eba9bc702e1015ed8d1e7e4e",
     "packs-src/weapons/_subfolder_taser_a6839df7cd4a9019.json": "0e5430599874bf68eeef7dbf2cbfeab2dc5fa420",
-    "system.json": "39ad3e133ebced2e0ba5b23ce5e30371136e1b45"
+    "system.json": "d2f91fa63b10366db6536121f4b133054ee93ee2"
   }
 }

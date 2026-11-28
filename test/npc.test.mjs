@@ -55,7 +55,7 @@ test("a contact as printed: Threat 0, its items with fresh ids, the printed rang
 });
 
 test("archetypes become NPCs with Foundry's prepared numbers baked in (the runners parity fixture)", () => {
-  const fixture = JSON.parse(readFileSync(new URL("fixtures/parity/runners-v0.172.0.json", import.meta.url), "utf8"));
+  const fixture = JSON.parse(readFileSync(new URL("fixtures/parity/runners-v0.173.1.json", import.meta.url), "utf8"));
   for (const want of fixture.actors) {
     const id = Object.keys(npcs).find(k => k.endsWith(`.${want.id}`));
     const b = newNpc(npcs[id], null, id), v = npcView(b), at = (k) => `${want.name}: ${k}`;
